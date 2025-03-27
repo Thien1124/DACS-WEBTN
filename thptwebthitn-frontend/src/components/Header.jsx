@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme, toggleMenu } from '../redux/uiSlice';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-// import logo from '../assets/logo.png';
+import logo from '../assets/logo.png'; // Uncommented this line
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -150,7 +150,7 @@ function Header() {
       <HeaderContainer theme={theme}>
         <HeaderContent>
           <Logo>
-            {/* <img src={logo} alt="LearnDG Logo" /> */}
+            <img src={logo} alt="LearnDG Logo" /> {/* Added logo image */}
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
