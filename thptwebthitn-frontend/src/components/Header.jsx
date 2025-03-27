@@ -150,13 +150,13 @@ function Header() {
       <HeaderContainer theme={theme}>
         <HeaderContent>
           <Logo>
-            <img src={logo} alt="LearnDG Logo" /> {/* Added logo image */}
+            <img src={logo} alt="ExamDG Logo" /> 
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              LearnDG
+              ExamDG
             </motion.span>
           </Logo>
           

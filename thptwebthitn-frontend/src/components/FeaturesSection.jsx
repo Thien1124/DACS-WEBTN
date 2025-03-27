@@ -61,20 +61,20 @@ const FeatureDescription = styled.p`
 const features = [
   {
     icon: '📚',
-    title: 'Khóa học đa dạng',
-    description: 'Nhiều lĩnh vực khác nhau để bạn lựa chọn và phát triển kỹ năng của mình.',
+    title: 'Đề thi phong phú',
+    description: 'Cung cấp đa dạng các đề thi từ nhiều môn học khác nhau, bao gồm Toán, Lý, Hóa, Sinh, Văn, Sử, Địa.',
     gradient: 'linear-gradient(135deg, #ff7e5f, #feb47b)'
   },
   {
     icon: '🚀',
-    title: 'Học mọi lúc mọi nơi',
-    description: 'Truy cập khóa học từ máy tính, điện thoại hoặc máy tính bảng của bạn.',
+    title: 'Truy cập dễ dàng',
+    description: 'Học sinh có thể truy cập đề thi và làm bài kiểm tra bất cứ lúc nào, từ bất kỳ thiết bị nào.',
     gradient: 'linear-gradient(135deg, #43cea2, #185a9d)'
   },
   {
     icon: '🏆',
-    title: 'Chứng chỉ công nhận',
-    description: 'Nhận chứng chỉ sau khi hoàn thành khóa học để nâng cao hồ sơ của bạn.',
+    title: 'Chấm điểm tự động',
+    description: 'Hệ thống tự động chấm điểm và cung cấp kết quả nhanh chóng, chính xác.',
     gradient: 'linear-gradient(135deg, #834d9b, #d04ed6)'
   }
 ];
@@ -117,7 +117,7 @@ function FeaturesSection({ animation }) {
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
       >
-        Tại sao chọn LearnDG?
+        Tại sao chọn ExamDG?
       </SectionTitle>
       
       <FeaturesGrid>

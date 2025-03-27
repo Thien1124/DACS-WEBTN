@@ -1,13 +1,10 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { motion } from 'framer-motion';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
-import { setAnimation } from './redux/uiSlice'; 
-import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import GradeSection from './components/GradeSection'; 
-import FeaturesSection from './components/FeaturesSection';
-import Footer from './components/Footer';
+import { setAnimation } from './redux/uiSlice';
+import Profile from './components/Profile';
+import Home from './components/Home';
 import './App.css';
 
 const AppContainer = styled.div`
@@ -25,28 +22,23 @@ function App() {
     // Auto-play animations in sequence
     const animationSequence = ['fadeIn', 'slideUp', 'pulse', 'idle'];
     let currentIndex = 0;
-    
+
     const animationInterval = setInterval(() => {
       dispatch(setAnimation(animationSequence[currentIndex]));
       currentIndex = (currentIndex + 1) % animationSequence.length;
     }, 3000);
-    
+
     return () => clearInterval(animationInterval);
   }, [dispatch]);
 
   return (
     <AppContainer theme={theme}>
-      <Header />
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      >
-        <HeroSection animation={currentAnimation} />
-        <GradeSection /> {/* Add this component here */}
-        <FeaturesSection animation={currentAnimation} />
-      </motion.main>
-      <Footer />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </Router>
     </AppContainer>
   );
 }
