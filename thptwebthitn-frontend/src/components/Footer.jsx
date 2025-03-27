@@ -63,7 +63,7 @@ function Footer() {
   
   const footerSections = [
     {
-      title: 'Về LearnDG',
+      title: 'Về ExamDG',
       links: [
         { text: 'Giới thiệu', url: '#' },
         { text: 'Đội ngũ giảng viên', url: '#' },
@@ -73,9 +73,13 @@ function Footer() {
     {
       title: 'Khóa học',
       links: [
-        { text: 'Lập trình', url: '#' },
-        { text: 'Thiết kế', url: '#' },
-        { text: 'Marketing', url: '#' }
+        { text: 'Toán học', url: '#' },
+        { text: 'Vật lý', url: '#' },
+        { text: 'Hóa học', url: '#' },
+        { text: 'Sinh học', url: '#' },
+        { text: 'Ngữ văn', url: '#' },
+        { text: 'Lịch sử', url: '#' },
+        { text: 'Địa lý', url: '#' }
       ]
     },
     {
