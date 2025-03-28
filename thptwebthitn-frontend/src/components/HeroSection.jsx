@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
+import ExamListModal from './ExamListModal'; // Import the new component
 
 const HeroContainer = styled.section`
   min-height: 80vh;
@@ -9,8 +10,8 @@ const HeroContainer = styled.section`
   align-items: center;
   justify-content: center;
   background: ${props => props.theme === 'dark' 
-    ? 'linear-gradient(135deg, #1e3c72, #2a5298)'  // Changed dark theme colors
-    : 'linear-gradient(135deg, #e0f7fa, #80deea)'}; // Changed light theme colors
+    ? 'linear-gradient(135deg, #1e3c72, #2a5298)'
+    : 'linear-gradient(135deg, #e0f7fa, #80deea)'};
   padding: 2rem;
 `;
 
@@ -38,10 +39,10 @@ const HeroTitle = styled(motion.h1)`
   font-size: 3.5rem;
   margin-bottom: 1.5rem;
   line-height: 1.2;
-  color: ${props => props.theme === 'dark' ? '#ffffff' : '#00796b'}; // Changed text colors
+  color: ${props => props.theme === 'dark' ? '#ffffff' : '#00796b'};
   
   span {
-    background: linear-gradient(45deg, #00bcd4, #009688); // Changed gradient colors
+    background: linear-gradient(45deg, #00bcd4, #009688);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
@@ -50,7 +51,7 @@ const HeroTitle = styled(motion.h1)`
 const HeroSubtitle = styled(motion.p)`
   font-size: 1.25rem;
   margin-bottom: 2rem;
-  color: ${props => props.theme === 'dark' ? '#b0bec5' : '#00796b'}; // Changed subtitle colors
+  color: ${props => props.theme === 'dark' ? '#b0bec5' : '#00796b'};
   line-height: 1.6;
 `;
 
@@ -65,7 +66,7 @@ const ButtonGroup = styled.div`
 
 const PrimaryButton = styled(motion.button)`
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(45deg, #00bcd4, #009688); // Changed button colors
+  background: linear-gradient(45deg, #00bcd4, #009688);
   color: white;
   border: none;
   border-radius: 8px;
@@ -73,19 +74,19 @@ const PrimaryButton = styled(motion.button)`
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2); // Changed shadow color
+  box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2);
   
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 150, 136, 0.3); // Changed hover shadow color
+    box-shadow: 0 6px 12px rgba(0, 150, 136, 0.3);
   }
 `;
 
 const SecondaryButton = styled(motion.button)`
   padding: 0.75rem 1.5rem;
   background: transparent;
-  color: ${props => props.theme === 'dark' ? '#ffffff' : '#00bcd4'}; // Changed button text colors
-  border: 2px solid ${props => props.theme === 'dark' ? '#ffffff' : '#00bcd4'}; // Changed border colors
+  color: ${props => props.theme === 'dark' ? '#ffffff' : '#00bcd4'};
+  border: 2px solid ${props => props.theme === 'dark' ? '#ffffff' : '#00bcd4'};
   border-radius: 8px;
   font-weight: 600;
   font-size: 1.1rem;
@@ -93,7 +94,7 @@ const SecondaryButton = styled(motion.button)`
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,188,212,0.1)'}; // Changed hover background color
+    background: ${props => props.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,188,212,0.1)'};
     transform: translateY(-3px);
   }
 `;
@@ -138,6 +139,20 @@ const animationVariants = {
 
 function HeroSection({ animation = 'idle' }) {
   const { theme } = useSelector(state => state.ui);
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  
+  const handleStartExam = () => {
+    setIsExamModalOpen(true);
+  };
+  
+  const handleCloseExamModal = () => {
+    setIsExamModalOpen(false);
+  };
+  
+  const handleLearnMore = () => {
+    // Scroll to the about section
+    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+  };
   
   return (
     <HeroContainer theme={theme} id="home">
@@ -160,6 +175,7 @@ function HeroSection({ animation = 'idle' }) {
           <ButtonGroup>
             <PrimaryButton 
               animate={animationVariants[animation]}
+              onClick={handleStartExam}
             >
               Bắt đầu thi
             </PrimaryButton>
@@ -167,6 +183,7 @@ function HeroSection({ animation = 'idle' }) {
             <SecondaryButton 
               theme={theme}
               animate={animationVariants[animation]}
+              onClick={handleLearnMore}
             >
               Tìm hiểu thêm
             </SecondaryButton>
@@ -183,6 +200,13 @@ function HeroSection({ animation = 'idle' }) {
           />
         </HeroImage>
       </HeroContent>
+      
+      {/* Exam List Modal */}
+      <ExamListModal
+        isOpen={isExamModalOpen}
+        onClose={handleCloseExamModal}
+        theme={theme}
+      />
     </HeroContainer>
   );
 }

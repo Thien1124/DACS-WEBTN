@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
+import ProfileUpdateModal from './ProfileUpdateModal';
 
 const ProfileContainer = styled.section`
   min-height: 80vh;
@@ -38,6 +39,7 @@ const ProfileImage = styled(motion.img)`
   box-shadow: ${props => props.theme === 'dark'
     ? '0 4px 8px rgba(255, 255, 255, 0.1)'
     : '0 4px 8px rgba(0, 0, 0, 0.1)'};
+  object-fit: cover;
 `;
 
 const ProfileName = styled(motion.h1)`
@@ -48,8 +50,38 @@ const ProfileName = styled(motion.h1)`
 
 const ProfileEmail = styled(motion.p)`
   font-size: 1.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   color: ${props => props.theme === 'dark' ? '#b0bec5' : '#00796b'};
+`;
+
+const ProfileDetails = styled(motion.div)`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  width: 100%;
+`;
+
+const DetailItem = styled.div`
+  padding: 0.75rem 1.5rem;
+  background: ${props => props.theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 188, 212, 0.1)'};
+  border-radius: 8px;
+  min-width: 150px;
+  
+  h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.9rem;
+    color: ${props => props.theme === 'dark' ? '#b0bec5' : '#00796b'};
+    font-weight: 500;
+  }
+  
+  p {
+    margin: 0;
+    font-weight: 600;
+    color: ${props => props.theme === 'dark' ? '#ffffff' : '#00796b'};
+  }
 `;
 
 const ProfileButton = styled(motion.button)`
@@ -89,34 +121,96 @@ const animationVariants = {
 
 function Profile({ animation = 'idle' }) {
   const { theme } = useSelector(state => state.ui);
-  const user = useSelector(state => state.auth?.user) || {}; // Handle undefined user
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  
+  // For demonstration purposes, we'll create a mock user profile
+  // In a real app, this would come from your Redux store or context
+  const [userData, setUserData] = useState({
+    name: 'Nguyễn Văn A',
+    email: 'nguyenvana@example.com',
+    phone: '0123456789',
+    grade: '12',
+    school: 'THPT ABC',
+    address: 'Hà Nội, Việt Nam',
+    birthdate: '2007-05-15',
+    profileImage: 'https://vgrow.co/wp-content/uploads/2021/12/unnamed-2.png'
+  });
+  
+  const handleOpenUpdateModal = () => {
+    setIsUpdateModalOpen(true);
+  };
+  
+  const handleCloseUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+  };
+  
+  // Add this function to utilize setUserData
+  const handleUpdateUserData = (updatedData) => {
+    setUserData(updatedData);
+    handleCloseUpdateModal();
+  };
 
   return (
     <ProfileContainer theme={theme}>
       <ProfileContent>
         <ProfileImage
-          src={user.profileImage || 'https://vgrow.co/wp-content/uploads/2021/12/unnamed-2.png'}
+          src={userData.profileImage}
           alt="Profile Image"
           animate={animationVariants[animation]}
+          theme={theme}
         />
         <ProfileName
           theme={theme}
           animate={animationVariants[animation]}
         >
-          {user.name || 'Tên người dùng'}
+          {userData.name}
         </ProfileName>
         <ProfileEmail
           theme={theme}
           animate={animationVariants[animation]}
         >
-          {user.email || 'Email người dùng'}
+          {userData.email}
         </ProfileEmail>
+        
+        <ProfileDetails 
+          animate={animationVariants[animation]}
+        >
+          <DetailItem theme={theme}>
+            <h4>Lớp</h4>
+            <p>{userData.grade ? `Lớp ${userData.grade}` : 'Chưa cập nhật'}</p>
+          </DetailItem>
+          <DetailItem theme={theme}>
+            <h4>Trường</h4>
+            <p>{userData.school || 'Chưa cập nhật'}</p>
+          </DetailItem>
+          <DetailItem theme={theme}>
+            <h4>Số điện thoại</h4>
+            <p>{userData.phone || 'Chưa cập nhật'}</p>
+          </DetailItem>
+          <DetailItem theme={theme}>
+            <h4>Ngày sinh</h4>
+            <p>
+              {userData.birthdate ? new Date(userData.birthdate).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+            </p>
+          </DetailItem>
+        </ProfileDetails>
+        
         <ProfileButton
           animate={animationVariants[animation]}
+          onClick={handleOpenUpdateModal}
         >
           Cập nhật thông tin
         </ProfileButton>
       </ProfileContent>
+      
+      {/* Profile Update Modal */}
+      <ProfileUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleCloseUpdateModal}
+        userData={userData}
+        theme={theme}
+        onSubmit={handleUpdateUserData} // Pass the update function to the modal
+      />
     </ProfileContainer>
   );
 }
