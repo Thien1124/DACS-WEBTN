@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
+import SubjectSelectionModal from './SubjectSelectionModal';
 
 const SectionContainer = styled.section`
   padding: 4rem 2rem;
@@ -145,6 +146,17 @@ const grades = [
 
 function GradeSection() {
   const { theme } = useSelector(state => state.ui);
+  const [selectedGrade, setSelectedGrade] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const handlePracticeClick = (grade) => {
+    setSelectedGrade(grade);
+    setIsModalOpen(true);
+  };
+  
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
   
   return (
     <SectionContainer theme={theme} id="courses">
@@ -173,13 +185,23 @@ function GradeSection() {
                 ))}
               </SubjectsList>
               
-              <PracticeButton>
+              <PracticeButton onClick={() => handlePracticeClick(grade)}>
                 Luyện Ngay
               </PracticeButton>
             </GradeContent>
           </GradeCard>
         ))}
       </GradesContainer>
+      
+      {/* Subject Selection Modal */}
+      {selectedGrade && (
+        <SubjectSelectionModal 
+          isOpen={isModalOpen} 
+          onClose={handleCloseModal} 
+          gradeInfo={selectedGrade} 
+          theme={theme}
+        />
+      )}
     </SectionContainer>
   );
 }

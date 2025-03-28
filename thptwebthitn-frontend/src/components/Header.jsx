@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme, toggleMenu } from '../redux/uiSlice';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import logo from '../assets/logo.png'; // Uncommented this line
+import logo from '../assets/logo.png';
+import LoginModal from './LoginModal'; // Make sure to create this component
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -131,6 +132,7 @@ const HeaderSpacer = styled.div`
 function Header() {
   const dispatch = useDispatch();
   const { theme, isMenuVisible } = useSelector(state => state.ui);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
@@ -141,8 +143,11 @@ function Header() {
   };
 
   const handleLogin = () => {
-    // In a real app, this would open a login modal or redirect to login page
-    alert('Chức năng đăng nhập sẽ được phát triển trong tương lai!');
+    setIsLoginModalOpen(true);
+  };
+  
+  const closeLoginModal = () => {
+    setIsLoginModalOpen(false);
   };
   
   return (
@@ -184,6 +189,13 @@ function Header() {
         </HeaderContent>
       </HeaderContainer>
       <HeaderSpacer />
+      
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={closeLoginModal} 
+        theme={theme}
+      />
     </>
   );
 }
