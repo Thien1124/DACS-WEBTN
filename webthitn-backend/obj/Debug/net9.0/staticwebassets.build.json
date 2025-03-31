@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "PwV3fkIQMlJFwWFFw64AaNNAOrsMsHGnJJuP+SNMhcI=",
+  "Source": "webthitn-backend",
+  "BasePath": "_content/webthitn-backend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
