@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { setAnimation } from './redux/uiSlice';
 import Profile from './components/Profile';
 import Home from './components/Home';
+import AuthContainer from './components/Auth/AuthContainer';
 import './App.css';
 
 const AppContainer = styled.div`
@@ -37,6 +38,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/login" element={<AuthContainer />} />
         </Routes>
       </Router>
     </AppContainer>

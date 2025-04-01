@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import ExamListModal from './ExamListModal'; // Import the new component
+import ExamListModal from '../modals/ExamListModal'; // Updated path to the ExamListModal component
 
 const HeroContainer = styled.section`
   min-height: 80vh;

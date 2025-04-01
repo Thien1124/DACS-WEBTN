@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import ProfileUpdateModal from './ProfileUpdateModal';
+import ProfileUpdateModal from './modals/ProfileUpdateModal'; // Updated path to the ProfileUpdateModal component
 
 const ProfileContainer = styled.section`
   min-height: 80vh;

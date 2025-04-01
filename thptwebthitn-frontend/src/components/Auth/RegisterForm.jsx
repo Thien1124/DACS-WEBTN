@@ -1,0 +1,587 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import styled from 'styled-components';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { register } from '../../redux/authSlice';
+import * as authService from '../../services/authService';
+import { FaUser, FaEnvelope, FaLock, FaGraduationCap, FaUserTie } from 'react-icons/fa';
+
+const FormContainer = styled(motion.div)`
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 450px;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
+  overflow: hidden;
+  position: relative;
+  
+  @media (max-width: 480px) {
+    padding: 1.5rem;
+    max-width: 100%;
+    border-radius: 10px;
+  }
+`;
+
+const FormTitle = styled.h2`
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  position: relative;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(45deg, #4285f4, #34a853);
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+  position: relative;
+  
+  @media (max-width: 480px) {
+    margin-bottom: 1.2rem;
+  }
+`;
+
+const InputIcon = styled.div`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
+  transition: all 0.2s;
+  
+  @media (max-width: 480px) {
+    left: 10px;
+    font-size: 0.9rem;
+  }
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#444'};
+  font-size: 0.95rem;
+  
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #4285f4;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
+    
+    & + ${InputIcon} {
+      color: #4285f4;
+    }
+  }
+  
+  &::placeholder {
+    color: ${props => props.theme === 'dark' ? '#6c7280' : '#aaa'};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 10px 10px 35px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
+  transition: all 0.2s ease;
+  appearance: none;
+  
+  &:focus {
+    outline: none;
+    border-color: #4285f4;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
+  }
+  
+  &::-ms-expand {
+    display: none;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 10px 10px 35px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+  }
+`;
+
+const SelectArrow = styled.div`
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
+  pointer-events: none;
+  
+  @media (max-width: 480px) {
+    right: 10px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
+  }
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(45deg, #4285f4, #34a853);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(45deg, #fbbc05, #ea4335);
+    transition: width 0.5s ease;
+    z-index: 0;
+  }
+  
+  &:hover:before {
+    width: 100%;
+  }
+  
+  span {
+    position: relative;
+    z-index: 1;
+  }
+  
+  &:active {
+    transform: translateY(2px);
+  }
+  
+  &:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: translateY(0);
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  
+  &:before {
+    content: '⚠️';
+    margin-right: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+  }
+`;
+
+const LoginLink = styled.div`
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#666'};
+  
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    margin-top: 1.2rem;
+  }
+`;
+
+const SwitchFormButton = styled.button`
+  background: none;
+  border: none;
+  color: ${props => props.theme === 'dark' ? '#4da3ff' : '#4285f4'};
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 5px;
+  transition: all 0.2s;
+  position: relative;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    bottom: 0;
+    left: 0;
+    background-color: ${props => props.theme === 'dark' ? '#4da3ff' : '#4285f4'};
+    transition: width 0.3s;
+  }
+  
+  &:hover:after {
+    width: 100%;
+  }
+`;
+
+const RoleToggle = styled.div`
+  display: flex;
+  background: ${props => props.theme === 'dark' ? '#333' : '#f5f5f5'};
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
+  
+  @media (max-width: 480px) {
+    border-radius: 6px;
+    padding: 3px;
+    margin-bottom: 1.2rem;
+  }
+`;
+
+const RoleOption = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: ${props => props.active 
+    ? 'linear-gradient(45deg, #4285f4, #34a853)'
+    : 'transparent'};
+  color: ${props => props.active 
+    ? 'white' 
+    : props.theme === 'dark' ? '#a0aec0' : '#666'};
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    margin-right: 6px;
+  }
+  
+  &:hover {
+    background: ${props => props.active 
+      ? 'linear-gradient(45deg, #4285f4, #34a853)'
+      : props.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    
+    svg {
+      margin-right: 4px;
+      font-size: 0.9rem;
+    }
+  }
+`;
+
+// Responsive container để ngăn không cho form bị thu nhỏ quá nhiều
+const ResponsiveContainer = styled.div`
+  width: 100%;
+  padding: 0 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  @media (max-width: 480px) {
+    padding: 0;
+  }
+`;
+
+const RegisterForm = ({ theme, switchToLogin }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    grade: '',
+    role: 'student'  // Default role
+  });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+  };
+
+  const setRole = (role) => {
+    setFormData({
+      ...formData,
+      role
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Validate name
+    if (!formData.name) {
+      newErrors.name = 'Vui lòng nhập họ tên';
+    }
+    
+    // Validate email
+    if (!formData.email) {
+      newErrors.email = 'Vui lòng nhập email';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email không hợp lệ';
+    }
+    
+    // Validate password
+    if (!formData.password) {
+      newErrors.password = 'Vui lòng nhập mật khẩu';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+    
+    // Validate password confirmation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
+    }
+    
+    // Validate grade
+    if (!formData.grade && formData.role === 'student') {
+      newErrors.grade = 'Vui lòng chọn lớp';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      setIsLoading(true);
+      try {
+        // Use actual API service to register
+        const response = await authService.register({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          grade: formData.grade,
+          role: formData.role
+        });
+        
+        // Dispatch register action with actual data
+        dispatch(register({
+          user: response.user,
+          token: response.token
+        }));
+        
+        // Redirect to home page after registration
+        navigate('/');
+      } catch (error) {
+        setErrors({
+          general: error.message || 'Đăng ký thất bại. Vui lòng thử lại sau.'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  return (
+    <ResponsiveContainer>
+      <FormContainer
+        theme={theme}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      >
+        <FormTitle>Đăng Ký Tài Khoản</FormTitle>
+        
+        {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+        
+        <form onSubmit={handleSubmit}>
+          <RoleToggle theme={theme}>
+            <RoleOption 
+              active={formData.role === 'student'} 
+              onClick={() => setRole('student')} 
+              type="button"
+              theme={theme}
+            >
+              <FaGraduationCap /> Học sinh
+            </RoleOption>
+            <RoleOption 
+              active={formData.role === 'teacher'} 
+              onClick={() => setRole('teacher')} 
+              type="button"
+              theme={theme}
+            >
+              <FaUserTie /> Giáo viên
+            </RoleOption>
+          </RoleToggle>
+          
+          <FormGroup>
+            <Label theme={theme} htmlFor="name">Họ và tên</Label>
+            <Input
+              theme={theme}
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Nguyễn Văn A"
+            />
+            <InputIcon theme={theme}><FaUser /></InputIcon>
+            {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
+          </FormGroup>
+          
+          <FormGroup>
+            <Label theme={theme} htmlFor="email">Email</Label>
+            <Input
+              theme={theme}
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="example@gmail.com"
+            />
+            <InputIcon theme={theme}><FaEnvelope /></InputIcon>
+            {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+          </FormGroup>
+          
+          <FormGroup>
+            <Label theme={theme} htmlFor="password">Mật khẩu</Label>
+            <Input
+              theme={theme}
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Tối thiểu 6 ký tự"
+            />
+            <InputIcon theme={theme}><FaLock /></InputIcon>
+            {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+          </FormGroup>
+          
+          <FormGroup>
+            <Label theme={theme} htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+            <Input
+              theme={theme}
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="Nhập lại mật khẩu"
+            />
+            <InputIcon theme={theme}><FaLock /></InputIcon>
+            {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
+          </FormGroup>
+          
+          {formData.role === 'student' && (
+            <FormGroup>
+              <Label theme={theme} htmlFor="grade">Lớp</Label>
+              <Select
+                theme={theme}
+                id="grade"
+                name="grade"
+                value={formData.grade}
+                onChange={handleInputChange}
+              >
+                <option value="">-- Chọn lớp --</option>
+                <option value="10">Lớp 10</option>
+                <option value="11">Lớp 11</option>
+                <option value="12">Lớp 12</option>
+              </Select>
+              <InputIcon theme={theme}><FaGraduationCap /></InputIcon>
+              <SelectArrow theme={theme} />
+              {errors.grade && <ErrorMessage>{errors.grade}</ErrorMessage>}
+            </FormGroup>
+          )}
+          
+          <SubmitButton type="submit" disabled={isLoading}>
+            <span>{isLoading ? 'Đang xử lý...' : 'Đăng Ký'}</span>
+          </SubmitButton>
+        </form>
+        
+        <LoginLink theme={theme}>
+          Đã có tài khoản? 
+          <SwitchFormButton 
+            theme={theme}
+            type="button" 
+            onClick={switchToLogin}
+          >
+            Đăng nhập
+          </SwitchFormButton>
+        </LoginLink>
+      </FormContainer>
+    </ResponsiveContainer>
+  );
+};
+
+export default RegisterForm;
