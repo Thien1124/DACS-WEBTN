@@ -36,7 +36,6 @@ C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\staticwebassets\ms
 C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.webthitn-backend.props
 C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.webthitn-backend.props
 C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\staticwebassets.pack.json
-C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\webthitn.81648C40.Up2Date
 C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\webthitn-backend.dll
 C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\refint\webthitn-backend.dll
@@ -169,3 +168,7 @@ C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\ru\Microsoft.CodeA
 C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
+C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\MailKit.dll
+C:\Users\Thien\source\repos\webthitn-backend\bin\Debug\net9.0\MimeKit.dll
+C:\Users\Thien\source\repos\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

@@ -1,26 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
-using webthitn_backend.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi.Models;
+using System.Text;
+using webthitn_backend.Models;
+using Microsoft.EntityFrameworkCore;
+using webthitn_backend.Services;
+using webthitn_backend.Middleware;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Email service
+builder.Services.AddSingleton<EmailService>();
 
 // Cấu hình DbContext để kết nối với cơ sở dữ liệu
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Cấu hình CORS (Cross-Origin Resource Sharing)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin() // Cho phép mọi nguồn
-              .AllowAnyMethod() // Cho phép mọi phương thức (GET, POST, PUT, DELETE...)
-              .AllowAnyHeader(); // Cho phép mọi header
-    });
-});
 
 // Cấu hình Authentication với JWT Bearer Token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -34,11 +29,56 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            ClockSkew = TimeSpan.Zero // Để token hết hạn đúng thời điểm
+        };
+
+        // Thêm event handlers để debug
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("Token validated successfully");
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                Console.WriteLine("JWT Bearer auth scheme: Token received");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Console.WriteLine($"JWT Bearer auth scheme: Challenge for path {context.Request.Path}");
+                return Task.CompletedTask;
+            }
         };
     });
 
-// Thêm dịch vụ Swagger để hiển thị API tài liệu
+// Cấu hình CORS để cho phép frontend gọi API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()  // Cho phép mọi nguồn (origin)
+              .AllowAnyHeader()  // Cho phép mọi header
+              .AllowAnyMethod(); // Cho phép mọi phương thức (GET, POST, PUT, DELETE)
+    });
+});
+
+// Thêm logging
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddDebug();
+});
+
+// Cấu hình Swagger để tài liệu hóa các API
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebThitn Backend API", Version = "v1" });
@@ -51,7 +91,7 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer",
         BearerFormat = "JWT",
-        Description = "Please enter your JWT with 'Bearer' prefix"
+        Description = "Nhập JWT token ở đây (không cần thêm tiền tố 'Bearer')"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -70,31 +110,29 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Thêm dịch vụ các API Controllers
+// Thêm các dịch vụ API Controllers
 builder.Services.AddControllers();
 
-// Build ứng dụng
 var app = builder.Build();
 
-// Cấu hình middleware cho Swagger UI trong môi trường phát triển
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebThitn Backend API v1");
-        c.RoutePrefix = string.Empty; // Đặt Swagger UI ở URL gốc của ứng dụng (http://localhost:5006)
-    });
-}
+// Middleware Swagger 
+app.UseSwagger();
+app.UseSwaggerUI(c => {
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebThitn Backend API v1");
+    c.RoutePrefix = "swagger";
+});
 
 // Sử dụng CORS
 app.UseCors("AllowAll");
 
-// Sử dụng Authentication và Authorization cho API
-app.UseAuthentication();
-app.UseAuthorization();
+// Thêm middleware xử lý JSON token trước authentication
+app.UseMiddleware<JsonTokenAuthenticationMiddleware>();
 
-// Định tuyến các Controller
+// Sử dụng Authentication và Authorization cho API
+app.UseAuthentication();  // Đảm bảo yêu cầu token hợp lệ cho các API yêu cầu xác thực
+app.UseAuthorization();   // Kiểm tra quyền truy cập của người dùng
+
+// Định tuyến các Controllers
 app.MapControllers();
 
 // Chạy ứng dụng

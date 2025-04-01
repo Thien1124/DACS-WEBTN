@@ -3,32 +3,24 @@
   "WorkspaceRootPath": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\dtos\\userdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:dtos\\userdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\migrations\\20250401164620_fixrequiredpropertiesinusermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:migrations\\20250401164620_fixrequiredpropertiesinusermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\migrations\\20250327141005_initial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:migrations\\20250327141005_initial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\source\\repos\\webthitn-backend\\models\\users\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\users\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,92 +30,72 @@
       "DocumentGroups": [
         {
           "DockedWidth": 305,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "appsettings.Development.json",
-              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\appsettings.Development.json",
-              "RelativeDocumentMoniker": "appsettings.Development.json",
-              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\appsettings.Development.json",
-              "RelativeToolTip": "appsettings.Development.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-03-27T14:20:12.456Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "Models\\ApplicationDbContext.cs",
-              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\ApplicationDbContext.cs",
-              "RelativeToolTip": "Models\\ApplicationDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T14:13:01.688Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "20250327141005_Initial.cs",
-              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Migrations\\20250327141005_Initial.cs",
-              "RelativeDocumentMoniker": "Migrations\\20250327141005_Initial.cs",
-              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Migrations\\20250327141005_Initial.cs",
-              "RelativeToolTip": "Migrations\\20250327141005_Initial.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T14:10:05.925Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\appsettings.json",
-              "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\appsettings.json",
-              "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAABhAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-03-27T13:58:50.945Z"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAAwwCgAAAAwAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T13:57:17.571Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
               "Title": "AuthController.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Controllers\\AuthController.cs",
               "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
               "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Controllers\\AuthController.cs",
               "RelativeToolTip": "Controllers\\AuthController.cs",
-              "ViewState": "AgIAAE0AAAAAAAAAAAAnwFYAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAMYAAAAAAAAAAAAAACsAAABPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T13:29:56.197Z"
+              "WhenOpened": "2025-04-01T16:59:29.499Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "User.cs",
-              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\User.cs",
-              "RelativeDocumentMoniker": "Models\\User.cs",
-              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\User.cs",
-              "RelativeToolTip": "Models\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "UserDTO.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\DTOs\\UserDTO.cs",
+              "RelativeDocumentMoniker": "DTOs\\UserDTO.cs",
+              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\DTOs\\UserDTO.cs",
+              "RelativeToolTip": "DTOs\\UserDTO.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T13:29:32.017Z"
+              "WhenOpened": "2025-04-01T16:51:39.002Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "20250401164620_FixRequiredPropertiesInUserModel.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Migrations\\20250401164620_FixRequiredPropertiesInUserModel.cs",
+              "RelativeDocumentMoniker": "Migrations\\20250401164620_FixRequiredPropertiesInUserModel.cs",
+              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Migrations\\20250401164620_FixRequiredPropertiesInUserModel.cs",
+              "RelativeToolTip": "Migrations\\20250401164620_FixRequiredPropertiesInUserModel.cs",
+              "ViewState": "AgIAAFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-01T16:46:49.348Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Models\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Models\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAGgAAAAAAAAAAAAwwKgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-01T16:32:22.33Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\Users\\User.cs",
+              "RelativeDocumentMoniker": "Models\\Users\\User.cs",
+              "ToolTip": "C:\\Users\\Thien\\source\\repos\\webthitn-backend\\Models\\Users\\User.cs",
+              "RelativeToolTip": "Models\\Users\\User.cs",
+              "ViewState": "AgIAAC8AAAAAAAAAAAAAAAIAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-01T16:25:11.743Z",
+              "EditorCaption": ""
             }
           ]
         },
