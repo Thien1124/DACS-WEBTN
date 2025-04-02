@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../../redux/authSlice';
 import { validateLoginForm } from '../../utils/validation';
 import * as authService from '../../services/authService';
-import { FaEnvelope, FaLock, FaGoogle, FaFacebook } from 'react-icons/fa';
+import { FaUser, FaLock, FaGoogle, FaFacebook } from 'react-icons/fa';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -332,7 +332,7 @@ const LoginForm = ({ theme, switchToRegister }) => {
   const location = useLocation();
   
   const [formData, setFormData] = useState({
-    email: '',
+    usernameOrEmail: '',
     password: '',
     rememberMe: false
   });
@@ -371,8 +371,8 @@ const LoginForm = ({ theme, switchToRegister }) => {
     setIsLoading(true);
     try {
       // Call login API
-      const { email, password } = formData;
-      const response = await authService.login({ email, password });
+      const { usernameOrEmail, password } = formData;
+      const response = await authService.login({ usernameOrEmail, password });
       
       // Dispatch login action to update Redux state
       dispatch(login({
@@ -409,18 +409,18 @@ const LoginForm = ({ theme, switchToRegister }) => {
       
       <form onSubmit={handleSubmit}>
         <FormGroup>
-          <Label theme={theme} htmlFor="email">Email</Label>
+          <Label theme={theme} htmlFor="usernameOrEmail">Tên đăng nhập hoặc Email</Label>
           <Input
             theme={theme}
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
+            type="text"
+            id="usernameOrEmail"
+            name="usernameOrEmail"
+            value={formData.usernameOrEmail}
             onChange={handleInputChange}
-            placeholder="example@gmail.com"
+            placeholder="Nhập tên đăng nhập hoặc email"
           />
-          <InputIcon theme={theme}><FaEnvelope /></InputIcon>
-          {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+          <InputIcon theme={theme}><FaUser /></InputIcon>
+          {errors.usernameOrEmail && <ErrorMessage>{errors.usernameOrEmail}</ErrorMessage>}
         </FormGroup>
         
         <FormGroup>

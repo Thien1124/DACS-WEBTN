@@ -204,10 +204,6 @@ function Header() {
             </motion.span>
           </Logo>
           
-          <MenuButton onClick={handleMenuToggle} theme={theme}>
-            {isMenuVisible ? '✕' : '☰'}
-          </MenuButton>
-          
           <Nav isMenuVisible={isMenuVisible} theme={theme}>
             <NavItems>
               <NavItem theme={theme}><a href="#home">Trang chủ</a></NavItem>

@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../../redux/authSlice';
 import * as authService from '../../services/authService';
-import { FaUser, FaEnvelope, FaLock, FaGraduationCap, FaUserTie } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaIdCard, FaPhone } from 'react-icons/fa';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -120,54 +120,6 @@ const Input = styled.input`
   }
 `;
 
-const Select = styled.select`
-  width: 100%;
-  padding: 12px 12px 12px 40px;
-  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  transition: all 0.2s ease;
-  appearance: none;
-  
-  &:focus {
-    outline: none;
-    border-color: #4285f4;
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
-  }
-  
-  &::-ms-expand {
-    display: none;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 10px 10px 10px 35px;
-    font-size: 0.9rem;
-    border-radius: 6px;
-  }
-`;
-
-const SelectArrow = styled.div`
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 5px solid ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
-  pointer-events: none;
-  
-  @media (max-width: 480px) {
-    right: 10px;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
-  }
-`;
-
 const SubmitButton = styled.button`
   width: 100%;
   padding: 14px;
@@ -276,60 +228,6 @@ const SwitchFormButton = styled.button`
   }
 `;
 
-const RoleToggle = styled.div`
-  display: flex;
-  background: ${props => props.theme === 'dark' ? '#333' : '#f5f5f5'};
-  border-radius: 10px;
-  padding: 4px;
-  margin-bottom: 1.5rem;
-  
-  @media (max-width: 480px) {
-    border-radius: 6px;
-    padding: 3px;
-    margin-bottom: 1.2rem;
-  }
-`;
-
-const RoleOption = styled.button`
-  flex: 1;
-  padding: 10px;
-  background: ${props => props.active 
-    ? 'linear-gradient(45deg, #4285f4, #34a853)'
-    : 'transparent'};
-  color: ${props => props.active 
-    ? 'white' 
-    : props.theme === 'dark' ? '#a0aec0' : '#666'};
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  svg {
-    margin-right: 6px;
-  }
-  
-  &:hover {
-    background: ${props => props.active 
-      ? 'linear-gradient(45deg, #4285f4, #34a853)'
-      : props.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'};
-  }
-  
-  @media (max-width: 480px) {
-    padding: 8px;
-    font-size: 0.85rem;
-    border-radius: 6px;
-    
-    svg {
-      margin-right: 4px;
-      font-size: 0.9rem;
-    }
-  }
-`;
-
 // Responsive container để ngăn không cho form bị thu nhỏ quá nhiều
 const ResponsiveContainer = styled.div`
   width: 100%;
@@ -347,12 +245,12 @@ const RegisterForm = ({ theme, switchToLogin }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
-    grade: '',
-    role: 'student'  // Default role
+    fullName: '',
+    phoneNumber: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -373,19 +271,12 @@ const RegisterForm = ({ theme, switchToLogin }) => {
     }
   };
 
-  const setRole = (role) => {
-    setFormData({
-      ...formData,
-      role
-    });
-  };
-
   const validateForm = () => {
     const newErrors = {};
     
-    // Validate name
-    if (!formData.name) {
-      newErrors.name = 'Vui lòng nhập họ tên';
+    // Validate username
+    if (!formData.username) {
+      newErrors.username = 'Vui lòng nhập tên đăng nhập';
     }
     
     // Validate email
@@ -393,6 +284,18 @@ const RegisterForm = ({ theme, switchToLogin }) => {
       newErrors.email = 'Vui lòng nhập email';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
+    }
+    
+    // Validate fullName
+    if (!formData.fullName) {
+      newErrors.fullName = 'Vui lòng nhập họ tên đầy đủ';
+    }
+    
+    // Validate phoneNumber
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
+    } else if (!/^[0-9]{10,11}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = 'Số điện thoại không hợp lệ';
     }
     
     // Validate password
@@ -409,11 +312,6 @@ const RegisterForm = ({ theme, switchToLogin }) => {
       newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
     
-    // Validate grade
-    if (!formData.grade && formData.role === 'student') {
-      newErrors.grade = 'Vui lòng chọn lớp';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -426,11 +324,11 @@ const RegisterForm = ({ theme, switchToLogin }) => {
       try {
         // Use actual API service to register
         const response = await authService.register({
-          name: formData.name,
+          username: formData.username,
           email: formData.email,
           password: formData.password,
-          grade: formData.grade,
-          role: formData.role
+          fullName: formData.fullName,
+          phoneNumber: formData.phoneNumber
         });
         
         // Dispatch register action with actual data
@@ -464,38 +362,19 @@ const RegisterForm = ({ theme, switchToLogin }) => {
         {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
         
         <form onSubmit={handleSubmit}>
-          <RoleToggle theme={theme}>
-            <RoleOption 
-              active={formData.role === 'student'} 
-              onClick={() => setRole('student')} 
-              type="button"
-              theme={theme}
-            >
-              <FaGraduationCap /> Học sinh
-            </RoleOption>
-            <RoleOption 
-              active={formData.role === 'teacher'} 
-              onClick={() => setRole('teacher')} 
-              type="button"
-              theme={theme}
-            >
-              <FaUserTie /> Giáo viên
-            </RoleOption>
-          </RoleToggle>
-          
           <FormGroup>
-            <Label theme={theme} htmlFor="name">Họ và tên</Label>
+            <Label theme={theme} htmlFor="username">Tên đăng nhập</Label>
             <Input
               theme={theme}
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleInputChange}
-              placeholder="Nguyễn Văn A"
+              placeholder="Nhập tên đăng nhập"
             />
             <InputIcon theme={theme}><FaUser /></InputIcon>
-            {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
+            {errors.username && <ErrorMessage>{errors.username}</ErrorMessage>}
           </FormGroup>
           
           <FormGroup>
@@ -511,6 +390,36 @@ const RegisterForm = ({ theme, switchToLogin }) => {
             />
             <InputIcon theme={theme}><FaEnvelope /></InputIcon>
             {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+          </FormGroup>
+          
+          <FormGroup>
+            <Label theme={theme} htmlFor="fullName">Họ và tên</Label>
+            <Input
+              theme={theme}
+              type="text"
+              id="fullName"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleInputChange}
+              placeholder="Nhập họ và tên đầy đủ"
+            />
+            <InputIcon theme={theme}><FaIdCard /></InputIcon>
+            {errors.fullName && <ErrorMessage>{errors.fullName}</ErrorMessage>}
+          </FormGroup>
+          
+          <FormGroup>
+            <Label theme={theme} htmlFor="phoneNumber">Số điện thoại</Label>
+            <Input
+              theme={theme}
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              placeholder="Nhập số điện thoại"
+            />
+            <InputIcon theme={theme}><FaPhone /></InputIcon>
+            {errors.phoneNumber && <ErrorMessage>{errors.phoneNumber}</ErrorMessage>}
           </FormGroup>
           
           <FormGroup>
@@ -542,27 +451,6 @@ const RegisterForm = ({ theme, switchToLogin }) => {
             <InputIcon theme={theme}><FaLock /></InputIcon>
             {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
           </FormGroup>
-          
-          {formData.role === 'student' && (
-            <FormGroup>
-              <Label theme={theme} htmlFor="grade">Lớp</Label>
-              <Select
-                theme={theme}
-                id="grade"
-                name="grade"
-                value={formData.grade}
-                onChange={handleInputChange}
-              >
-                <option value="">-- Chọn lớp --</option>
-                <option value="10">Lớp 10</option>
-                <option value="11">Lớp 11</option>
-                <option value="12">Lớp 12</option>
-              </Select>
-              <InputIcon theme={theme}><FaGraduationCap /></InputIcon>
-              <SelectArrow theme={theme} />
-              {errors.grade && <ErrorMessage>{errors.grade}</ErrorMessage>}
-            </FormGroup>
-          )}
           
           <SubmitButton type="submit" disabled={isLoading}>
             <span>{isLoading ? 'Đang xử lý...' : 'Đăng Ký'}</span>
