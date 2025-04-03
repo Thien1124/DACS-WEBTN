@@ -29,6 +29,26 @@ export const validatePassword = (password) => {
 };
 
 /**
+ * Validates if a string could be an email
+ * @param {string} str - String to check
+ * @returns {boolean} - True if string looks like an email
+ */
+export const isLikelyEmail = (str) => {
+  return str.includes('@');
+};
+
+/**
+ * Phone number validation
+ * @param {string} phoneNumber - Phone number to validate
+ * @returns {boolean} - True if phone number is valid
+ */
+export const isValidPhoneNumber = (phoneNumber) => {
+  // Simple validation for Vietnamese phone numbers
+  const phoneRegex = /^(0|\+84)(\d{9,10})$/;
+  return phoneRegex.test(phoneNumber);
+};
+
+/**
  * Validates login form data
  * @param {Object} formData - The login form data to validate
  * @returns {Object} - An object containing validation errors, if any
@@ -36,11 +56,11 @@ export const validatePassword = (password) => {
 export const validateLoginForm = (formData) => {
   const errors = {};
   
-  // Email validation
-  if (!formData.email) {
-    errors.email = 'Vui lòng nhập email';
-  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-    errors.email = 'Email không hợp lệ';
+  // Username or Email validation
+  if (!formData.usernameOrEmail) {
+    errors.usernameOrEmail = 'Vui lòng nhập tên đăng nhập hoặc email';
+  } else if (isLikelyEmail(formData.usernameOrEmail) && !isValidEmail(formData.usernameOrEmail)) {
+    errors.usernameOrEmail = 'Email không hợp lệ';
   }
   
   // Password validation
@@ -61,16 +81,30 @@ export const validateLoginForm = (formData) => {
 export const validateRegisterForm = (formData) => {
   const errors = {};
   
-  // Name validation
-  if (!formData.name) {
-    errors.name = 'Vui lòng nhập họ tên';
+  // Username validation
+  if (!formData.username) {
+    errors.username = 'Vui lòng nhập tên đăng nhập';
+  } else if (formData.username.length < 3) {
+    errors.username = 'Tên đăng nhập phải có ít nhất 3 ký tự';
   }
   
   // Email validation
   if (!formData.email) {
     errors.email = 'Vui lòng nhập email';
-  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+  } else if (!isValidEmail(formData.email)) {
     errors.email = 'Email không hợp lệ';
+  }
+  
+  // Full name validation
+  if (!formData.fullName) {
+    errors.fullName = 'Vui lòng nhập họ tên đầy đủ';
+  }
+  
+  // Phone number validation
+  if (!formData.phoneNumber) {
+    errors.phoneNumber = 'Vui lòng nhập số điện thoại';
+  } else if (!isValidPhoneNumber(formData.phoneNumber)) {
+    errors.phoneNumber = 'Số điện thoại không hợp lệ';
   }
   
   // Password validation
@@ -85,11 +119,6 @@ export const validateRegisterForm = (formData) => {
     errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
   } else if (formData.password !== formData.confirmPassword) {
     errors.confirmPassword = 'Mật khẩu không khớp';
-  }
-  
-  // Grade validation for students
-  if (!formData.grade && formData.role === 'student') {
-    errors.grade = 'Vui lòng chọn lớp';
   }
   
   return errors;
