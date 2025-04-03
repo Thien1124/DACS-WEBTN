@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/authSlice';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getUserData } from '../../utils/auth';
+
 
 const NavbarContainer = styled.nav`
   background-color: ${props => props.theme === 'dark' ? '#222' : 'white'};
@@ -255,7 +257,8 @@ const LogoutButton = styled.button`
 const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector(state => state.auth.user);
+  const userFromRedux = useSelector(state => state.auth.user);
+  const user = userFromRedux || getUserData();
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -273,7 +276,22 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
     setIsUserMenuOpen(false);
     navigate('/');
   };
-  
+  const getUserDisplayName = (userData) => {
+    if (!userData) return 'Người dùng';
+    
+    // Thứ tự ưu tiên: fullName > username > email
+    if (userData.fullName) {
+      // Chỉ lấy tên đầu tiên từ họ tên đầy đủ
+      return userData.fullName.split(' ')[0];
+    } else if (userData.username) {
+      return userData.username;
+    } else if (userData.email) {
+      // Trích xuất phần trước @ trong email
+      return userData.email.split('@')[0];
+    } else {
+      return 'Người dùng';
+    }
+  };
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -295,8 +313,19 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
   }, [navigate]);
   
   // Get first letter of name for avatar
-  const getInitials = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'U';
+  const getInitials = (userData) => {
+    if (!userData) return 'U';
+    
+    // Thứ tự ưu tiên: fullName > username > email
+    if (userData.fullName) {
+      return userData.fullName.charAt(0).toUpperCase();
+    } else if (userData.username) {
+      return userData.username.charAt(0).toUpperCase();
+    } else if (userData.email) {
+      return userData.email.charAt(0).toUpperCase();
+    } else {
+      return 'U';
+    }
   };
   
   return (
@@ -316,8 +345,8 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
         {isAuthenticated ? (
           <UserMenu className="user-menu">
             <UserMenuButton theme={theme} onClick={toggleUserMenu}>
-              <UserAvatar>{getInitials(user?.name)}</UserAvatar>
-              <span>{user?.name || 'Người dùng'}</span>
+              <UserAvatar>{getInitials(user)}</UserAvatar>
+              <span>Xin chào, {getUserDisplayName(user)}</span>
             </UserMenuButton>
             
             <AnimatePresence>

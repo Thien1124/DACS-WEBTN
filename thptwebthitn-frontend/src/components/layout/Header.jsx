@@ -6,6 +6,11 @@ import { motion } from 'framer-motion';
 import logo from '../../assets/logo.png';
 import AuthModal from '../Auth/AuthModal'; // Import AuthModal thay vì LoginModal
 
+
+
+
+
+
 const HeaderContainer = styled.header`
   position: fixed;
   top: 0;

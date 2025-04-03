@@ -1,11 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
-import { setAnimation } from './redux/uiSlice';
+import { setAnimation,login } from './redux/uiSlice';
 import Profile from './components/Profile';
 import Home from './components/Home';
 import AuthContainer from './components/Auth/AuthContainer';
+import { ThemeProvider } from 'styled-components';
+import Navbar from './components/layout/Navbar';
+import { getUserData, getToken } from './utils/auth';
+
 import './App.css';
 
 const AppContainer = styled.div`

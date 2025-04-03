@@ -8,30 +8,33 @@ import { setToken, saveUserData, removeToken, removeUserData } from '../utils/au
  */
 export const register = async (userData) => {
   try {
-    const response = await apiClient.post('/api/Auth/register', {
-      username: userData.username,
-      email: userData.email,
-      password: userData.password,
-      fullName: userData.fullName,
-      phoneNumber: userData.phoneNumber
-    });
-
-    // Nếu đăng ký thành công và API trả về token
-    if (response.data.token) {
-      setToken(response.data.token);
-      saveUserData(response.data.user);
-    }
-
+    console.log('Sending registration data:', userData);
+    const response = await apiClient.post('/api/Auth/register', userData);
+    console.log('Registration response:', response);
     return response.data;
   } catch (error) {
-    console.error('Registration error:', error);
-    const errorMessage = error.response?.data?.message 
-      || error.response?.data
-      || 'Đăng ký thất bại. Vui lòng thử lại sau.';
+    console.error('Registration error details:', error);
+    let errorMessage = 'Đăng ký thất bại. Vui lòng thử lại sau.';
+    
+    if (error.response) {
+      console.error('Server error response:', error.response.data);
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response.data.errors) {
+        // Handle validation errors
+        const validationErrors = error.response.data.errors;
+        const firstError = Object.values(validationErrors)[0];
+        if (Array.isArray(firstError) && firstError.length > 0) {
+          errorMessage = firstError[0];
+        }
+      }
+    }
+    
     throw { message: errorMessage };
   }
 };
-
 
 /**
  * Log in a user
@@ -40,25 +43,56 @@ export const register = async (userData) => {
  */
 export const login = async (credentials) => {
   try {
+    console.log('Sending login credentials:', credentials);
+    
+    // Đảm bảo gửi rememberMe parameter nếu API cần
     const response = await apiClient.post('/api/Auth/login', {
       usernameOrEmail: credentials.usernameOrEmail,
-      password: credentials.password
+      password: credentials.password,
+      rememberMe: credentials.rememberMe || false
     });
-
-    if (response.data.token) {
-      setToken(response.data.token);
-      saveUserData(response.data.user);
+    
+    console.log('Login response:', response);
+    
+    // Kiểm tra xem response có token không
+    if (!response.data || !response.data.token) {
+      throw new Error('Không nhận được token từ server');
     }
-
+    
+    const { token, user } = response.data;
+    
+    // Lưu token và thông tin user
+    console.log('Setting token and user data');
+    setToken(token);
+    if (user) {
+      saveUserData(user);
+    }
+    
+    // Lưu trạng thái "ghi nhớ đăng nhập"
+    if (credentials.rememberMe) {
+      localStorage.setItem('remember_me', 'true');
+    } else {
+      localStorage.removeItem('remember_me');
+    }
+    
     return response.data;
   } catch (error) {
-    console.error('Login error:', error);
-    const errorMessage = error.response?.data?.message 
-      || error.response?.data
-      || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+    console.error('Login error details:', error);
+    let errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+    
+    if (error.response) {
+      console.error('Server error response:', error.response.data);
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+    }
+    
     throw { message: errorMessage };
   }
 };
+
 
 /**
  * Log out a user

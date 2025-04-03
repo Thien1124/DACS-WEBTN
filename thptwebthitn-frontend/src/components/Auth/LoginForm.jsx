@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
@@ -6,7 +6,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../../redux/authSlice';
 import { validateLoginForm } from '../../utils/validation';
 import * as authService from '../../services/authService';
-import { FaUser, FaLock, FaGoogle, FaFacebook } from 'react-icons/fa';
+import { FaUser, FaLock, FaGoogle, FaFacebook, FaCheckCircle } from 'react-icons/fa';
 import ForgotPasswordForm from './ForgotPasswordForm';
 
 const FormContainer = styled(motion.div)`
@@ -329,6 +329,24 @@ const Checkbox = ({ className, checked, onChange, label, theme }) => (
 // components/auth/LoginForm.jsx
 
 // Các import và styled-components không thay đổi...
+const SuccessMessage = styled.div`
+  color: #2ecc71;
+  background-color: ${props => props.theme === 'dark' ? '#1a2e1a' : '#efffef'};
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    margin-right: 8px;
+    font-size: 1.2rem;
+  }
+`;
+
 
 const LoginForm = ({ theme, switchToRegister }) => {
   const dispatch = useDispatch();
@@ -343,9 +361,21 @@ const LoginForm = ({ theme, switchToRegister }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false); // Thêm trạng thái thành công
 
   // Get redirect path from location state or default to home page
   const from = location.state?.from?.pathname || '/';
+
+  // Hiệu ứng chuyển hướng sau khi đăng nhập thành công
+  useEffect(() => {
+    let timer;
+    if (loginSuccess) {
+      timer = setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 1500);
+    }
+    return () => clearTimeout(timer);
+  }, [loginSuccess, navigate, from]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -385,8 +415,11 @@ const LoginForm = ({ theme, switchToRegister }) => {
         token: response.token
       }));
       
-      // Redirect to the page user was trying to access or home page
-      navigate(from, { replace: true });
+      // Hiển thị thông báo thành công thay vì chuyển hướng ngay lập tức
+      setLoginSuccess(true);
+      
+      // Không chuyển hướng ngay lập tức
+      // navigate(from, { replace: true });
     } catch (error) {
       setErrors({
         general: error.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
@@ -414,7 +447,13 @@ const LoginForm = ({ theme, switchToRegister }) => {
     >
       <FormTitle>Đăng Nhập</FormTitle>
       
-      {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+      {loginSuccess ? (
+        <SuccessMessage theme={theme}>
+          <FaCheckCircle /> Đăng nhập thành công! Đang chuyển hướng...
+        </SuccessMessage>
+      ) : (
+        errors.general && <ErrorMessage>{errors.general}</ErrorMessage>
+      )}
       
       <form onSubmit={handleSubmit}>
         <FormGroup>
@@ -469,7 +508,7 @@ const LoginForm = ({ theme, switchToRegister }) => {
           </ForgotPasswordLink>
         </div>
         
-        <SubmitButton type="submit" disabled={isLoading}>
+        <SubmitButton type="submit" disabled={isLoading || loginSuccess}>
           <span>{isLoading ? 'Đang xử lý...' : 'Đăng Nhập'}</span>
         </SubmitButton>
       </form>
