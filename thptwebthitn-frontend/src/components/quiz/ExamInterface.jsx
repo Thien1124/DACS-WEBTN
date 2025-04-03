@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import QuizQuestion from './QuizQuestion';
+import LoadingSpinner from '../common/LoadingSpinner';
+import { getExamById, startExam, submitExam } from '../../services/examService';
 
 const ExamContainer = styled.div`
   max-width: 1200px;
@@ -363,151 +365,33 @@ const ExamInterface = ({ theme }) => {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [error, setError] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
   
   const timerRef = useRef(null);
   
-  // Fetch exam data
+  // Fetch exam data and start session
   useEffect(() => {
     const fetchExam = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        // In a real app, you would make an API call to fetch the exam
-        // For demo purposes, we'll use mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Get exam details
+        const examData = await getExamById(examId);
+        setExam(examData);
         
-        const mockExam = {
-          id: examId,
-          title: 'Đề thi Toán học - Đại số và Giải tích',
-          duration: 45 * 60, // 45 minutes in seconds
-          questions: [
-            {
-              id: 1,
-              text: 'Giải phương trình: $x^2 - 5x + 6 = 0$',
-              options: [
-                'x = 2 hoặc x = 3',
-                'x = -2 hoặc x = -3',
-                'x = 2 hoặc x = -3',
-                'x = -2 hoặc x = 3'
-              ],
-              correctAnswer: 0,
-              explanation: 'Ta có: $x^2 - 5x + 6 = 0$ <br> $\\Rightarrow (x - 2)(x - 3) = 0$ <br> $\\Rightarrow x = 2$ hoặc $x = 3$'
-            },
-            {
-              id: 2,
-              text: 'Tìm giá trị lớn nhất của hàm số $f(x) = -x^2 + 4x - 3$ trên tập số thực.',
-              options: [
-                '1',
-                '2',
-                '3',
-                '4'
-              ],
-              correctAnswer: 1,
-              explanation: 'Ta có: $f(x) = -x^2 + 4x - 3$ <br> $f\'(x) = -2x + 4$ <br> Để $f\'(x) = 0$ ta có $x = 2$ <br> Vì hệ số của $x^2$ là âm nên $f(x)$ đạt giá trị lớn nhất tại $x = 2$ <br> $f(2) = -2^2 + 4 \\cdot 2 - 3 = -4 + 8 - 3 = 1$'
-            },
-            {
-              id: 3,
-              text: 'Tính giới hạn: $\\lim_{x \\to 0} \\frac{\\sin(3x)}{x}$',
-              options: [
-                '0',
-                '1',
-                '3',
-                'Không tồn tại'
-              ],
-              correctAnswer: 2,
-              explanation: 'Ta có: $\\lim_{x \\to 0} \\frac{\\sin(3x)}{x} = \\lim_{x \\to 0} \\frac{\\sin(3x)}{3x} \\cdot 3$ <br> $= \\lim_{x \\to 0} \\frac{\\sin(3x)}{3x} \\cdot 3$ <br> $= 1 \\cdot 3 = 3$ (vì $\\lim_{t \\to 0} \\frac{\\sin t}{t} = 1$)'
-            },
-            {
-              id: 4,
-              text: 'Tính đạo hàm của hàm số $f(x) = e^{x^2}$',
-              options: [
-                '$f\'(x) = e^{x^2}$',
-                '$f\'(x) = 2x \\cdot e^{x^2}$',
-                '$f\'(x) = x^2 \\cdot e^{x^2}$',
-                '$f\'(x) = 2 \\cdot e^{x^2}$'
-              ],
-              correctAnswer: 1,
-              explanation: 'Áp dụng quy tắc chuỗi: <br> $f(x) = e^u$ với $u = x^2$ <br> $f\'(x) = e^u \\cdot u\' = e^{x^2} \\cdot 2x = 2x \\cdot e^{x^2}$'
-            },
-            {
-              id: 5,
-              text: 'Tìm nghiệm của bất phương trình: $\\frac{x-2}{x+1} > 0$',
-              options: [
-                '$x > 2$',
-                '$x < -1$ hoặc $x > 2$',
-                '$-1 < x < 2$',
-                '$x < -1$ hoặc $0 < x < 2$'
-              ],
-              correctAnswer: 1,
-              explanation: 'Ta có: $\\frac{x-2}{x+1} > 0$ <br> Điều này xảy ra khi cả tử số và mẫu số cùng dương hoặc cùng âm <br> Trường hợp 1: $x - 2 > 0$ và $x + 1 > 0$ $\\Rightarrow$ $x > 2$ và $x > -1$ $\\Rightarrow$ $x > 2$ <br> Trường hợp 2: $x - 2 < 0$ và $x + 1 < 0$ $\\Rightarrow$ $x < 2$ và $x < -1$ $\\Rightarrow$ $x < -1$ <br> Kết hợp cả hai, ta có: $x < -1$ hoặc $x > 2$'
-            },
-            {
-              id: 6,
-              text: 'Tính tích phân: $\\int_{0}^{1} (2x + 3) dx$',
-              options: [
-                '4',
-                '5',
-                '6',
-                '7'
-              ],
-              correctAnswer: 1,
-              explanation: 'Ta có: $\\int_{0}^{1} (2x + 3) dx = [x^2 + 3x]_{0}^{1}$ <br> $= (1^2 + 3 \\cdot 1) - (0^2 + 3 \\cdot 0)$ <br> $= (1 + 3) - 0 = 4$'
-            },
-            {
-              id: 7,
-              text: 'Một hình chữ nhật có chu vi 20 cm. Tìm kích thước của hình chữ nhật để diện tích đạt giá trị lớn nhất.',
-              options: [
-                'Dài 6 cm, rộng 4 cm',
-                'Dài 7 cm, rộng 3 cm',
-                'Dài 5 cm, rộng 5 cm',
-                'Dài 8 cm, rộng 2 cm'
-              ],
-              correctAnswer: 2,
-              explanation: 'Gọi chiều dài là $x$ và chiều rộng là $y$ <br> Ta có: $2(x + y) = 20$ $\\Rightarrow$ $x + y = 10$ $\\Rightarrow$ $y = 10 - x$ <br> Diện tích $S = x \\cdot y = x(10 - x) = 10x - x^2$ <br> $S\'(x) = 10 - 2x$ <br> Để $S\'(x) = 0$ $\\Rightarrow$ $x = 5$ <br> Vì $S\'\'(x) = -2 < 0$ nên $S$ đạt giá trị lớn nhất tại $x = 5$ <br> Do đó $y = 10 - 5 = 5$ <br> Vậy hình chữ nhật có kích thước $5 \\times 5$, tức là một hình vuông cạnh 5 cm.'
-            },
-            {
-              id: 8,
-              text: 'Tìm giới hạn: $\\lim_{x \\to \\infty} (1 + \\frac{1}{x})^x$',
-              options: [
-                '0',
-                '1',
-                '$e$',
-                '$\\infty$'
-              ],
-              correctAnswer: 2,
-              explanation: 'Đây là giới hạn cơ bản: $\\lim_{x \\to \\infty} (1 + \\frac{1}{x})^x = e \\approx 2.71828$'
-            },
-            {
-              id: 9,
-              text: 'Tính đạo hàm của hàm số $f(x) = \\ln(\\cos x)$ tại $x = 0$',
-              options: [
-                '$0$',
-                '$1$',
-                '$-1$',
-                '$\\frac{1}{2}$'
-              ],
-              correctAnswer: 0,
-              explanation: 'Ta có: $f(x) = \\ln(\\cos x)$ <br> $f\'(x) = \\frac{1}{\\cos x} \\cdot (-\\sin x) = -\\tan x$ <br> $f\'(0) = -\\tan 0 = 0$'
-            },
-            {
-              id: 10,
-              text: 'Xác định tập xác định của hàm số $f(x) = \\sqrt{9-x^2}$',
-              options: [
-                '$[-3, 3]$',
-                '$(-\\infty, -3] \\cup [3, +\\infty)$',
-                '$(-3, 3)$',
-                '$[-3, 3)$'
-              ],
-              correctAnswer: 0,
-              explanation: 'Để hàm số xác định, ta cần: $9 - x^2 \\geq 0$ <br> $\\Rightarrow x^2 \\leq 9$ <br> $\\Rightarrow -3 \\leq x \\leq 3$ <br> Vậy tập xác định của hàm số là $[-3, 3]$'
-            }
-          ]
-        };
+        // Start exam session
+        const session = await startExam(examId);
+        setSessionId(session.id);
         
-        setExam(mockExam);
-        setTimeRemaining(mockExam.duration);
-        setAnswers(new Array(mockExam.questions.length).fill(null));
+        // Set time remaining
+        setTimeRemaining(examData.duration * 60); // Convert minutes to seconds
+        
+        // Initialize answers array
+        setAnswers(new Array(examData.questions.length).fill(null));
       } catch (error) {
         console.error('Error fetching exam:', error);
+        setError('Không thể bắt đầu bài thi. Vui lòng thử lại sau.');
       } finally {
         setIsLoading(false);
       }
@@ -538,6 +422,12 @@ const ExamInterface = ({ theme }) => {
         });
       }, 1000);
     }
+    
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [timeRemaining]);
   
   const handleSelectOption = (optionIndex) => {
@@ -573,32 +463,51 @@ const ExamInterface = ({ theme }) => {
     setShowConfirmModal(false);
   };
   
-  const handleSubmitExam = () => {
-    // In a real app, you would make an API call to submit the exam answers
-    // For demo purposes, we'll just navigate to a results page
+  const handleSubmitExam = async () => {
     clearInterval(timerRef.current);
     
-    // Create a result object to store in localStorage for demo purposes
-    const result = {
-      examId,
-      examTitle: exam.title,
-      answers,
-      questions: exam.questions,
-      timeSpent: exam.duration - timeRemaining,
-      submitTime: new Date().toISOString()
-    };
-    
-    // Store result in localStorage
-    localStorage.setItem(`exam_result_${examId}`, JSON.stringify(result));
-    
-    // Navigate to results page
-    navigate(`/exam-results/${examId}`);
+    setIsLoading(true);
+    try {
+      // Submit exam answers
+      const timeSpent = exam.duration * 60 - timeRemaining;
+      const result = await submitExam(examId, answers, timeSpent);
+      
+      // Navigate to results page
+      navigate(`/exam-results/${result.id}`);
+    } catch (error) {
+      console.error('Error submitting exam:', error);
+      setError('Không thể nộp bài thi. Vui lòng thử lại.');
+      setIsLoading(false);
+    }
   };
   
-  if (isLoading) {
+  if (isLoading && !exam) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <p>Đang tải đề thi...</p>
+        <LoadingSpinner text="Đang tải đề thi..." />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '3rem' }}>
+        <h2>Đã xảy ra lỗi</h2>
+        <p>{error}</p>
+        <button 
+          onClick={() => navigate('/subjects')}
+          style={{ 
+            padding: '0.75rem 1.5rem',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Quay lại danh sách môn học
+        </button>
       </div>
     );
   }
@@ -628,8 +537,8 @@ const ExamInterface = ({ theme }) => {
               {formatTime(timeRemaining)}
             </TimeText>
           </TimeRemaining>
-          <SubmitButton onClick={handleOpenConfirmModal}>
-            Nộp bài
+          <SubmitButton onClick={handleOpenConfirmModal} disabled={isLoading}>
+            {isLoading ? 'Đang xử lý...' : 'Nộp bài'}
           </SubmitButton>
         </ExamInfo>
       </ExamHeader>
@@ -679,56 +588,59 @@ const ExamInterface = ({ theme }) => {
         ) : (
           <FinalSubmitButton
             onClick={handleOpenConfirmModal}
+            disabled={isLoading}
           >
-            ✓ Hoàn thành bài thi
+            {isLoading ? 'Đang xử lý...' : '✓ Hoàn thành bài thi'}
           </FinalSubmitButton>
         )}
       </ExamFooter>
       
-      {showConfirmModal && (
-        <ConfirmationModal
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <ModalContent
-            theme={theme}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      <AnimatePresence>
+        {showConfirmModal && (
+          <ConfirmationModal
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <ModalTitle theme={theme}>Xác nhận nộp bài</ModalTitle>
-            <ModalText theme={theme}>
-              Bạn có chắc chắn muốn nộp bài? Sau khi nộp, bạn sẽ không thể thay đổi câu trả lời.
-            </ModalText>
-            
-            <ModalInfo theme={theme}>
-              <InfoItem>
-                <InfoLabel theme={theme}>Số câu đã trả lời:</InfoLabel>
-                <InfoValue theme={theme}>{answeredCount}/{exam.questions.length}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel theme={theme}>Số câu chưa trả lời:</InfoLabel>
-                <InfoValue theme={theme}>{exam.questions.length - answeredCount}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel theme={theme}>Thời gian còn lại:</InfoLabel>
-                <InfoValue theme={theme}>{formatTime(timeRemaining)}</InfoValue>
-              </InfoItem>
-            </ModalInfo>
-            
-            <ModalActions>
-              <CancelButton theme={theme} onClick={handleCloseConfirmModal}>
-                Quay lại làm bài
-              </CancelButton>
-              <ConfirmButton onClick={handleSubmitExam}>
-                Xác nhận nộp bài
-              </ConfirmButton>
-            </ModalActions>
-          </ModalContent>
-        </ConfirmationModal>
-      )}
+            <ModalContent
+              theme={theme}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <ModalTitle theme={theme}>Xác nhận nộp bài</ModalTitle>
+              <ModalText theme={theme}>
+                Bạn có chắc chắn muốn nộp bài? Sau khi nộp, bạn sẽ không thể thay đổi câu trả lời.
+              </ModalText>
+              
+              <ModalInfo theme={theme}>
+                <InfoItem>
+                  <InfoLabel theme={theme}>Số câu đã trả lời:</InfoLabel>
+                  <InfoValue theme={theme}>{answeredCount}/{exam.questions.length}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel theme={theme}>Số câu chưa trả lời:</InfoLabel>
+                  <InfoValue theme={theme}>{exam.questions.length - answeredCount}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel theme={theme}>Thời gian còn lại:</InfoLabel>
+                  <InfoValue theme={theme}>{formatTime(timeRemaining)}</InfoValue>
+                </InfoItem>
+              </ModalInfo>
+              
+              <ModalActions>
+                <CancelButton theme={theme} onClick={handleCloseConfirmModal}>
+                  Quay lại làm bài
+                </CancelButton>
+                <ConfirmButton onClick={handleSubmitExam} disabled={isLoading}>
+                  {isLoading ? 'Đang xử lý...' : 'Xác nhận nộp bài'}
+                </ConfirmButton>
+              </ModalActions>
+            </ModalContent>
+          </ConfirmationModal>
+        )}
+      </AnimatePresence>
     </ExamContainer>
   );
 };

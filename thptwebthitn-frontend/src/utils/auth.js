@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // Constants for storage keys and token prefix
 const STORAGE_KEYS = {
   TOKEN: 'auth_token',
@@ -47,7 +49,7 @@ export const removeToken = () => {
  * Check if the user is authenticated (has a valid token)
  * @returns {boolean} - True if authenticated
  */
-export const isAuthenticated = () => {
+export const isTokenValid = () => {
   const token = getRawToken();
   if (!token) return false;
 
@@ -78,7 +80,6 @@ export const saveUserData = (userData) => {
       fullName: userData.fullName,
       phoneNumber: userData.phoneNumber,
       roles: userData.roles || [],
-      // Add any other necessary fields but exclude sensitive data
     };
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(sanitizedData));
   } catch (error) {
@@ -194,5 +195,19 @@ export const getTokenExpirationTime = () => {
     return new Date(payload.exp * 1000);
   } catch {
     return null;
+  }
+};
+
+/**
+ * Set authentication token and update axios headers
+ * @param {string|null} token - The token to set
+ */
+export const setAuthToken = (token) => {
+  if (token) {
+    setToken(token); // Use existing setToken function
+    axios.defaults.headers.common['Authorization'] = getToken(); // Use existing getToken function that adds Bearer prefix
+  } else {
+    removeToken(); // Use existing removeToken function
+    delete axios.defaults.headers.common['Authorization'];
   }
 };

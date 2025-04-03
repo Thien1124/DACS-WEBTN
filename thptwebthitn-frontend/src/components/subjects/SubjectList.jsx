@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { getAllSubjects } from '../../services/subjectService';
+import SubjectFilter from './SubjectFilter';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 const Container = styled(motion.div)`
   max-width: 1200px;
@@ -176,209 +179,119 @@ const NoResultsMessage = styled.div`
   font-size: 1.1rem;
 `;
 
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+`;
+
+const PaginationButton = styled.button`
+  background-color: ${props => props.active ? '#007bff' : props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  color: ${props => props.active ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#555'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  padding: 0.5rem 1rem;
+  margin: 0 0.25rem;
+  border-radius: 4px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.disabled ? 0.5 : 1};
+  
+  &:hover:not(:disabled) {
+    background-color: ${props => props.active ? '#007bff' : props.theme === 'dark' ? '#333' : '#f5f5f5'};
+  }
+`;
+
 const SubjectList = ({ theme }) => {
   const [subjects, setSubjects] = useState([]);
   const [filteredSubjects, setFilteredSubjects] = useState([]);
   const [filters, setFilters] = useState({
     grade: '',
-    search: ''
+    search: '',
+    sortBy: 'name'
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0
+  });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate API call to fetch subjects
-    const fetchSubjects = async () => {
-      setIsLoading(true);
-      try {
-        // In a real app, this would be an API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock data
-        const mockSubjects = [
-          {
-            id: 1,
-            title: 'Toán học',
-            description: 'Các khái niệm cơ bản về đại số, giải tích, hình học và thống kê. Bao gồm các bài tập từ cơ bản đến nâng cao.',
-            image: 'https://img.freepik.com/free-vector/hand-drawn-mathematics-background_23-2148157511.jpg',
-            grade: '10',
-            testsCount: 24
-          },
-          {
-            id: 2,
-            title: 'Vật lý',
-            description: 'Kiến thức về cơ học, nhiệt học, điện từ học, quang học và vật lý hiện đại, giúp học sinh hiểu sâu về các quy luật vật lý.',
-            image: 'https://img.freepik.com/free-vector/physics-background-with-elements_23-2147607578.jpg',
-            grade: '10',
-            testsCount: 18
-          },
-          {
-            id: 3,
-            title: 'Hóa học',
-            description: 'Các bài học về cấu trúc nguyên tử, liên kết hóa học, phản ứng hóa học, hóa hữu cơ và vô cơ.',
-            image: 'https://img.freepik.com/free-vector/hand-drawn-chemistry-background_23-2148164901.jpg',
-            grade: '10',
-            testsCount: 15
-          },
-          {
-            id: 4,
-            title: 'Sinh học',
-            description: 'Kiến thức về tế bào, di truyền học, sinh thái học, sinh lý học và tiến hóa, giúp học sinh hiểu về thế giới sống.',
-            image: 'https://img.freepik.com/free-vector/hand-drawn-biology-background_23-2148157779.jpg',
-            grade: '10',
-            testsCount: 17
-          },
-          {
-            id: 5,
-            title: 'Ngữ văn',
-            description: 'Các tác phẩm văn học Việt Nam và thế giới, kỹ năng đọc hiểu, phân tích và viết các thể loại văn bản.',
-            image: 'https://img.freepik.com/free-photo/book-composition-with-open-book_23-2147690555.jpg',
-            grade: '10',
-            testsCount: 20
-          },
-          {
-            id: 6,
-            title: 'Lịch sử',
-            description: 'Tổng quan về lịch sử Việt Nam và thế giới từ thời kỳ nguyên thủy đến hiện đại, giúp học sinh hiểu về quá khứ.',
-            image: 'https://img.freepik.com/free-vector/realistic-history-concept-composition-with-image-history-textbook-with-colorful-bookmark-icons-characters-from-different-eras-vector-illustration_1284-79388.jpg',
-            grade: '10',
-            testsCount: 16
-          },
-          {
-            id: 7,
-            title: 'Địa lý',
-            description: 'Kiến thức về địa lý tự nhiên và địa lý kinh tế-xã hội của Việt Nam và thế giới.',
-            image: 'https://img.freepik.com/free-vector/geography-subject-concept_23-2148982602.jpg',
-            grade: '10',
-            testsCount: 14
-          },
-          {
-            id: 8,
-            title: 'Tiếng Anh',
-            description: 'Ngữ pháp, từ vựng, các kỹ năng nghe, nói, đọc, viết tiếng Anh phù hợp với trình độ học sinh THPT.',
-            image: 'https://img.freepik.com/free-vector/english-communication-collage-illustration_23-2149514626.jpg',
-            grade: '10',
-            testsCount: 25
-          },
-          {
-            id: 9,
-            title: 'Toán học nâng cao',
-            description: 'Chương trình toán học chuyên sâu, tập trung vào các bài toán khó và nâng cao, chuẩn bị cho các kỳ thi lớn.',
-            image: 'https://img.freepik.com/free-vector/realistic-math-chalkboard-background_23-2148163817.jpg',
-            grade: '11',
-            testsCount: 22
-          },
-          {
-            id: 10,
-            title: 'Vật lý nâng cao',
-            description: 'Kiến thức vật lý chuyên sâu, bao gồm các bài tập và thí nghiệm nâng cao dành cho học sinh khối 11.',
-            image: 'https://img.freepik.com/free-vector/physics-science-education-background-doodle-style_1284-54564.jpg',
-            grade: '11',
-            testsCount: 19
-          },
-          {
-            id: 11,
-            title: 'Hóa học hữu cơ',
-            description: 'Kiến thức chuyên sâu về hóa hữu cơ, cấu trúc và phản ứng của các hợp chất hữu cơ dành cho học sinh khối 11.',
-            image: 'https://img.freepik.com/free-vector/hand-drawn-chemistry-background_23-2148164893.jpg',
-            grade: '11',
-            testsCount: 16
-          },
-          {
-            id: 12,
-            title: 'Sinh học phát triển',
-            description: 'Kiến thức nâng cao về sinh lý học động vật, thực vật và di truyền học phân tử dành cho học sinh khối 11.',
-            image: 'https://img.freepik.com/free-vector/biology-concept-education-science-banner_107791-14404.jpg',
-            grade: '11',
-            testsCount: 15
-          },
-          {
-            id: 13,
-            title: 'Toán học – Ôn thi THPT Quốc gia',
-            description: 'Ôn tập toàn diện các kiến thức toán học THPT, tập trung vào dạng bài và kỹ thuật giải nhanh cho kỳ thi tốt nghiệp.',
-            image: 'https://img.freepik.com/free-vector/mathematics-collage-concept_23-2148161193.jpg',
-            grade: '12',
-            testsCount: 30
-          },
-          {
-            id: 14,
-            title: 'Vật lý – Ôn thi THPT Quốc gia',
-            description: 'Tổng hợp kiến thức vật lý trọng tâm và các dạng bài tập thường gặp trong kỳ thi tốt nghiệp THPT.',
-            image: 'https://img.freepik.com/free-vector/realistic-science-laboratory-equipment_107791-15384.jpg',
-            grade: '12',
-            testsCount: 28
-          },
-          {
-            id: 15,
-            title: 'Hóa học – Ôn thi THPT Quốc gia',
-            description: 'Tổng hợp lý thuyết và bài tập hóa học quan trọng, tập trung vào các chuyên đề thường xuất hiện trong đề thi.',
-            image: 'https://img.freepik.com/free-vector/realistic-science-laboratory-background_52683-63851.jpg',
-            grade: '12',
-            testsCount: 26
-          },
-          {
-            id: 16,
-            title: 'Sinh học – Ôn thi THPT Quốc gia',
-            description: 'Ôn tập có hệ thống kiến thức sinh học từ lớp 10-12, tập trung vào các câu hỏi trọng tâm trong đề thi.',
-            image: 'https://img.freepik.com/free-vector/realistic-science-laboratory-background_52683-63850.jpg',
-            grade: '12',
-            testsCount: 25
-          },
-          {
-            id: 17,
-            title: 'Ngữ văn – Ôn thi THPT Quốc gia',
-            description: 'Ôn tập các tác phẩm văn học trọng điểm, kỹ năng làm văn nghị luận và phân tích tác phẩm.',
-            image: 'https://img.freepik.com/free-photo/learning-education-ideas-insight-intelligence-study-concept_53876-120082.jpg',
-            grade: '12',
-            testsCount: 22
-          },
-          {
-            id: 18,
-            title: 'Tiếng Anh – Ôn thi THPT Quốc gia',
-            description: 'Ôn tập ngữ pháp, từ vựng trọng tâm và chiến lược làm bài thi trắc nghiệm tiếng Anh hiệu quả.',
-            image: 'https://img.freepik.com/free-vector/english-language-composition-with-flat-design_23-2147897071.jpg',
-            grade: '12',
-            testsCount: 30
-          }
-        ];
-        
-        setSubjects(mockSubjects);
-        setFilteredSubjects(mockSubjects);
-      } catch (error) {
-        console.error('Error fetching subjects:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchSubjects();
-  }, []);
+  }, [filters.grade, filters.sortBy, pagination.currentPage]);
 
   useEffect(() => {
-    // Filter subjects based on selected filters
-    let results = [...subjects];
-    
-    // Filter by grade
-    if (filters.grade) {
-      results = results.filter(subject => subject.grade === filters.grade);
+    const delayDebounceFn = setTimeout(() => {
+      if (filters.search !== undefined) {
+        fetchSubjects();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [filters.search]);
+
+  const fetchSubjects = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await getAllSubjects({
+        ...filters,
+        page: pagination.currentPage,
+        limit: 12
+      });
+      
+      setSubjects(result.data);
+      setFilteredSubjects(result.data);
+      setPagination({
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        totalItems: result.totalItems
+      });
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+      setError('Không thể tải danh sách môn học. Vui lòng thử lại sau.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Filter by search term
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      results = results.filter(subject => 
-        subject.title.toLowerCase().includes(searchTerm) || 
-        subject.description.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    setFilteredSubjects(results);
-  }, [filters, subjects]);
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
       [name]: value
+    }));
+    
+    if (name !== 'search') {
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 1
+      }));
+    }
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      grade: '',
+      search: '',
+      sortBy: 'name'
+    });
+    
+    setPagination(prev => ({
+      ...prev, 
+      currentPage: 1
+    }));
+    
+    // Refetch subjects with cleared filters
+    fetchSubjects({ grade: '', search: '', sortBy: 'name', page: 1, limit: 12 });
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    
+    setPagination(prev => ({
+      ...prev,
+      currentPage: newPage
     }));
   };
 
@@ -392,62 +305,82 @@ const SubjectList = ({ theme }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <FiltersContainer>
-        <FilterGroup>
-          <FilterLabel theme={theme} htmlFor="grade">Khối lớp:</FilterLabel>
-          <Select 
-            theme={theme}
-            id="grade"
-            name="grade"
-            value={filters.grade}
-            onChange={handleFilterChange}
-          >
-            <option value="">Tất cả</option>
-            <option value="10">Lớp 10</option>
-            <option value="11">Lớp 11</option>
-            <option value="12">Lớp 12</option>
-          </Select>
-        </FilterGroup>
-        
-        <SearchInput 
-          theme={theme}
-          type="text"
-          placeholder="Tìm kiếm môn học..."
-          name="search"
-          value={filters.search}
-          onChange={handleFilterChange}
-        />
-      </FiltersContainer>
+      <SubjectFilter 
+        filters={filters} 
+        onChange={handleFilterChange}
+        onClear={resetFilters}
+        theme={theme} 
+      />
+      
+      {error && (
+        <div style={{ textAlign: 'center', padding: '1rem', color: 'red', marginBottom: '1rem' }}>
+          {error}
+        </div>
+      )}
       
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+          <LoadingSpinner />
           <p>Đang tải danh sách môn học...</p>
         </div>
       ) : filteredSubjects.length > 0 ? (
-        <SubjectsGrid>
-          {filteredSubjects.map(subject => (
-            <SubjectCard 
-              key={subject.id} 
-              theme={theme}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <SubjectImage image={subject.image}>
-                <SubjectGradeBadge>{formatGradeLabel(subject.grade)}</SubjectGradeBadge>
-              </SubjectImage>
-              
-              <SubjectContent>
-                <SubjectTitle theme={theme}>{subject.title}</SubjectTitle>
-                <SubjectDescription theme={theme}>{subject.description}</SubjectDescription>
+        <>
+          <SubjectsGrid>
+            {filteredSubjects.map(subject => (
+              <SubjectCard 
+                key={subject.id} 
+                theme={theme}
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SubjectImage image={subject.image}>
+                  <SubjectGradeBadge>{formatGradeLabel(subject.grade)}</SubjectGradeBadge>
+                </SubjectImage>
                 
-                <SubjectMeta theme={theme}>
-                  <SubjectTests theme={theme}>{subject.testsCount} bài thi</SubjectTests>
-                  <ViewButton to={`/subjects/${subject.id}`}>Xem chi tiết</ViewButton>
-                </SubjectMeta>
-              </SubjectContent>
-            </SubjectCard>
-          ))}
-        </SubjectsGrid>
+                <SubjectContent>
+                  <SubjectTitle theme={theme}>{subject.title}</SubjectTitle>
+                  <SubjectDescription theme={theme}>{subject.description}</SubjectDescription>
+                  
+                  <SubjectMeta theme={theme}>
+                    <SubjectTests theme={theme}>{subject.testsCount} bài thi</SubjectTests>
+                    <ViewButton to={`/subjects/${subject.id}`}>Xem chi tiết</ViewButton>
+                  </SubjectMeta>
+                </SubjectContent>
+              </SubjectCard>
+            ))}
+          </SubjectsGrid>
+          
+          {pagination.totalPages > 1 && (
+            <PaginationContainer>
+              <PaginationButton 
+                theme={theme}
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage === 1}
+              >
+                &laquo; Trước
+              </PaginationButton>
+              
+              {[...Array(pagination.totalPages).keys()].map(pageNum => (
+                <PaginationButton
+                  key={pageNum + 1}
+                  theme={theme}
+                  active={pageNum + 1 === pagination.currentPage}
+                  onClick={() => handlePageChange(pageNum + 1)}
+                >
+                  {pageNum + 1}
+                </PaginationButton>
+              ))}
+              
+              <PaginationButton 
+                theme={theme}
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage === pagination.totalPages}
+              >
+                Sau &raquo;
+              </PaginationButton>
+            </PaginationContainer>
+          )}
+        </>
       ) : (
         <NoResultsMessage theme={theme}>
           Không tìm thấy môn học nào phù hợp với bộ lọc đã chọn.

@@ -1,9 +1,32 @@
 import apiClient from './api';
 
 /**
+ * Get all available exams
+ * @param {object} filters - Optional filters (subject, difficulty, etc.)
+ * @returns {Promise} - Promise resolving to exams array
+ */
+export const getAllExams = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams();
+    
+    // Add filters to query parameters
+    if (filters.subject) params.append('subject', filters.subject);
+    if (filters.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
+    
+    const response = await apiClient.get(`/exams?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Không thể lấy danh sách đề thi.' };
+  }
+};
+
+/**
  * Get an exam by ID
  * @param {string} examId - Exam ID
- * @returns {Promise} - Promise resolving to exam data with questions
+ * @returns {Promise} - Promise resolving to exam data
  */
 export const getExamById = async (examId) => {
   try {
@@ -15,14 +38,32 @@ export const getExamById = async (examId) => {
 };
 
 /**
- * Submit exam answers
+ * Start an exam session
  * @param {string} examId - Exam ID
- * @param {array} answers - Array of answer choices
- * @returns {Promise} - Promise resolving to exam result
+ * @returns {Promise} - Promise resolving to exam session data
  */
-export const submitExamAnswers = async (examId, answers) => {
+export const startExam = async (examId) => {
   try {
-    const response = await apiClient.post(`/exams/${examId}/submit`, { answers });
+    const response = await apiClient.post(`/exams/${examId}/start`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Không thể bắt đầu bài thi.' };
+  }
+};
+
+/**
+ * Submit an exam
+ * @param {string} examId - Exam ID
+ * @param {object} answers - User's answers
+ * @param {number} timeSpent - Time spent in seconds
+ * @returns {Promise} - Promise resolving to exam results
+ */
+export const submitExam = async (examId, answers, timeSpent) => {
+  try {
+    const response = await apiClient.post(`/exams/${examId}/submit`, {
+      answers,
+      timeSpent
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể nộp bài thi.' };
@@ -30,49 +71,38 @@ export const submitExamAnswers = async (examId, answers) => {
 };
 
 /**
- * Get exam result by ID
- * @param {string} resultId - Result ID
- * @returns {Promise} - Promise resolving to exam result data
+ * Get exam history for current user
+ * @param {object} filters - Optional filters (subject, date, etc.)
+ * @returns {Promise} - Promise resolving to exam history
  */
-export const getExamResult = async (resultId) => {
-  try {
-    const response = await apiClient.get(`/exam-results/${resultId}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Không thể lấy kết quả bài thi.' };
-  }
-};
-
-/**
- * Get user's exam history
- * @param {object} filters - Optional filters (subject, date range, etc.)
- * @returns {Promise} - Promise resolving to array of exam results
- */
-export const getUserExamHistory = async (filters = {}) => {
+export const getExamHistory = async (filters = {}) => {
   try {
     const params = new URLSearchParams();
     
     // Add filters to query parameters
     if (filters.subject) params.append('subject', filters.subject);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.fromDate) params.append('fromDate', filters.fromDate);
+    if (filters.toDate) params.append('toDate', filters.toDate);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
     
-    const response = await apiClient.get(`/user/exam-history?${params.toString()}`);
+    const response = await apiClient.get(`/exams/history?${params.toString()}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể lấy lịch sử bài thi.' };
+    throw error.response?.data || { message: 'Không thể lấy lịch sử làm bài thi.' };
   }
 };
 
 /**
- * Get user's exam statistics
- * @returns {Promise} - Promise resolving to user's exam statistics
+ * Get exam result details
+ * @param {string} resultId - Result ID
+ * @returns {Promise} - Promise resolving to exam result details
  */
-export const getUserExamStatistics = async () => {
+export const getExamResult = async (resultId) => {
   try {
-    const response = await apiClient.get('/user/exam-statistics');
+    const response = await apiClient.get(`/exams/results/${resultId}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể lấy thống kê bài thi.' };
+    throw error.response?.data || { message: 'Không thể lấy kết quả bài thi.' };
   }
 };

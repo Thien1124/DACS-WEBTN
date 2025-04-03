@@ -6,6 +6,8 @@ import { setAnimation,login } from './redux/uiSlice';
 import Profile from './components/Profile';
 import Home from './components/Home';
 import AuthContainer from './components/Auth/AuthContainer';
+import Dashboard from './components/Dashboard/Dashboard';
+import Settings from './components/Settings/Settings';
 import { ThemeProvider } from 'styled-components';
 import Navbar from './components/layout/Navbar';
 import { getUserData, getToken } from './utils/auth';
@@ -43,6 +45,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<AuthContainer />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Router>
     </AppContainer>

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import ProfileUpdateModal from './modals/ProfileUpdateModal'; // Updated path to the ProfileUpdateModal component
+import { updateUserProfile } from '../services/authService'; // Import named export for API calls
 
 const ProfileContainer = styled.section`
   min-height: 80vh;
@@ -86,19 +87,29 @@ const DetailItem = styled.div`
 
 const ProfileButton = styled(motion.button)`
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(45deg, #00bcd4, #009688);
+  background: linear-gradient(45deg, #00bcd4, #2196f3);
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2);
   
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 150, 136, 0.3);
+    box-shadow: 0 6px 12px rgba(0, 188, 212, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  span {
+    background: linear-gradient(45deg, #e0f7fa, #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 `;
 
@@ -119,22 +130,36 @@ const animationVariants = {
   idle: {}
 };
 
+const defaultAvatar = 'https://secure.gravatar.com/avatar?d=mp'; // Avatar mặc định
+
 function Profile({ animation = 'idle' }) {
+  const dispatch = useDispatch();
   const { theme } = useSelector(state => state.ui);
+  const user = useSelector(state => state.auth.user);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   
-  // For demonstration purposes, we'll create a mock user profile
-  // In a real app, this would come from your Redux store or context
   const [userData, setUserData] = useState({
-    name: 'Nguyễn Văn A',
-    email: 'nguyenvana@example.com',
-    phone: '0123456789',
-    grade: '12',
-    school: 'THPT ABC',
-    address: 'Hà Nội, Việt Nam',
-    birthdate: '2007-05-15',
-    profileImage: 'https://vgrow.co/wp-content/uploads/2021/12/unnamed-2.png'
+    name: user?.fullName || user?.name || '',
+    email: user?.email || '',
+    phone: user?.phoneNumber || user?.phone || '',
+    address: user?.address || '',
+    birthdate: user?.birthdate || '',
+    avatar: user?.avatar || defaultAvatar,
   });
+
+  // Cập nhật userData khi user thay đổi
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        name: user.fullName || user.name || '',
+        email: user.email || '',
+        phone: user.phoneNumber || user.phone || '',
+        address: user.address || '',
+        birthdate: user.birthdate || '',
+        avatar: user.avatar || defaultAvatar,
+      });
+    }
+  }, [user]);
   
   const handleOpenUpdateModal = () => {
     setIsUpdateModalOpen(true);
@@ -144,20 +169,51 @@ function Profile({ animation = 'idle' }) {
     setIsUpdateModalOpen(false);
   };
   
-  // Add this function to utilize setUserData
-  const handleUpdateUserData = (updatedData) => {
-    setUserData(updatedData);
-    handleCloseUpdateModal();
+  const handleUpdateUserData = async (updatedData) => {
+    try {
+      console.log('Updating user data:', updatedData);
+      const response = await updateUserProfile(updatedData);
+      
+      // Update local state with the response data
+      setUserData(prev => ({
+        ...prev,
+        name: response.fullName || updatedData.fullName,
+        email: response.email || updatedData.email,
+        phone: response.phoneNumber || updatedData.phoneNumber
+      }));
+      
+      // Update Redux store with the complete user data
+      dispatch({
+        type: 'auth/updateUser',
+        payload: {
+          ...user,
+          fullName: response.fullName || updatedData.fullName,
+          email: response.email || updatedData.email,
+          phoneNumber: response.phoneNumber || updatedData.phoneNumber
+        }
+      });
+
+      handleCloseUpdateModal();
+      // Show success notification
+      alert('Cập nhật thông tin thành công!');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert(error.message || 'Không thể cập nhật thông tin cá nhân.');
+      throw error;
+    }
   };
 
   return (
     <ProfileContainer theme={theme}>
       <ProfileContent>
         <ProfileImage
-          src={userData.profileImage}
-          alt="Profile Image"
+          src={userData.avatar || defaultAvatar}
+          alt="Profile"
           animate={animationVariants[animation]}
           theme={theme}
+          onError={(e) => {
+            e.target.src = defaultAvatar; // Fallback nếu ảnh lỗi
+          }}
         />
         <ProfileName
           theme={theme}
@@ -176,22 +232,8 @@ function Profile({ animation = 'idle' }) {
           animate={animationVariants[animation]}
         >
           <DetailItem theme={theme}>
-            <h4>Lớp</h4>
-            <p>{userData.grade ? `Lớp ${userData.grade}` : 'Chưa cập nhật'}</p>
-          </DetailItem>
-          <DetailItem theme={theme}>
-            <h4>Trường</h4>
-            <p>{userData.school || 'Chưa cập nhật'}</p>
-          </DetailItem>
-          <DetailItem theme={theme}>
             <h4>Số điện thoại</h4>
-            <p>{userData.phone || 'Chưa cập nhật'}</p>
-          </DetailItem>
-          <DetailItem theme={theme}>
-            <h4>Ngày sinh</h4>
-            <p>
-              {userData.birthdate ? new Date(userData.birthdate).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
-            </p>
+            <p>{userData.phone || userData.phoneNumber || 'Chưa cập nhật'}</p>
           </DetailItem>
         </ProfileDetails>
         
@@ -205,11 +247,11 @@ function Profile({ animation = 'idle' }) {
       
       {/* Profile Update Modal */}
       <ProfileUpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={handleCloseUpdateModal}
+        show={isUpdateModalOpen}
+        handleClose={handleCloseUpdateModal}
         userData={userData}
         theme={theme}
-        onSubmit={handleUpdateUserData} // Pass the update function to the modal
+        updateProfile={handleUpdateUserData}
       />
     </ProfileContainer>
   );

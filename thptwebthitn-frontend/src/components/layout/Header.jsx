@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, Link } from 'react-router-dom'; // Import useNavigate và Link
 import { toggleTheme, toggleMenu } from '../../redux/uiSlice';
+import { logout } from '../../redux/authSlice'; // Import action logout
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import logo from '../../assets/logo.png';
-import AuthModal from '../Auth/AuthModal'; // Import AuthModal thay vì LoginModal
-
-
-
-
-
+import { motion, AnimatePresence } from 'framer-motion';
+import logo from '../../assets/images/logo.png';
+import AuthModal from '../Auth/AuthModal';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -105,7 +102,81 @@ const ThemeToggle = styled.button`
     background-color: ${props => props.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
   }
 `;
+const UserProfile = styled.div`
+  display: flex;
+  align-items: center;
+  position: relative;
+`;
 
+const UserButton = styled.button`
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: ${props => props.theme === 'dark' ? '#ffffff' : '#333333'};
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 20px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
+  }
+`;
+
+const UserAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #4285f4, #34a853);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+`;
+
+const UserDropdown = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 200px;
+  background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : '#ffffff'};
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 8px;
+  overflow: hidden;
+  z-index: 1000;
+`;
+
+const DropdownItem = styled(Link)`
+  display: block;
+  padding: 10px 16px;
+  color: ${props => props.theme === 'dark' ? '#e0e0e0' : '#333333'};
+  text-decoration: none;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
+  }
+`;
+
+const LogoutButton = styled.button`
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: #e74c3c;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
+  }
+`;
 const MenuButton = styled.button`
   display: none;
   background: none;
@@ -175,8 +246,25 @@ const HeaderSpacer = styled.div`
 
 function Header() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { theme, isMenuVisible } = useSelector(state => state.ui);
+  const { isAuthenticated, user } = useSelector(state => state.auth); // Updated selector
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  
+  // Xử lý click bên ngoài dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown-container')) {
+        setShowUserDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown]);
   
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
@@ -194,12 +282,42 @@ function Header() {
     setShowAuthModal(false);
   };
   
+  const handleToggleUserDropdown = () => {
+    setShowUserDropdown(!showUserDropdown);
+  };
+  
+  const handleLogout = () => {
+    dispatch(logout());
+    setShowUserDropdown(false);
+    // Điều hướng về trang chủ sau khi đăng xuất
+    navigate('/');
+  };
+  
+  // Hàm lấy chữ cái đầu của tên người dùng
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
+  };
+  
+  // Hàm lấy tên hiển thị
+  const getDisplayName = () => {
+    if (!user) return 'Người dùng';
+    return user.fullName || user.username || user.email.split('@')[0];
+  };
+  
+  // Callback sau khi đăng nhập thành công
+  const handleLoginSuccess = () => {
+    handleCloseAuthModal();
+    // Điều hướng đến trang chính sau đăng nhập, ví dụ: dashboard
+    navigate('/dashboard'); // Thay đổi đường dẫn theo yêu cầu của bạn
+  };
+  
   return (
     <>
       <HeaderContainer theme={theme}>
         <HeaderContent>
           <Logo>
-            <img src={logo} alt="ExamDG Logo" /> 
+            <img src={logo} alt="ExamDG Logo" />
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -209,32 +327,65 @@ function Header() {
             </motion.span>
           </Logo>
           
-          <Nav isMenuVisible={isMenuVisible} theme={theme}>
+          <Nav $isMenuVisible={isMenuVisible} theme={theme}>
             <NavItems>
-              <NavItem theme={theme}><a href="#home">Trang chủ</a></NavItem>
-              <NavItem theme={theme}><a href="#courses">Khóa học</a></NavItem>
-              <NavItem theme={theme}><a href="#about">Giới thiệu</a></NavItem>
-              <NavItem theme={theme}><a href="#contact">Liên hệ</a></NavItem>
+              <NavItem theme={theme}><Link to="/">Trang chủ</Link></NavItem>
+              <NavItem theme={theme}><Link to="/courses">Khóa học</Link></NavItem>
+              <NavItem theme={theme}><Link to="/about">Giới thiệu</Link></NavItem>
+              <NavItem theme={theme}><Link to="/contact">Liên hệ</Link></NavItem>
             </NavItems>
           </Nav>
           
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <LoginButton onClick={handleOpenAuthModal}>
-              <span>Đăng nhập</span>
-            </LoginButton>
+            {isAuthenticated ? (
+              <UserProfile className="user-dropdown-container">
+                <UserButton 
+                  theme={theme}
+                  onClick={handleToggleUserDropdown}
+                >
+                  <UserAvatar>{getInitials(user?.fullName || user?.username)}</UserAvatar>
+                  <span>{getDisplayName()}</span>
+                </UserButton>
+                
+                <AnimatePresence>
+                  {showUserDropdown && (
+                    <UserDropdown
+                      theme={theme}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <DropdownItem to="/profile" theme={theme}>Hồ sơ cá nhân</DropdownItem>
+                      <DropdownItem to="/dashboard" theme={theme}>Bảng điều khiển</DropdownItem>
+                      <DropdownItem to="/settings" theme={theme}>Cài đặt tài khoản</DropdownItem>
+                      <LogoutButton onClick={handleLogout}>Đăng xuất</LogoutButton>
+                    </UserDropdown>
+                  )}
+                </AnimatePresence>
+              </UserProfile>
+            ) : (
+              <LoginButton onClick={handleOpenAuthModal}>
+                <span>Đăng nhập</span>
+              </LoginButton>
+            )}
             <ThemeToggle onClick={handleThemeToggle} theme={theme}>
               {theme === 'dark' ? '☀️' : '🌙'}
             </ThemeToggle>
+            <MenuButton onClick={handleMenuToggle} theme={theme}>
+              {isMenuVisible ? '✕' : '☰'}
+            </MenuButton>
           </div>
         </HeaderContent>
       </HeaderContainer>
       <HeaderSpacer />
       
-      {/* Sử dụng AuthModal mới */}
+      {/* Truyền thêm callback onLoginSuccess cho AuthModal */}
       <AuthModal 
         show={showAuthModal} 
         handleClose={handleCloseAuthModal} 
         theme={theme}
+        onLoginSuccess={handleLoginSuccess}
       />
     </>
   );

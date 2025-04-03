@@ -2,7 +2,7 @@ import apiClient from './api';
 
 /**
  * Get all subjects
- * @param {object} filters - Optional filters (grade, search query, etc.)
+ * @param {object} filters - Optional filters (grade, search query, sortBy, etc.)
  * @returns {Promise} - Promise resolving to subjects array
  */
 export const getAllSubjects = async (filters = {}) => {
@@ -12,6 +12,9 @@ export const getAllSubjects = async (filters = {}) => {
     // Add filters to query parameters
     if (filters.grade) params.append('grade', filters.grade);
     if (filters.search) params.append('search', filters.search);
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
     
     const response = await apiClient.get(`/subjects?${params.toString()}`);
     return response.data;

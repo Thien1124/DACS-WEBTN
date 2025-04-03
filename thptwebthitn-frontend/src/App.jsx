@@ -12,6 +12,8 @@ import LoginForm from './components/auth/LoginForm';
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import ChangePasswordForm from './components/auth/ChangePasswordForm';
+import DashboardPage from './pages/DashboardPage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
 // Add fontawesome to the project
@@ -43,6 +45,8 @@ function App() {
           <Route path="change-password" element={<ChangePasswordForm />} />
           <Route path="exams/:examId" element={<ExamInterface />} />
           <Route path="exam-results/:examId" element={<ExamResults />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           
           {/* Add other routes as needed */}
         </Route>

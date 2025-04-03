@@ -115,6 +115,11 @@ const AuthModal = ({ show, handleClose, theme }) => {
     }
   }, [show, formType]);
 
+  const handleLoginSuccess = () => {
+    // Close modal after successful login
+    handleClose();
+  };
+
   const switchToRegister = () => setFormType('register');
   const switchToLogin = () => setFormType('login');
 
@@ -153,6 +158,7 @@ const AuthModal = ({ show, handleClose, theme }) => {
                   <LoginForm 
                     theme={theme} 
                     switchToRegister={switchToRegister} 
+                    onLoginSuccess={handleLoginSuccess} 
                   />
                 </motion.div>
               ) : (

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { login } from '../../redux/authSlice';
 import { validateLoginForm } from '../../utils/validation';
 import * as authService from '../../services/authService';
 import { FaUser, FaLock, FaGoogle, FaFacebook, FaCheckCircle } from 'react-icons/fa';
@@ -328,7 +327,6 @@ const Checkbox = ({ className, checked, onChange, label, theme }) => (
 
 // components/auth/LoginForm.jsx
 
-// Các import và styled-components không thay đổi...
 const SuccessMessage = styled.div`
   color: #2ecc71;
   background-color: ${props => props.theme === 'dark' ? '#1a2e1a' : '#efffef'};
@@ -347,7 +345,6 @@ const SuccessMessage = styled.div`
   }
 `;
 
-
 const LoginForm = ({ theme, switchToRegister }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -361,21 +358,7 @@ const LoginForm = ({ theme, switchToRegister }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false); // Thêm trạng thái thành công
-
-  // Get redirect path from location state or default to home page
-  const from = location.state?.from?.pathname || '/';
-
-  // Hiệu ứng chuyển hướng sau khi đăng nhập thành công
-  useEffect(() => {
-    let timer;
-    if (loginSuccess) {
-      timer = setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 1500);
-    }
-    return () => clearTimeout(timer);
-  }, [loginSuccess, navigate, from]);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -384,7 +367,6 @@ const LoginForm = ({ theme, switchToRegister }) => {
       [name]: type === 'checkbox' ? checked : value
     });
     
-    // Clear error when user types
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -396,7 +378,6 @@ const LoginForm = ({ theme, switchToRegister }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
     const validationErrors = validateLoginForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -405,21 +386,24 @@ const LoginForm = ({ theme, switchToRegister }) => {
     
     setIsLoading(true);
     try {
-      // Call login API
       const { usernameOrEmail, password } = formData;
       const response = await authService.login({ usernameOrEmail, password });
       
-      // Dispatch login action to update Redux state
-      dispatch(login({
-        user: response.user,
-        token: response.token
-      }));
+      dispatch({
+        type: 'auth/loginSuccess',
+        payload: {
+          user: response.user,
+          token: response.token
+        }
+      });
       
-      // Hiển thị thông báo thành công thay vì chuyển hướng ngay lập tức
       setLoginSuccess(true);
       
-      // Không chuyển hướng ngay lập tức
-      // navigate(from, { replace: true });
+      // Delay before closing form and redirecting
+      setTimeout(() => {
+        navigate('/');
+      }, 1200); // 1.2 seconds delay
+      
     } catch (error) {
       setErrors({
         general: error.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
@@ -430,7 +414,6 @@ const LoginForm = ({ theme, switchToRegister }) => {
   };
 
   const handleSocialLogin = (provider) => {
-    // Logic để đăng nhập với mạng xã hội
     console.log(`Đăng nhập với ${provider}`);
   };
 
@@ -445,105 +428,106 @@ const LoginForm = ({ theme, switchToRegister }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
     >
-      <FormTitle>Đăng Nhập</FormTitle>
-      
       {loginSuccess ? (
         <SuccessMessage theme={theme}>
-          <FaCheckCircle /> Đăng nhập thành công! Đang chuyển hướng...
+          <FaCheckCircle /> Đăng nhập thành công!
         </SuccessMessage>
       ) : (
-        errors.general && <ErrorMessage>{errors.general}</ErrorMessage>
-      )}
-      
-      <form onSubmit={handleSubmit}>
-        <FormGroup>
-          <Label theme={theme} htmlFor="usernameOrEmail">Tên đăng nhập hoặc Email</Label>
-          <Input
-            theme={theme}
-            type="text"
-            id="usernameOrEmail"
-            name="usernameOrEmail"
-            value={formData.usernameOrEmail}
-            onChange={handleInputChange}
-            placeholder="Nhập tên đăng nhập hoặc email"
-          />
-          <InputIcon theme={theme}><FaUser /></InputIcon>
-          {errors.usernameOrEmail && <ErrorMessage>{errors.usernameOrEmail}</ErrorMessage>}
-        </FormGroup>
-        
-        <FormGroup>
-          <Label theme={theme} htmlFor="password">Mật khẩu</Label>
-          <Input
-            theme={theme}
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            placeholder="Nhập mật khẩu"
-          />
-          <InputIcon theme={theme}><FaLock /></InputIcon>
-          {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
-        </FormGroup>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <Checkbox 
-            checked={formData.rememberMe}
-            onChange={e => handleInputChange({
-              target: {
-                name: 'rememberMe',
-                type: 'checkbox',
-                checked: e.target.checked
-              }
-            })}
-            label="Ghi nhớ đăng nhập"
-            theme={theme}
-          />
+        <>
+          <FormTitle>Đăng Nhập</FormTitle>
+          {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
           
-          <ForgotPasswordLink theme={theme}>
-            <a href="#" onClick={(e) => {
-              e.preventDefault();
-              setShowForgotPassword(true);
-            }}>Quên mật khẩu?</a>
-          </ForgotPasswordLink>
-        </div>
-        
-        <SubmitButton type="submit" disabled={isLoading || loginSuccess}>
-          <span>{isLoading ? 'Đang xử lý...' : 'Đăng Nhập'}</span>
-        </SubmitButton>
-      </form>
-      
-      <OrDivider theme={theme}>
-        <span>HOẶC</span>
-      </OrDivider>
-      
-      <SocialButtonsContainer>
-        <SocialButton 
-          theme={theme} 
-          provider="google"
-          onClick={() => handleSocialLogin('google')}
-        >
-          <FaGoogle /> Google
-        </SocialButton>
-        <SocialButton 
-          theme={theme} 
-          provider="facebook"
-          onClick={() => handleSocialLogin('facebook')}
-        >
-          <FaFacebook /> Facebook
-        </SocialButton>
-      </SocialButtonsContainer>
-      
-      <RegisterLink theme={theme}>
-        Chưa có tài khoản? 
-        <SwitchFormButton 
-          theme={theme}
-          type="button" 
-          onClick={switchToRegister}
-        >
-          Đăng ký
-        </SwitchFormButton>
-      </RegisterLink>
+          <form onSubmit={handleSubmit}>
+            <FormGroup>
+              <Label theme={theme} htmlFor="usernameOrEmail">Tên đăng nhập hoặc Email</Label>
+              <Input
+                theme={theme}
+                type="text"
+                id="usernameOrEmail"
+                name="usernameOrEmail"
+                value={formData.usernameOrEmail}
+                onChange={handleInputChange}
+                placeholder="Nhập tên đăng nhập hoặc email"
+              />
+              <InputIcon theme={theme}><FaUser /></InputIcon>
+              {errors.usernameOrEmail && <ErrorMessage>{errors.usernameOrEmail}</ErrorMessage>}
+            </FormGroup>
+            
+            <FormGroup>
+              <Label theme={theme} htmlFor="password">Mật khẩu</Label>
+              <Input
+                theme={theme}
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Nhập mật khẩu"
+              />
+              <InputIcon theme={theme}><FaLock /></InputIcon>
+              {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+            </FormGroup>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <Checkbox 
+                checked={formData.rememberMe}
+                onChange={e => handleInputChange({
+                  target: {
+                    name: 'rememberMe',
+                    type: 'checkbox',
+                    checked: e.target.checked
+                  }
+                })}
+                label="Ghi nhớ đăng nhập"
+                theme={theme}
+              />
+              
+              <ForgotPasswordLink theme={theme}>
+                <a href="#" onClick={(e) => {
+                  e.preventDefault();
+                  setShowForgotPassword(true);
+                }}>Quên mật khẩu?</a>
+              </ForgotPasswordLink>
+            </div>
+            
+            <SubmitButton type="submit" disabled={isLoading || loginSuccess}>
+              <span>{isLoading ? 'Đang xử lý...' : 'Đăng Nhập'}</span>
+            </SubmitButton>
+          </form>
+          
+          <OrDivider theme={theme}>
+            <span>HOẶC</span>
+          </OrDivider>
+          
+          <SocialButtonsContainer>
+            <SocialButton 
+              theme={theme} 
+              provider="google"
+              onClick={() => handleSocialLogin('google')}
+            >
+              <FaGoogle /> Google
+            </SocialButton>
+            <SocialButton 
+              theme={theme} 
+              provider="facebook"
+              onClick={() => handleSocialLogin('facebook')}
+            >
+              <FaFacebook /> Facebook
+            </SocialButton>
+          </SocialButtonsContainer>
+          
+          <RegisterLink theme={theme}>
+            Chưa có tài khoản? 
+            <SwitchFormButton 
+              theme={theme}
+              type="button" 
+              onClick={switchToRegister}
+            >
+              Đăng ký
+            </SwitchFormButton>
+          </RegisterLink>
+        </>
+      )}
     </FormContainer>
   );
 };

@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import QuizQuestion from './QuizQuestion';
+import LoadingSpinner from '../common/LoadingSpinner';
+import { getExamResult } from '../../services/examService';
 
 const ResultsContainer = styled.div`
   max-width: 1200px;
@@ -247,54 +249,31 @@ const formatDate = (dateString) => {
 };
 
 const ExamResults = ({ theme }) => {
-  const { examId } = useParams();
+  const { resultId } = useParams();
   const navigate = useNavigate();
   
   const [result, setResult] = useState(null);
   const [showAll, setShowAll] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
-    // In a real app, you would fetch the results from an API
-    // For demo purposes, we'll get it from localStorage
     const fetchResults = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        // Simulate API request delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const storedResult = localStorage.getItem(`exam_result_${examId}`);
-        if (storedResult) {
-          const parsedResult = JSON.parse(storedResult);
-          
-          // Calculate score
-          let correctCount = 0;
-          parsedResult.questions.forEach((question, index) => {
-            if (parsedResult.answers[index] === question.correctAnswer) {
-              correctCount++;
-            }
-          });
-          
-          const score = (correctCount / parsedResult.questions.length) * 10;
-          
-          setResult({
-            ...parsedResult,
-            score,
-            correctCount
-          });
-        } else {
-          // If no result found, redirect to subjects page
-          navigate('/subjects');
-        }
+        const resultData = await getExamResult(resultId);
+        setResult(resultData);
       } catch (error) {
         console.error('Error fetching results:', error);
+        setError('Không thể tải kết quả bài thi. Vui lòng thử lại sau.');
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchResults();
-  }, [examId, navigate]);
+  }, [resultId]);
   
   const toggleShowAll = () => {
     setShowAll(prev => !prev);
@@ -303,7 +282,30 @@ const ExamResults = ({ theme }) => {
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <p>Đang tải kết quả...</p>
+        <LoadingSpinner text="Đang tải kết quả..." />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '3rem' }}>
+        <h2>Đã xảy ra lỗi</h2>
+        <p>{error}</p>
+        <button 
+          onClick={() => navigate('/subjects')}
+          style={{ 
+            padding: '0.75rem 1.5rem',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Quay lại danh sách môn học
+        </button>
       </div>
     );
   }
@@ -317,8 +319,6 @@ const ExamResults = ({ theme }) => {
       </div>
     );
   }
-  
-  const { score, correctCount, questions, answers, timeSpent, submitTime } = result;
   
   // Determine feedback message based on score
   const getFeedbackMessage = (score) => {
@@ -344,27 +344,27 @@ const ExamResults = ({ theme }) => {
         transition={{ duration: 0.5 }}
       >
         <ScoreTitle theme={theme}>Điểm số của bạn</ScoreTitle>
-        <ScoreCircle score={score}>
-          <ScoreValue>{score.toFixed(1)}</ScoreValue>
+        <ScoreCircle score={result.score}>
+          <ScoreValue>{result.score.toFixed(1)}</ScoreValue>
         </ScoreCircle>
         
         <ScoreInfo>
           <InfoItem>
-            <InfoValue theme={theme}>{correctCount}/{questions.length}</InfoValue>
+            <InfoValue theme={theme}>{result.correctCount}/{result.questions.length}</InfoValue>
             <InfoLabel theme={theme}>Câu trả lời đúng</InfoLabel>
           </InfoItem>
           <InfoItem>
-            <InfoValue theme={theme}>{formatTime(timeSpent)}</InfoValue>
+            <InfoValue theme={theme}>{formatTime(result.timeSpent)}</InfoValue>
             <InfoLabel theme={theme}>Thời gian làm bài</InfoLabel>
           </InfoItem>
           <InfoItem>
-            <InfoValue theme={theme}>{formatDate(submitTime)}</InfoValue>
+            <InfoValue theme={theme}>{formatDate(result.submitTime)}</InfoValue>
             <InfoLabel theme={theme}>Ngày hoàn thành</InfoLabel>
           </InfoItem>
         </ScoreInfo>
         
         <FeedbackContainer>
-          <FeedbackMessage theme={theme}>{getFeedbackMessage(score)}</FeedbackMessage>
+          <FeedbackMessage theme={theme}>{getFeedbackMessage(result.score)}</FeedbackMessage>
         </FeedbackContainer>
       </ScoreCard>
       
@@ -382,9 +382,9 @@ const ExamResults = ({ theme }) => {
         </QuestionsHeader>
         
         <QuestionsContainer>
-          {questions.map((question, index) => {
+          {result.questions.map((question, index) => {
             // If showAll is false, only show incorrect answers
-            const shouldShow = showAll || answers[index] !== question.correctAnswer;
+            const shouldShow = showAll || result.answers[index] !== question.correctAnswer;
             
             if (!shouldShow) return null;
             
@@ -394,7 +394,7 @@ const ExamResults = ({ theme }) => {
                 theme={theme}
                 question={question}
                 number={index + 1}
-                selectedOption={answers[index]}
+                selectedOption={result.answers[index]}
                 isReviewMode={true}
                 correctAnswer={question.correctAnswer}
               />
@@ -411,7 +411,7 @@ const ExamResults = ({ theme }) => {
           Quay lại danh sách môn học
         </SecondaryButton>
         <PrimaryButton 
-          to={`/subjects/${examId.split('-')[0]}`}
+          to={`/subjects/${result.subjectId}`}
         >
           Làm bài thi khác
         </PrimaryButton>

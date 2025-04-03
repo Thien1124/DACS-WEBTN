@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { getSubjectById, getSubjectExams } from '../../services/subjectService';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -150,7 +152,7 @@ const ExamCard = styled(motion.div)`
 `;
 
 const ExamContent = styled.div`
-  padding: s1.25rem;
+  padding: 1.25rem;
 `;
 
 const ExamTitle = styled.h3`
@@ -241,132 +243,52 @@ const LoadingContainer = styled.div`
 
 const SubjectDetail = ({ theme }) => {
   const { subjectId } = useParams();
+  const navigate = useNavigate();
   const [subject, setSubject] = useState(null);
   const [exams, setExams] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
-    const fetchSubjectData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        // In a real app, you would make API calls to fetch subject and exams
-        // For demo purposes, we'll use mock data with a delay to simulate API calls
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Fetch subject details
+        const subjectData = await getSubjectById(subjectId);
+        setSubject(subjectData);
         
-        // Find subject by ID from mock data
-        const mockSubjects = [
-          {
-            id: "1",
-            title: 'Toán học',
-            description: 'Toán học là môn học cơ bản về các khái niệm số học, đại số, hình học và các ứng dụng của chúng. Môn học giúp học sinh phát triển tư duy logic, khả năng phân tích và giải quyết vấn đề. Thông qua các bài tập từ cơ bản đến nâng cao, học sinh sẽ được rèn luyện kỹ năng tính toán, suy luận và áp dụng kiến thức vào thực tế.',
-            image: 'https://img.freepik.com/free-vector/hand-drawn-mathematics-background_23-2148157511.jpg',
-            grade: '10',
-            testsCount: 24,
-            popularity: 'Cao',
-            lastUpdated: '15/05/2023'
-          },
-          {
-            id: "9",
-            title: 'Toán học nâng cao',
-            description: 'Toán học nâng cao dành cho học sinh khối 11 tập trung vào các chủ đề chuyên sâu như giải tích, đại số tuyến tính, lý thuyết xác suất và thống kê. Khóa học cung cấp kiến thức vững chắc và các kỹ thuật giải quyết bài toán phức tạp, chuẩn bị cho học sinh tham gia các kỳ thi học sinh giỏi cấp trường, cấp tỉnh và quốc gia.',
-            image: 'https://img.freepik.com/free-vector/realistic-math-chalkboard-background_23-2148163817.jpg',
-            grade: '11',
-            testsCount: 22,
-            popularity: 'Cao',
-            lastUpdated: '10/05/2023'
-          },
-          {
-            id: "13",
-            title: 'Toán học – Ôn thi THPT Quốc gia',
-            description: 'Khóa học tập trung vào ôn tập toàn diện các kiến thức toán học THPT từ lớp 10 đến lớp 12, đặc biệt chú trọng vào các dạng bài tập thường xuất hiện trong đề thi tốt nghiệp THPT Quốc gia. Khóa học giúp học sinh hệ thống hóa kiến thức, rèn luyện kỹ năng làm bài thi trắc nghiệm và tự luận một cách hiệu quả.',
-            image: 'https://img.freepik.com/free-vector/mathematics-collage-concept_23-2148161193.jpg',
-            grade: '12',
-            testsCount: 30,
-            popularity: 'Rất cao',
-            lastUpdated: '20/05/2023'
-          }
-        ];
-        
-        const foundSubject = mockSubjects.find(s => s.id === subjectId);
-        
-        if (foundSubject) {
-          setSubject(foundSubject);
-          
-          // Mock exams for the subject
-          const mockExams = [
-            {
-              id: `${subjectId}-1`,
-              title: 'Đề kiểm tra 15 phút số 1',
-              questions: 10,
-              time: 15,
-              description: 'Bài kiểm tra nhanh về kiến thức cơ bản, giúp học sinh ôn tập và củng cố các khái niệm đã học.',
-              difficulty: 'easy',
-              completedCount: 1245
-            },
-            {
-              id: `${subjectId}-2`,
-              title: 'Đề kiểm tra 1 tiết số 1',
-              questions: 20,
-              time: 45,
-              description: 'Bài kiểm tra kiến thức chương 1, bao gồm cả lý thuyết và bài tập để đánh giá mức độ hiểu bài của học sinh.',
-              difficulty: 'medium',
-              completedCount: 987
-            },
-            {
-              id: `${subjectId}-3`,
-              title: 'Đề thi học kỳ I',
-              questions: 40,
-              time: 90,
-              description: 'Đề thi cuối học kỳ I bao gồm tất cả kiến thức đã học trong nửa đầu năm học. Đây là bài thi quan trọng đánh giá năng lực học tập của học sinh.',
-              difficulty: 'hard',
-              completedCount: 752
-            },
-            {
-              id: `${subjectId}-4`,
-              title: 'Đề kiểm tra 15 phút số 2',
-              questions: 10,
-              time: 15,
-              description: 'Bài kiểm tra nhanh về các công thức và định lý quan trọng trong chương 2.',
-              difficulty: 'easy',
-              completedCount: 1032
-            },
-            {
-              id: `${subjectId}-5`,
-              title: 'Đề kiểm tra 1 tiết số 2',
-              questions: 20,
-              time: 45,
-              description: 'Bài kiểm tra kiến thức chương 2 và 3, đánh giá khả năng ứng dụng kiến thức vào giải quyết các bài toán thực tế.',
-              difficulty: 'medium',
-              completedCount: 845
-            },
-            {
-              id: `${subjectId}-6`,
-              title: 'Đề thi học kỳ II',
-              questions: 40,
-              time: 90,
-              description: 'Đề thi cuối năm bao gồm tất cả kiến thức đã học, đặc biệt chú trọng vào các nội dung đã học trong học kỳ II.',
-              difficulty: 'hard',
-              completedCount: 634
-            }
-          ];
-          
-          setExams(mockExams);
-        }
+        // Fetch subject exams
+        const examsData = await getSubjectExams(subjectId);
+        setExams(examsData);
       } catch (error) {
         console.error('Error fetching subject data:', error);
+        setError('Không thể tải thông tin môn học. Vui lòng thử lại sau.');
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchSubjectData();
+    fetchData();
   }, [subjectId]);
   
   if (isLoading) {
     return (
       <LoadingContainer theme={theme}>
-        <p>Đang tải thông tin môn học...</p>
+        <LoadingSpinner text="Đang tải thông tin môn học..." />
       </LoadingContainer>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Container>
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <h2>Đã xảy ra lỗi</h2>
+          <p>{error}</p>
+          <Link to="/subjects">Quay lại danh sách môn học</Link>
+        </div>
+      </Container>
     );
   }
   
