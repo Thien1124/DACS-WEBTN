@@ -8,12 +8,30 @@ import { setToken, saveUserData, removeToken, removeUserData } from '../utils/au
  */
 export const register = async (userData) => {
   try {
-    const response = await apiClient.post('/auth/register', userData);
+    const response = await apiClient.post('/api/Auth/register', {
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      fullName: userData.fullName,
+      phoneNumber: userData.phoneNumber
+    });
+
+    // Nếu đăng ký thành công và API trả về token
+    if (response.data.token) {
+      setToken(response.data.token);
+      saveUserData(response.data.user);
+    }
+
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Đăng ký thất bại. Vui lòng thử lại.' };
+    console.error('Registration error:', error);
+    const errorMessage = error.response?.data?.message 
+      || error.response?.data
+      || 'Đăng ký thất bại. Vui lòng thử lại sau.';
+    throw { message: errorMessage };
   }
 };
+
 
 /**
  * Log in a user
@@ -22,18 +40,23 @@ export const register = async (userData) => {
  */
 export const login = async (credentials) => {
   try {
-    const response = await apiClient.post('/auth/login', credentials);
-    const { token, user } = response.data;
-    
-    // Store token and user data
-    if (token) {
-      setToken(token);
-      saveUserData(user);
+    const response = await apiClient.post('/api/Auth/login', {
+      usernameOrEmail: credentials.usernameOrEmail,
+      password: credentials.password
+    });
+
+    if (response.data.token) {
+      setToken(response.data.token);
+      saveUserData(response.data.user);
     }
-    
+
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.' };
+    console.error('Login error:', error);
+    const errorMessage = error.response?.data?.message 
+      || error.response?.data
+      || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+    throw { message: errorMessage };
   }
 };
 
@@ -41,8 +64,12 @@ export const login = async (credentials) => {
  * Log out a user
  */
 export const logout = () => {
-  removeToken();
-  removeUserData();
+  try {
+    removeToken();
+    removeUserData();
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 };
 
 /**

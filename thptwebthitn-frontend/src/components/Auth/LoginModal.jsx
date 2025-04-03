@@ -5,13 +5,10 @@ import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 const LoginModal = ({ show, handleClose, onLogin }) => {
   const [activeTab, setActiveTab] = useState('login');
   const [formData, setFormData] = useState({
-    usernameOrEmail: '',
-    password: '',
-    username: '',
     email: '',
+    password: '',
     confirmPassword: '',
     fullName: '',
-    phoneNumber: '',
     agreeTerms: false
   });
   const [error, setError] = useState('');
@@ -31,7 +28,7 @@ const LoginModal = ({ show, handleClose, onLogin }) => {
     setLoading(true);
 
     // Validate form
-    if (!formData.usernameOrEmail || !formData.password) {
+    if (!formData.email || !formData.password) {
       setError('Vui lòng nhập đầy đủ thông tin');
       setLoading(false);
       return;
@@ -43,13 +40,13 @@ const LoginModal = ({ show, handleClose, onLogin }) => {
       
       // Simulate successful login
       onLogin({
-        usernameOrEmail: formData.usernameOrEmail,
+        email: formData.email,
         fullName: 'User Name', // This would come from your API
         token: 'mock-token-123' // This would come from your API
       });
       handleClose();
     } catch (err) {
-      setError('Đăng nhập thất bại. Vui lòng kiểm tra tên đăng nhập/email và mật khẩu.');
+      setError('Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -61,7 +58,7 @@ const LoginModal = ({ show, handleClose, onLogin }) => {
     setLoading(true);
 
     // Validate form
-    if (!formData.username || !formData.email || !formData.password || !formData.fullName || !formData.phoneNumber) {
+    if (!formData.email || !formData.password || !formData.fullName) {
       setError('Vui lòng nhập đầy đủ thông tin');
       setLoading(false);
       return;
@@ -120,13 +117,13 @@ const LoginModal = ({ show, handleClose, onLogin }) => {
             {error && <Alert variant="danger">{error}</Alert>}
             <Form onSubmit={handleLogin}>
               <Form.Group className="mb-3">
-                <Form.Label>Tên đăng nhập hoặc Email</Form.Label>
+                <Form.Label>Email</Form.Label>
                 <Form.Control
-                  type="text"
-                  name="usernameOrEmail"
-                  value={formData.usernameOrEmail}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
-                  placeholder="Nhập tên đăng nhập hoặc email"
+                  placeholder="Nhập email của bạn"
                   required
                 />
               </Form.Group>
@@ -181,13 +178,13 @@ const LoginModal = ({ show, handleClose, onLogin }) => {
             {error && <Alert variant="danger">{error}</Alert>}
             <Form onSubmit={handleRegister}>
               <Form.Group className="mb-3">
-                <Form.Label>Tên đăng nhập</Form.Label>
+                <Form.Label>Họ và tên</Form.Label>
                 <Form.Control
                   type="text"
-                  name="username"
-                  value={formData.username}
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleChange}
-                  placeholder="Nhập tên đăng nhập"
+                  placeholder="Nhập họ và tên của bạn"
                   required
                 />
               </Form.Group>
@@ -200,30 +197,6 @@ const LoginModal = ({ show, handleClose, onLogin }) => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Nhập email của bạn"
-                  required
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Họ và tên</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="Nhập họ và tên đầy đủ"
-                  required
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Số điện thoại</Form.Label>
-                <Form.Control
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="Nhập số điện thoại"
                   required
                 />
               </Form.Group>

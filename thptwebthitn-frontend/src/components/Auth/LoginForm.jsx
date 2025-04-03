@@ -1,4 +1,3 @@
-// components/auth/LoginForm.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
@@ -8,6 +7,7 @@ import { login } from '../../redux/authSlice';
 import { validateLoginForm } from '../../utils/validation';
 import * as authService from '../../services/authService';
 import { FaUser, FaLock, FaGoogle, FaFacebook } from 'react-icons/fa';
+import ForgotPasswordForm from './ForgotPasswordForm';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -326,6 +326,10 @@ const Checkbox = ({ className, checked, onChange, label, theme }) => (
   </CheckboxContainer>
 );
 
+// components/auth/LoginForm.jsx
+
+// Các import và styled-components không thay đổi...
+
 const LoginForm = ({ theme, switchToRegister }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -338,6 +342,7 @@ const LoginForm = ({ theme, switchToRegister }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Get redirect path from location state or default to home page
   const from = location.state?.from?.pathname || '/';
@@ -396,6 +401,10 @@ const LoginForm = ({ theme, switchToRegister }) => {
     console.log(`Đăng nhập với ${provider}`);
   };
 
+  if (showForgotPassword) {
+    return <ForgotPasswordForm theme={theme} onBackToLogin={() => setShowForgotPassword(false)} />;
+  }
+
   return (
     <FormContainer
       theme={theme}
@@ -453,7 +462,10 @@ const LoginForm = ({ theme, switchToRegister }) => {
           />
           
           <ForgotPasswordLink theme={theme}>
-            <Link to="/forgot-password">Quên mật khẩu?</Link>
+            <a href="#" onClick={(e) => {
+              e.preventDefault();
+              setShowForgotPassword(true);
+            }}>Quên mật khẩu?</a>
           </ForgotPasswordLink>
         </div>
         

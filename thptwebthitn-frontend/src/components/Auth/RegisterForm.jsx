@@ -322,24 +322,28 @@ const RegisterForm = ({ theme, switchToLogin }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        // Use actual API service to register
-        const response = await authService.register({
+        const userData = {
           username: formData.username,
           email: formData.email,
           password: formData.password,
           fullName: formData.fullName,
           phoneNumber: formData.phoneNumber
-        });
-        
-        // Dispatch register action with actual data
+        };
+  
+        console.log('Sending registration data:', userData);
+        const response = await authService.register(userData);
+        console.log('Registration successful:', response);
+  
+        // Dispatch register action
         dispatch(register({
           user: response.user,
           token: response.token
         }));
-        
-        // Redirect to home page after registration
+  
+        // Redirect to home page
         navigate('/');
       } catch (error) {
+        console.error('Registration error:', error);
         setErrors({
           general: error.message || 'Đăng ký thất bại. Vui lòng thử lại sau.'
         });

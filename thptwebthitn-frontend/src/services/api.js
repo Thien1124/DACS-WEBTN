@@ -1,17 +1,24 @@
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 
-// Create an axios instance with base URL and default headers
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to include the auth token in all requests
+// Add request interceptor
 apiClient.interceptors.request.use(
   (config) => {
+    // Log request details for debugging
+    console.log('API Request:', {
+      url: config.url,
+      method: config.method,
+      data: config.data,
+      headers: config.headers,
+    });
+
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -19,39 +26,51 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Add a response interceptor for global error handling
+// Add response interceptor
 apiClient.interceptors.response.use(
   (response) => {
+    // Log successful response
+    console.log('API Response:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
+    });
     return response;
   },
   (error) => {
-    // Handle different error statuses
+    // Log error details
+    console.error('Response Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+
     if (error.response) {
-      // Handle 401 Unauthorized errors (e.g., token expired)
-      if (error.response.status === 401) {
-        // You might want to redirect to login or refresh token here
-        console.error('Unauthorized access. Please log in again.');
-      }
-      
-      // Handle 403 Forbidden errors
-      if (error.response.status === 403) {
-        console.error('You do not have permission to access this resource.');
-      }
-      
-      // Handle 500 Server errors
-      if (error.response.status >= 500) {
-        console.error('Server error. Please try again later.');
+      switch (error.response.status) {
+        case 401:
+          console.error('Unauthorized - Please login again');
+          // Handle unauthorized access
+          break;
+        case 403:
+          console.error('Forbidden - Access denied');
+          break;
+        case 404:
+          console.error('Not found - The requested resource does not exist');
+          break;
+        case 500:
+          console.error('Server error - Please try again later');
+          break;
+        default:
+          console.error('An error occurred:', error.response.data);
       }
     } else if (error.request) {
-      // The request was made but no response was received
-      console.error('Network error. Please check your connection.');
-    } else {
-      // Something happened in setting up the request
-      console.error('Error:', error.message);
+      console.error('Network error - No response received');
     }
     
     return Promise.reject(error);
