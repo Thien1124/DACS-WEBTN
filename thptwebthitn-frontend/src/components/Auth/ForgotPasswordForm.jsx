@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -99,18 +98,21 @@ const LoginLink = styled.div`
   text-align: center;
   font-size: 0.9rem;
   color: ${props => props.theme === 'dark' ? '#a0aec0' : '#777'};
+`;
+
+const LoginButton = styled.button`
+  background: none;
+  border: none;
+  color: ${props => props.theme === 'dark' ? '#4da3ff' : '#007bff'};
+  font-weight: 500;
+  cursor: pointer;
   
-  a {
-    color: ${props => props.theme === 'dark' ? '#4da3ff' : '#007bff'};
-    font-weight: 500;
-    
-    &:hover {
-      text-decoration: underline;
-    }
+  &:hover {
+    text-decoration: underline;
   }
 `;
 
-const ForgotPasswordForm = ({ theme }) => {
+const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -170,7 +172,9 @@ const ForgotPasswordForm = ({ theme }) => {
             Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu vào email của bạn. Vui lòng kiểm tra hộp thư.
           </SuccessMessage>
           <LoginLink theme={theme}>
-            <Link to="/login">Quay lại đăng nhập</Link>
+            <LoginButton theme={theme} onClick={onBackToLogin}>
+              Quay lại đăng nhập
+            </LoginButton>
           </LoginLink>
         </>
       ) : (
@@ -202,7 +206,9 @@ const ForgotPasswordForm = ({ theme }) => {
           </form>
           
           <LoginLink theme={theme}>
-            <Link to="/login">Quay lại đăng nhập</Link>
+            <LoginButton theme={theme} onClick={onBackToLogin}>
+              Quay lại đăng nhập
+            </LoginButton>
           </LoginLink>
         </>
       )}
