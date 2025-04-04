@@ -151,7 +151,6 @@ const ErrorMessage = styled.div`
 
 const ForgotPasswordLink = styled.div`
   text-align: right;
-  margin-bottom: 1.8rem;
   font-size: 0.95rem;
   
   a {
@@ -231,20 +230,26 @@ const SocialButton = styled.button`
 const RememberMeContainer = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 `;
 
+// Cải thiện CheckboxContainer để đảm bảo click được
 const CheckboxContainer = styled.div`
   position: relative;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  user-select: none;
 `;
 
-const HiddenCheckbox = styled.input.attrs({ type: 'checkbox' })`
-  position: absolute;
+// Sửa lại HiddenCheckbox để có thể tương tác dễ dàng hơn
+const HiddenCheckbox = styled.input`
   opacity: 0;
-  height: 0;
-  width: 0;
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  z-index: 1;
+  cursor: pointer;
 `;
 
 const StyledCheckbox = styled.div`
@@ -257,10 +262,7 @@ const StyledCheckbox = styled.div`
   border-radius: 3px;
   transition: all 0.2s ease;
   position: relative;
-  
-  ${HiddenCheckbox}:focus + & {
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
-  }
+  pointer-events: none;
   
   &:after {
     content: '';
@@ -277,7 +279,7 @@ const StyledCheckbox = styled.div`
   }
 `;
 
-const CheckboxLabel = styled.label`
+const CheckboxLabel = styled.span`
   margin-left: 8px;
   font-size: 0.95rem;
   color: ${props => props.theme === 'dark' ? '#a0aec0' : '#666'};
@@ -317,16 +319,6 @@ const SwitchFormButton = styled.button`
   }
 `;
 
-const Checkbox = ({ className, checked, onChange, label, theme }) => (
-  <CheckboxContainer className={className}>
-    <HiddenCheckbox checked={checked} onChange={onChange} />
-    <StyledCheckbox checked={checked} theme={theme} />
-    <CheckboxLabel theme={theme}>{label}</CheckboxLabel>
-  </CheckboxContainer>
-);
-
-// components/auth/LoginForm.jsx
-
 const SuccessMessage = styled.div`
   color: #2ecc71;
   background-color: ${props => props.theme === 'dark' ? '#1a2e1a' : '#efffef'};
@@ -345,6 +337,19 @@ const SuccessMessage = styled.div`
   }
 `;
 
+// Tái cấu trúc component Checkbox để tương tác tốt hơn
+const Checkbox = ({ checked, onChange, label, theme }) => (
+  <CheckboxContainer onClick={() => onChange(!checked)}>
+    <HiddenCheckbox 
+      type="checkbox" 
+      checked={checked}
+      onChange={e => onChange(e.target.checked)}
+    />
+    <StyledCheckbox checked={checked} theme={theme} />
+    <CheckboxLabel theme={theme}>{label}</CheckboxLabel>
+  </CheckboxContainer>
+);
+
 const LoginForm = ({ theme, switchToRegister }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -353,12 +358,13 @@ const LoginForm = ({ theme, switchToRegister }) => {
   const [formData, setFormData] = useState({
     usernameOrEmail: '',
     password: '',
-    rememberMe: false
+    rememberMe: true
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  
   useEffect(() => {
     let successTimer;
     
@@ -374,6 +380,7 @@ const LoginForm = ({ theme, switchToRegister }) => {
       if (successTimer) clearTimeout(successTimer);
     };
   }, [loginSuccess, navigate]);
+  
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -389,6 +396,15 @@ const LoginForm = ({ theme, switchToRegister }) => {
     }
   };
 
+  // Cập nhật hàm để xử lý trực tiếp thay đổi checkbox
+  const handleCheckboxChange = (checked) => {
+    console.log("Remember me changed to:", checked); // Debug log
+    setFormData(prev => ({
+      ...prev,
+      rememberMe: checked
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -400,18 +416,26 @@ const LoginForm = ({ theme, switchToRegister }) => {
     
     setIsLoading(true);
     try {
-      const { usernameOrEmail, password } = formData;
-      const response = await authService.login({ usernameOrEmail, password });
+      console.log("Đang đăng nhập với:", formData); // Debug log
+      
+      const { usernameOrEmail, password, rememberMe } = formData;
+      const response = await authService.login({ 
+        usernameOrEmail, 
+        password, 
+        rememberMe // Gửi tham số rememberMe 
+      });
+      
+      console.log("Đăng nhập thành công:", response); // Debug log
       
       dispatch({
         type: 'auth/loginSuccess',
         payload: {
           user: response.user,
-          token: response.token
+          token: response.token,
+          rememberMe: formData.rememberMe // Lưu trạng thái rememberMe
         }
       });
       setLoginSuccess(true);
-      
       
       // Delay before closing form and redirecting
       setTimeout(() => {
@@ -419,6 +443,7 @@ const LoginForm = ({ theme, switchToRegister }) => {
       }, 1200); // 1.2 seconds delay
       
     } catch (error) {
+      console.error("Lỗi đăng nhập:", error); // Debug log
       setErrors({
         general: error.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
       });
@@ -483,18 +508,15 @@ const LoginForm = ({ theme, switchToRegister }) => {
             </FormGroup>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <Checkbox 
-                checked={formData.rememberMe}
-                onChange={e => handleInputChange({
-                  target: {
-                    name: 'rememberMe',
-                    type: 'checkbox',
-                    checked: e.target.checked
-                  }
-                })}
-                label="Ghi nhớ đăng nhập"
-                theme={theme}
-              />
+              {/* Thay thế checkbox bằng phiên bản mới */}
+              <RememberMeContainer>
+                <Checkbox
+                  checked={formData.rememberMe}
+                  onChange={handleCheckboxChange}
+                  label="Ghi nhớ đăng nhập"
+                  theme={theme}
+                />
+              </RememberMeContainer>
               
               <ForgotPasswordLink theme={theme}>
                 <a href="#" onClick={(e) => {

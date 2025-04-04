@@ -197,7 +197,7 @@ export const requestPasswordReset = async (email) => {
 
 /**
  * Reset password with code
- * @param {object} resetData - Reset data including email, resetCode, and newPassword
+ * @param {object} resetData - Reset data including email, resetCode, newPassword, and confirmPassword
  * @returns {Promise} - Promise resolving to response data
  */
 export const resetPasswordWithCode = async (resetData) => {
@@ -208,10 +208,11 @@ export const resetPasswordWithCode = async (resetData) => {
       // Không log mật khẩu
     });
     
-    const response = await apiClient.post('/api/Password/reset-password-with-code', {
+    const response = await apiClient.post('/api/Password/reset-password', {
       email: resetData.email,
       resetCode: resetData.resetCode,
-      newPassword: resetData.newPassword
+      newPassword: resetData.newPassword,
+      confirmPassword: resetData.confirmPassword // Thêm tham số confirmPassword
     });
     
     console.log('Password reset with code response:', response.data);
@@ -240,14 +241,15 @@ export const resetPasswordWithCode = async (resetData) => {
  * Reset password with token
  * @param {string} token - Reset token
  * @param {string} password - New password
+ * @param {string} confirmPassword - Confirm new password
  * @returns {Promise} - Promise resolving to response data
  */
-export const resetPassword = async (token, password) => {
+export const resetPassword = async (token, password, confirmPassword) => {
   try {
     const response = await apiClient.post(`/api/Password/reset-password`, { 
       token, 
       newPassword: password,
-      confirmPassword: password 
+      confirmPassword: confirmPassword || password // Sử dụng tham số confirmPassword nếu được cung cấp, nếu không thì dùng password
     });
     return response.data;
   } catch (error) {

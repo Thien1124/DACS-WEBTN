@@ -158,6 +158,11 @@ const ResetPasswordForm = ({ theme, onBackToLogin }) => {
         [name]: ''
       });
     }
+    
+    // Xóa thông báo lỗi chung khi người dùng thay đổi bất kỳ trường nào
+    if (errors.general) {
+      setErrors(prev => ({...prev, general: ''}));
+    }
   };
 
   const validateForm = () => {
@@ -201,13 +206,21 @@ const ResetPasswordForm = ({ theme, onBackToLogin }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
+        console.log('Đang gửi yêu cầu đặt lại mật khẩu với dữ liệu:', {
+          email: formData.email,
+          resetCode: formData.resetCode,
+          // không log mật khẩu
+        });
+        
         // Gọi API để đặt lại mật khẩu
         await authService.resetPasswordWithCode({
           email: formData.email,
           resetCode: formData.resetCode,
-          newPassword: formData.newPassword
+          newPassword: formData.newPassword,
+          confirmPassword: formData.confirmPassword // Thêm confirmPassword vào request
         });
         
+        console.log('Đặt lại mật khẩu thành công');
         setIsSubmitted(true);
         
         // Chuyển đến trang đăng nhập sau 3 giây
@@ -219,6 +232,7 @@ const ResetPasswordForm = ({ theme, onBackToLogin }) => {
           }
         }, 3000);
       } catch (error) {
+        console.error('Lỗi khi đặt lại mật khẩu:', error);
         setErrors({
           general: error.message || 'Đã xảy ra lỗi khi đặt lại mật khẩu. Vui lòng thử lại.'
         });
