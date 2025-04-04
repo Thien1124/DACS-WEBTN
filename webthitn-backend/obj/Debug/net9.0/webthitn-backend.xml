@@ -1,0 +1,2491 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>webthitn-backend</name>
+    </assembly>
+    <members>
+        <member name="T:webthitn_backend.Controllers.ExamController">
+            <summary>
+            API để quản lý và truy xuất thông tin bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.Extensions.Logging.ILogger{webthitn_backend.Controllers.ExamController})">
+            <summary>
+            Khởi tạo controller với các dependency
+            </summary>
+            <param name="context">Database context</param>
+            <param name="logger">Logger service</param>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.GetExams(webthitn_backend.DTOs.ExamFilterDTO)">
+             <summary>
+             Lấy danh sách bài thi với các bộ lọc và phân trang
+             </summary>
+             <remarks>
+             API này cho phép lấy danh sách bài thi với nhiều tùy chọn lọc khác nhau.
+             Có thể lọc theo môn học, loại bài thi, trạng thái, từ khóa và phân trang kết quả.
+             
+             Sample request:
+            
+                 GET /api/Exam?SubjectId=1&amp;ExamTypeId=3&amp;Page=1&amp;PageSize=10&amp;ActiveOnly=true&amp;IsOpen=true
+            
+             </remarks>
+             <param name="filter">Các tham số lọc</param>
+             <returns>Danh sách bài thi được phân trang và lọc</returns>
+             <response code="200">Trả về danh sách bài thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.GetExamsBySubject(System.Int32,System.Nullable{System.Int32},System.Int32,System.Int32,System.Boolean,System.Nullable{System.Boolean},System.String)">
+             <summary>
+             Lấy danh sách bài thi theo môn học
+             </summary>
+             <remarks>
+             API này cho phép lấy danh sách bài thi thuộc một môn học cụ thể.
+             
+             Sample request:
+            
+                 GET /api/Exam/BySubject/1?Page=1&amp;PageSize=10&amp;ActiveOnly=true&amp;IsOpen=true
+            
+             </remarks>
+             <param name="subjectId">ID của môn học</param>
+             <param name="examTypeId">ID của loại bài thi (không bắt buộc)</param>
+             <param name="page">Trang hiện tại (mặc định: 1)</param>
+             <param name="pageSize">Số lượng mỗi trang (mặc định: 10)</param>
+             <param name="activeOnly">Chỉ lấy bài thi đang hoạt động (mặc định: true)</param>
+             <param name="isOpen">Lọc theo trạng thái mở/đóng (null: tất cả)</param>
+             <param name="searchTerm">Từ khóa tìm kiếm</param>
+             <returns>Danh sách bài thi thuộc môn học</returns>
+             <response code="200">Trả về danh sách bài thi</response>
+             <response code="404">Không tìm thấy môn học</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.GetExamsForStudents(System.Int32,System.Int32,System.Int32,System.String)">
+             <summary>
+             Lấy danh sách bài thi cho học sinh
+             </summary>
+             <remarks>
+             API này cho phép học sinh xem danh sách bài thi đang mở của một môn học.
+             Chỉ hiển thị bài thi đang hoạt động và trong thời gian mở.
+             
+             Sample request:
+            
+                 GET /api/Exam/ForStudents/1
+            
+             </remarks>
+             <param name="subjectId">ID của môn học</param>
+             <param name="page">Trang hiện tại (mặc định: 1)</param>
+             <param name="pageSize">Số lượng mỗi trang (mặc định: 10)</param>
+             <param name="searchTerm">Từ khóa tìm kiếm</param>
+             <returns>Danh sách bài thi đang mở cho học sinh</returns>
+             <response code="200">Trả về danh sách bài thi</response>
+             <response code="404">Không tìm thấy môn học</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjects(System.Int32,System.Int32,System.Boolean,System.String)">
+            <summary>
+            Lấy danh sách môn học có phân trang
+            </summary>
+            <param name="page">Trang hiện tại</param>
+            <param name="pageSize">Số lượng mỗi trang</param>
+            <param name="includeInactive">Có hiển thị môn học không hoạt động</param>
+            <returns>Danh sách môn học được phân trang</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.GetSubject(System.Int32)">
+            <summary>
+            Lấy chi tiết một môn học theo ID
+            </summary>
+            <param name="id">ID của môn học</param>
+            <returns>Thông tin chi tiết môn học</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.CreateSubject(webthitn_backend.DTOs.CreateSubjectDTO)">
+            <summary>
+            Tạo môn học mới
+            </summary>
+            <param name="model">Thông tin môn học cần tạo</param>
+            <returns>Thông tin môn học đã tạo</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.UpdateSubject(System.Int32,webthitn_backend.DTOs.UpdateSubjectDTO)">
+            <summary>
+            Cập nhật thông tin môn học
+            </summary>
+            <param name="id">ID của môn học cần cập nhật</param>
+            <param name="model">Thông tin cần cập nhật</param>
+            <returns>Thông tin môn học sau khi cập nhật</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.ToggleSubjectStatus(System.Int32)">
+            <summary>
+            Thay đổi trạng thái kích hoạt/vô hiệu hóa môn học
+            </summary>
+            <param name="id">ID của môn học</param>
+            <returns>Thông tin và trạng thái mới</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.DeleteSubject(System.Int32)">
+            <summary>
+            Xóa môn học
+            </summary>
+            <param name="id">ID của môn học cần xóa</param>
+            <returns>Thông báo kết quả</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.GetAllSubjects(System.Boolean)">
+            <summary>
+            Lấy tất cả môn học không phân trang (sử dụng cho dropdown)
+            </summary>
+            <param name="activeOnly">Chỉ lấy môn học đang hoạt động</param>
+            <returns>Danh sách môn học đơn giản</returns>
+        </member>
+        <member name="T:webthitn_backend.Data.IRepository`1">
+            <summary>
+            Generic repository pattern interface
+            </summary>
+            <typeparam name="T">Entity type</typeparam>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.GetByIdAsync(System.Int32)">
+            <summary>
+            Get entity by id
+            </summary>
+            <param name="id">Entity id</param>
+            <returns>Entity</returns>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.GetAllAsync">
+            <summary>
+            Get all entities
+            </summary>
+            <returns>List of entities</returns>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.FindAsync(System.Linq.Expressions.Expression{System.Func{`0,System.Boolean}})">
+            <summary>
+            Find entities by predicate
+            </summary>
+            <param name="predicate">Filter expression</param>
+            <returns>Filtered entities</returns>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.AddAsync(`0)">
+            <summary>
+            Add entity
+            </summary>
+            <param name="entity">Entity to add</param>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.AddRangeAsync(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Add multiple entities
+            </summary>
+            <param name="entities">Entities to add</param>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.Update(`0)">
+            <summary>
+            Update entity
+            </summary>
+            <param name="entity">Entity to update</param>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.Remove(`0)">
+            <summary>
+            Remove entity
+            </summary>
+            <param name="entity">Entity to remove</param>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.RemoveRange(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Remove multiple entities
+            </summary>
+            <param name="entities">Entities to remove</param>
+        </member>
+        <member name="M:webthitn_backend.Data.IRepository`1.GetQueryable">
+            <summary>
+            Get queryable
+            </summary>
+            <returns>Queryable</returns>
+        </member>
+        <member name="T:webthitn_backend.Data.IUnitOfWork">
+            <summary>
+            Unit of work pattern interface
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.IUnitOfWork.Repository``1">
+            <summary>
+            Get repository
+            </summary>
+            <typeparam name="TEntity">Entity type</typeparam>
+            <returns>Repository</returns>
+        </member>
+        <member name="M:webthitn_backend.Data.IUnitOfWork.CompleteAsync">
+            <summary>
+            Complete unit of work
+            </summary>
+            <returns>Number of changes</returns>
+        </member>
+        <member name="T:webthitn_backend.Data.Repository`1">
+            <summary>
+            Generic repository implementation
+            </summary>
+            <typeparam name="T">Entity type</typeparam>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.#ctor(webthitn_backend.Models.ApplicationDbContext)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="context">Database context</param>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.GetByIdAsync(System.Int32)">
+            <summary>
+            Get entity by id
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.GetAllAsync">
+            <summary>
+            Get all entities
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.FindAsync(System.Linq.Expressions.Expression{System.Func{`0,System.Boolean}})">
+            <summary>
+            Find entities by predicate
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.AddAsync(`0)">
+            <summary>
+            Add entity
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.AddRangeAsync(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Add multiple entities
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.Update(`0)">
+            <summary>
+            Update entity
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.Remove(`0)">
+            <summary>
+            Remove entity
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.RemoveRange(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Remove multiple entities
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.Repository`1.GetQueryable">
+            <summary>
+            Get queryable
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Data.UnitOfWork">
+            <summary>
+            Unit of work implementation
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.UnitOfWork.#ctor(webthitn_backend.Models.ApplicationDbContext)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="context">Database context</param>
+        </member>
+        <member name="M:webthitn_backend.Data.UnitOfWork.Repository``1">
+            <summary>
+            Get repository
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.UnitOfWork.CompleteAsync">
+            <summary>
+            Complete unit of work
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.UnitOfWork.Dispose">
+            <summary>
+            Dispose
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Data.UnitOfWork.Dispose(System.Boolean)">
+            <summary>
+            Dispose
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamListDTO">
+            <summary>
+            DTO hiển thị thông tin bài thi trong danh sách
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Id">
+            <summary>
+            ID của bài thi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Title">
+            <summary>
+            Tiêu đề bài thi
+            </summary>
+            <example>Kiểm tra giữa kỳ Toán học</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Type">
+            <summary>
+            Loại bài thi
+            </summary>
+            <example>Giữa kỳ</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Description">
+            <summary>
+            Mô tả ngắn về bài thi
+            </summary>
+            <example>Bài kiểm tra kiến thức cơ bản về đạo hàm và tích phân</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Duration">
+            <summary>
+            Thời gian làm bài (phút)
+            </summary>
+            <example>45</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.QuestionCount">
+            <summary>
+            Số câu hỏi trong bài thi
+            </summary>
+            <example>30</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.TotalScore">
+            <summary>
+            Điểm tối đa của bài thi
+            </summary>
+            <example>10</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.PassScore">
+            <summary>
+            Điểm đạt của bài thi
+            </summary>
+            <example>5</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.MaxAttempts">
+            <summary>
+            Số lần được làm bài
+            </summary>
+            <example>2</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.StartTime">
+            <summary>
+            Thời gian bắt đầu mở bài thi
+            </summary>
+            <example>2025-04-05T08:00:00Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.EndTime">
+            <summary>
+            Thời gian kết thúc đóng bài thi
+            </summary>
+            <example>2025-04-15T23:59:59Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Status">
+            <summary>
+            Trạng thái bài thi
+            </summary>
+            <example>Đang mở</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt của bài thi
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.ShowResult">
+            <summary>
+            Hiển thị kết quả sau khi làm bài
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.ShowAnswers">
+            <summary>
+            Hiển thị đáp án sau khi làm bài
+            </summary>
+            <example>false</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.ShuffleQuestions">
+            <summary>
+            Trộn câu hỏi khi hiển thị
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.CreatedAt">
+            <summary>
+            Ngày tạo bài thi
+            </summary>
+            <example>2025-04-03T13:18:47Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Subject">
+            <summary>
+            Thông tin cơ bản về môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.Creator">
+            <summary>
+            Thông tin người tạo
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.SubjectBasicDTO">
+            <summary>
+            DTO cơ bản về môn học cho danh sách bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SubjectBasicDTO.Id">
+            <summary>
+            ID của môn học
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SubjectBasicDTO.Name">
+            <summary>
+            Tên môn học
+            </summary>
+            <example>Toán</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SubjectBasicDTO.Code">
+            <summary>
+            Mã môn học
+            </summary>
+            <example>MATH</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UserBasicDTO">
+            <summary>
+            DTO cơ bản về người dùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserBasicDTO.Id">
+            <summary>
+            ID của người dùng
+            </summary>
+            <example>2</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserBasicDTO.Username">
+            <summary>
+            Tên đăng nhập
+            </summary>
+            <example>Thien1124</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserBasicDTO.FullName">
+            <summary>
+            Họ tên đầy đủ
+            </summary>
+            <example>Thien Nguyen</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamFilterDTO">
+            <summary>
+            Tham số truyền vào khi lọc bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.SubjectId">
+            <summary>
+            ID của môn học cần lọc
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.ExamTypeId">
+            <summary>
+            ID của loại bài thi
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.Page">
+            <summary>
+            Trang hiện tại
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.PageSize">
+            <summary>
+            Số lượng bản ghi mỗi trang
+            </summary>
+            <example>10</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.ActiveOnly">
+            <summary>
+            Chỉ lấy các bài thi đang hoạt động
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.IsOpen">
+            <summary>
+            Lọc trạng thái bài thi (null: tất cả, true: đang mở, false: đã đóng)
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamFilterDTO.SearchTerm">
+            <summary>
+            Từ khóa tìm kiếm (tên, mô tả)
+            </summary>
+            <example>kiểm tra</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamResultListDTO">
+            <summary>
+            DTO hiển thị thông tin kết quả bài thi trong danh sách
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.Id">
+            <summary>
+            ID của kết quả bài thi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.Exam">
+            <summary>
+            Thông tin cơ bản về bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.Student">
+            <summary>
+            Thông tin cơ bản về học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.Score">
+            <summary>
+            Số điểm đạt được
+            </summary>
+            <example>8.5</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.PercentageScore">
+            <summary>
+            Điểm phần trăm
+            </summary>
+            <example>85</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.IsPassed">
+            <summary>
+            Đạt yêu cầu hay không
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.CorrectRatio">
+            <summary>
+            Số câu đúng / tổng số câu
+            </summary>
+            <example>17/20</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.DurationFormatted">
+            <summary>
+            Thời gian làm bài (phút:giây)
+            </summary>
+            <example>42:30</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.AttemptNumber">
+            <summary>
+            Thứ tự lần làm
+            </summary>
+            <example>2</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.IsCompleted">
+            <summary>
+            Trạng thái hoàn thành
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.StartedAt">
+            <summary>
+            Thời điểm bắt đầu làm bài
+            </summary>
+            <example>2025-04-05T10:15:30Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultListDTO.CompletedAt">
+            <summary>
+            Thời điểm hoàn thành
+            </summary>
+            <example>2025-04-05T10:58:00Z</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamResultDetailDTO">
+            <summary>
+            DTO hiển thị thông tin chi tiết kết quả bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.Id">
+            <summary>
+            ID của kết quả bài thi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.Exam">
+            <summary>
+            Thông tin bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.Student">
+            <summary>
+            Thông tin học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.Score">
+            <summary>
+            Số điểm đạt được
+            </summary>
+            <example>8.5</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.TotalScore">
+            <summary>
+            Điểm tối đa của bài thi
+            </summary>
+            <example>10</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.PercentageScore">
+            <summary>
+            Điểm phần trăm
+            </summary>
+            <example>85</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.IsPassed">
+            <summary>
+            Đạt yêu cầu hay không
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.PassScore">
+            <summary>
+            Điểm đạt yêu cầu
+            </summary>
+            <example>5</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.Duration">
+            <summary>
+            Thời gian làm bài (giây)
+            </summary>
+            <example>2550</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.DurationFormatted">
+            <summary>
+            Thời gian làm bài định dạng
+            </summary>
+            <example>42 phút 30 giây</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.CorrectAnswers">
+            <summary>
+            Số câu trả lời đúng
+            </summary>
+            <example>17</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.TotalQuestions">
+            <summary>
+            Tổng số câu hỏi
+            </summary>
+            <example>20</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.AnsweredQuestions">
+            <summary>
+            Số câu đã làm
+            </summary>
+            <example>20</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.AttemptNumber">
+            <summary>
+            Thứ tự lần làm
+            </summary>
+            <example>2</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.IsCompleted">
+            <summary>
+            Trạng thái hoàn thành
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.StartedAt">
+            <summary>
+            Thời điểm bắt đầu làm bài
+            </summary>
+            <example>2025-04-05T10:15:30Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.CompletedAt">
+            <summary>
+            Thời điểm hoàn thành
+            </summary>
+            <example>2025-04-05T10:58:00Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.TeacherComment">
+            <summary>
+            Nhận xét của giáo viên
+            </summary>
+            <example>Bài làm tốt, cần cải thiện phần giới hạn</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.IsSubmittedManually">
+            <summary>
+            Bài thi được nộp tự động khi hết giờ hay nộp bởi người dùng
+            </summary>
+            <example>false</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.StudentAnswers">
+            <summary>
+            Danh sách câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.LevelStats">
+            <summary>
+            Thống kê theo mức độ câu hỏi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.StudentAnswerDTO">
+            <summary>
+            DTO cho câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.Id">
+            <summary>
+            ID của câu trả lời
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+            <example>42</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.QuestionContent">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+            <example>Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.QuestionType">
+            <summary>
+            Loại câu hỏi
+            </summary>
+            <example>Một đáp án</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.QuestionOrder">
+            <summary>
+            Thứ tự câu hỏi trong bài thi
+            </summary>
+            <example>5</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.SelectedOptions">
+            <summary>
+            Các đáp án đã chọn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.TextAnswer">
+            <summary>
+            Văn bản câu trả lời (cho câu hỏi điền từ)
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.MatchingPairs">
+            <summary>
+            Dữ liệu ghép đôi (cho câu hỏi ghép đôi)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.IsCorrect">
+            <summary>
+            Câu trả lời đúng hoàn toàn
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.IsPartiallyCorrect">
+            <summary>
+            Câu trả lời đúng một phần
+            </summary>
+            <example>false</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.Score">
+            <summary>
+            Điểm số cho câu trả lời
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.MaxScore">
+            <summary>
+            Điểm tối đa cho câu hỏi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.AnswerTime">
+            <summary>
+            Thời gian trả lời (giây)
+            </summary>
+            <example>45</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.Status">
+            <summary>
+            Trạng thái câu hỏi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.Explanation">
+            <summary>
+            Giải thích cho câu hỏi
+            </summary>
+            <example>Áp dụng định lý L'Hospital ta có giới hạn bằng 1</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.SelectedOptionDTO">
+            <summary>
+            DTO cho đáp án đã chọn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SelectedOptionDTO.OptionId">
+            <summary>
+            ID của đáp án
+            </summary>
+            <example>15</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SelectedOptionDTO.Content">
+            <summary>
+            Nội dung đáp án
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SelectedOptionDTO.IsCorrect">
+            <summary>
+            Đáp án này có đúng không
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.MatchingPairDTO">
+            <summary>
+            DTO cho cặp ghép đôi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.MatchingPairDTO.LeftValue">
+            <summary>
+            Giá trị bên trái
+            </summary>
+            <example>France</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.MatchingPairDTO.RightValue">
+            <summary>
+            Giá trị bên phải
+            </summary>
+            <example>Paris</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.MatchingPairDTO.IsCorrect">
+            <summary>
+            Cặp này có đúng không
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionLevelStatDTO">
+            <summary>
+            DTO thống kê theo mức độ câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.LevelId">
+            <summary>
+            ID mức độ
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.LevelName">
+            <summary>
+            Tên mức độ
+            </summary>
+            <example>Vận dụng thấp</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.TotalQuestions">
+            <summary>
+            Tổng số câu hỏi ở mức độ này
+            </summary>
+            <example>8</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.CorrectAnswers">
+            <summary>
+            Số câu trả lời đúng
+            </summary>
+            <example>6</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.CorrectPercentage">
+            <summary>
+            Tỷ lệ đúng (%)
+            </summary>
+            <example>75</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamBasicDTO">
+            <summary>
+            DTO cơ bản về bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamBasicDTO.Id">
+            <summary>
+            ID của bài thi
+            </summary>
+            <example>15</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamBasicDTO.Title">
+            <summary>
+            Tiêu đề bài thi
+            </summary>
+            <example>Kiểm tra giữa kỳ Toán học</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamBasicDTO.Type">
+            <summary>
+            Loại bài thi
+            </summary>
+            <example>Giữa kỳ</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamBasicDTO.Subject">
+            <summary>
+            Môn học
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionListDTO">
+            <summary>
+            DTO hiển thị thông tin câu hỏi trong danh sách
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.Id">
+            <summary>
+            ID của câu hỏi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.Content">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+            <example>Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.QuestionType">
+            <summary>
+            Loại câu hỏi
+            </summary>
+            <example>Một đáp án</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.Level">
+            <summary>
+            Mức độ câu hỏi
+            </summary>
+            <example>Vận dụng</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.DefaultScore">
+            <summary>
+            Điểm mặc định
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.Subject">
+            <summary>
+            Thông tin môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.Chapter">
+            <summary>
+            Thông tin chương
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.Tags">
+            <summary>
+            Tags của câu hỏi
+            </summary>
+            <example>giới hạn,đạo hàm</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.OptionsCount">
+            <summary>
+            Số lượng đáp án
+            </summary>
+            <example>4</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionListDTO.CreatedAt">
+            <summary>
+            Thời gian tạo
+            </summary>
+            <example>2025-04-03T13:18:47Z</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionDetailDTO">
+            <summary>
+            DTO hiển thị chi tiết câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Id">
+            <summary>
+            ID của câu hỏi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Content">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+            <example>Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Explanation">
+            <summary>
+            Giải thích cho câu hỏi
+            </summary>
+            <example>Áp dụng định lý L'Hospital ta có giới hạn bằng 1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.SubjectId">
+            <summary>
+            ID môn học
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.ChapterId">
+            <summary>
+            ID chương
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.QuestionLevelId">
+            <summary>
+            ID mức độ câu hỏi
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.QuestionType">
+            <summary>
+            Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Tags">
+            <summary>
+            Tags của câu hỏi
+            </summary>
+            <example>giới hạn,đạo hàm</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.SuggestedTime">
+            <summary>
+            Thời gian làm câu hỏi gợi ý (giây)
+            </summary>
+            <example>60</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.DefaultScore">
+            <summary>
+            Điểm mặc định
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.HasImage">
+            <summary>
+            Có đường dẫn đến hình ảnh hay không
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.ImagePath">
+            <summary>
+            Đường dẫn hình ảnh
+            </summary>
+            <example>/uploads/questions/image1.png</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Subject">
+            <summary>
+            Thông tin môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Chapter">
+            <summary>
+            Thông tin chương
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Level">
+            <summary>
+            Thông tin mức độ
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Creator">
+            <summary>
+            Thông tin người tạo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Options">
+            <summary>
+            Danh sách đáp án
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionLevelDTO">
+            <summary>
+            DTO cho mức độ câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelDTO.Id">
+            <summary>
+            ID của mức độ
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelDTO.Name">
+            <summary>
+            Tên mức độ
+            </summary>
+            <example>Vận dụng thấp</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelDTO.Value">
+            <summary>
+            Giá trị số của mức độ
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelDTO.Description">
+            <summary>
+            Mô tả mức độ
+            </summary>
+            <example>Câu hỏi mức độ vận dụng thấp</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionOptionDTO">
+            <summary>
+            DTO cho đáp án câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.Id">
+            <summary>
+            ID của đáp án
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.Content">
+            <summary>
+            Nội dung đáp án
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.IsCorrect">
+            <summary>
+            Đánh dấu đáp án đúng
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.OrderIndex">
+            <summary>
+            Thứ tự hiển thị
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.ImagePath">
+            <summary>
+            Đường dẫn hình ảnh (nếu có)
+            </summary>
+            <example>/uploads/options/image1.png</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.Explanation">
+            <summary>
+            Giải thích cho đáp án
+            </summary>
+            <example>Đây là đáp án đúng vì...</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.MatchingValue">
+            <summary>
+            Giá trị ghép đôi (cho câu hỏi ghép đôi)
+            </summary>
+            <example>Paris</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CreateQuestionDTO">
+            <summary>
+            DTO để tạo mới câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.Content">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+            <example>Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.Explanation">
+            <summary>
+            Giải thích cho câu hỏi
+            </summary>
+            <example>Áp dụng định lý L'Hospital ta có giới hạn bằng 1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.SubjectId">
+            <summary>
+            ID môn học
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.ChapterId">
+            <summary>
+            ID chương (không bắt buộc)
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.QuestionLevelId">
+            <summary>
+            ID mức độ câu hỏi
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.QuestionType">
+            <summary>
+            Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.Tags">
+            <summary>
+            Tags của câu hỏi, phân cách bởi dấu phẩy
+            </summary>
+            <example>giới hạn,đạo hàm</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.SuggestedTime">
+            <summary>
+            Thời gian làm câu hỏi gợi ý (giây)
+            </summary>
+            <example>60</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.DefaultScore">
+            <summary>
+            Điểm mặc định
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.Options">
+            <summary>
+            Danh sách các đáp án
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CreateQuestionOptionDTO">
+            <summary>
+            DTO để tạo mới đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.Content">
+            <summary>
+            Nội dung đáp án
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.IsCorrect">
+            <summary>
+            Đánh dấu đáp án đúng
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.OrderIndex">
+            <summary>
+            Thứ tự hiển thị
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.Explanation">
+            <summary>
+            Giải thích cho đáp án
+            </summary>
+            <example>Đây là đáp án đúng vì...</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.MatchingValue">
+            <summary>
+            Giá trị ghép đôi (cho câu hỏi ghép đôi)
+            </summary>
+            <example>Paris</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionFilterDTO">
+            <summary>
+            Tham số truyền vào khi lọc câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.SubjectId">
+            <summary>
+            ID của môn học cần lọc
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.ChapterId">
+            <summary>
+            ID của chương cần lọc
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.QuestionLevelId">
+            <summary>
+            ID của mức độ cần lọc
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.QuestionType">
+            <summary>
+            Loại câu hỏi cần lọc
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.Page">
+            <summary>
+            Trang hiện tại
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.PageSize">
+            <summary>
+            Số lượng bản ghi mỗi trang
+            </summary>
+            <example>20</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.ActiveOnly">
+            <summary>
+            Chỉ lấy các câu hỏi đang hoạt động
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.Tags">
+            <summary>
+            Tags cần lọc
+            </summary>
+            <example>giới hạn</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.SearchTerm">
+            <summary>
+            Từ khóa tìm kiếm (nội dung câu hỏi)
+            </summary>
+            <example>giới hạn</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.SubjectListDTO">
+            <summary>
+            DTO hiển thị thông tin môn học trong danh sách
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.SubjectDetailDTO">
+            <summary>
+            DTO hiển thị chi tiết môn học kèm thông tin chương
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ChapterBasicDTO">
+            <summary>
+            DTO cơ bản cho chương (dùng trong chi tiết môn học)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CreateSubjectDTO">
+            <summary>
+            DTO dùng để tạo mới môn học
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UpdateSubjectDTO">
+            <summary>
+            DTO dùng để cập nhật môn học
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.SubjectDropdownDTO">
+            <summary>
+            DTO đơn giản cho dropdown/select
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UserDTO">
+            <summary>
+            DTO chứa thông tin người dùng để trả về cho client
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.Id">
+            <summary>
+            ID của người dùng
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.Username">
+            <summary>
+            Tên đăng nhập của người dùng
+            </summary>
+            <example>thien1124</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.Email">
+            <summary>
+            Địa chỉ email của người dùng
+            </summary>
+            <example>thien1124@example.com</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.FullName">
+            <summary>
+            Họ và tên đầy đủ của người dùng
+            </summary>
+            <example>Nguyễn Văn Thiện</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.PhoneNumber">
+            <summary>
+            Số điện thoại của người dùng
+            </summary>
+            <example>0912345678</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.Role">
+            <summary>
+            Vai trò của người dùng trong hệ thống (Admin, Teacher, Student)
+            </summary>
+            <example>Teacher</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.CreatedAt">
+            <summary>
+            Thời điểm tạo tài khoản
+            </summary>
+            <example>2025-04-03T13:18:47Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.LastLogin">
+            <summary>
+            Thời điểm đăng nhập cuối cùng
+            </summary>
+            <example>2025-04-03T13:18:47Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UserDTO.UpdatedAt">
+            <summary>
+            Thời điểm cập nhật thông tin gần nhất
+            </summary>
+            <example>2025-04-03T13:18:47Z</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UpdateUserDTO">
+            <summary>
+            DTO dùng để cập nhật thông tin cá nhân của người dùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UpdateUserDTO.Email">
+            <summary>
+            Địa chỉ email mới của người dùng
+            </summary>
+            <example>thien1124.new@example.com</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UpdateUserDTO.FullName">
+            <summary>
+            Họ và tên đầy đủ mới của người dùng
+            </summary>
+            <example>Nguyễn Văn Thiện</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UpdateUserDTO.PhoneNumber">
+            <summary>
+            Số điện thoại mới của người dùng
+            </summary>
+            <example>0987654321</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UpdateUserRoleDTO">
+            <summary>
+            DTO dùng để cập nhật vai trò của người dùng (chỉ Admin mới có quyền)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UpdateUserRoleDTO.Role">
+            <summary>
+            Vai trò mới của người dùng (Admin, Teacher, Student)
+            </summary>
+            <example>Teacher</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UpdateUserStatusDTO">
+            <summary>
+            DTO dùng để kích hoạt hoặc vô hiệu hóa tài khoản người dùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.UpdateUserStatusDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt của tài khoản (true: kích hoạt, false: vô hiệu hóa)
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="T:webthitn_backend.Migrations.Initial">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.Initial.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.Initial.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.Initial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddResetTokenToUser">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddResetTokenToUser.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddResetTokenToUser.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddResetTokenToUser.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddPasswordResetTable">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddEmailToUser">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddEmailToUser.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddEmailToUser.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddEmailToUser.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddPasswordResetFields">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetFields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetFields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddPasswordResetField">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetField.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetField.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPasswordResetField.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AllowNullForResetPasswordFields">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AllowNullForResetPasswordFields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AllowNullForResetPasswordFields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AllowNullForResetPasswordFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddUserManagementFields">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddUserManagementFields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddUserManagementFields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddUserManagementFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.FixRequiredPropertiesInUserModel">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.FixRequiredPropertiesInUserModel.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.FixRequiredPropertiesInUserModel.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.FixRequiredPropertiesInUserModel.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.FixStudentAnswerModels">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.FixStudentAnswerModels.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.FixStudentAnswerModels.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.FixStudentAnswerModels.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddExamResultTables">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddExamResultTables.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddExamResultTables.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddExamResultTables.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Models.Subject">
+            <summary>
+            Model đại diện cho môn học trong hệ thống
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Id">
+            <summary>
+            ID của môn học, là khóa chính
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Name">
+            <summary>
+            Tên môn học: Toán, Lý, Hóa, Văn, Anh,...
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Code">
+            <summary>
+            Mã môn học: MATH, PHY, CHEM, LIT, ENG,...
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Description">
+            <summary>
+            Mô tả về môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.IsActive">
+            <summary>
+            Trạng thái của môn học: true - đang hoạt động, false - đã vô hiệu hóa
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.CreatedAt">
+            <summary>
+            Thời gian tạo môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.UpdatedAt">
+            <summary>
+            Thời gian cập nhật môn học gần nhất, null nếu chưa được cập nhật
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Chapters">
+            <summary>
+            Danh sách các chương thuộc môn học này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Exams">
+            <summary>
+            Danh sách các bài thi thuộc môn học này
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ExamQuestion">
+            <summary>
+            Entity đại diện cho quan hệ giữa bài thi và câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.Id">
+            <summary>
+            ID của quan hệ bài thi - câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.ExamId">
+            <summary>
+            ID của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.OrderIndex">
+            <summary>
+            Thứ tự hiển thị của câu hỏi trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.Score">
+            <summary>
+            Điểm của câu hỏi trong bài thi này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.Exam">
+            <summary>
+            Bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamQuestion.Question">
+            <summary>
+            Câu hỏi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ExamResult">
+            <summary>
+            Entity đại diện cho kết quả làm bài thi của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Id">
+            <summary>
+            ID của kết quả bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.ExamId">
+            <summary>
+            ID của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.StudentId">
+            <summary>
+            ID của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Score">
+            <summary>
+            Số điểm đạt được
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Duration">
+            <summary>
+            Thời gian làm bài thực tế (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.AttemptNumber">
+            <summary>
+            Thứ tự lần làm bài (nếu học sinh làm nhiều lần)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.CorrectAnswers">
+            <summary>
+            Số câu trả lời đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.TotalQuestions">
+            <summary>
+            Tổng số câu hỏi trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.AnsweredQuestions">
+            <summary>
+            Số câu đã làm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.IsCompleted">
+            <summary>
+            Trạng thái hoàn thành bài thi
+            </summary>
+            <remarks>
+            True: Đã hoàn thành/đã nộp bài
+            False: Đang làm/chưa hoàn thành
+            </remarks>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.PercentageScore">
+            <summary>
+            Điểm phần trăm (0-100)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.IsPassed">
+            <summary>
+            Đã đạt yêu cầu hay chưa
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.TeacherComment">
+            <summary>
+            Nhận xét của giáo viên
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.GradedById">
+            <summary>
+            ID của giáo viên chấm bài (nếu có chấm thủ công)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.GradingStatus">
+            <summary>
+            Trạng thái chấm bài
+            </summary>
+            <remarks>
+            0: Đang chờ chấm
+            1: Đã chấm tự động
+            2: Đã chấm thủ công
+            3: Đã chấm kết hợp (tự động + thủ công)
+            </remarks>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.IPAddress">
+            <summary>
+            IP của thiết bị làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.DeviceInfo">
+            <summary>
+            Thông tin thiết bị làm bài (user agent)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.StartedAt">
+            <summary>
+            Thời điểm bắt đầu làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.CompletedAt">
+            <summary>
+            Thời điểm nộp bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.GradedAt">
+            <summary>
+            Thời điểm chấm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.IsSubmittedManually">
+            <summary>
+            Bài thi được hoàn thành hay bị hết thời gian
+            </summary>
+            <remarks>
+            True: Người dùng chủ động nộp bài
+            False: Hết thời gian làm bài và hệ thống tự động nộp
+            </remarks>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Exam">
+            <summary>
+            Bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Student">
+            <summary>
+            Học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.GradedBy">
+            <summary>
+            Giáo viên chấm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.StudentAnswers">
+            <summary>
+            Danh sách câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.Exam">
+            <summary>
+            Entity đại diện cho bài thi trong hệ thống
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.Id">
+            <summary>
+            ID của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.Title">
+            <summary>
+            Tiêu đề bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.Description">
+            <summary>
+            Mô tả bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.SubjectId">
+            <summary>
+            ID của môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ExamTypeId">
+            <summary>
+            ID của loại bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.Duration">
+            <summary>
+            Thời gian làm bài (phút)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.TotalScore">
+            <summary>
+            Điểm tối đa của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.PassScore">
+            <summary>
+            Điểm đạt của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.MaxAttempts">
+            <summary>
+            Số lần được làm bài (null là không giới hạn)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.StartTime">
+            <summary>
+            Thời gian bắt đầu mở bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.EndTime">
+            <summary>
+            Thời gian kết thúc đóng bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.IsActive">
+            <summary>
+            Trạng thái kích hoạt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ShowResult">
+            <summary>
+            Cài đặt hiển thị kết quả sau khi làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ShowAnswers">
+            <summary>
+            Cài đặt hiển thị đáp án đúng sau khi làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ShuffleQuestions">
+            <summary>
+            Trộn câu hỏi khi hiển thị
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.AccessCode">
+            <summary>
+            Mã truy cập bài thi (nếu được bảo vệ)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.CreatedAt">
+            <summary>
+            Ngày giờ tạo bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.UpdatedAt">
+            <summary>
+            Ngày giờ cập nhật gần nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.CreatorId">
+            <summary>
+            ID người tạo bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.Subject">
+            <summary>
+            Quan hệ với môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ExamType">
+            <summary>
+            Quan hệ với loại bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.Creator">
+            <summary>
+            Người tạo bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ExamQuestions">
+            <summary>
+            Danh sách câu hỏi trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ExamResults">
+            <summary>
+            Danh sách kết quả làm bài
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ExamType">
+            <summary>
+            Entity đại diện cho loại bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamType.Id">
+            <summary>
+            ID của loại bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamType.Name">
+            <summary>
+            Tên loại bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamType.Description">
+            <summary>
+            Mô tả loại bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamType.Exams">
+            <summary>
+            Danh sách bài thi thuộc loại này
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.StudentAnswerHistory">
+            <summary>
+            Entity lưu trữ lịch sử thay đổi câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.Id">
+            <summary>
+            ID của lịch sử
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.StudentAnswerId">
+            <summary>
+            ID của câu trả lời
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.SelectedOptionIds">
+            <summary>
+            Các ID của đáp án được chọn (JSON array cho câu hỏi nhiều đáp án)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.TextAnswer">
+            <summary>
+            Văn bản câu trả lời (cho câu hỏi điền từ)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.MatchingData">
+            <summary>
+            Dữ liệu ghép đôi (JSON cho câu hỏi ghép đôi)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.ChangedAt">
+            <summary>
+            Thời gian thay đổi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.IPAddress">
+            <summary>
+            IP của thiết bị khi thay đổi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.SessionId">
+            <summary>
+            ID của phiên làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.StudentAnswer">
+            <summary>
+            Câu trả lời
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.StudentAnswer">
+            <summary>
+            Entity đại diện cho câu trả lời của học sinh trong bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.StudentAnswer.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.Id">
+            <summary>
+            ID của câu trả lời
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ExamResultId">
+            <summary>
+            ID của kết quả bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ExamQuestionId">
+            <summary>
+            ID của quan hệ bài thi - câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.QuestionOrder">
+            <summary>
+            Thứ tự câu hỏi trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.SelectedOptionIds">
+            <summary>
+            Các ID của đáp án được chọn (JSON array cho câu hỏi nhiều đáp án)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.TextAnswer">
+            <summary>
+            Văn bản câu trả lời (cho câu hỏi điền từ)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.MatchingData">
+            <summary>
+            Dữ liệu ghép đôi (JSON cho câu hỏi ghép đôi)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.IsCorrect">
+            <summary>
+            Câu trả lời có đúng hay không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.IsPartiallyCorrect">
+            <summary>
+            Câu trả lời có chính xác một phần hay không (cho câu nhiều đáp án)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.Score">
+            <summary>
+            Điểm số cho câu trả lời này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.MaxScore">
+            <summary>
+            Điểm số tối đa cho câu hỏi này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.AnswerTime">
+            <summary>
+            Thời gian trả lời (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.IsFlagged">
+            <summary>
+            Có đánh dấu để xem lại không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ManualScore">
+            <summary>
+            Điểm chấm thủ công (nếu giáo viên thay đổi điểm)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.TeacherNote">
+            <summary>
+            Ghi chú của giáo viên khi chấm điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.AnsweredAt">
+            <summary>
+            Thời điểm trả lời câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ModifiedAt">
+            <summary>
+            Thời điểm sửa đổi câu trả lời gần nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.Status">
+            <summary>
+            Trạng thái câu hỏi
+            </summary>
+            <remarks>
+            0: Chưa trả lời
+            1: Đã trả lời
+            2: Đánh dấu xem lại
+            </remarks>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ExamResult">
+            <summary>
+            Kết quả bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ExamQuestion">
+            <summary>
+            Câu hỏi trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.Question">
+            <summary>
+            Câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.AnswerHistory">
+            <summary>
+            Lịch sử thay đổi của câu trả lời
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.SelectedOptionIdsList">
+            <summary>
+            Danh sách các ID đáp án đã chọn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.MatchingPairs">
+            <summary>
+            Cấu trúc dữ liệu ghép đôi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.QuestionLevel">
+            <summary>
+            Entity đại diện cho mức độ khó của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionLevel.Id">
+            <summary>
+            ID của mức độ
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionLevel.Name">
+            <summary>
+            Tên mức độ
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionLevel.Value">
+            <summary>
+            Giá trị số của mức độ (1: Dễ, 2: Trung bình, 3: Khó, 4: Rất khó)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionLevel.Description">
+            <summary>
+            Mô tả về mức độ
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionLevel.Questions">
+            <summary>
+            Danh sách câu hỏi thuộc mức độ này
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.QuestionOption">
+            <summary>
+            Entity đại diện cho các lựa chọn/đáp án của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.Id">
+            <summary>
+            ID của đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.Content">
+            <summary>
+            Nội dung đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.IsCorrect">
+            <summary>
+            Đánh dấu đáp án đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.OrderIndex">
+            <summary>
+            Thứ tự hiển thị của đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.ImagePath">
+            <summary>
+            Đường dẫn đến hình ảnh (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.Explanation">
+            <summary>
+            Phần giải thích cho đáp án này (nếu cần)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.Question">
+            <summary>
+            Tham chiếu đến câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.MatchingValue">
+            <summary>
+            Giá trị ghép đôi (sử dụng cho câu hỏi ghép đôi)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.Question">
+            <summary>
+            Entity đại diện cho câu hỏi trong hệ thống
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Id">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Content">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Explanation">
+            <summary>
+            Giải thích cho câu hỏi (hiển thị sau khi làm bài)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.SubjectId">
+            <summary>
+            ID của môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.ChapterId">
+            <summary>
+            ID của chương (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.QuestionLevelId">
+            <summary>
+            ID của mức độ câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.QuestionType">
+            <summary>
+            Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Tags">
+            <summary>
+            Tags/từ khóa cho câu hỏi, phân cách bởi dấu phẩy
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.SuggestedTime">
+            <summary>
+            Thời gian làm câu hỏi gợi ý (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.DefaultScore">
+            <summary>
+            Điểm mặc định cho câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.IsActive">
+            <summary>
+            Trạng thái kích hoạt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.ImagePath">
+            <summary>
+            Đường dẫn đến hình ảnh (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.CreatorId">
+            <summary>
+            ID người tạo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.CreatedAt">
+            <summary>
+            Ngày tạo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.UpdatedAt">
+            <summary>
+            Ngày cập nhật
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Subject">
+            <summary>
+            Môn học của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Chapter">
+            <summary>
+            Chương của câu hỏi (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.QuestionLevel">
+            <summary>
+            Mức độ câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Creator">
+            <summary>
+            Người tạo câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.Options">
+            <summary>
+            Danh sách các đáp án của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.ExamQuestions">
+            <summary>
+            Danh sách bài thi chứa câu hỏi này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.QuestionTypeName">
+            <summary>
+            Trả về tên loại câu hỏi dựa trên mã QuestionType
+            </summary>
+            <returns>Tên loại câu hỏi</returns>
+        </member>
+        <member name="T:webthitn_backend.Models.Users.User">
+            <summary>
+            Entity đại diện cho người dùng trong hệ thống
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Id">
+            <summary>
+            ID của người dùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Username">
+            <summary>
+            Tên đăng nhập
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Email">
+            <summary>
+            Email của người dùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Password">
+            <summary>
+            Mật khẩu đã được hash
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.FullName">
+            <summary>
+            Họ và tên
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Role">
+            <summary>
+            Vai trò của người dùng (Admin, Teacher, Student)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.PhoneNumber">
+            <summary>
+            Số điện thoại
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.School">
+            <summary>
+            Trường học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Grade">
+            <summary>
+            Lớp hoặc khối
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.IsActive">
+            <summary>
+            Trạng thái kích hoạt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.AvatarUrl">
+            <summary>
+            Đường dẫn đến ảnh đại diện
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.ResetPasswordCode">
+            <summary>
+            Mã đặt lại mật khẩu
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.ResetPasswordExpiry">
+            <summary>
+            Thời gian hết hạn của mã đặt lại mật khẩu
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.ResetToken">
+            <summary>
+            Token đặt lại mật khẩu
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.ResetTokenExpires">
+            <summary>
+            Thời gian hết hạn token đặt lại mật khẩu
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.RefreshToken">
+            <summary>
+            Refresh token cho JWT
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.RefreshTokenExpires">
+            <summary>
+            Thời gian hết hạn refresh token
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.CreatedAt">
+            <summary>
+            Ngày tạo người dùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.UpdatedAt">
+            <summary>
+            Ngày cập nhật thông tin gần nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.LastLogin">
+            <summary>
+            Thời gian đăng nhập gần nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.CreatedExams">
+            <summary>
+            Các bài thi đã tạo (chỉ áp dụng cho Teacher và Admin)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.CreatedQuestions">
+            <summary>
+            Các câu hỏi đã tạo (chỉ áp dụng cho Teacher và Admin)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.ExamResults">
+            <summary>
+            Kết quả các bài thi đã làm (chỉ áp dụng cho Student)
+            </summary>
+        </member>
+    </members>
+</doc>
