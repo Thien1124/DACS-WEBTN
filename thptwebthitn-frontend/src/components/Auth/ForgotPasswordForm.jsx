@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import * as authService from '../../services/authService';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -117,6 +119,7 @@ const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setEmail(e.target.value);
@@ -144,12 +147,23 @@ const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        // API call would go here
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+        // Gọi API để gửi email đặt lại mật khẩu
+        await authService.requestPasswordReset(email);
+        
+        // Hiển thị thông báo thành công tạm thời
         setIsSubmitted(true);
+        
+        // Sau đó chuyển đến trang nhập mã xác nhận và mật khẩu mới
+        setTimeout(() => {
+          navigate('/reset-password', { 
+            state: { 
+              email: email 
+            } 
+          });
+        }, 1500);
       } catch (error) {
         setErrors({
-          general: 'Đã xảy ra lỗi. Vui lòng thử lại sau.'
+          general: error.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.'
         });
       } finally {
         setIsLoading(false);
@@ -169,18 +183,13 @@ const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
       {isSubmitted ? (
         <>
           <SuccessMessage theme={theme}>
-            Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu vào email của bạn. Vui lòng kiểm tra hộp thư.
+            Chúng tôi đã gửi mã xác nhận vào email của bạn. Đang chuyển đến trang đặt lại mật khẩu...
           </SuccessMessage>
-          <LoginLink theme={theme}>
-            <LoginButton theme={theme} onClick={onBackToLogin}>
-              Quay lại đăng nhập
-            </LoginButton>
-          </LoginLink>
         </>
       ) : (
         <>
           <p style={{ marginBottom: '1.5rem', textAlign: 'center', color: theme === 'dark' ? '#a0aec0' : '#777' }}>
-            Nhập email đã đăng ký của bạn để nhận hướng dẫn đặt lại mật khẩu.
+            Nhập email đã đăng ký của bạn để nhận mã xác nhận đặt lại mật khẩu.
           </p>
           
           {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}

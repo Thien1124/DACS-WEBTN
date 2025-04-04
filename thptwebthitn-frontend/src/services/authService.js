@@ -177,7 +177,9 @@ export const logout = async () => {
  */
 export const requestPasswordReset = async (email) => {
   try {
+    console.log('Sending password reset request for email:', email);
     const response = await apiClient.post('/api/Password/forgot-password', { email });
+    console.log('Password reset request response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Password reset request failed:', error);
@@ -185,6 +187,49 @@ export const requestPasswordReset = async (email) => {
     let errorMessage = 'Gửi yêu cầu đặt lại mật khẩu thất bại.';
     if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
+    } else if (typeof error.response?.data === 'string') {
+      errorMessage = error.response.data;
+    }
+    
+    throw { message: errorMessage };
+  }
+};
+
+/**
+ * Reset password with code
+ * @param {object} resetData - Reset data including email, resetCode, and newPassword
+ * @returns {Promise} - Promise resolving to response data
+ */
+export const resetPasswordWithCode = async (resetData) => {
+  try {
+    console.log('Sending password reset with code request:', {
+      email: resetData.email,
+      resetCode: resetData.resetCode,
+      // Không log mật khẩu
+    });
+    
+    const response = await apiClient.post('/api/Password/reset-password-with-code', {
+      email: resetData.email,
+      resetCode: resetData.resetCode,
+      newPassword: resetData.newPassword
+    });
+    
+    console.log('Password reset with code response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Password reset with code failed:', error);
+    
+    let errorMessage = 'Đặt lại mật khẩu thất bại.';
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (typeof error.response?.data === 'string') {
+      errorMessage = error.response.data;
+    } else if (error.response?.data?.errors) {
+      const validationErrors = error.response.data.errors;
+      const firstError = Object.values(validationErrors)[0];
+      if (Array.isArray(firstError) && firstError.length > 0) {
+        errorMessage = firstError[0];
+      }
     }
     
     throw { message: errorMessage };

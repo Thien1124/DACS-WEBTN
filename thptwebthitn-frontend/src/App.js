@@ -11,6 +11,7 @@ import Settings from './components/Settings/Settings';
 import { ThemeProvider } from 'styled-components';
 import Navbar from './components/layout/Navbar';
 import { getUserData, getToken } from './utils/auth';
+import AuthPage from './pages/AuthPage';
 
 import './App.css';
 
@@ -47,6 +48,8 @@ function App() {
           <Route path="/login" element={<AuthContainer />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
+          <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
         </Routes>
       </Router>
     </AppContainer>

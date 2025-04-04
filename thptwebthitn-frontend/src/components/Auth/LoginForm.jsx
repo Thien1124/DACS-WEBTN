@@ -359,7 +359,21 @@ const LoginForm = ({ theme, switchToRegister }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-
+  useEffect(() => {
+    let successTimer;
+    
+    if (loginSuccess) {
+      successTimer = setTimeout(() => {
+        // Chuyển trang sau khi thông báo biến mất
+        navigate('/');
+      }, 2000); // 2 giây
+    }
+    
+    // Cleanup timer khi component unmount hoặc loginSuccess thay đổi
+    return () => {
+      if (successTimer) clearTimeout(successTimer);
+    };
+  }, [loginSuccess, navigate]);
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -396,8 +410,8 @@ const LoginForm = ({ theme, switchToRegister }) => {
           token: response.token
         }
       });
-      
       setLoginSuccess(true);
+      
       
       // Delay before closing form and redirecting
       setTimeout(() => {
