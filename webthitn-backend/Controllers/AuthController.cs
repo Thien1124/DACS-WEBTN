@@ -53,6 +53,7 @@ namespace webthitn_backend.Controllers
                 {
                     return BadRequest("Mật khẩu và xác nhận mật khẩu không khớp.");
                 }
+
                 // Tạo người dùng mới
                 var user = new User
                 {
@@ -61,7 +62,9 @@ namespace webthitn_backend.Controllers
                     Email = registerRequest.Email,
                     Password = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password),
                     PhoneNumber = registerRequest.PhoneNumber,
-                    Role = "User", // Mặc định là User
+                    Role = "Student", // Mặc định là Student thay vì User
+                    School = "Chưa cập nhật", // Thêm giá trị mặc định
+                    Grade = "Chưa cập nhật", // Thêm giá trị mặc định
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -71,7 +74,7 @@ namespace webthitn_backend.Controllers
                 await _context.SaveChangesAsync();
 
                 // Tạo token để đăng nhập luôn
-                var token = GenerateJwtToken(user);
+                var token = GenerateJwtToken(user, false); // Không ghi nhớ khi đăng ký
 
                 return Ok(new
                 {
@@ -91,9 +94,16 @@ namespace webthitn_backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Đăng ký thất bại: {ex.Message}");
+                _logger.LogError($"Stack Trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError($"Inner Exception: {ex.InnerException.Message}");
+                    _logger.LogError($"Inner Stack Trace: {ex.InnerException.StackTrace}");
+                }
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng ký tài khoản." });
             }
         }
+
 
         // Đăng nhập và lấy JWT token
         [HttpPost("login")]
@@ -101,18 +111,22 @@ namespace webthitn_backend.Controllers
         {
             try
             {
+                _logger.LogInformation($"Đang thực hiện đăng nhập cho: {loginRequest.UsernameOrEmail}, RememberMe: {loginRequest.RememberMe}");
+
                 // Kiểm tra tài khoản người dùng trong cơ sở dữ liệu dựa trên username hoặc email
                 var user = await _context.Users.FirstOrDefaultAsync(u =>
                     u.Username == loginRequest.UsernameOrEmail || u.Email == loginRequest.UsernameOrEmail);
 
                 if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password))
                 {
+                    _logger.LogWarning($"Đăng nhập thất bại: thông tin không hợp lệ cho user {loginRequest.UsernameOrEmail}");
                     return Unauthorized(new { message = "Thông tin đăng nhập không hợp lệ" });
                 }
 
                 // Kiểm tra trạng thái tài khoản
                 if (!user.IsActive)
                 {
+                    _logger.LogWarning($"Đăng nhập thất bại: tài khoản {user.Username} bị khóa");
                     return Unauthorized(new { message = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên." });
                 }
 
@@ -120,8 +134,10 @@ namespace webthitn_backend.Controllers
                 user.LastLogin = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                // Tạo JWT token khi đăng nhập thành công
-                var token = GenerateJwtToken(user);
+                // Tạo JWT token khi đăng nhập thành công với thời hạn phụ thuộc vào Remember Me
+                var token = GenerateJwtToken(user, loginRequest.RememberMe);
+
+                _logger.LogInformation($"Đăng nhập thành công: {user.Username}, RememberMe: {loginRequest.RememberMe}");
 
                 return Ok(new
                 {
@@ -137,6 +153,7 @@ namespace webthitn_backend.Controllers
                         LastLogin = user.LastLogin,
                         CreatedAt = user.CreatedAt
                     },
+                    rememberMe = loginRequest.RememberMe,
                     currentDate = DateTime.UtcNow // Thông tin thời gian hiện tại
                 });
             }
@@ -178,42 +195,63 @@ namespace webthitn_backend.Controllers
                 var username = jwtToken.Claims.First(x => x.Type == "sub").Value;
                 var email = jwtToken.Claims.First(x => x.Type == "email").Value;
 
+                // Kiểm tra xem token có được tạo với RememberMe hay không
+                var rememberMeClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "rememberMe")?.Value;
+                bool isRemembered = rememberMeClaim != null && bool.Parse(rememberMeClaim);
+
                 return Ok(new
                 {
                     valid = true,
                     username = username,
                     email = email,
+                    rememberMe = isRemembered,
                     currentDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
                     currentUser = username // Hiển thị username hiện tại (Thien1124)
                 });
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning($"Xác thực token thất bại: {ex.Message}");
                 return Unauthorized(new { message = "Token không hợp lệ hoặc đã hết hạn" });
             }
         }
 
-        // Tạo JWT token với thời gian hết hạn dài hơn
-        private string GenerateJwtToken(User user)
+        // Tạo JWT token với thời gian hết hạn dài hơn nếu rememberMe = true
+        private string GenerateJwtToken(User user, bool rememberMe)
         {
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Username),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.Role, user.Role ?? "User"),
                 new Claim("userId", user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("rememberMe", rememberMe.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Tăng thời gian hết hạn token lên 24 giờ (hoặc dài hơn nếu cần)
+            // Thời gian hết hạn phụ thuộc vào tùy chọn "ghi nhớ mật khẩu"
+            DateTime expiresTime;
+            if (rememberMe)
+            {
+                // Nếu chọn "ghi nhớ mật khẩu", token có hiệu lực trong 30 ngày
+                expiresTime = DateTime.Now.AddDays(30);
+                _logger.LogInformation($"Tạo token cho {user.Username} với thời hạn 30 ngày (RememberMe)");
+            }
+            else
+            {
+                // Nếu không, token có hiệu lực trong 1 ngày như cũ
+                expiresTime = DateTime.Now.AddDays(1);
+                _logger.LogInformation($"Tạo token cho {user.Username} với thời hạn 1 ngày (Session)");
+            }
+
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddDays(1),  // Tăng lên 1 ngày
+                expires: expiresTime,
                 signingCredentials: creds
             );
 

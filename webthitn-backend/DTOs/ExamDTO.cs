@@ -105,6 +105,24 @@ namespace webthitn_backend.DTOs
         public required bool ShuffleQuestions { get; set; }
 
         /// <summary>
+        /// Trộn đáp án khi hiển thị (áp dụng cho câu hỏi trắc nghiệm một đáp án)
+        /// </summary>
+        /// <example>true</example>
+        public bool ShuffleOptions { get; set; } = true;
+
+        /// <summary>
+        /// Cài đặt chấm tự động câu hỏi trả lời ngắn
+        /// </summary>
+        /// <example>true</example>
+        public bool AutoGradeShortAnswer { get; set; } = true;
+
+        /// <summary>
+        /// Cài đặt mức điểm đạt (%) cho câu hỏi đúng-sai nhiều ý nếu trả lời đúng một phần
+        /// </summary>
+        /// <example>true</example>
+        public bool AllowPartialGrading { get; set; } = true;
+
+        /// <summary>
         /// Ngày tạo bài thi
         /// </summary>
         /// <example>2025-04-03T13:18:47Z</example>
@@ -119,6 +137,11 @@ namespace webthitn_backend.DTOs
         /// Thông tin người tạo
         /// </summary>
         public required UserBasicDTO Creator { get; set; }
+
+        /// <summary>
+        /// Thống kê số lượng câu hỏi theo loại
+        /// </summary>
+        public QuestionTypeCountDTO QuestionTypeCounts { get; set; }
     }
 
     /// <summary>
@@ -224,5 +247,195 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>kiểm tra</example>
         public required string SearchTerm { get; set; }
+    }
+
+    /// <summary>
+    /// DTO tạo mới bài thi
+    /// </summary>
+    public class CreateExamDTO
+    {
+        /// <summary>
+        /// Tiêu đề bài thi
+        /// </summary>
+        /// <example>Kiểm tra giữa kỳ Toán học</example>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// Mô tả bài thi
+        /// </summary>
+        /// <example>Bài kiểm tra kiến thức cơ bản về đạo hàm và tích phân</example>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// ID của môn học
+        /// </summary>
+        /// <example>1</example>
+        public int SubjectId { get; set; }
+
+        /// <summary>
+        /// ID của loại bài thi
+        /// </summary>
+        /// <example>3</example>
+        public int ExamTypeId { get; set; }
+
+        /// <summary>
+        /// Thời gian làm bài (phút)
+        /// </summary>
+        /// <example>45</example>
+        public int Duration { get; set; }
+
+        /// <summary>
+        /// Điểm tối đa của bài thi
+        /// </summary>
+        /// <example>10</example>
+        public decimal TotalScore { get; set; }
+
+        /// <summary>
+        /// Điểm đạt của bài thi
+        /// </summary>
+        /// <example>5</example>
+        public decimal? PassScore { get; set; }
+
+        /// <summary>
+        /// Số lần được làm bài
+        /// </summary>
+        /// <example>2</example>
+        public int? MaxAttempts { get; set; }
+
+        /// <summary>
+        /// Thời gian bắt đầu mở bài thi
+        /// </summary>
+        /// <example>2025-04-05T08:00:00Z</example>
+        public DateTime? StartTime { get; set; }
+
+        /// <summary>
+        /// Thời gian kết thúc đóng bài thi
+        /// </summary>
+        /// <example>2025-04-15T23:59:59Z</example>
+        public DateTime? EndTime { get; set; }
+
+        /// <summary>
+        /// Trạng thái kích hoạt của bài thi
+        /// </summary>
+        /// <example>true</example>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Hiển thị kết quả sau khi làm bài
+        /// </summary>
+        /// <example>true</example>
+        public bool ShowResult { get; set; } = true;
+
+        /// <summary>
+        /// Hiển thị đáp án sau khi làm bài
+        /// </summary>
+        /// <example>false</example>
+        public bool ShowAnswers { get; set; } = false;
+
+        /// <summary>
+        /// Trộn câu hỏi khi hiển thị
+        /// </summary>
+        /// <example>true</example>
+        public bool ShuffleQuestions { get; set; } = true;
+
+        /// <summary>
+        /// Trộn đáp án khi hiển thị (áp dụng cho câu hỏi trắc nghiệm một đáp án)
+        /// </summary>
+        /// <example>true</example>
+        public bool ShuffleOptions { get; set; } = true;
+
+        /// <summary>
+        /// Cài đặt chấm tự động câu hỏi trả lời ngắn
+        /// </summary>
+        /// <example>true</example>
+        public bool AutoGradeShortAnswer { get; set; } = true;
+
+        /// <summary>
+        /// Cài đặt mức điểm đạt (%) cho câu hỏi đúng-sai nhiều ý nếu trả lời đúng một phần
+        /// </summary>
+        /// <example>true</example>
+        public bool AllowPartialGrading { get; set; } = true;
+
+        /// <summary>
+        /// Mã truy cập bài thi (nếu được bảo vệ)
+        /// </summary>
+        /// <example>abc123</example>
+        public string AccessCode { get; set; }
+
+        /// <summary>
+        /// Cấu hình tính điểm (JSON)
+        /// </summary>
+        public string ScoringConfig { get; set; }
+
+        /// <summary>
+        /// Danh sách ID câu hỏi đưa vào bài thi
+        /// </summary>
+        public List<ExamQuestionCreateDTO> Questions { get; set; }
+    }
+
+    /// <summary>
+    /// DTO thêm câu hỏi vào bài thi
+    /// </summary>
+    public class ExamQuestionCreateDTO
+    {
+        /// <summary>
+        /// ID của câu hỏi
+        /// </summary>
+        /// <example>42</example>
+        public int QuestionId { get; set; }
+
+        /// <summary>
+        /// Thứ tự câu hỏi trong bài thi
+        /// </summary>
+        /// <example>1</example>
+        public int Order { get; set; }
+
+        /// <summary>
+        /// Điểm số cho câu hỏi trong bài thi
+        /// </summary>
+        /// <example>1.5</example>
+        public decimal Score { get; set; }
+    }
+
+    /// <summary>
+    /// Thống kê số lượng câu hỏi theo loại
+    /// </summary>
+    public class QuestionTypeCountDTO
+    {
+        /// <summary>
+        /// Số câu hỏi trắc nghiệm một đáp án
+        /// </summary>
+        public int SingleChoiceCount { get; set; }
+
+        /// <summary>
+        /// Số câu hỏi đúng-sai nhiều ý
+        /// </summary>
+        public int TrueFalseCount { get; set; }
+
+        /// <summary>
+        /// Số câu hỏi trả lời ngắn
+        /// </summary>
+        public int ShortAnswerCount { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cấu hình tính điểm cho bài thi
+    /// </summary>
+    public class ExamScoringConfigDTO
+    {
+        /// <summary>
+        /// Phương thức tính điểm ("sum": cộng điểm, "average": lấy trung bình)
+        /// </summary>
+        public string GradingMethod { get; set; } = "sum";
+
+        /// <summary>
+        /// Phương thức tính điểm một phần ("proportional": tính theo tỷ lệ, "all_or_nothing": đúng hết hoặc không điểm)
+        /// </summary>
+        public string PartialCreditMethod { get; set; } = "proportional";
+
+        /// <summary>
+        /// Phần trăm điểm trừ cho câu trả lời sai (0-100)
+        /// </summary>
+        public decimal PenaltyForWrongAnswer { get; set; } = 0;
     }
 }

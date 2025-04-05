@@ -115,7 +115,10 @@ namespace webthitn_backend.DTOs
         public int QuestionLevelId { get; set; }
 
         /// <summary>
-        /// Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+        /// Loại câu hỏi
+        /// 1: Một đáp án (trắc nghiệm a,b,c,d)
+        /// 3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+        /// 5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
         /// </summary>
         /// <example>1</example>
         public int QuestionType { get; set; }
@@ -155,6 +158,16 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>true</example>
         public bool IsActive { get; set; }
+
+        /// <summary>
+        /// Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)
+        /// </summary>
+        public string ScoringConfig { get; set; }
+
+        /// <summary>
+        /// Cấu hình cho câu hỏi trả lời ngắn (JSON)
+        /// </summary>
+        public string ShortAnswerConfig { get; set; }
 
         /// <summary>
         /// Thông tin môn học
@@ -242,6 +255,12 @@ namespace webthitn_backend.DTOs
         public int OrderIndex { get; set; }
 
         /// <summary>
+        /// Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+        /// </summary>
+        /// <example>a</example>
+        public string Label { get; set; }
+
+        /// <summary>
         /// Đường dẫn hình ảnh (nếu có)
         /// </summary>
         /// <example>/uploads/options/image1.png</example>
@@ -258,6 +277,22 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>Paris</example>
         public string MatchingValue { get; set; }
+
+        /// <summary>
+        /// Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
+        /// </summary>
+        public bool IsPartOfTrueFalseGroup { get; set; }
+
+        /// <summary>
+        /// Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
+        /// </summary>
+        public int? GroupId { get; set; }
+
+        /// <summary>
+        /// Mức điểm cho đáp án này (0-100%)
+        /// </summary>
+        /// <example>100</example>
+        public int ScorePercentage { get; set; } = 100;
     }
 
     /// <summary>
@@ -296,7 +331,10 @@ namespace webthitn_backend.DTOs
         public int QuestionLevelId { get; set; }
 
         /// <summary>
-        /// Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+        /// Loại câu hỏi
+        /// 1: Một đáp án (trắc nghiệm a,b,c,d)
+        /// 3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+        /// 5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
         /// </summary>
         /// <example>1</example>
         public int QuestionType { get; set; }
@@ -324,6 +362,16 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>true</example>
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)
+        /// </summary>
+        public string ScoringConfig { get; set; }
+
+        /// <summary>
+        /// Cấu hình cho câu hỏi trả lời ngắn (JSON)
+        /// </summary>
+        public string ShortAnswerConfig { get; set; }
 
         /// <summary>
         /// Danh sách các đáp án
@@ -355,6 +403,12 @@ namespace webthitn_backend.DTOs
         public int OrderIndex { get; set; }
 
         /// <summary>
+        /// Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+        /// </summary>
+        /// <example>a</example>
+        public string Label { get; set; }
+
+        /// <summary>
         /// Giải thích cho đáp án
         /// </summary>
         /// <example>Đây là đáp án đúng vì...</example>
@@ -365,6 +419,22 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>Paris</example>
         public string MatchingValue { get; set; }
+
+        /// <summary>
+        /// Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
+        /// </summary>
+        public bool IsPartOfTrueFalseGroup { get; set; }
+
+        /// <summary>
+        /// Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
+        /// </summary>
+        public int? GroupId { get; set; }
+
+        /// <summary>
+        /// Mức điểm cho đáp án này (0-100%)
+        /// </summary>
+        /// <example>100</example>
+        public int ScorePercentage { get; set; } = 100;
     }
 
     /// <summary>
@@ -392,6 +462,9 @@ namespace webthitn_backend.DTOs
 
         /// <summary>
         /// Loại câu hỏi cần lọc
+        /// 1: Một đáp án (trắc nghiệm a,b,c,d)
+        /// 3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+        /// 5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
         /// </summary>
         /// <example>1</example>
         public int? QuestionType { get; set; }
@@ -425,5 +498,67 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>giới hạn</example>
         public string SearchTerm { get; set; }
+    }
+
+    /// <summary>
+    /// Cấu hình cho câu hỏi trả lời ngắn
+    /// </summary>
+    public class ShortAnswerConfigDTO
+    {
+        /// <summary>
+        /// Phân biệt chữ hoa/thường
+        /// </summary>
+        public bool CaseSensitive { get; set; } = false;
+
+        /// <summary>
+        /// Yêu cầu khớp chính xác
+        /// </summary>
+        public bool ExactMatch { get; set; } = false;
+
+        /// <summary>
+        /// Cho phép điểm một phần
+        /// </summary>
+        public bool PartialCredit { get; set; } = true;
+
+        /// <summary>
+        /// Phần trăm điểm cho điểm một phần
+        /// </summary>
+        public int PartialCreditPercent { get; set; } = 50;
+
+        /// <summary>
+        /// Cho phép câu trả lời tương đối
+        /// </summary>
+        public bool AllowSimilar { get; set; } = true;
+
+        /// <summary>
+        /// Ngưỡng tương đồng (%)
+        /// </summary>
+        public int SimilarityThreshold { get; set; } = 80;
+    }
+
+    /// <summary>
+    /// Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý
+    /// </summary>
+    public class TrueFalseScoringConfigDTO
+    {
+        /// <summary>
+        /// Điểm cho 1 câu đúng
+        /// </summary>
+        public decimal OneCorrect { get; set; } = 0.10m;
+
+        /// <summary>
+        /// Điểm cho 2 câu đúng
+        /// </summary>
+        public decimal TwoCorrect { get; set; } = 0.25m;
+
+        /// <summary>
+        /// Điểm cho 3 câu đúng
+        /// </summary>
+        public decimal ThreeCorrect { get; set; } = 0.50m;
+
+        /// <summary>
+        /// Điểm cho 4 câu đúng
+        /// </summary>
+        public decimal FourCorrect { get; set; } = 1.00m;
     }
 }

@@ -37,8 +37,6 @@ namespace webthitn_backend.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // Định nghĩa các mối quan hệ và ràng buộc
-
             // Subject - Chapter (1-n)
             modelBuilder.Entity<Chapter>()
                 .HasOne(c => c.Subject)
@@ -80,7 +78,7 @@ namespace webthitn_backend.Models
                 .WithMany(u => u.ExamResults)
                 .HasForeignKey(er => er.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
-
+            
             // Seed data
             SeedData(modelBuilder);
         }
@@ -162,10 +160,11 @@ namespace webthitn_backend.Models
                 new Subject { Id = 6, Name = "Tiếng Anh", Code = "ENG", Description = "Môn Tiếng Anh", CreatedAt = fixedDate1 },
                 new Subject { Id = 7, Name = "Lịch Sử", Code = "HIST", Description = "Môn Lịch Sử", CreatedAt = fixedDate1 },
                 new Subject { Id = 8, Name = "Địa Lý", Code = "GEO", Description = "Môn Địa Lý", CreatedAt = fixedDate1 },
-                new Subject { Id = 9, Name = "GDCD", Code = "CIVIC", Description = "Môn Giáo dục công dân", CreatedAt = fixedDate1 }
+                new Subject { Id = 9, Name = "GDCD", Code = "GDKT&PL", Description = "Giáo dục kinh tế và pháp luật", CreatedAt = fixedDate1 }
             );
 
         }
+
 
     }
 }

@@ -36,14 +36,26 @@ namespace webthitn_backend.Models
         public int OrderIndex { get; set; }
 
         /// <summary>
-        /// Đường dẫn đến hình ảnh (nếu có)
+        /// Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+        /// </summary>
+        [MaxLength(10)]
+        public string Label { get; set; }
+
+        /// <summary>
+        /// Đường dẫn đến hình ảnh (cập nhật sau)
         /// </summary>
         public string ImagePath { get; set; }
 
         /// <summary>
-        /// Phần giải thích cho đáp án này (nếu cần)
+        /// Phần giải thích cho đáp án này (cập nhật sau)
         /// </summary>
-        public string Explanation { get; set; }
+        public string Explanation { get; set; } 
+
+        /// <summary>
+        /// Mức độ điểm số cho đáp án này (0-100%)
+        /// Chỉ dùng cho câu hỏi trả lời ngắn, đáp án chính xác nhất sẽ là 100%
+        /// </summary>
+        public int ScorePercentage { get; set; } = 100;
 
         /// <summary>
         /// Tham chiếu đến câu hỏi
@@ -51,8 +63,13 @@ namespace webthitn_backend.Models
         public virtual Question Question { get; set; }
 
         /// <summary>
-        /// Giá trị ghép đôi (sử dụng cho câu hỏi ghép đôi)
+        /// Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
         /// </summary>
-        public string MatchingValue { get; set; }
+        public bool IsPartOfTrueFalseGroup { get; set; }
+
+        /// <summary>
+        /// Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý, các đáp án có cùng GroupId thuộc về cùng một ý con)
+        /// </summary>
+        public int? GroupId { get; set; }
     }
 }

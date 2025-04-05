@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using webthitn_backend.Models;
-using webthitn_backend.Models.Applications;
 
 namespace webthitn_backend.Data
 {

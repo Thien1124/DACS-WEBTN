@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using webthitn_backend.Models;
-using webthitn_backend.Models.Applications;
-
 namespace webthitn_backend.Services
 {
     public static class JwtRoleValidationExtension

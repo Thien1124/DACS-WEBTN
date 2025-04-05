@@ -21,19 +21,28 @@ namespace webthitn_backend.Models
         public int StudentAnswerId { get; set; }
 
         /// <summary>
-        /// Các ID của đáp án được chọn (JSON array cho câu hỏi nhiều đáp án)
+        /// ID của đáp án được chọn (cho câu hỏi một đáp án)
         /// </summary>
-        public string? SelectedOptionIds { get; set; }
+        public int? SelectedOptionId { get; set; }
 
         /// <summary>
-        /// Văn bản câu trả lời (cho câu hỏi điền từ)
+        /// Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
         /// </summary>
         public string? TextAnswer { get; set; }
 
         /// <summary>
-        /// Dữ liệu ghép đôi (JSON cho câu hỏi ghép đôi)
+        /// Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)
+        /// Ví dụ: {"1":true,"2":false,"3":true,"4":true}
         /// </summary>
-        public string? MatchingData { get; set; }
+        public string? TrueFalseAnswers { get; set; }
+
+        /// <summary>
+        /// Loại câu hỏi được lưu trong lịch sử này
+        /// 1: Một đáp án (trắc nghiệm a,b,c,d)
+        /// 3: Trả lời ngắn
+        /// 5: Đúng-sai nhiều ý
+        /// </summary>
+        public int QuestionType { get; set; }
 
         /// <summary>
         /// Thời gian thay đổi
@@ -51,6 +60,11 @@ namespace webthitn_backend.Models
         /// </summary>
         [MaxLength(100)]
         public string? SessionId { get; set; }
+
+        /// <summary>
+        /// Thiết bị sử dụng (user agent)
+        /// </summary>
+        public string? DeviceInfo { get; set; }
 
         #region Navigation Properties
 

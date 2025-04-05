@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using webthitn_backend.Models;
@@ -158,7 +159,6 @@ namespace webthitn_backend.Models.Users
 
         #endregion
         #region Navigation Properties
-
         #endregion
     }
 }

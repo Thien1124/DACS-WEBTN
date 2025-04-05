@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using webthitn_backend.Models;
 using webthitn_backend.DTOs;
-using webthitn_backend.Models.Applications;
 
 namespace webthitn_backend.Controllers
 {
