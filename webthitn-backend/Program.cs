@@ -8,7 +8,6 @@ using webthitn_backend.Middleware;
 using System;
 using System.Reflection;
 using System.IO;
-using webthitn_backend.Models.Applications;
 using webthitn_backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);

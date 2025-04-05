@@ -149,6 +149,12 @@ namespace webthitn_backend.DTOs
         public int CorrectAnswers { get; set; }
 
         /// <summary>
+        /// Số câu trả lời đúng một phần
+        /// </summary>
+        /// <example>3</example>
+        public int PartiallyCorrectAnswers { get; set; }
+
+        /// <summary>
         /// Tổng số câu hỏi
         /// </summary>
         /// <example>20</example>
@@ -159,6 +165,12 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>20</example>
         public int AnsweredQuestions { get; set; }
+
+        /// <summary>
+        /// Số câu hỏi cần chấm thủ công
+        /// </summary>
+        /// <example>2</example>
+        public int PendingManualGradeCount { get; set; }
 
         /// <summary>
         /// Thứ tự lần làm
@@ -205,6 +217,11 @@ namespace webthitn_backend.DTOs
         /// Thống kê theo mức độ câu hỏi
         /// </summary>
         public required IEnumerable<QuestionLevelStatDTO> LevelStats { get; set; }
+
+        /// <summary>
+        /// Thống kê theo loại câu hỏi
+        /// </summary>
+        public QuestionTypeStatisticsDTO QuestionTypeStats { get; set; }
     }
 
     /// <summary>
@@ -237,26 +254,47 @@ namespace webthitn_backend.DTOs
         public required string QuestionType { get; set; }
 
         /// <summary>
+        /// Loại câu hỏi (giá trị số)
+        /// 1: Một đáp án (trắc nghiệm a,b,c,d)
+        /// 3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+        /// 5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
+        /// </summary>
+        /// <example>1</example>
+        public int QuestionTypeValue { get; set; }
+
+        /// <summary>
         /// Thứ tự câu hỏi trong bài thi
         /// </summary>
         /// <example>5</example>
         public int QuestionOrder { get; set; }
 
         /// <summary>
-        /// Các đáp án đã chọn
+        /// ID của đáp án được chọn (cho câu hỏi một đáp án)
+        /// </summary>
+        /// <example>15</example>
+        public int? SelectedOptionId { get; set; }
+
+        /// <summary>
+        /// Các đáp án đã chọn (chỉ hiển thị cho một đáp án)
         /// </summary>
         public List<SelectedOptionDTO> SelectedOptions { get; set; }
 
         /// <summary>
-        /// Văn bản câu trả lời (cho câu hỏi điền từ)
+        /// Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
         /// </summary>
         /// <example>1</example>
         public string TextAnswer { get; set; }
 
         /// <summary>
-        /// Dữ liệu ghép đôi (cho câu hỏi ghép đôi)
+        /// Dữ liệu đáp án đúng-sai (cho câu hỏi đúng-sai nhiều ý)
         /// </summary>
-        public List<MatchingPairDTO> MatchingPairs { get; set; }
+        public Dictionary<string, bool> TrueFalseAnswers { get; set; }
+
+        /// <summary>
+        /// Số lượng ý đúng trong câu hỏi đúng-sai nhiều ý
+        /// </summary>
+        /// <example>3</example>
+        public int? TrueFalseCorrectCount { get; set; }
 
         /// <summary>
         /// Câu trả lời đúng hoàn toàn
@@ -299,6 +337,17 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>Áp dụng định lý L'Hospital ta có giới hạn bằng 1</example>
         public string Explanation { get; set; }
+
+        /// <summary>
+        /// Chi tiết đánh giá câu trả lời ngắn
+        /// </summary>
+        public ShortAnswerEvaluationDTO ShortAnswerEvaluation { get; set; }
+
+        /// <summary>
+        /// Đánh dấu xem câu trả lời có cần đánh giá thủ công không
+        /// </summary>
+        /// <example>false</example>
+        public bool RequiresManualReview { get; set; }
     }
 
     /// <summary>
@@ -317,6 +366,12 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>1</example>
         public string Content { get; set; }
+
+        /// <summary>
+        /// Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+        /// </summary>
+        /// <example>a</example>
+        public string Label { get; set; }
 
         /// <summary>
         /// Đáp án này có đúng không
@@ -379,9 +434,103 @@ namespace webthitn_backend.DTOs
         public int CorrectAnswers { get; set; }
 
         /// <summary>
+        /// Số câu trả lời đúng một phần
+        /// </summary>
+        /// <example>1</example>
+        public int PartiallyCorrectAnswers { get; set; }
+
+        /// <summary>
         /// Tỷ lệ đúng (%)
         /// </summary>
         /// <example>75</example>
+        public decimal CorrectPercentage { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho thông tin đánh giá câu trả lời ngắn
+    /// </summary>
+    public class ShortAnswerEvaluationDTO
+    {
+        /// <summary>
+        /// Câu trả lời gốc của học sinh
+        /// </summary>
+        public string OriginalAnswer { get; set; }
+
+        /// <summary>
+        /// Đáp án khớp nhất từ danh sách đáp án đúng
+        /// </summary>
+        public string MatchedAnswer { get; set; }
+
+        /// <summary>
+        /// Đánh dấu khớp chính xác
+        /// </summary>
+        public bool IsExactMatch { get; set; }
+
+        /// <summary>
+        /// Đánh dấu khớp một phần
+        /// </summary>
+        public bool IsPartialMatch { get; set; }
+
+        /// <summary>
+        /// Độ tương đồng (0-100)
+        /// </summary>
+        public int SimilarityScore { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho thống kê theo loại câu hỏi
+    /// </summary>
+    public class QuestionTypeStatisticsDTO
+    {
+        /// <summary>
+        /// Câu hỏi trắc nghiệm một đáp án
+        /// </summary>
+        public QuestionTypeDetailDTO SingleChoice { get; set; } = new QuestionTypeDetailDTO();
+
+        /// <summary>
+        /// Câu hỏi đúng-sai nhiều ý
+        /// </summary>
+        public QuestionTypeDetailDTO TrueFalse { get; set; } = new QuestionTypeDetailDTO();
+
+        /// <summary>
+        /// Câu hỏi trả lời ngắn
+        /// </summary>
+        public QuestionTypeDetailDTO ShortAnswer { get; set; } = new QuestionTypeDetailDTO();
+    }
+
+    /// <summary>
+    /// Chi tiết thống kê cho từng loại câu hỏi
+    /// </summary>
+    public class QuestionTypeDetailDTO
+    {
+        /// <summary>
+        /// Tổng số câu hỏi
+        /// </summary>
+        public int Total { get; set; }
+
+        /// <summary>
+        /// Số câu trả lời đúng
+        /// </summary>
+        public int Correct { get; set; }
+
+        /// <summary>
+        /// Số câu trả lời đúng một phần
+        /// </summary>
+        public int Partial { get; set; }
+
+        /// <summary>
+        /// Tổng điểm đạt được
+        /// </summary>
+        public decimal TotalScore { get; set; }
+
+        /// <summary>
+        /// Điểm tối đa có thể đạt
+        /// </summary>
+        public decimal MaxScore { get; set; }
+
+        /// <summary>
+        /// Tỷ lệ đúng (%)
+        /// </summary>
         public decimal CorrectPercentage { get; set; }
     }
 

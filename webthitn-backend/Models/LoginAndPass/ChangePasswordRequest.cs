@@ -8,4 +8,5 @@ public class ChangePasswordRequest
     [Required]
     [MinLength(6, ErrorMessage = "Mật khẩu mới phải có ít nhất 6 ký tự")]
     public string NewPassword { get; set; }
+    public string ConfirmPassword { get; set; }
 }

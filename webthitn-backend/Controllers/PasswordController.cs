@@ -8,7 +8,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Linq;
 using webthitn_backend.Models.LoginAndPass;
-using webthitn_backend.Models.Applications;
 using webthitn_backend.Models;
 
 namespace webthitn_backend.Controllers
@@ -81,6 +80,12 @@ namespace webthitn_backend.Controllers
         {
             _logger.LogInformation($"Yêu cầu đặt lại mật khẩu với mã: {request.ResetCode} cho email: {request.Email}");
 
+            // Kiểm tra sự trùng khớp giữa mật khẩu mới và mật khẩu xác nhận
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new { message = "Mật khẩu mới và mật khẩu xác nhận không khớp." });
+            }
+
             // Tìm người dùng với mã reset
             var user = await _context.Users.FirstOrDefaultAsync(u =>
                 u.Email == request.Email &&
@@ -105,8 +110,8 @@ namespace webthitn_backend.Controllers
             user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
             // Đặt giá trị rỗng thay vì null để tránh lỗi SQL
-            user.ResetPasswordCode = string.Empty;  // Sử dụng chuỗi rỗng thay vì null
-            user.ResetPasswordExpiry = null;        // Giữ null cho datetime nếu DB cho phép
+            user.ResetPasswordCode = string.Empty;
+            user.ResetPasswordExpiry = null;
 
             try
             {
@@ -125,37 +130,20 @@ namespace webthitn_backend.Controllers
             }
         }
 
+
         // 3. Endpoint thay đổi mật khẩu (yêu cầu đăng nhập)
         [Authorize]
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            // Debug thông tin token và claims
-            _logger.LogInformation("Bắt đầu xử lý yêu cầu đổi mật khẩu");
-            _logger.LogInformation($"Authorization header present: {Request.Headers.ContainsKey("Authorization")}");
-
-            if (Request.Headers.TryGetValue("Authorization", out var authHeader))
+            // Kiểm tra sự trùng khớp giữa mật khẩu mới và mật khẩu xác nhận
+            if (request.NewPassword != request.ConfirmPassword)
             {
-                _logger.LogInformation($"Authorization header: {authHeader.FirstOrDefault()?.Substring(0, 20)}...");
-            }
-
-            _logger.LogInformation("Claims trong token:");
-            foreach (var claim in User.Claims)
-            {
-                _logger.LogInformation($"Claim: {claim.Type} = {claim.Value}");
+                return BadRequest(new { message = "Mật khẩu mới và mật khẩu xác nhận không khớp." });
             }
 
             // Lấy username từ token JWT
             var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            _logger.LogInformation($"Username trích xuất từ token: {username ?? "null"}");
-
-            // Nếu không tìm thấy username trong claim tiêu chuẩn, thử tìm trong claim 'sub'
-            if (string.IsNullOrEmpty(username))
-            {
-                username = User.FindFirst("sub")?.Value;
-                _logger.LogInformation($"Username từ claim 'sub': {username ?? "null"}");
-            }
-
             if (string.IsNullOrEmpty(username))
             {
                 _logger.LogWarning("Không thể xác định người dùng từ token");
@@ -169,8 +157,6 @@ namespace webthitn_backend.Controllers
                 _logger.LogWarning($"Không tìm thấy người dùng trong DB: {username}");
                 return NotFound(new { message = "Không tìm thấy người dùng." });
             }
-
-            _logger.LogInformation($"Đã tìm thấy người dùng: {user.Username}, Email: {user.Email}");
 
             // Xác thực mật khẩu hiện tại
             if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.Password))
@@ -194,6 +180,7 @@ namespace webthitn_backend.Controllers
                 return StatusCode(500, new { message = "Lỗi khi cập nhật mật khẩu.", error = ex.Message });
             }
         }
+
 
         // Phương thức hỗ trợ - Tạo mã xác nhận ngẫu nhiên
         private string GenerateResetCode()

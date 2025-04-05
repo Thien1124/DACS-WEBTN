@@ -122,7 +122,13 @@ namespace webthitn_backend.Controllers
                     .OrderByDescending(e => e.CreatedAt)
                     .Skip((filter.Page - 1) * filter.PageSize)
                     .Take(filter.PageSize)
-                    .Select(e => new ExamListDTO
+                    .ToListAsync();
+
+                var examDTOs = exams.Select(e => {
+                    // Đếm số lượng câu hỏi cho mỗi loại
+                    var questionTypeStats = GetQuestionTypeStatistics(e.Id);
+
+                    return new ExamListDTO
                     {
                         Id = e.Id,
                         Title = e.Title,
@@ -140,6 +146,9 @@ namespace webthitn_backend.Controllers
                         ShowResult = e.ShowResult,
                         ShowAnswers = e.ShowAnswers,
                         ShuffleQuestions = e.ShuffleQuestions,
+                        ShuffleOptions = e.ShuffleOptions,
+                        AutoGradeShortAnswer = e.AutoGradeShortAnswer,
+                        AllowPartialGrading = e.AllowPartialGrading,
                         CreatedAt = e.CreatedAt,
                         Subject = e.Subject != null ? new SubjectBasicDTO
                         {
@@ -152,9 +161,10 @@ namespace webthitn_backend.Controllers
                             Id = e.Creator.Id,
                             Username = e.Creator.Username,
                             FullName = e.Creator.FullName
-                        } : null
-                    })
-                    .ToListAsync();
+                        } : null,
+                        QuestionTypeCounts = questionTypeStats
+                    };
+                }).ToList();
 
                 // Trả về kết quả với thông tin phân trang
                 return Ok(new
@@ -163,7 +173,7 @@ namespace webthitn_backend.Controllers
                     page = filter.Page,
                     pageSize = filter.PageSize,
                     totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize),
-                    data = exams
+                    data = examDTOs
                 });
             }
             catch (Exception ex)
@@ -326,6 +336,38 @@ namespace webthitn_backend.Controllers
                 return "Đã đóng";
 
             return "Đang mở";
+        }
+
+        // Phương thức helper để đếm số lượng câu hỏi theo loại
+        private QuestionTypeCountDTO GetQuestionTypeStatistics(int examId)
+        {
+            var stats = new QuestionTypeCountDTO();
+
+            var examQuestions = _context.ExamQuestions
+                .Include(eq => eq.Question)
+                .Where(eq => eq.ExamId == examId)
+                .ToList();
+
+            foreach (var eq in examQuestions)
+            {
+                if (eq.Question == null)
+                    continue;
+
+                switch (eq.Question.QuestionType)
+                {
+                    case 1: // Trắc nghiệm một đáp án
+                        stats.SingleChoiceCount++;
+                        break;
+                    case 3: // Trả lời ngắn
+                        stats.ShortAnswerCount++;
+                        break;
+                    case 5: // Đúng-sai nhiều ý
+                        stats.TrueFalseCount++;
+                        break;
+                }
+            }
+
+            return stats;
         }
     }
 }

@@ -8,7 +8,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using webthitn_backend.DTOs;
-using webthitn_backend.Models.Applications;
 using webthitn_backend.Models;
 
 namespace webthitn_backend.Controllers

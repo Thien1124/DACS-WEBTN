@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using webthitn_backend.Models;
-using webthitn_backend.Models.Applications;
 
 namespace webthitn_backend.Data
 {

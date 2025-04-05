@@ -401,6 +401,24 @@
             </summary>
             <example>true</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.ShuffleOptions">
+            <summary>
+            Trộn đáp án khi hiển thị (áp dụng cho câu hỏi trắc nghiệm một đáp án)
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.AutoGradeShortAnswer">
+            <summary>
+            Cài đặt chấm tự động câu hỏi trả lời ngắn
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.AllowPartialGrading">
+            <summary>
+            Cài đặt mức điểm đạt (%) cho câu hỏi đúng-sai nhiều ý nếu trả lời đúng một phần
+            </summary>
+            <example>true</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.ExamListDTO.CreatedAt">
             <summary>
             Ngày tạo bài thi
@@ -415,6 +433,11 @@
         <member name="P:webthitn_backend.DTOs.ExamListDTO.Creator">
             <summary>
             Thông tin người tạo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamListDTO.QuestionTypeCounts">
+            <summary>
+            Thống kê số lượng câu hỏi theo loại
             </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.SubjectBasicDTO">
@@ -509,6 +532,192 @@
             Từ khóa tìm kiếm (tên, mô tả)
             </summary>
             <example>kiểm tra</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CreateExamDTO">
+            <summary>
+            DTO tạo mới bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.Title">
+            <summary>
+            Tiêu đề bài thi
+            </summary>
+            <example>Kiểm tra giữa kỳ Toán học</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.Description">
+            <summary>
+            Mô tả bài thi
+            </summary>
+            <example>Bài kiểm tra kiến thức cơ bản về đạo hàm và tích phân</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.SubjectId">
+            <summary>
+            ID của môn học
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.ExamTypeId">
+            <summary>
+            ID của loại bài thi
+            </summary>
+            <example>3</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.Duration">
+            <summary>
+            Thời gian làm bài (phút)
+            </summary>
+            <example>45</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.TotalScore">
+            <summary>
+            Điểm tối đa của bài thi
+            </summary>
+            <example>10</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.PassScore">
+            <summary>
+            Điểm đạt của bài thi
+            </summary>
+            <example>5</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.MaxAttempts">
+            <summary>
+            Số lần được làm bài
+            </summary>
+            <example>2</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.StartTime">
+            <summary>
+            Thời gian bắt đầu mở bài thi
+            </summary>
+            <example>2025-04-05T08:00:00Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.EndTime">
+            <summary>
+            Thời gian kết thúc đóng bài thi
+            </summary>
+            <example>2025-04-15T23:59:59Z</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt của bài thi
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.ShowResult">
+            <summary>
+            Hiển thị kết quả sau khi làm bài
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.ShowAnswers">
+            <summary>
+            Hiển thị đáp án sau khi làm bài
+            </summary>
+            <example>false</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.ShuffleQuestions">
+            <summary>
+            Trộn câu hỏi khi hiển thị
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.ShuffleOptions">
+            <summary>
+            Trộn đáp án khi hiển thị (áp dụng cho câu hỏi trắc nghiệm một đáp án)
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.AutoGradeShortAnswer">
+            <summary>
+            Cài đặt chấm tự động câu hỏi trả lời ngắn
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.AllowPartialGrading">
+            <summary>
+            Cài đặt mức điểm đạt (%) cho câu hỏi đúng-sai nhiều ý nếu trả lời đúng một phần
+            </summary>
+            <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.AccessCode">
+            <summary>
+            Mã truy cập bài thi (nếu được bảo vệ)
+            </summary>
+            <example>abc123</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.ScoringConfig">
+            <summary>
+            Cấu hình tính điểm (JSON)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateExamDTO.Questions">
+            <summary>
+            Danh sách ID câu hỏi đưa vào bài thi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamQuestionCreateDTO">
+            <summary>
+            DTO thêm câu hỏi vào bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionCreateDTO.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+            <example>42</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionCreateDTO.Order">
+            <summary>
+            Thứ tự câu hỏi trong bài thi
+            </summary>
+            <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionCreateDTO.Score">
+            <summary>
+            Điểm số cho câu hỏi trong bài thi
+            </summary>
+            <example>1.5</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionTypeCountDTO">
+            <summary>
+            Thống kê số lượng câu hỏi theo loại
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeCountDTO.SingleChoiceCount">
+            <summary>
+            Số câu hỏi trắc nghiệm một đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeCountDTO.TrueFalseCount">
+            <summary>
+            Số câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeCountDTO.ShortAnswerCount">
+            <summary>
+            Số câu hỏi trả lời ngắn
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamScoringConfigDTO">
+            <summary>
+            DTO cấu hình tính điểm cho bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamScoringConfigDTO.GradingMethod">
+            <summary>
+            Phương thức tính điểm ("sum": cộng điểm, "average": lấy trung bình)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamScoringConfigDTO.PartialCreditMethod">
+            <summary>
+            Phương thức tính điểm một phần ("proportional": tính theo tỷ lệ, "all_or_nothing": đúng hết hoặc không điểm)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamScoringConfigDTO.PenaltyForWrongAnswer">
+            <summary>
+            Phần trăm điểm trừ cho câu trả lời sai (0-100)
+            </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.ExamResultListDTO">
             <summary>
@@ -654,6 +863,12 @@
             </summary>
             <example>17</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.PartiallyCorrectAnswers">
+            <summary>
+            Số câu trả lời đúng một phần
+            </summary>
+            <example>3</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.TotalQuestions">
             <summary>
             Tổng số câu hỏi
@@ -665,6 +880,12 @@
             Số câu đã làm
             </summary>
             <example>20</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.PendingManualGradeCount">
+            <summary>
+            Số câu hỏi cần chấm thủ công
+            </summary>
+            <example>2</example>
         </member>
         <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.AttemptNumber">
             <summary>
@@ -712,6 +933,11 @@
             Thống kê theo mức độ câu hỏi
             </summary>
         </member>
+        <member name="P:webthitn_backend.DTOs.ExamResultDetailDTO.QuestionTypeStats">
+            <summary>
+            Thống kê theo loại câu hỏi
+            </summary>
+        </member>
         <member name="T:webthitn_backend.DTOs.StudentAnswerDTO">
             <summary>
             DTO cho câu trả lời của học sinh
@@ -741,27 +967,48 @@
             </summary>
             <example>Một đáp án</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.QuestionTypeValue">
+            <summary>
+            Loại câu hỏi (giá trị số)
+            1: Một đáp án (trắc nghiệm a,b,c,d)
+            3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+            5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
+            </summary>
+            <example>1</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.QuestionOrder">
             <summary>
             Thứ tự câu hỏi trong bài thi
             </summary>
             <example>5</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.SelectedOptionId">
+            <summary>
+            ID của đáp án được chọn (cho câu hỏi một đáp án)
+            </summary>
+            <example>15</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.SelectedOptions">
             <summary>
-            Các đáp án đã chọn
+            Các đáp án đã chọn (chỉ hiển thị cho một đáp án)
             </summary>
         </member>
         <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.TextAnswer">
             <summary>
-            Văn bản câu trả lời (cho câu hỏi điền từ)
+            Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
             </summary>
             <example>1</example>
         </member>
-        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.MatchingPairs">
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.TrueFalseAnswers">
             <summary>
-            Dữ liệu ghép đôi (cho câu hỏi ghép đôi)
+            Dữ liệu đáp án đúng-sai (cho câu hỏi đúng-sai nhiều ý)
             </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.TrueFalseCorrectCount">
+            <summary>
+            Số lượng ý đúng trong câu hỏi đúng-sai nhiều ý
+            </summary>
+            <example>3</example>
         </member>
         <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.IsCorrect">
             <summary>
@@ -805,6 +1052,17 @@
             </summary>
             <example>Áp dụng định lý L'Hospital ta có giới hạn bằng 1</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.ShortAnswerEvaluation">
+            <summary>
+            Chi tiết đánh giá câu trả lời ngắn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.RequiresManualReview">
+            <summary>
+            Đánh dấu xem câu trả lời có cần đánh giá thủ công không
+            </summary>
+            <example>false</example>
+        </member>
         <member name="T:webthitn_backend.DTOs.SelectedOptionDTO">
             <summary>
             DTO cho đáp án đã chọn
@@ -821,6 +1079,12 @@
             Nội dung đáp án
             </summary>
             <example>1</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.SelectedOptionDTO.Label">
+            <summary>
+            Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+            </summary>
+            <example>a</example>
         </member>
         <member name="P:webthitn_backend.DTOs.SelectedOptionDTO.IsCorrect">
             <summary>
@@ -880,11 +1144,102 @@
             </summary>
             <example>6</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.PartiallyCorrectAnswers">
+            <summary>
+            Số câu trả lời đúng một phần
+            </summary>
+            <example>1</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.QuestionLevelStatDTO.CorrectPercentage">
             <summary>
             Tỷ lệ đúng (%)
             </summary>
             <example>75</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ShortAnswerEvaluationDTO">
+            <summary>
+            DTO cho thông tin đánh giá câu trả lời ngắn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerEvaluationDTO.OriginalAnswer">
+            <summary>
+            Câu trả lời gốc của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerEvaluationDTO.MatchedAnswer">
+            <summary>
+            Đáp án khớp nhất từ danh sách đáp án đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerEvaluationDTO.IsExactMatch">
+            <summary>
+            Đánh dấu khớp chính xác
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerEvaluationDTO.IsPartialMatch">
+            <summary>
+            Đánh dấu khớp một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerEvaluationDTO.SimilarityScore">
+            <summary>
+            Độ tương đồng (0-100)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionTypeStatisticsDTO">
+            <summary>
+            DTO cho thống kê theo loại câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeStatisticsDTO.SingleChoice">
+            <summary>
+            Câu hỏi trắc nghiệm một đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeStatisticsDTO.TrueFalse">
+            <summary>
+            Câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeStatisticsDTO.ShortAnswer">
+            <summary>
+            Câu hỏi trả lời ngắn
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionTypeDetailDTO">
+            <summary>
+            Chi tiết thống kê cho từng loại câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeDetailDTO.Total">
+            <summary>
+            Tổng số câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeDetailDTO.Correct">
+            <summary>
+            Số câu trả lời đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeDetailDTO.Partial">
+            <summary>
+            Số câu trả lời đúng một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeDetailDTO.TotalScore">
+            <summary>
+            Tổng điểm đạt được
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeDetailDTO.MaxScore">
+            <summary>
+            Điểm tối đa có thể đạt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionTypeDetailDTO.CorrectPercentage">
+            <summary>
+            Tỷ lệ đúng (%)
+            </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.ExamBasicDTO">
             <summary>
@@ -1026,7 +1381,10 @@
         </member>
         <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.QuestionType">
             <summary>
-            Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+            Loại câu hỏi
+            1: Một đáp án (trắc nghiệm a,b,c,d)
+            3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+            5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
             </summary>
             <example>1</example>
         </member>
@@ -1065,6 +1423,16 @@
             Trạng thái kích hoạt
             </summary>
             <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.ScoringConfig">
+            <summary>
+            Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.ShortAnswerConfig">
+            <summary>
+            Cấu hình cho câu hỏi trả lời ngắn (JSON)
+            </summary>
         </member>
         <member name="P:webthitn_backend.DTOs.QuestionDetailDTO.Subject">
             <summary>
@@ -1149,6 +1517,12 @@
             </summary>
             <example>1</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.Label">
+            <summary>
+            Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+            </summary>
+            <example>a</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.ImagePath">
             <summary>
             Đường dẫn hình ảnh (nếu có)
@@ -1166,6 +1540,22 @@
             Giá trị ghép đôi (cho câu hỏi ghép đôi)
             </summary>
             <example>Paris</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.IsPartOfTrueFalseGroup">
+            <summary>
+            Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.GroupId">
+            <summary>
+            Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionOptionDTO.ScorePercentage">
+            <summary>
+            Mức điểm cho đáp án này (0-100%)
+            </summary>
+            <example>100</example>
         </member>
         <member name="T:webthitn_backend.DTOs.CreateQuestionDTO">
             <summary>
@@ -1204,7 +1594,10 @@
         </member>
         <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.QuestionType">
             <summary>
-            Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+            Loại câu hỏi
+            1: Một đáp án (trắc nghiệm a,b,c,d)
+            3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+            5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
             </summary>
             <example>1</example>
         </member>
@@ -1231,6 +1624,16 @@
             Trạng thái kích hoạt
             </summary>
             <example>true</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.ScoringConfig">
+            <summary>
+            Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.ShortAnswerConfig">
+            <summary>
+            Cấu hình cho câu hỏi trả lời ngắn (JSON)
+            </summary>
         </member>
         <member name="P:webthitn_backend.DTOs.CreateQuestionDTO.Options">
             <summary>
@@ -1260,6 +1663,12 @@
             </summary>
             <example>1</example>
         </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.Label">
+            <summary>
+            Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+            </summary>
+            <example>a</example>
+        </member>
         <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.Explanation">
             <summary>
             Giải thích cho đáp án
@@ -1271,6 +1680,22 @@
             Giá trị ghép đôi (cho câu hỏi ghép đôi)
             </summary>
             <example>Paris</example>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.IsPartOfTrueFalseGroup">
+            <summary>
+            Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.GroupId">
+            <summary>
+            Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.CreateQuestionOptionDTO.ScorePercentage">
+            <summary>
+            Mức điểm cho đáp án này (0-100%)
+            </summary>
+            <example>100</example>
         </member>
         <member name="T:webthitn_backend.DTOs.QuestionFilterDTO">
             <summary>
@@ -1298,6 +1723,9 @@
         <member name="P:webthitn_backend.DTOs.QuestionFilterDTO.QuestionType">
             <summary>
             Loại câu hỏi cần lọc
+            1: Một đáp án (trắc nghiệm a,b,c,d)
+            3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được
+            5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
             </summary>
             <example>1</example>
         </member>
@@ -1330,6 +1758,66 @@
             Từ khóa tìm kiếm (nội dung câu hỏi)
             </summary>
             <example>giới hạn</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ShortAnswerConfigDTO">
+            <summary>
+            Cấu hình cho câu hỏi trả lời ngắn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerConfigDTO.CaseSensitive">
+            <summary>
+            Phân biệt chữ hoa/thường
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerConfigDTO.ExactMatch">
+            <summary>
+            Yêu cầu khớp chính xác
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerConfigDTO.PartialCredit">
+            <summary>
+            Cho phép điểm một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerConfigDTO.PartialCreditPercent">
+            <summary>
+            Phần trăm điểm cho điểm một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerConfigDTO.AllowSimilar">
+            <summary>
+            Cho phép câu trả lời tương đối
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ShortAnswerConfigDTO.SimilarityThreshold">
+            <summary>
+            Ngưỡng tương đồng (%)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.TrueFalseScoringConfigDTO">
+            <summary>
+            Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TrueFalseScoringConfigDTO.OneCorrect">
+            <summary>
+            Điểm cho 1 câu đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TrueFalseScoringConfigDTO.TwoCorrect">
+            <summary>
+            Điểm cho 2 câu đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TrueFalseScoringConfigDTO.ThreeCorrect">
+            <summary>
+            Điểm cho 3 câu đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TrueFalseScoringConfigDTO.FourCorrect">
+            <summary>
+            Điểm cho 4 câu đúng
+            </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.SubjectListDTO">
             <summary>
@@ -1692,6 +2180,11 @@
             Entity đại diện cho kết quả làm bài thi của học sinh
             </summary>
         </member>
+        <member name="M:webthitn_backend.Models.ExamResult.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.ExamResult.Id">
             <summary>
             ID của kết quả bài thi
@@ -1724,7 +2217,12 @@
         </member>
         <member name="P:webthitn_backend.Models.ExamResult.CorrectAnswers">
             <summary>
-            Số câu trả lời đúng
+            Số câu trả lời đúng hoàn toàn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.PartiallyCorrectAnswers">
+            <summary>
+            Số câu trả lời đúng một phần
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.ExamResult.TotalQuestions">
@@ -1775,7 +2273,13 @@
             1: Đã chấm tự động
             2: Đã chấm thủ công
             3: Đã chấm kết hợp (tự động + thủ công)
+            4: Đang chờ chấm tay cho câu hỏi trả lời ngắn
             </remarks>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.PendingManualGradeCount">
+            <summary>
+            Số câu hỏi cần chấm thủ công (trả lời ngắn)
+            </summary>
         </member>
         <member name="P:webthitn_backend.Models.ExamResult.IPAddress">
             <summary>
@@ -1811,6 +2315,11 @@
             False: Hết thời gian làm bài và hệ thống tự động nộp
             </remarks>
         </member>
+        <member name="P:webthitn_backend.Models.ExamResult.QuestionTypeStatistics">
+            <summary>
+            Thống kê chi tiết theo loại câu hỏi (JSON)
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.ExamResult.Exam">
             <summary>
             Bài thi
@@ -1829,6 +2338,26 @@
         <member name="P:webthitn_backend.Models.ExamResult.StudentAnswers">
             <summary>
             Danh sách câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Statistics">
+            <summary>
+            Phiên làm bài tạo ra kết quả này
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.ExamResult.UpdateStatistics">
+            <summary>
+            Cập nhật thống kê sau khi hoàn thành bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.ExamResult.CalculatePercentageAndStatus">
+            <summary>
+            Tính điểm phần trăm và kiểm tra đạt yêu cầu
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.QuestionStatistics">
+            <summary>
+            Thống kê chi tiết theo loại câu hỏi
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.Exam">
@@ -1911,6 +2440,21 @@
             Trộn câu hỏi khi hiển thị
             </summary>
         </member>
+        <member name="P:webthitn_backend.Models.Exam.ShuffleOptions">
+            <summary>
+            Trộn đáp án khi hiển thị (áp dụng cho câu hỏi trắc nghiệm một đáp án)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.AutoGradeShortAnswer">
+            <summary>
+            Cài đặt chấm tự động câu hỏi trả lời ngắn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.AllowPartialGrading">
+            <summary>
+            Cài đặt mức điểm đạt (%) cho câu hỏi đúng-sai nhiều ý nếu trả lời đúng một phần
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.Exam.AccessCode">
             <summary>
             Mã truy cập bài thi (nếu được bảo vệ)
@@ -1929,6 +2473,16 @@
         <member name="P:webthitn_backend.Models.Exam.CreatorId">
             <summary>
             ID người tạo bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ScoringConfig">
+            <summary>
+            Cài đặt kiểu tính điểm cho bài thi (JSON)
+            {
+              "grading_method": "sum", // sum hoặc average
+              "partial_credit_method": "proportional", // proportional hoặc all_or_nothing
+              "penalty_for_wrong_answer": 0 // điểm trừ cho câu trả lời sai (0 = không trừ điểm)
+            }
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.Exam.Subject">
@@ -1954,6 +2508,41 @@
         <member name="P:webthitn_backend.Models.Exam.ExamResults">
             <summary>
             Danh sách kết quả làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.ScoringConfiguration">
+            <summary>
+            Cấu hình tính điểm của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Exam.IsOpen">
+            <summary>
+            Kiểm tra xem bài thi có đang mở không
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.Exam.CalculateScore(System.Collections.Generic.ICollection{webthitn_backend.Models.StudentAnswer})">
+            <summary>
+            Tính điểm cho bài thi dựa trên câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ScoringConfiguration">
+            <summary>
+            Cấu hình tính điểm cho bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ScoringConfiguration.GradingMethod">
+            <summary>
+            Phương thức tính điểm ("sum": cộng điểm, "average": lấy trung bình)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ScoringConfiguration.PartialCreditMethod">
+            <summary>
+            Phương thức tính điểm một phần ("proportional": tính theo tỷ lệ, "all_or_nothing": đúng hết hoặc không điểm)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ScoringConfiguration.PenaltyForWrongAnswer">
+            <summary>
+            Phần trăm điểm trừ cho câu trả lời sai (0-100)
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.ExamType">
@@ -1996,19 +2585,28 @@
             ID của câu trả lời
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.StudentAnswerHistory.SelectedOptionIds">
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.SelectedOptionId">
             <summary>
-            Các ID của đáp án được chọn (JSON array cho câu hỏi nhiều đáp án)
+            ID của đáp án được chọn (cho câu hỏi một đáp án)
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswerHistory.TextAnswer">
             <summary>
-            Văn bản câu trả lời (cho câu hỏi điền từ)
+            Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.StudentAnswerHistory.MatchingData">
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.TrueFalseAnswers">
             <summary>
-            Dữ liệu ghép đôi (JSON cho câu hỏi ghép đôi)
+            Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)
+            Ví dụ: {"1":true,"2":false,"3":true,"4":true}
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.QuestionType">
+            <summary>
+            Loại câu hỏi được lưu trong lịch sử này
+            1: Một đáp án (trắc nghiệm a,b,c,d)
+            3: Trả lời ngắn
+            5: Đúng-sai nhiều ý
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswerHistory.ChangedAt">
@@ -2024,6 +2622,11 @@
         <member name="P:webthitn_backend.Models.StudentAnswerHistory.SessionId">
             <summary>
             ID của phiên làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswerHistory.DeviceInfo">
+            <summary>
+            Thiết bị sử dụng (user agent)
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswerHistory.StudentAnswer">
@@ -2066,19 +2669,20 @@
             Thứ tự câu hỏi trong bài thi
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.StudentAnswer.SelectedOptionIds">
+        <member name="P:webthitn_backend.Models.StudentAnswer.SelectedOptionId">
             <summary>
-            Các ID của đáp án được chọn (JSON array cho câu hỏi nhiều đáp án)
+            ID của đáp án được chọn (cho câu hỏi một đáp án)
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswer.TextAnswer">
             <summary>
-            Văn bản câu trả lời (cho câu hỏi điền từ)
+            Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.StudentAnswer.MatchingData">
+        <member name="P:webthitn_backend.Models.StudentAnswer.TrueFalseAnswers">
             <summary>
-            Dữ liệu ghép đôi (JSON cho câu hỏi ghép đôi)
+            Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)
+            Ví dụ: {"1":true,"2":false,"3":true,"4":true}
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswer.IsCorrect">
@@ -2088,7 +2692,8 @@
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswer.IsPartiallyCorrect">
             <summary>
-            Câu trả lời có chính xác một phần hay không (cho câu nhiều đáp án)
+            Câu trả lời có chính xác một phần hay không
+            (sử dụng cho câu hỏi đúng-sai nhiều ý hoặc trả lời ngắn khớp một phần)
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswer.Score">
@@ -2119,6 +2724,29 @@
         <member name="P:webthitn_backend.Models.StudentAnswer.TeacherNote">
             <summary>
             Ghi chú của giáo viên khi chấm điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.ShortAnswerEvaluation">
+            <summary>
+            Chi tiết đánh giá câu trả lời ngắn (JSON)
+            {
+              "original_answer": "Câu trả lời gốc",
+              "matched_answer": "Đáp án khớp",
+              "is_exact_match": true/false,
+              "is_partial_match": true/false,
+              "similarity_score": 85,
+              "requires_manual_review": true/false
+            }
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.TrueFalseCorrectCount">
+            <summary>
+            Số lượng ý đúng trong câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.RequiresManualReview">
+            <summary>
+            Đánh dấu xem câu trả lời có cần đánh giá thủ công không
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.StudentAnswer.AnsweredAt">
@@ -2156,19 +2784,74 @@
             Câu hỏi
             </summary>
         </member>
+        <member name="P:webthitn_backend.Models.StudentAnswer.SelectedOption">
+            <summary>
+            Đáp án được chọn cho câu hỏi một đáp án
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.StudentAnswer.AnswerHistory">
             <summary>
             Lịch sử thay đổi của câu trả lời
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.StudentAnswer.SelectedOptionIdsList">
+        <member name="P:webthitn_backend.Models.StudentAnswer.TrueFalseAnswersDictionary">
             <summary>
-            Danh sách các ID đáp án đã chọn
+            Cấu trúc dữ liệu đúng-sai nhiều ý
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.StudentAnswer.MatchingPairs">
+        <member name="P:webthitn_backend.Models.StudentAnswer.ShortAnswerEvaluationInfo">
             <summary>
-            Cấu trúc dữ liệu ghép đôi
+            Thông tin đánh giá câu trả lời ngắn
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.StudentAnswer.UpdateScore">
+            <summary>
+            Cập nhật điểm cho câu trả lời dựa trên loại câu hỏi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.StudentAnswer.UpdateSingleChoiceScore">
+            <summary>
+            Cập nhật điểm cho câu hỏi một đáp án
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.StudentAnswer.UpdateTrueFalseScore">
+            <summary>
+            Cập nhật điểm cho câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ShortAnswerEvaluationInfo">
+            <summary>
+            Thông tin đánh giá câu trả lời ngắn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.OriginalAnswer">
+            <summary>
+            Câu trả lời gốc của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.MatchedAnswer">
+            <summary>
+            Đáp án khớp nhất từ danh sách đáp án đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.IsExactMatch">
+            <summary>
+            Đánh dấu khớp chính xác
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.IsPartialMatch">
+            <summary>
+            Đánh dấu khớp một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.SimilarityScore">
+            <summary>
+            Độ tương đồng (0-100)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.RequiresManualReview">
+            <summary>
+            Cần đánh giá thủ công
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.QuestionLevel">
@@ -2231,14 +2914,25 @@
             Thứ tự hiển thị của đáp án
             </summary>
         </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.Label">
+            <summary>
+            Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.QuestionOption.ImagePath">
             <summary>
-            Đường dẫn đến hình ảnh (nếu có)
+            Đường dẫn đến hình ảnh (cập nhật sau)
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.QuestionOption.Explanation">
             <summary>
-            Phần giải thích cho đáp án này (nếu cần)
+            Phần giải thích cho đáp án này (cập nhật sau)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.ScorePercentage">
+            <summary>
+            Mức độ điểm số cho đáp án này (0-100%)
+            Chỉ dùng cho câu hỏi trả lời ngắn, đáp án chính xác nhất sẽ là 100%
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.QuestionOption.Question">
@@ -2246,9 +2940,14 @@
             Tham chiếu đến câu hỏi
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.QuestionOption.MatchingValue">
+        <member name="P:webthitn_backend.Models.QuestionOption.IsPartOfTrueFalseGroup">
             <summary>
-            Giá trị ghép đôi (sử dụng cho câu hỏi ghép đôi)
+            Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.QuestionOption.GroupId">
+            <summary>
+            Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý, các đáp án có cùng GroupId thuộc về cùng một ý con)
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.Question">
@@ -2288,7 +2987,10 @@
         </member>
         <member name="P:webthitn_backend.Models.Question.QuestionType">
             <summary>
-            Loại câu hỏi (1: Một đáp án, 2: Nhiều đáp án, 3: Điền từ, 4: Ghép đôi)
+            Loại câu hỏi 
+            1: Một đáp án (trắc nghiệm a,b,c,d)
+            2: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý) , mới xuất hiện năm nay
+            3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được , mới xuất hiện năm nay
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.Question.Tags">
@@ -2316,6 +3018,30 @@
             Đường dẫn đến hình ảnh (nếu có)
             </summary>
         </member>
+        <member name="P:webthitn_backend.Models.Question.ScoringConfig">
+            <summary>
+            Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)
+            {
+              "1_correct": 0.10,
+              "2_correct": 0.25,
+              "3_correct": 0.50,
+              "4_correct": 1.00
+            }
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.ShortAnswerConfig">
+            <summary>
+            Cấu hình cho câu hỏi trả lời ngắn (JSON)
+            {
+              "case_sensitive": false,
+              "exact_match": false,
+              "partial_credit": true,
+              "partial_credit_percent": 50,
+              "allow_similar": true,
+              "similarity_threshold": 80
+            }
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.Question.CreatorId">
             <summary>
             ID người tạo
@@ -2341,7 +3067,7 @@
             Chương của câu hỏi (nếu có)
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.Question.QuestionLevel">
+        <member name="P:webthitn_backend.Models.Question.Level">
             <summary>
             Mức độ câu hỏi
             </summary>
@@ -2366,6 +3092,79 @@
             Trả về tên loại câu hỏi dựa trên mã QuestionType
             </summary>
             <returns>Tên loại câu hỏi</returns>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.IsMultiTrueFalseQuestion">
+            <summary>
+            Kiểm tra xem đây có phải là câu hỏi đúng-sai nhiều ý hay không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Question.IsShortAnswerQuestion">
+            <summary>
+            Kiểm tra xem đây có phải là câu hỏi trả lời ngắn hay không
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.Question.CalculateScoreForTrueFalse(System.Int32)">
+            <summary>
+            Tính điểm dựa trên số lượng câu trả lời đúng cho câu hỏi đúng-sai
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.Question.EvaluateShortAnswer(System.String,System.Collections.Generic.IEnumerable{webthitn_backend.Models.QuestionOption})">
+            <summary>
+            Đánh giá câu trả lời ngắn và tính điểm
+            </summary>
+            <param name="studentAnswer">Câu trả lời của học sinh</param>
+            <param name="correctAnswers">Danh sách các câu trả lời đúng</param>
+            <returns>Điểm số và thông tin đánh giá</returns>
+        </member>
+        <member name="M:webthitn_backend.Models.Question.IsSimilar(System.String,System.String,System.Int32)">
+            <summary>
+            Kiểm tra mức độ tương đồng giữa hai chuỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.Question.CalculateLevenshteinDistance(System.String,System.String)">
+            <summary>
+            Tính khoảng cách Levenshtein giữa hai chuỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.Question.GetShortAnswerConfiguration">
+            <summary>
+            Lấy cấu hình cho câu hỏi trả lời ngắn
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ShortAnswerConfiguration">
+            <summary>
+            Cấu hình cho câu hỏi trả lời ngắn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerConfiguration.CaseSensitive">
+            <summary>
+            Phân biệt chữ hoa/thường
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerConfiguration.ExactMatch">
+            <summary>
+            Yêu cầu khớp chính xác
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerConfiguration.PartialCredit">
+            <summary>
+            Cho phép điểm một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerConfiguration.PartialCreditPercent">
+            <summary>
+            Phần trăm điểm cho điểm một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerConfiguration.AllowSimilar">
+            <summary>
+            Cho phép câu trả lời tương đối
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ShortAnswerConfiguration.SimilarityThreshold">
+            <summary>
+            Ngưỡng tương đồng (%)
+            </summary>
         </member>
         <member name="T:webthitn_backend.Models.Users.User">
             <summary>
