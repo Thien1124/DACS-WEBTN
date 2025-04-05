@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
-import SubjectSelectionModal from './SubjectSelectionModal';
+import SubjectSelectionModal from '../common/SubjectSelectionModal';
 
 const SectionContainer = styled.section`
   padding: 4rem 2rem;

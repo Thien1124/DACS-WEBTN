@@ -330,7 +330,7 @@ function Header() {
           <Nav $isMenuVisible={isMenuVisible} theme={theme}>
             <NavItems>
               <NavItem theme={theme}><Link to="/">Trang chủ</Link></NavItem>
-              <NavItem theme={theme}><Link to="/courses">Khóa học</Link></NavItem>
+              <NavItem theme={theme}><Link to="/subjects">Môn học</Link></NavItem>
               <NavItem theme={theme}><Link to="/about">Giới thiệu</Link></NavItem>
               <NavItem theme={theme}><Link to="/contact">Liên hệ</Link></NavItem>
             </NavItems>

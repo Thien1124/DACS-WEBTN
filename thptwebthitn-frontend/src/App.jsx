@@ -7,12 +7,13 @@ import SubjectList from './components/subjects/SubjectList';
 import SubjectDetail from './components/subjects/SubjectDetail';
 import ExamInterface from './components/quiz/ExamInterface';
 import ExamResults from './components/quiz/ExamResults';
-import RegisterForm from './components/auth/RegisterForm';
-import LoginForm from './components/auth/LoginForm';
-import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
-import ResetPasswordForm from './components/auth/ResetPasswordForm';
+import RegisterForm from './components/Auth/RegisterForm';
+import LoginForm from './components/Auth/LoginForm';
+import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
+import ResetPasswordForm from './components/Auth/ResetPasswordForm';
 import ChangePasswordForm from './components/auth/ChangePasswordForm';
 import DashboardPage from './pages/DashboardPage';
+import SettingsPage from './pages/SettingsPage';
 import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
@@ -31,22 +32,22 @@ function App() {
         <Route path="/" element={<AppLayout />}>
           {/* Public routes */}
           <Route index element={<HomePage />} />
-          <Route path="subjects" element={<SubjectList />} />
-          <Route path="subjects/:subjectId" element={<SubjectDetail />} />
+          <Route path="/subjects" element={<SubjectList />} />
+          <Route path="/subjects/:subjectId" element={<SubjectDetail />} />
           
           {/* Auth routes */}
-          <Route path="login" element={<LoginForm />} />
-          <Route path="register" element={<RegisterForm />} />
-          <Route path="forgot-password" element={<ForgotPasswordForm />} />
-          <Route path="reset-password/:token" element={<ResetPasswordForm />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
           
           {/* Protected routes */}
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="change-password" element={<ChangePasswordForm />} />
-          <Route path="exams/:examId" element={<ExamInterface />} />
-          <Route path="exam-results/:examId" element={<ExamResults />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/change-password" element={<ChangePasswordForm />} />
+          <Route path="/exams/:examId" element={<ExamInterface />} />
+          <Route path="/exam-results/:examId" element={<ExamResults />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           
           {/* Add other routes as needed */}
         </Route>

@@ -13,6 +13,7 @@ const HomePage = () => {
 
   return (
     <HomeContainer>
+      <Header />
       <HeroSection theme={theme} />
       <FeaturedSubjects theme={theme} />
       {/* You can add more sections as needed */}

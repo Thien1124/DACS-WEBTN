@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { getSubjectById, getSubjectExams } from '../../services/subjectService';
 import LoadingSpinner from '../common/LoadingSpinner';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSubjectById } from '../../redux/subjectSlice';
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -244,11 +245,17 @@ const LoadingContainer = styled.div`
 const SubjectDetail = ({ theme }) => {
   const { subjectId } = useParams();
   const navigate = useNavigate();
-  const [subject, setSubject] = useState(null);
+  const [ setSubject] = useState(null);
   const [exams, setExams] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [ setIsLoading] = useState(true);
+  const [ setError] = useState(null);
   
+  const dispatch = useDispatch();
+  const { currentSubject: subject, loading: isLoading, error } = useSelector(state => state.subjects);
+
+  useEffect(() => {
+    dispatch(fetchSubjectById(subjectId));
+  }, [dispatch, subjectId]);
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);

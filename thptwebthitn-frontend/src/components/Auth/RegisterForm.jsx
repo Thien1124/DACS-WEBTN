@@ -356,6 +356,7 @@ const SuccessMessage = styled.div`
             username: formData.username,
             email: formData.email,
             password: formData.password,
+            confirmPassword: formData.confirmPassword,
             fullName: formData.fullName,
             phoneNumber: formData.phoneNumber
           };

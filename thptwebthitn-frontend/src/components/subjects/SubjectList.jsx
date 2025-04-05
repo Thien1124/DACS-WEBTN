@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { getAllSubjects } from '../../services/subjectService';
 import SubjectFilter from './SubjectFilter';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSubjects, setFilters, resetFilters, setPagination } from '../../redux/subjectSlice';
 
 const Container = styled(motion.div)`
   max-width: 1200px;
@@ -201,20 +203,28 @@ const PaginationButton = styled.button`
 `;
 
 const SubjectList = ({ theme }) => {
-  const [subjects, setSubjects] = useState([]);
+  const dispatch = useDispatch();
+  const [ setSubjects] = useState([]);
   const [filteredSubjects, setFilteredSubjects] = useState([]);
-  const [filters, setFilters] = useState({
+  const [ setFilters] = useState({
     grade: '',
     search: '',
     sortBy: 'name'
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [pagination, setPagination] = useState({
+  const { 
+    items: subjects,
+    loading: isLoading,
+    error,
+    pagination,
+    filters 
+  } = useSelector(state => state.subjects);
+  const [ setIsLoading] = useState(true);
+  const [ setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0
   });
-  const [error, setError] = useState(null);
+  const [ setError] = useState(null);
 
   useEffect(() => {
     fetchSubjects();
@@ -229,6 +239,9 @@ const SubjectList = ({ theme }) => {
 
     return () => clearTimeout(delayDebounceFn);
   }, [filters.search]);
+  useEffect(() => {
+    dispatch(fetchSubjects({ ...filters, page: pagination.currentPage }));
+  }, [dispatch, filters, pagination.currentPage]);
 
   const fetchSubjects = async () => {
     setIsLoading(true);
@@ -254,9 +267,14 @@ const SubjectList = ({ theme }) => {
       setIsLoading(false);
     }
   };
-
+  const handleResetFilters = () => {
+    dispatch(resetFilters());
+    dispatch(setPagination({ currentPage: 1 }));
+  };
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
+    dispatch(setFilters({ [name]: value }));
+    dispatch(setPagination({ currentPage: 1 }));
     setFilters(prev => ({
       ...prev,
       [name]: value
