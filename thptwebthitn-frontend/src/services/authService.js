@@ -271,18 +271,42 @@ export const resetPassword = async (token, password, confirmPassword) => {
  */
 export const changePassword = async (passwordData) => {
   try {
+    console.log('Sending password change request:', passwordData);
+    
+    // Sử dụng đúng endpoint: /api/Password/change-password
     const response = await apiClient.post('/api/Password/change-password', {
       currentPassword: passwordData.currentPassword,
       newPassword: passwordData.newPassword,
       confirmPassword: passwordData.confirmPassword || passwordData.newPassword
     });
+    
+    console.log('Password change response:', response);
+    
     return response.data;
   } catch (error) {
     console.error('Password change failed:', error);
     
     let errorMessage = 'Thay đổi mật khẩu thất bại.';
-    if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
+    
+    // Kiểm tra và lấy thông báo lỗi chi tiết từ response
+    if (error.response) {
+      console.error('Server response:', error.response.data);
+      
+      if (error.response.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data.title) {
+          errorMessage = error.response.data.title;
+        } else if (error.response.data.errors) {
+          // Handle validation errors
+          const firstError = Object.values(error.response.data.errors)[0];
+          if (Array.isArray(firstError) && firstError.length > 0) {
+            errorMessage = firstError[0];
+          }
+        }
+      }
     }
     
     throw { message: errorMessage };

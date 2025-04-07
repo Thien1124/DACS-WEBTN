@@ -95,3 +95,46 @@ export const updateUserProfile = async (userData) => {
     }
   };
   
+  export const updateProfile = async (profileData) => {
+    try {
+      console.log('Sending profile update:', profileData);
+      
+      // Sử dụng endpoint đúng: /api/User/update
+      const response = await apiClient.put('/api/User/update', profileData);
+      
+      console.log('Profile update response:', response);
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      
+      // Log chi tiết lỗi để debug
+      if (error.response) {
+        console.error('Error status:', error.response.status);
+        console.error('Error data:', error.response.data);
+      }
+      
+      throw error;
+    }
+  };
+  export const uploadAvatar = async (formData) => {
+    try {
+      const response = await apiClient.post('/api/Users/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Tải lên ảnh đại diện thất bại.' };
+    }
+  };
+  export const getUserActivity = async () => {
+    try {
+      const response = await apiClient.get('/api/Users/activity');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Không thể lấy nhật ký hoạt động.' };
+    }
+  };
+  

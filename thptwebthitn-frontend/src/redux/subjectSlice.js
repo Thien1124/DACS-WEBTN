@@ -1,25 +1,35 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as subjectService from '../services/subjectService';
 
+import { getAllSubjects, getSubjectById } from '../services/subjectService';
+
 // Async thunks
 export const fetchSubjects = createAsyncThunk(
   'subjects/fetchSubjects',
-  async (filters) => {
-    const response = await subjectService.getAllSubjects(filters);
-    return response;
+  async (params, { rejectWithValue }) => {
+    try {
+      const response = await getAllSubjects(params);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Không thể tải danh sách môn học');
+    }
   }
 );
 
 export const fetchSubjectById = createAsyncThunk(
   'subjects/fetchSubjectById',
-  async (id) => {
-    const response = await subjectService.getSubjectById(id);
-    return response;
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await getSubjectById(id);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Không thể tải thông tin môn học');
+    }
   }
 );
 
 export const createNewSubject = createAsyncThunk(
-  'subjects/createSubject',
+  'subjects/addSubject',
   async (subjectData) => {
     const response = await subjectService.createSubject(subjectData);
     return response;

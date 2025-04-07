@@ -1,4 +1,32 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import * as userService from '../services/userService';
+
+// Thunk để cập nhật thông tin user
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateUserProfile',
+  async (profileData, { rejectWithValue }) => {
+    try {
+      // Gọi API cập nhật thông tin
+      const response = await userService.updateProfile(profileData);
+      
+      // Kiểm tra dữ liệu trả về
+      if (response && response.user) {
+        return response.user; // Trả về dữ liệu người dùng đã cập nhật
+      } else if (response) {
+        return profileData; // Nếu API không trả về dữ liệu user, sử dụng dữ liệu đã gửi
+      }
+      
+      return profileData;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Cập nhật thông tin thất bại. Vui lòng thử lại.'
+      );
+    }
+  }
+);
 
 const initialState = {
   isAuthenticated: false,
@@ -43,19 +71,59 @@ const authSlice = createSlice({
       }
     },
     updateUser: (state, action) => {
-      state.user = {
-        ...state.user,
-        ...action.payload
-      };
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload
+        };
+      }
+    },
+    register: (state, action) => {
+      state.isAuthenticated = true;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.loading = false;
+      state.error = null;
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      // Xử lý updateUserProfile
+      .addCase(updateUserProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        // Cập nhật trạng thái người dùng với dữ liệu mới
+        if (state.user) {
+          state.user = {
+            ...state.user,
+            ...(action.payload || {})
+          };
+        }
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   }
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout, updateUser } = authSlice.actions;
+export const { 
+  loginStart, 
+  loginSuccess, 
+  loginFailure, 
+  logout, 
+  updateUser, 
+  updateAvatar, 
+  register 
+} = authSlice.actions;
 
 // Add a new action to update user avatar
 export const updateUserAvatar = (avatar) => ({
-  type: 'auth/updateAvatar',
+  type: '/api/User/avatar',
   payload: avatar
 });
 

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
-import { setAnimation,login } from './redux/uiSlice';
-import Profile from './components/Profile';
+import { setAnimation, login } from './redux/uiSlice';
+import StudentProfile from './pages/profile/StudentProfile';
+import Profile from './pages/profile/Profile';
 import Home from './components/Home';
 import AuthContainer from './components/Auth/AuthContainer';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -12,7 +13,11 @@ import { ThemeProvider } from 'styled-components';
 import Navbar from './components/layout/Navbar';
 import { getUserData, getToken } from './utils/auth';
 import AuthPage from './pages/AuthPage';
-
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import toggleSubjectStatus from './pages/admin/toggleSubjectStatus';
+import Unauthorized from './components/error/Unauthorized';
+import Subjects from './pages/SubjectsPage'
+import SubjectDetail from './components/subjects/SubjectDetail';
 import './App.css';
 
 const AppContainer = styled.div`
@@ -22,9 +27,15 @@ const AppContainer = styled.div`
   transition: background-color 0.3s ease, color 0.3s ease;
 `;
 
+// Hàm tiện ích để định dạng thời gian
+const formatDateTime = (date = new Date()) => {
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+};
+
 function App() {
   const { theme, currentAnimation } = useSelector(state => state.ui);
   const dispatch = useDispatch();
+  const currentUser = 'vinhsonvlog'; // hoặc lấy từ state/localStorage
 
   useEffect(() => {
     // Auto-play animations in sequence
@@ -36,8 +47,12 @@ function App() {
       currentIndex = (currentIndex + 1) % animationSequence.length;
     }, 3000);
 
+    // Lưu thông tin thời gian hiện tại
+    const currentDate = formatDateTime();
+    console.log(`App initialized at: ${currentDate} by user: ${currentUser}`);
+
     return () => clearInterval(animationInterval);
-  }, [dispatch]);
+  }, [dispatch, currentUser]);
 
   return (
     <AppContainer theme={theme}>
@@ -48,8 +63,17 @@ function App() {
           <Route path="/login" element={<AuthContainer />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
           <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
+          <Route path="/subjects" element={<Subjects />} />
+          <Route path="/subjects/:id" element={<SubjectDetail />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/api/Subject/:id/toggle-status" element={
+            <ProtectedRoute role="admin">
+              <toggleSubjectStatus />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </AppContainer>
