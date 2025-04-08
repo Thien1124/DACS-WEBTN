@@ -8,10 +8,23 @@ export const fetchSubjects = createAsyncThunk(
   'subjects/fetchSubjects',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await getAllSubjects(params);
+      // Console log để kiểm tra params
+      console.log('Fetching subjects with params:', params);
+      const response = await subjectService.getAllSubjects(params);
       return response;
     } catch (error) {
-      return rejectWithValue(error.message || 'Không thể tải danh sách môn học');
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải danh sách môn học');
+    }
+  }
+);
+export const fetchAllSubjectsNoPaging = createAsyncThunk(
+  'subjects/fetchAllSubjectsNoPaging',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await subjectService.getAllSubjectsNoPaging();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải danh sách môn học');
     }
   }
 );
@@ -20,10 +33,21 @@ export const fetchSubjectById = createAsyncThunk(
   'subjects/fetchSubjectById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await getSubjectById(id);
+      const response = await subjectService.getSubjectById(id);
       return response;
     } catch (error) {
-      return rejectWithValue(error.message || 'Không thể tải thông tin môn học');
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải thông tin môn học');
+    }
+  }
+);
+export const fetchSubjectExams = createAsyncThunk(
+  'subjects/fetchSubjectExams',
+  async (subjectId, { rejectWithValue }) => {
+    try {
+      const response = await subjectService.getSubjectExams(subjectId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải danh sách đề thi');
     }
   }
 );
@@ -43,7 +67,26 @@ export const updateExistingSubject = createAsyncThunk(
     return response;
   }
 );
-
+// Thêm vào file này nếu chưa có
+export const toggleSubjectStatus = async (id) => {
+  try {
+    // Trong môi trường thực tế, hãy uncomment dòng dưới đây
+    // const response = await apiClient.patch(`/api/Subject/${id}/toggle-status`);
+    
+    // Mock response
+    console.log(`Toggling status for subject ${id}`);
+    // Simulate delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      id: id,
+      status: Math.random() > 0.5 // Mock random status
+    };
+  } catch (error) {
+    console.error('Error toggling subject status:', error);
+    throw error;
+  }
+};
 export const deleteExistingSubject = createAsyncThunk(
   'subjects/deleteSubject',
   async (id) => {
@@ -51,12 +94,18 @@ export const deleteExistingSubject = createAsyncThunk(
     return id;
   }
 );
-
 const initialState = {
-  items: [],
+  items: [], // Ensure items is always initialized as an array
+  allSubjects: [],
+  featuredSubjects: [],
   currentSubject: null,
+  subjectExams: [],
   loading: false,
+  allSubjectsLoading: false,
+  examLoading: false,
+  featuredLoading: false,
   error: null,
+  examError: null,
   pagination: {
     currentPage: 1,
     totalPages: 1,
@@ -74,35 +123,44 @@ const subjectSlice = createSlice({
   initialState,
   reducers: {
     setFilters: (state, action) => {
+      // Cập nhật chỉ những filters được cung cấp, giữ nguyên các filters khác
       state.filters = { ...state.filters, ...action.payload };
+      console.log('Updated filters:', state.filters);
     },
     resetFilters: (state) => {
       state.filters = initialState.filters;
+      console.log('Reset filters to:', initialState.filters);
     },
     setPagination: (state, action) => {
       state.pagination = { ...state.pagination, ...action.payload };
+    },
+    clearCurrentSubject: (state) => {
+      state.currentSubject = null;
+    },
+    clearSubjectExams: (state) => {
+      state.subjectExams = [];
     }
   },
   extraReducers: (builder) => {
     builder
-      // Fetch subjects
-      .addCase(fetchSubjects.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchSubjects.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload.data;
-        state.pagination = {
-          currentPage: action.payload.currentPage,
-          totalPages: action.payload.totalPages,
-          totalItems: action.payload.totalItems
-        };
-      })
-      .addCase(fetchSubjects.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      })
+    .addCase(fetchSubjects.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(fetchSubjects.fulfilled, (state, action) => {
+      state.loading = false;
+      state.items = action.payload.items || action.payload;
+      state.pagination = {
+        currentPage: action.payload.currentPage || 1,
+        totalPages: action.payload.totalPages || 1,
+        totalItems: action.payload.totalItems || action.payload.length || 0
+      };
+    })
+    .addCase(fetchSubjects.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+      state.items = [];
+    })
       
       // Fetch single subject
       .addCase(fetchSubjectById.fulfilled, (state, action) => {
@@ -129,6 +187,12 @@ const subjectSlice = createSlice({
   }
 });
 
-export const { setFilters, resetFilters, setPagination } = subjectSlice.actions;
-
+export const { 
+  
+  setFilters, 
+  resetFilters, 
+  setPagination,
+  clearCurrentSubject,
+  clearSubjectExams
+} = subjectSlice.actions;
 export default subjectSlice.reducer;

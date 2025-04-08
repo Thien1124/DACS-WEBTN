@@ -30,7 +30,14 @@ export const updateUserProfile = createAsyncThunk(
 
 const initialState = {
   isAuthenticated: false,
-  user: null,
+  user: {
+    id: 1,
+    fullName: 'Vinh Sơn',
+    email: 'vinhsonvlog@example.com',
+    role: 'Teacher', //  đổi thành 'Admin' hoặc 'Student' để test các vai trò khác
+    isActive: true,
+    phoneNumber: '0987654321'
+  },
   token: null,
   error: null,
   loading: false

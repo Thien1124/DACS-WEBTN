@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FaPlus, FaEdit, FaTrash, FaToggleOn } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaList } from 'react-icons/fa';
 
 const NavigationContainer = styled.div`
   display: grid;
@@ -45,40 +45,65 @@ const NavButton = styled.button`
   }
 `;
 
-const SubjectNavigation = ({ theme }) => {
-    const navigate = useNavigate();
+const Title = styled.h2`
+  margin-bottom: 1rem;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  font-size: 1.5rem;
+`;
+
+const SubjectNavigation = ({ theme = 'light', showOnlyCreateButton = false }) => {
+  const navigate = useNavigate();
   
-    return (
+  // Cập nhật thời gian và user
+  const currentTime = "2025-04-08 11:22:37";
+  const currentUser = "vinhsonvlog";
+  
+  // Log component render
+  React.useEffect(() => {
+    console.log(`SubjectNavigation component accessed at: ${currentTime} by user: ${currentUser}`);
+  }, []);
+  
+  return (
+    <>
+      <Title theme={theme}>Quản lý môn học</Title>
+      
       <NavigationContainer>
+        {/* Luôn hiển thị nút Tạo Môn Học Mới */}
         <NavButton
           theme={theme}
           onClick={() => navigate('/subject/create')}
         >
           <FaPlus /> Tạo Môn Học Mới
         </NavButton>
-  
-        <NavButton
-          theme={theme}
-          onClick={() => navigate('/subject/edit')}
-        >
-          <FaEdit /> Cập Nhật Môn Học
-        </NavButton>
-  
-        <NavButton
-          theme={theme}
-          onClick={() => navigate('/subject/delete')}
-        >
-          <FaTrash /> Xóa Môn Học
-        </NavButton>
-  
-        <NavButton
-          theme={theme}
-          onClick={() => navigate('/subject/toggle-status')}
-        >
-          <FaToggleOn /> Trạng Thái Môn Học
-        </NavButton>
+        
+        {/* Chỉ hiển thị các nút khác nếu showOnlyCreateButton = false */}
+        {!showOnlyCreateButton && (
+          <>
+            <NavButton
+              theme={theme}
+              onClick={() => navigate('/subject/edit')}
+            >
+              <FaEdit /> Cập Nhật Môn Học
+            </NavButton>
+            
+            <NavButton
+              theme={theme}
+              onClick={() => navigate('/subject/delete')}
+            >
+              <FaTrash /> Xóa Môn Học
+            </NavButton>
+            
+            <NavButton
+              theme={theme}
+              onClick={() => navigate('/subject/toggle-status')}
+            >
+              <FaToggleOn /> Trạng Thái Môn Học
+            </NavButton>
+          </>
+        )}
       </NavigationContainer>
-    );
+    </>
+  );
 };
 
 export default SubjectNavigation;

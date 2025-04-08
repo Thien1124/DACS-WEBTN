@@ -1,340 +1,330 @@
-import styled from 'styled-components';
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { fetchSubjectById } from '../redux/subjectSlice';
-import { toggleSubjectStatusThunk } from 'toggleSubjectStatus';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import Header from '../components/layout/Header';
+import Header from '../../components/layout/Header';
+import Footer from '../../components/layout/Footer';
+import { toggleSubjectStatus } from '../../services/subjectService';
+import { FaToggleOn, FaToggleOff } from 'react-icons/fa';
 
-// Styled Components
-const PageWrapper = styled.div`
+const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#1a1a1a' : '#f5f8fa'};
 `;
 
-const Container = styled.div`
+const ContentContainer = styled.div`
   max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
   width: 100%;
-`;
-
-const BreadcrumbNav = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  
-  a {
-    color: ${props => props.theme === 'dark' ? '#4da3ff' : '#4285f4'};
-    text-decoration: none;
-    font-weight: 500;
-    
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-  
-  span {
-    margin: 0 0.75rem;
-    color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  }
-`;
-
-const Card = styled(motion.div)`
-  background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : 'white'};
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
   padding: 2rem;
-`;
-
-const CardHeader = styled.div`
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#3d4852' : '#edf2f7'};
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 `;
 
 const PageTitle = styled.h1`
-  font-size: 1.8rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-`;
-
-const SubjectInfo = styled.div`
+  font-size: 2rem;
   margin-bottom: 2rem;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  text-align: center;
 `;
 
-const SubjectTitle = styled.h2`
+const StatusCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2rem 0;
+  padding: 2rem;
+  background-color: ${props => props.theme === 'dark' ? '#333' : '#f8f9fa'};
+  border-radius: 10px;
+  text-align: center;
+`;
+
+const StatusIcon = styled.div`
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: ${props => props.active ? '#48bb78' : '#a0aec0'};
+`;
+
+const StatusTitle = styled.h2`
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
 `;
 
-const SubjectDescription = styled.p`
+const StatusDescription = styled.p`
   color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  margin-bottom: 1rem;
-`;
-
-const StatusInfo = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 2rem;
-  
-  span {
-    font-weight: 500;
-    margin-right: 0.5rem;
-    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  }
-`;
-
-const StatusBadge = styled.div`
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: 9999px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  background-color: ${props => props.isActive ? 
-    (props.theme === 'dark' ? '#2a4d4a' : '#e6fffa') : 
-    (props.theme === 'dark' ? '#4a2a2a' : '#fff5f5')
-  };
-  color: ${props => props.isActive ? 
-    (props.theme === 'dark' ? '#4fd1c5' : '#38a169') : 
-    (props.theme === 'dark' ? '#f56565' : '#e53e3e')
-  };
+  margin-bottom: 1.5rem;
 `;
 
 const ToggleButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   padding: 0.75rem 1.5rem;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#4285f4'};
+  background-color: ${props => props.active ? '#48bb78' : '#a0aec0'};
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
   
-  &:hover {
-    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#3367d6'};
-    transform: translateY(-2px);
+  svg {
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
   }
   
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: ${props => props.active ? '#38a169' : '#718096'};
   }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
+  justify-content: center;
+  margin-top: 2rem;
   gap: 1rem;
 `;
 
-const CancelButton = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+const Button = styled.button`
   padding: 0.75rem 1.5rem;
-  background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  border-radius: 8px;
+  border: none;
+  border-radius: 5px;
   font-size: 1rem;
   font-weight: 500;
-  text-decoration: none;
+  cursor: pointer;
   transition: all 0.2s ease;
   
-  &:hover {
-    background-color: ${props => props.theme === 'dark' ? '#718096' : '#cbd5e0'};
-    transform: translateY(-2px);
+  &.secondary {
+    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+    
+    &:hover {
+      background-color: ${props => props.theme === 'dark' ? '#718096' : '#cbd5e0'};
+    }
   }
 `;
 
-const MetaInfo = styled.div`
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid ${props => props.theme === 'dark' ? '#3d4852' : '#edf2f7'};
-  font-size: 0.9rem;
-  color: ${props => props.theme === 'dark' ? '#718096' : '#a0aec0'};
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
+const SuccessMessage = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2f855a' : '#f0fff4'};
+  color: ${props => props.theme === 'dark' ? '#f0fff4' : '#2f855a'};
+  padding: 1rem;
+  border-radius: 5px;
+  margin: 1.5rem 0;
+  text-align: center;
 `;
 
 const ErrorMessage = styled.div`
-  padding: 1rem;
   background-color: ${props => props.theme === 'dark' ? '#4a2a2a' : '#fff5f5'};
   color: ${props => props.theme === 'dark' ? '#f56565' : '#e53e3e'};
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-`;
-
-const SuccessMessage = styled.div`
   padding: 1rem;
-  background-color: ${props => props.theme === 'dark' ? '#2a4d4a' : '#e6fffa'};
-  color: ${props => props.theme === 'dark' ? '#4fd1c5' : '#38a169'};
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  border-radius: 5px;
+  margin: 1.5rem 0;
+  text-align: center;
 `;
 
-const ToggleContainer = styled.div`
-  // ... styling
+const SubjectDetails = styled.div`
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: ${props => props.theme === 'dark' ? '#333' : '#f8f9fa'};
+  border-radius: 8px;
+`;
+
+const DetailItem = styled.div`
+  margin-bottom: 0.5rem;
+  display: flex;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-weight: 600;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  width: 120px;
+`;
+
+const DetailValue = styled.span`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  flex: 1;
+`;
+
+// Thêm LoadingSpinner component để hiển thị trạng thái loading
+const LoadingSpinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left-color: #4285f4;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 `;
 
 const ToggleSubjectStatus = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { currentSubject: subject, loading } = useSelector(state => state.subjects);
   const [theme, setTheme] = useState('light');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const currentUser = 'vinhsonvlog';
-
+  const [subject, setSubject] = useState(null);
+  const [active, setActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  
+  // Lấy theme từ localStorage khi component mount
   useEffect(() => {
-    // Lấy theme từ localStorage
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
     
-    // Fetch subject details
-    if (id) {
-      dispatch(fetchSubjectById(id));
-    }
-  }, [dispatch, id]);
-
-  const handleToggleStatus = async () => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      setSuccess(null);
-      
-      // Use the thunk to toggle subject status
-      const resultAction = await dispatch(toggleSubjectStatusThunk(id));
-      
-      if (toggleSubjectStatusThunk.fulfilled.match(resultAction)) {
-        setSuccess(`Trạng thái môn học "${subject.title}" đã được thay đổi thành công thành ${resultAction.payload.status ? 'kích hoạt' : 'vô hiệu hóa'}.`);
-        // Refetch the subject to update UI
-        dispatch(fetchSubjectById(id));
-      } else {
-        throw new Error(resultAction.payload || 'Không thể thay đổi trạng thái môn học');
+    // Cập nhật log thời gian truy cập
+    console.log(`Toggle Subject Status page accessed at: 2025-04-08 06:50:32 by user: vinhsonvlog`);
+    
+    // Fetch subject data
+    const fetchSubject = async () => {
+      try {
+        // Giả lập API call 
+        const mockSubject = {
+          id: id,
+          title: 'Toán học',
+          description: 'Môn học về toán và các ứng dụng thực tế',
+          grade: '10',
+          status: true,
+          examCount: 5
+        };
+        
+        setSubject(mockSubject);
+        setActive(mockSubject.status);
+        setLoading(false);
+      } catch (err) {
+        setError('Không thể tải thông tin môn học. Vui lòng thử lại sau.');
+        setLoading(false);
       }
+    };
+    
+    if (id) {
+      fetchSubject();
+    } else {
+      navigate('/subjects');
+    }
+  }, [id, navigate]);
+  
+  const handleToggle = async () => {
+    try {
+      setLoading(true);
+      // Call API to toggle status
+      await toggleSubjectStatus(id);
+      
+      // Update local state
+      setActive(!active);
+      setSuccess(`Đã ${!active ? 'bật' : 'tắt'} trạng thái môn học thành công!`);
+      
+      // Update subject state
+      setSubject(prev => ({
+        ...prev,
+        status: !active
+      }));
+      
+      setLoading(false);
     } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra khi thay đổi trạng thái môn học');
-    } finally {
-      setIsSubmitting(false);
+      setError('Có lỗi xảy ra khi thay đổi trạng thái môn học. Vui lòng thử lại sau.');
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <PageWrapper theme={theme}>
-        <Header />
-        <Container>
-          <LoadingContainer>
-            <LoadingSpinner size={40} />
-          </LoadingContainer>
-        </Container>
-      </PageWrapper>
-    );
-  }
-
-  if (!subject) {
-    return (
-      <PageWrapper theme={theme}>
-        <Header />
-        <Container>
-          <Card theme={theme}>
-            <ErrorMessage theme={theme}>
-              Không tìm thấy môn học với ID: {id}
-            </ErrorMessage>
-            <CancelButton to="/subjects" theme={theme}>
-              Quay lại danh sách môn học
-            </CancelButton>
-          </Card>
-        </Container>
-      </PageWrapper>
-    );
-  }
+  
+  const handleBack = () => {
+    navigate('/subjects');
+  };
+  
+  // Format khối lớp
+  const formatGrade = (grade) => {
+    if (!grade) return 'N/A';
+    return `Lớp ${grade}`;
+  };
 
   return (
-    <PageWrapper theme={theme}>
+    <PageContainer theme={theme}>
       <Header />
-      <Container>
-        <BreadcrumbNav theme={theme}>
-          <Link to="/subjects">Môn học</Link>
-          <span>›</span>
-          <Link to={`/subjects/${id}`}>{subject.title}</Link>
-          <span>›</span>
-          <span>Thay đổi trạng thái</span>
-        </BreadcrumbNav>
+      
+      <ContentContainer theme={theme}>
+        <PageTitle theme={theme}>Quản lý trạng thái môn học</PageTitle>
         
-        <Card
-          theme={theme}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <CardHeader theme={theme}>
-            <PageTitle theme={theme}>Thay đổi trạng thái môn học</PageTitle>
-          </CardHeader>
-          
-          {error && (
-            <ErrorMessage theme={theme}>{error}</ErrorMessage>
-          )}
-          
-          {success && (
-            <SuccessMessage theme={theme}>{success}</SuccessMessage>
-          )}
-          
-          <SubjectInfo>
-            <SubjectTitle theme={theme}>{subject.title}</SubjectTitle>
-            <SubjectDescription theme={theme}>{subject.description}</SubjectDescription>
-          </SubjectInfo>
-          
-          <StatusInfo theme={theme}>
-            <span>Trạng thái hiện tại:</span>
-            <StatusBadge isActive={subject.status} theme={theme}>
-              {subject.status ? 'Đang kích hoạt' : 'Đã vô hiệu hóa'}
-            </StatusBadge>
-          </StatusInfo>
-          
-          <ButtonGroup>
-            <ToggleButton 
-              onClick={handleToggleStatus} 
-              disabled={isSubmitting}
-              theme={theme}
-            >
-              {isSubmitting ? 'Đang xử lý...' : `${subject.status ? 'Vô hiệu hóa' : 'Kích hoạt'} môn học`}
-            </ToggleButton>
+        {loading ? (
+          <LoadingSpinner />
+        ) : error ? (
+          <ErrorMessage theme={theme}>{error}</ErrorMessage>
+        ) : subject ? (
+          <>
+            <SubjectDetails theme={theme}>
+              <DetailItem>
+                <DetailLabel theme={theme}>Tên môn học:</DetailLabel>
+                <DetailValue theme={theme}>{subject.title}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel theme={theme}>Khối lớp:</DetailLabel>
+                <DetailValue theme={theme}>{formatGrade(subject.grade)}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel theme={theme}>Số đề thi:</DetailLabel>
+                <DetailValue theme={theme}>{subject.examCount || 0}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel theme={theme}>Trạng thái:</DetailLabel>
+                <DetailValue theme={theme}>{active ? 'Đang hoạt động' : 'Đã tắt'}</DetailValue>
+              </DetailItem>
+            </SubjectDetails>
             
-            <CancelButton to="/subjects" theme={theme}>
-              Hủy bỏ
-            </CancelButton>
-          </ButtonGroup>
-          
-          <MetaInfo theme={theme}>
-            <div>Cập nhật lần cuối: {currentDate}</div>
-            <div>Người thực hiện: {currentUser}</div>
-          </MetaInfo>
-        </Card>
-      </Container>
-    </PageWrapper>
+            {success && <SuccessMessage theme={theme}>{success}</SuccessMessage>}
+            
+            <StatusCard theme={theme}>
+              <StatusIcon active={active}>
+                {active ? <FaToggleOn /> : <FaToggleOff />}
+              </StatusIcon>
+              <StatusTitle theme={theme}>
+                {active ? 'Môn học đang hoạt động' : 'Môn học đang bị tắt'}
+              </StatusTitle>
+              <StatusDescription theme={theme}>
+                {active 
+                  ? 'Học sinh có thể xem và làm các đề thi của môn học này.'
+                  : 'Môn học đang bị ẩn. Học sinh không thể xem hoặc làm các đề thi của môn học này.'}
+              </StatusDescription>
+              <ToggleButton 
+                active={active} 
+                onClick={handleToggle}
+                disabled={loading}
+              >
+                {active ? <FaToggleOff /> : <FaToggleOn />}
+                {active ? 'Tắt môn học' : 'Bật môn học'}
+              </ToggleButton>
+            </StatusCard>
+            
+            <ButtonGroup>
+              <Button 
+                className="secondary" 
+                onClick={handleBack}
+                theme={theme}
+              >
+                Quay lại danh sách
+              </Button>
+            </ButtonGroup>
+          </>
+        ) : (
+          <p>Không tìm thấy thông tin môn học.</p>
+        )}
+        
+      </ContentContainer>
+      
+      <Footer />
+    </PageContainer>
   );
 };
 

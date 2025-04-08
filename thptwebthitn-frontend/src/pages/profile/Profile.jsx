@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Header from '../../components/layout/Header';
 
 import { Link } from 'react-router-dom';
-import { FaEdit, FaUser, FaPhoneAlt, FaEnvelope, FaIdBadge, FaCalendarAlt } from 'react-icons/fa';
+import { FaEdit, FaUser, FaPhoneAlt, FaEnvelope, FaIdBadge, FaCalendarAlt, FaCrown, FaChalkboardTeacher, FaGraduationCap } from 'react-icons/fa';
 
 const PageWrapper = styled.div`
   display: flex;
@@ -84,15 +84,26 @@ const ProfileName = styled.h1`
   font-size: 2.2rem;
   margin-bottom: 0.5rem;
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    justify-content: center;
+    text-align: center;
+  }
 `;
 
 const RoleBadge = styled.span`
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   background: ${props => {
     switch(props.role?.toLowerCase()) {
       case 'admin':
         return 'linear-gradient(45deg, #FF4500, #FFA500)';
       case 'giáo viên':
+      case 'teacher':
         return 'linear-gradient(45deg, #4285f4, #34a853)';
       default:
         return 'linear-gradient(45deg, #3498db, #2980b9)';
@@ -101,10 +112,15 @@ const RoleBadge = styled.span`
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
-  padding: 0.3rem 0.8rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 20px;
-  margin-left: 1rem;
   vertical-align: middle;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  
+  svg {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+  }
 `;
 
 const DetailItem = styled.div`
@@ -295,6 +311,59 @@ const NoTestsMessage = styled.div`
   }
 `;
 
+const RoleIcon = styled.div`
+  margin-right: 0.5rem;
+`;
+
+// Thêm component mới để hiển thị chi tiết về vai trò
+const RoleDetails = styled.div`
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: ${props => props.theme === 'dark' ? '#333' : '#f8f9fa'};
+  border-radius: 10px;
+  border-left: 5px solid ${props => {
+    switch(props.role?.toLowerCase()) {
+      case 'admin':
+        return '#FF4500';
+      case 'giáo viên':
+      case 'teacher':
+        return '#4285f4';
+      default:
+        return '#3498db';
+    }
+  }};
+`;
+
+const RoleTitle = styled.div`
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
+  
+  svg {
+    margin-right: 0.5rem;
+    color: ${props => {
+      switch(props.role?.toLowerCase()) {
+        case 'admin':
+          return '#FF4500';
+        case 'giáo viên':
+        case 'teacher':
+          return '#4285f4';
+        default:
+          return '#3498db';
+      }
+    }};
+  }
+`;
+
+const RoleDescription = styled.p`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#666'};
+  font-size: 0.95rem;
+  line-height: 1.5;
+`;
+
 const Profile = () => {
   const { user } = useSelector(state => state.auth);
   const [theme, setTheme] = useState('light');
@@ -305,11 +374,15 @@ const Profile = () => {
     streak: 0
   });
   const [recentTests, setRecentTests] = useState([]);
+  const [currentDate] = useState('2025-04-08 06:16:24'); // Sử dụng thời gian hiện tại
+  const [currentUser] = useState('vinhsonvlog'); // Sử dụng tên đăng nhập hiện tại
   
   useEffect(() => {
     // Lấy theme từ localStorage
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
+    
+    console.log(`Profile page accessed at: ${currentDate} by user: ${currentUser}`);
     
     // Trong ứng dụng thực tế, bạn sẽ gọi API để lấy thông tin này
     // Giả lập dữ liệu cho demo
@@ -321,7 +394,7 @@ const Profile = () => {
     });
     
     setRecentTests([]);
-  }, []);
+  }, [currentDate, currentUser]);
   
   // Lấy ký tự đầu của tên cho avatar
   const getInitials = (name) => {
@@ -342,6 +415,50 @@ const Profile = () => {
     }
   };
 
+  // Trả về icon tương ứng với vai trò
+  const getRoleIcon = (role) => {
+    if (!role) return <FaGraduationCap />;
+    
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return <FaCrown />;
+      case 'teacher':
+        return <FaChalkboardTeacher />;
+      default:
+        return <FaGraduationCap />;
+    }
+  };
+
+  // Trả về mô tả vai trò
+  const getRoleDescription = (role) => {
+    if (!role) return 'Học sinh có thể làm bài tập, làm đề thi và xem kết quả học tập của mình.';
+    
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return 'Admin có quyền quản lý toàn bộ hệ thống, bao gồm quản lý người dùng, môn học, đề thi và cấu hình hệ thống.';
+      case 'teacher':
+        return 'Giáo viên có thể tạo và quản lý đề thi, chấm điểm và theo dõi tiến độ học tập của học sinh.';
+      default:
+        return 'Học sinh có thể làm bài tập, làm đề thi và xem kết quả học tập của mình.';
+    }
+  };
+
+  // Format thời gian đăng nhập cuối cùng từ UTC sang định dạng địa phương
+  const formatLastLogin = (utcTime) => {
+    if (!utcTime) return 'Chưa có thông tin';
+    
+    const date = new Date(utcTime);
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const role = user?.role || 'student';
+  
   return (
     <PageWrapper theme={theme}>
       <Header />
@@ -362,15 +479,18 @@ const Profile = () => {
                 {user?.avatar ? (
                   <img src={user.avatar} alt={user.fullName || 'Avatar'} />
                 ) : (
-                  getInitials(user?.fullName)
+                  getInitials(user?.fullName || currentUser)
                 )}
               </ProfileAvatar>
             </ProfileAvatarContainer>
             
             <ProfileInfo>
               <ProfileName theme={theme}>
-                {user?.fullName || 'Chưa cập nhật tên'}
-                <RoleBadge role={formatRole(user?.role)}>{formatRole(user?.role)}</RoleBadge>
+                {user?.fullName || currentUser}
+                <RoleBadge role={role}>
+                  {getRoleIcon(role)}
+                  {formatRole(role)}
+                </RoleBadge>
               </ProfileName>
               
               <DetailItem theme={theme}>
@@ -380,7 +500,7 @@ const Profile = () => {
               
               <DetailItem theme={theme}>
                 <FaEnvelope />
-                {user?.email || 'Chưa cập nhật email'}
+                {user?.email || `${currentUser}@example.com`}
               </DetailItem>
               
               <DetailItem theme={theme}>
@@ -388,9 +508,22 @@ const Profile = () => {
                 {user?.phoneNumber || 'Chưa cập nhật số điện thoại'}
               </DetailItem>
               
-              {/* Đã loại bỏ phần hiển thị lớp và trường học */}
+              <DetailItem theme={theme}>
+                <FaCalendarAlt />
+                Đăng nhập cuối: {formatLastLogin(currentDate)}
+              </DetailItem>
             </ProfileInfo>
           </ProfileHeader>
+          
+          <RoleDetails theme={theme} role={role}>
+            <RoleTitle theme={theme} role={role}>
+              {getRoleIcon(role)}
+              Quyền hạn của {formatRole(role)}
+            </RoleTitle>
+            <RoleDescription theme={theme}>
+              {getRoleDescription(role)}
+            </RoleDescription>
+          </RoleDetails>
           
           <SectionTitle theme={theme}>Thống kê học tập</SectionTitle>
           <StatsGrid>

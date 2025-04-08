@@ -14,10 +14,13 @@ import Navbar from './components/layout/Navbar';
 import { getUserData, getToken } from './utils/auth';
 import AuthPage from './pages/AuthPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
-import toggleSubjectStatus from './pages/admin/toggleSubjectStatus';
+import ToggleSubjectStatus from './pages/admin/ToggleSubjectStatus';
 import Unauthorized from './components/error/Unauthorized';
 import Subjects from './pages/SubjectsPage'
 import SubjectDetail from './components/subjects/SubjectDetail';
+import CreateSubject from './components/subjects/CreateSubject';
+import EditSubject from './components/subjects/EditSubject';
+import DeleteSubject from './components/subjects/DeleteSubject';
 import './App.css';
 
 const AppContainer = styled.div`
@@ -66,14 +69,48 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
           <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
-          <Route path="/subjects" element={<Subjects />} />
+          <Route path="/subjects" element={<Subjects/>} />
           <Route path="/subjects/:id" element={<SubjectDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          
           <Route path="/api/Subject/:id/toggle-status" element={
             <ProtectedRoute role="admin">
-              <toggleSubjectStatus />
+              <ToggleSubjectStatus />
             </ProtectedRoute>
           } />
+          <Route path="/subject/create" element={
+            <ProtectedRoute roles={['Admin', 'Teacher']}>
+              <CreateSubject />
+            </ProtectedRoute>
+          } />
+          <Route path="/subject/edit" element={
+            <ProtectedRoute roles={['Admin', 'Teacher']}>
+              <EditSubject />
+            </ProtectedRoute>
+          } />
+          <Route path="/subject/edit/:id" element={
+            <ProtectedRoute roles={['Admin', 'Teacher']}>
+              <EditSubject />
+            </ProtectedRoute>
+          } />
+          <Route path="/subject/delete" element={
+            <ProtectedRoute roles={['Admin']}>
+              <DeleteSubject />
+            </ProtectedRoute>
+          } />
+          <Route path="/subject/delete/:id" element={
+            <ProtectedRoute roles={['Admin']}>
+              <DeleteSubject />
+            </ProtectedRoute>
+          } />
+          <Route path="/subject/toggle-status/:id" element={
+            <ProtectedRoute roles={['Admin', 'Teacher']}>
+              <ToggleSubjectStatus />
+            </ProtectedRoute>
+          } />
+          
+          
+          
         </Routes>
       </Router>
     </AppContainer>

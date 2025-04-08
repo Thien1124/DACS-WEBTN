@@ -1,44 +1,64 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { getToken, getUserData } from '../../utils/auth';
+import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
-/**
- * Bảo vệ route chỉ cho phép người dùng có quyền nhất định truy cập
- * 
- * @param {Object} props - Component props
- * @param {React.ReactNode} props.children - Child component to render if authorized
- * @param {string|string[]} props.role - Required role(s) to access this route
- */
-const ProtectedRoute = ({ children, role }) => {
-  const location = useLocation();
-  const token = getToken();
-  const userData = getUserData();
+// Cập nhật thời gian và người dùng hiện tại
+const currentTime = "2025-04-08 10:30:14";
+const currentUser = "vinhsonvlog";
+
+const ProtectedRoute = ({ children, roles = [], role }) => {
+  // QUAN TRỌNG: useSelector phải được gọi ở cấp cao nhất của component
+  // KHÔNG đặt nó sau điều kiện if
+  const { isAuthenticated, user } = useSelector(state => state.auth);
   
-  // Kiểm tra đăng nhập
-  if (!token || !userData) {
-    // Redirect to login with return URL
-    return <Navigate to={`/login?returnUrl=${encodeURIComponent(location.pathname)}`} replace />;
+  // Log cho mục đích gỡ lỗi
+  console.log(`ProtectedRoute check at ${currentTime} by ${currentUser}:`, {
+    roles, 
+    role,
+    childrenType: children?.type?.name || 'Unknown',
+    authState: { isAuthenticated, userRole: user?.role }
+  });
+  
+  // === DEV MODE ===
+  // Set thành true để bỏ qua kiểm tra xác thực trong quá trình phát triển
+  const DEV_MODE = true;
+  
+  if (DEV_MODE) {
+    console.log(`[${currentTime}] DEV MODE enabled - skipping authentication`);
+    return children;
   }
   
-  // Kiểm tra quyền truy cập
-  const hasRequiredRole = () => {
-    if (!role) return true; // Không yêu cầu role cụ thể
-    
-    if (Array.isArray(role)) {
-      // Nhiều role được chấp nhận
-      return role.some(r => userData.roles?.includes(r));
-    } else {
-      // Một role duy nhất
-      return userData.roles?.includes(role);
-    }
-  };
+  // === PRODUCTION MODE ===
+  // Hooks đã được gọi trước tất cả các điều kiện rồi, nên phần này an toàn
   
-  if (!hasRequiredRole()) {
-    // Không có quyền, chuyển về trang chủ hoặc trang lỗi
+  // Kiểm tra xác thực
+  if (!isAuthenticated) {
+    console.log(`User not authenticated, redirecting to login`);
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Kiểm tra roles array
+  if (roles && roles.length > 0) {
+    const userRole = user?.role || '';
+    console.log(`Checking roles: User role '${userRole}' against required roles:`, roles);
+    
+    const hasRequiredRole = roles.some(r => 
+      userRole.toLowerCase() === r.toLowerCase()
+    );
+    
+    if (!hasRequiredRole) {
+      console.log(`User lacks required role, redirecting to unauthorized`);
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+  
+  // Kiểm tra single role
+  if (role && user?.role?.toLowerCase() !== role.toLowerCase()) {
+    console.log(`User lacks required role '${role}', redirecting to unauthorized`);
     return <Navigate to="/unauthorized" replace />;
   }
   
-  // Đã đăng nhập và có đủ quyền
+  console.log(`Access granted to protected route`);
   return children;
 };
 

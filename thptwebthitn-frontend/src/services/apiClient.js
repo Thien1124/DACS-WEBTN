@@ -1,78 +1,48 @@
 import axios from 'axios';
-import { getToken } from '../utils/auth';
+
+// Thời gian và người dùng hiện tại
+const currentTime = "2025-04-08 11:17:02";
+const currentUser = "vinhsonvlog";
+
+console.log(`[${currentTime}] API client initialized by ${currentUser}`);
+
+// Cấu hình baseURL - ĐẢM BẢO URL NÀY TRÙNG VỚI URL API BACKEND CỦA BẠN
+const baseURL = 'http://localhost:5006'; // Thay đổi thành URL chính xác của API backend
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5006/',
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 seconds timeout
 });
 
-// Add request interceptor
+// Log requests để debug
 apiClient.interceptors.request.use(
-  (config) => {
-    // Log request details for debugging
-    console.log('API Request:', {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      headers: config.headers,
-    });
-
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `${token}`;
-    }
+  config => {
+    console.log(`[${currentTime}] API Request: ${config.method.toUpperCase()} ${config.url}`);
     return config;
   },
-  (error) => {
-    console.error('Request Error:', error);
+  error => {
+    console.error(`[${currentTime}] API Request Error:`, error);
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor
+// Log responses để debug
 apiClient.interceptors.response.use(
-  (response) => {
-    // Log successful response
-    console.log('API Response:', {
-      url: response.config.url,
-      status: response.status,
-      data: response.data,
-    });
+  response => {
+    console.log(`[${currentTime}] API Response [${response.status}] from: ${response.config.url}`);
     return response;
   },
-  (error) => {
-    // Log error details
-    console.error('Response Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
-
+  error => {
     if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          console.error('Unauthorized - Please login again');
-          // Handle unauthorized access
-          break;
-        case 403:
-          console.error('Forbidden - Access denied');
-          break;
-        case 404:
-          console.error('Not found - The requested resource does not exist');
-          break;
-        case 500:
-          console.error('Server error - Please try again later');
-          break;
-        default:
-          console.error('An error occurred:', error.response.data);
-      }
+      console.error(`[${currentTime}] API Error [${error.response.status}] from: ${error.config.url}`);
     } else if (error.request) {
-      console.error('Network error - No response received');
+      console.error(`[${currentTime}] API No Response from: ${error.config.url}`);
+    } else {
+      console.error(`[${currentTime}] API Error:`, error.message);
     }
-    
     return Promise.reject(error);
   }
 );
