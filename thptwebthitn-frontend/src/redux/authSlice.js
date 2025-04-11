@@ -7,7 +7,7 @@ export const updateUserProfile = createAsyncThunk(
   async (profileData, { rejectWithValue }) => {
     try {
       // Gọi API cập nhật thông tin
-      const response = await userService.updateProfile(profileData);
+      const response = await userService.updateUserProfile(profileData);
       
       // Kiểm tra dữ liệu trả về
       if (response && response.user) {

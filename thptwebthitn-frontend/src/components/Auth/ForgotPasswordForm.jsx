@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import * as authService from '../../services/authService';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -118,7 +119,6 @@ const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -149,21 +149,20 @@ const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
       try {
         // Gọi API để gửi email đặt lại mật khẩu
         await authService.requestPasswordReset(email);
+        showSuccessToast('Đã gửi email hướng dẫn đặt lại mật khẩu!');
         
-        // Hiển thị thông báo thành công tạm thời
-        setIsSubmitted(true);
-        
-        // Sau đó chuyển đến trang nhập mã xác nhận và mật khẩu mới
+        // Chuyển đến trang nhập mã xác nhận và mật khẩu mới
         setTimeout(() => {
           navigate('/reset-password', { 
             state: { 
               email: email 
             } 
           });
-        }, 1500);
+        }, 1000);
       } catch (error) {
+        showErrorToast(error.message || 'Không thể gửi email. Vui lòng thử lại.');
         setErrors({
-          general: error.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.'
+          general: error.message || 'Không thể gửi email. Vui lòng thử lại.'
         });
       } finally {
         setIsLoading(false);
@@ -180,47 +179,37 @@ const ForgotPasswordForm = ({ theme, onBackToLogin }) => {
     >
       <FormTitle>Quên Mật Khẩu</FormTitle>
       
-      {isSubmitted ? (
-        <>
-          <SuccessMessage theme={theme}>
-            Chúng tôi đã gửi mã xác nhận vào email của bạn. Đang chuyển đến trang đặt lại mật khẩu...
-          </SuccessMessage>
-        </>
-      ) : (
-        <>
-          <p style={{ marginBottom: '1.5rem', textAlign: 'center', color: theme === 'dark' ? '#a0aec0' : '#777' }}>
-            Nhập email đã đăng ký của bạn để nhận mã xác nhận đặt lại mật khẩu.
-          </p>
-          
-          {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
-          
-          <form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label theme={theme} htmlFor="email">Email</Label>
-              <Input
-                theme={theme}
-                type="email"
-                id="email"
-                name="email"
-                value={email}
-                onChange={handleInputChange}
-                placeholder="example@gmail.com"
-              />
-              {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-            </FormGroup>
-            
-            <SubmitButton type="submit" disabled={isLoading}>
-              {isLoading ? 'Đang xử lý...' : 'Gửi Yêu Cầu'}
-            </SubmitButton>
-          </form>
-          
-          <LoginLink theme={theme}>
-            <LoginButton theme={theme} onClick={onBackToLogin}>
-              Quay lại đăng nhập
-            </LoginButton>
-          </LoginLink>
-        </>
-      )}
+      <p style={{ marginBottom: '1.5rem', textAlign: 'center', color: theme === 'dark' ? '#a0aec0' : '#777' }}>
+        Nhập email đã đăng ký của bạn để nhận mã xác nhận đặt lại mật khẩu.
+      </p>
+      
+      {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+      
+      <form onSubmit={handleSubmit}>
+        <FormGroup>
+          <Label theme={theme} htmlFor="email">Email</Label>
+          <Input
+            theme={theme}
+            type="email"
+            id="email"
+            name="email"
+            value={email}
+            onChange={handleInputChange}
+            placeholder="example@gmail.com"
+          />
+          {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+        </FormGroup>
+        
+        <SubmitButton type="submit" disabled={isLoading}>
+          {isLoading ? 'Đang xử lý...' : 'Gửi Yêu Cầu'}
+        </SubmitButton>
+      </form>
+      
+      <LoginLink theme={theme}>
+        <LoginButton theme={theme} onClick={onBackToLogin}>
+          Quay lại đăng nhập
+        </LoginButton>
+      </LoginLink>
     </FormContainer>
   );
 };

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { register } from '../../redux/authSlice';
 import * as authService from '../../services/authService';
 import { FaUser, FaEnvelope, FaLock, FaIdCard, FaPhone, FaCheckCircle } from 'react-icons/fa';
+import { showSuccessToast, showErrorToast, showWarningToast } from '../../utils/toastUtils';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -65,7 +66,7 @@ const FormGroup = styled.div`
 const InputIcon = styled.div`
   position: absolute;
   left: 12px;
-  top: 50%;
+  top: 55px;
   transform: translateY(-50%);
   color: ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
   transition: all 0.2s;
@@ -258,7 +259,7 @@ const SuccessMessage = styled.div`
     }
   `;
   
-  const RegisterForm = ({ theme, switchToLogin }) => {
+  const RegisterForm = ({ theme, switchToLogin,onRegisterSuccess }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -271,8 +272,16 @@ const SuccessMessage = styled.div`
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    const [registrationSuccess, setRegistrationSuccess] = useState(false); // Thêm trạng thái thành công
-  
+    const [shouldSwitchToLogin, setShouldSwitchToLogin] = useState(false);
+    useEffect(() => {
+      if (shouldSwitchToLogin) {
+        const redirectTimer = setTimeout(() => {
+          switchToLogin();
+        }, 800); // Độ trễ 800ms để đảm bảo toast được hiển thị trước khi chuyển form
+        
+        return () => clearTimeout(redirectTimer);
+      }
+    }, [shouldSwitchToLogin, switchToLogin]);
     const handleInputChange = (e) => {
       const { name, value } = e.target;
       setFormData({
@@ -335,17 +344,6 @@ const SuccessMessage = styled.div`
       return Object.keys(newErrors).length === 0;
     };
   
-    // Hiệu ứng chuyển trang sau khi đăng ký thành công
-    useEffect(() => {
-      let timer;
-      if (registrationSuccess) {
-        timer = setTimeout(() => {
-          switchToLogin();
-        }, 2000);
-      }
-      return () => clearTimeout(timer);
-    }, [registrationSuccess, switchToLogin]);
-  
     const handleSubmit = async (e) => {
       e.preventDefault();
       
@@ -361,29 +359,36 @@ const SuccessMessage = styled.div`
             phoneNumber: formData.phoneNumber
           };
     
-          console.log('Sending registration data:', userData);
+          console.log(`[${new Date().toISOString().replace('T', ' ').substring(0, 19)}] Sending registration data:`, userData);
+          console.log(`Current User: vinhsonvlog`); // Log người dùng hiện tại
+          
           const response = await authService.register(userData);
           console.log('Registration successful:', response);
           
-          // Hiển thị thông báo thành công thay vì chuyển hướng ngay lập tức
-          setRegistrationSuccess(true);
+          // Hiển thị thông báo thành công
+          showSuccessToast('Đăng ký tài khoản thành công!',onRegisterSuccess);
+          setTimeout(() => {
+            if (onRegisterSuccess && typeof onRegisterSuccess === 'function') {
+              onRegisterSuccess();
+            } else {
+              switchToLogin();
+            }
+          }, 800);
+          // Đặt state để chuyển đến form đăng nhập
+          setShouldSwitchToLogin(true);
   
-          // Không dispatch register ngay lập tức vì người dùng sẽ cần đăng nhập
-          // dispatch(register({
-          //   user: response.user,
-          //   token: response.token
-          // }));
-    
-          // Không chuyển hướng ngay, để người dùng thấy thông báo thành công
-          // navigate('/');
         } catch (error) {
           console.error('Registration error:', error);
+          showErrorToast(error.message || 'Đăng ký thất bại. Vui lòng thử lại sau.');
+          
           setErrors({
             general: error.message || 'Đăng ký thất bại. Vui lòng thử lại sau.'
           });
         } finally {
           setIsLoading(false);
         }
+      } else {
+        showWarningToast('Vui lòng điền đầy đủ thông tin và kiểm tra lại dữ liệu đã nhập.');
       }
     };
   
@@ -393,126 +398,121 @@ const SuccessMessage = styled.div`
           theme={theme}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }} 
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
         >
           <FormTitle>Đăng Ký Tài Khoản</FormTitle>
           
-          {registrationSuccess ? (
-            <SuccessMessage theme={theme}>
-              <FaCheckCircle /> Đăng ký thành công! Đang chuyển đến trang đăng nhập...
-            </SuccessMessage>
-          ) : (
-            <>
-              {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
-              
-              <form onSubmit={handleSubmit}>
-                <FormGroup>
-                  <Label theme={theme} htmlFor="username">Tên đăng nhập</Label>
-                  <Input
-                    theme={theme}
-                    type="text"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    placeholder="Nhập tên đăng nhập"
-                  />
-                  <InputIcon theme={theme}><FaUser /></InputIcon>
-                  {errors.username && <ErrorMessage>{errors.username}</ErrorMessage>}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label theme={theme} htmlFor="email">Email</Label>
-                  <Input
-                    theme={theme}
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="example@gmail.com"
-                  />
-                  <InputIcon theme={theme}><FaEnvelope /></InputIcon>
-                  {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label theme={theme} htmlFor="fullName">Họ và tên</Label>
-                  <Input
-                    theme={theme}
-                    type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    placeholder="Nhập họ và tên đầy đủ"
-                  />
-                  <InputIcon theme={theme}><FaIdCard /></InputIcon>
-                  {errors.fullName && <ErrorMessage>{errors.fullName}</ErrorMessage>}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label theme={theme} htmlFor="phoneNumber">Số điện thoại</Label>
-                  <Input
-                    theme={theme}
-                    type="tel"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="Nhập số điện thoại"
-                  />
-                  <InputIcon theme={theme}><FaPhone /></InputIcon>
-                  {errors.phoneNumber && <ErrorMessage>{errors.phoneNumber}</ErrorMessage>}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label theme={theme} htmlFor="password">Mật khẩu</Label>
-                  <Input
-                    theme={theme}
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Tối thiểu 6 ký tự"
-                  />
-                  <InputIcon theme={theme}><FaLock /></InputIcon>
-                  {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label theme={theme} htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-                  <Input
-                    theme={theme}
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    placeholder="Nhập lại mật khẩu"
-                  />
-                  <InputIcon theme={theme}><FaLock /></InputIcon>
-                  {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
-                </FormGroup>
-                
-                <SubmitButton type="submit" disabled={isLoading}>
-                  <span>{isLoading ? 'Đang xử lý...' : 'Đăng Ký'}</span>
-                </SubmitButton>
-              </form>
-              
-              <LoginLink theme={theme}>
-                Đã có tài khoản? 
-                <SwitchFormButton 
-                  theme={theme}
-                  type="button" 
-                  onClick={switchToLogin}
-                >
-                  Đăng nhập
-                </SwitchFormButton>
-              </LoginLink>
-            </>
-          )}
+          {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+          
+          <form onSubmit={handleSubmit}>
+            <FormGroup>
+              <Label theme={theme} htmlFor="username">Tên đăng nhập</Label>
+              <Input
+                theme={theme}
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Nhập tên đăng nhập"
+              />
+              <InputIcon theme={theme}><FaUser /></InputIcon>
+              {errors.username && <ErrorMessage>{errors.username}</ErrorMessage>}
+            </FormGroup>
+            
+            <FormGroup>
+              <Label theme={theme} htmlFor="email">Email</Label>
+              <Input
+                theme={theme}
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="example@gmail.com"
+              />
+              <InputIcon theme={theme}><FaEnvelope /></InputIcon>
+              {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+            </FormGroup>
+            
+            <FormGroup>
+              <Label theme={theme} htmlFor="fullName">Họ và tên</Label>
+              <Input
+                theme={theme}
+                type="text"
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                placeholder="Nhập họ và tên đầy đủ"
+              />
+              <InputIcon theme={theme}><FaIdCard /></InputIcon>
+              {errors.fullName && <ErrorMessage>{errors.fullName}</ErrorMessage>}
+            </FormGroup>
+            
+            <FormGroup>
+              <Label theme={theme} htmlFor="phoneNumber">Số điện thoại</Label>
+              <Input
+                theme={theme}
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+                placeholder="Nhập số điện thoại"
+              />
+              <InputIcon theme={theme}><FaPhone /></InputIcon>
+              {errors.phoneNumber && <ErrorMessage>{errors.phoneNumber}</ErrorMessage>}
+            </FormGroup>
+            
+            <FormGroup>
+              <Label theme={theme} htmlFor="password">Mật khẩu</Label>
+              <Input
+                theme={theme}
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Tối thiểu 6 ký tự"
+              />
+              <InputIcon theme={theme}><FaLock /></InputIcon>
+              {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+            </FormGroup>
+            
+            <FormGroup>
+              <Label theme={theme} htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+              <Input
+                theme={theme}
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="Nhập lại mật khẩu"
+              />
+              <InputIcon theme={theme}><FaLock /></InputIcon>
+              {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
+            </FormGroup>
+            
+            <SubmitButton type="submit" disabled={isLoading}>
+              <span>{isLoading ? 'Đang xử lý...' : 
+               shouldSwitchToLogin ? 'Đăng ký thành công...' : 'Đăng Ký'}</span>
+            </SubmitButton>
+          </form>
+          
+          <LoginLink theme={theme}>
+            Đã có tài khoản? 
+            <SwitchFormButton 
+              theme={theme}
+              type="button" 
+              onClick={switchToLogin}
+              disabled={shouldSwitchToLogin}
+            >
+              Đăng nhập
+            </SwitchFormButton>
+          </LoginLink>
         </FormContainer>
       </ResponsiveContainer>
     );

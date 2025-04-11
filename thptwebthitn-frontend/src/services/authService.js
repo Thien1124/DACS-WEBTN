@@ -398,36 +398,7 @@ export const updateUserProfile = async (userData) => {
   }
 };
 
-/**
- * Update user information
- * @param {object} userInfo - User information to update
- * @returns {Promise} - Promise resolving to updated user data
- */
-export const updateUserInfo = async (userInfo) => {
-  try {
-    const response = await apiClient.put('/api/User/update', {
-      email: userInfo.email,
-      fullName: userInfo.fullName, 
-      phoneNumber: userInfo.phoneNumber
-    });
-    
-    // Update user data in localStorage if the update is successful
-    if (response.data) {
-      saveUserData(response.data);
-    }
-    
-    return response.data;
-  } catch (error) {
-    console.error('Update user info failed:', error);
-    
-    let errorMessage = 'Cập nhật thông tin thất bại.';
-    if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    }
-    
-    throw { message: errorMessage };
-  }
-};
+
 
 /**
  * Validate token và đăng nhập tự động

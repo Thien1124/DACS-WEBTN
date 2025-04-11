@@ -21,6 +21,10 @@ import SubjectDetail from './components/subjects/SubjectDetail';
 import CreateSubject from './components/subjects/CreateSubject';
 import EditSubject from './components/subjects/EditSubject';
 import DeleteSubject from './components/subjects/DeleteSubject';
+import './assets/styles/toast.css';
+import ToastProvider from './components/shared/ToastProvider';
+
+
 import './App.css';
 
 const AppContainer = styled.div`
@@ -59,8 +63,12 @@ function App() {
 
   return (
     <AppContainer theme={theme}>
+      
       <Router>
+        <ToastProvider />
+        
         <Routes>
+
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<AuthContainer />} />
