@@ -160,7 +160,7 @@ namespace webthitn_backend.Models
                 new Subject { Id = 6, Name = "Tiếng Anh", Code = "ENG", Description = "Môn Tiếng Anh", CreatedAt = fixedDate1 },
                 new Subject { Id = 7, Name = "Lịch Sử", Code = "HIST", Description = "Môn Lịch Sử", CreatedAt = fixedDate1 },
                 new Subject { Id = 8, Name = "Địa Lý", Code = "GEO", Description = "Môn Địa Lý", CreatedAt = fixedDate1 },
-                new Subject { Id = 9, Name = "GDCD", Code = "GDKT&PL", Description = "Giáo dục kinh tế và pháp luật", CreatedAt = fixedDate1 }
+                new Subject { Id = 9, Name = "GDKT&PL", Code = "GDKT&PL", Description = "Giáo dục kinh tế và pháp luật", CreatedAt = fixedDate1 }
             );
 
         }

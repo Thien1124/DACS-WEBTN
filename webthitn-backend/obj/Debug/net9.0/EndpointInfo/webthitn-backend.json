@@ -181,6 +181,81 @@
             "description": "Lỗi máy chủ"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Thêm bài thi mới vào hệ thống",
+        "description": "API này cho phép giáo viên hoặc admin tạo một bài thi mới.\r\n\r\nSample request:\r\n            \r\n    POST /api/Exam\r\n    {\r\n        \"title\": \"Kiểm tra cuối kỳ Toán 12\",\r\n        \"description\": \"Bài kiểm tra kiến thức cuối kỳ Toán 12\",\r\n        \"subjectId\": 1,\r\n        \"examTypeId\": 2,\r\n        \"duration\": 90,\r\n        \"totalScore\": 10,\r\n        \"passScore\": 5,\r\n        \"maxAttempts\": 1,\r\n        \"startTime\": \"2025-04-20T08:00:00Z\",\r\n        \"endTime\": \"2025-04-30T23:59:59Z\",\r\n        \"isActive\": true,\r\n        \"showResult\": true,\r\n        \"showAnswers\": false,\r\n        \"shuffleQuestions\": true,\r\n        \"shuffleOptions\": true,\r\n        \"autoGradeShortAnswer\": true,\r\n        \"allowPartialGrading\": true,\r\n        \"accessCode\": \"math12final\",\r\n        \"scoringConfig\": \"{\\\"gradingMethod\\\":\\\"sum\\\",\\\"partialCreditMethod\\\":\\\"proportional\\\",\\\"penaltyForWrongAnswer\\\":0}\",\r\n        \"questions\": [\r\n            {\r\n                \"questionId\": 42,\r\n                \"order\": 1,\r\n                \"score\": 1\r\n            },\r\n            {\r\n                \"questionId\": 56,\r\n                \"order\": 2,\r\n                \"score\": 2\r\n            }\r\n        ]\r\n    }",
+        "requestBody": {
+          "description": "Thông tin bài thi cần tạo",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Trả về thông tin bài thi đã tạo"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy môn học hoặc loại bài thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
       }
     },
     "/api/Exam/BySubject/{subjectId}": {
@@ -359,6 +434,324 @@
           },
           "500": {
             "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/{id}": {
+      "get": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Lấy thông tin chi tiết của một bài thi",
+        "description": "API này cho phép lấy thông tin chi tiết của một bài thi cụ thể theo ID.\r\n\r\nSample request:\r\n            \r\n    GET /api/Exam/5",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin chi tiết bài thi"
+          },
+          "404": {
+            "description": "Không tìm thấy bài thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Cập nhật thông tin đề thi",
+        "description": "API này cho phép giáo viên hoặc admin cập nhật thông tin của một đề thi đã tồn tại.\r\n\r\nSample request:\r\n            \r\n    PUT /api/Exam/5\r\n    {\r\n        \"title\": \"Kiểm tra cuối kỳ Toán 12 (Đã cập nhật)\",\r\n        \"description\": \"Bài kiểm tra kiến thức cuối kỳ Toán 12 - Phiên bản mới\",\r\n        \"subjectId\": 1,\r\n        \"examTypeId\": 2,\r\n        \"duration\": 90,\r\n        \"totalScore\": 10,\r\n        \"passScore\": 6,\r\n        \"maxAttempts\": 2,\r\n        \"startTime\": \"2025-04-20T08:00:00Z\",\r\n        \"endTime\": \"2025-04-30T23:59:59Z\",\r\n        \"isActive\": true,\r\n        \"showResult\": true,\r\n        \"showAnswers\": false,\r\n        \"shuffleQuestions\": true,\r\n        \"shuffleOptions\": true,\r\n        \"autoGradeShortAnswer\": true,\r\n        \"allowPartialGrading\": true,\r\n        \"accessCode\": \"math12final\",\r\n        \"scoringConfig\": \"{\\\"gradingMethod\\\":\\\"sum\\\",\\\"partialCreditMethod\\\":\\\"proportional\\\",\\\"penaltyForWrongAnswer\\\":0}\",\r\n        \"questions\": [\r\n            {\r\n                \"questionId\": 42,\r\n                \"order\": 1,\r\n                \"score\": 1.5\r\n            },\r\n            {\r\n                \"questionId\": 56,\r\n                \"order\": 2,\r\n                \"score\": 2.5\r\n            }\r\n        ]\r\n    }",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần cập nhật",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin cập nhật đề thi",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin đề thi đã cập nhật thành công"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền cập nhật đề thi này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi, môn học hoặc loại đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Xóa một đề thi khỏi hệ thống",
+        "description": "API này cho phép giáo viên hoặc admin xóa một đề thi đã tồn tại.\r\nLưu ý: Đề thi sẽ bị xóa vĩnh viễn cùng với tất cả các câu hỏi liên quan.\r\n\r\nSample request:\r\n            \r\n    DELETE /api/Exam/5",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần xóa",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đề thi đã được xóa thành công"
+          },
+          "403": {
+            "description": "Không có quyền xóa đề thi này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/WithQuestions/{id}": {
+      "get": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Lấy thông tin chi tiết của một bài thi kèm danh sách câu hỏi đầy đủ",
+        "description": "API này cho phép lấy thông tin chi tiết của một bài thi cụ thể theo ID cùng với danh sách câu hỏi đầy đủ.\r\n\r\nSample request:\r\n            \r\n    GET /api/Exam/WithQuestions/5",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin chi tiết bài thi và câu hỏi"
+          },
+          "404": {
+            "description": "Không tìm thấy bài thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/{id}/WithQuestions": {
+      "get": {
+        "tags": [
+          "Exam"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -897,6 +1290,131 @@
         },
         "additionalProperties": false
       },
+      "CreateExamDTO": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Tiêu đề bài thi",
+            "nullable": true,
+            "example": "Kiểm tra giữa kỳ Toán học"
+          },
+          "description": {
+            "type": "string",
+            "description": "Mô tả bài thi",
+            "nullable": true,
+            "example": "Bài kiểm tra kiến thức cơ bản về đạo hàm và tích phân"
+          },
+          "subjectId": {
+            "type": "integer",
+            "description": "ID của môn học",
+            "format": "int32",
+            "example": 1
+          },
+          "examTypeId": {
+            "type": "integer",
+            "description": "ID của loại bài thi",
+            "format": "int32",
+            "example": 3
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Thời gian làm bài (phút)",
+            "format": "int32",
+            "example": 45
+          },
+          "totalScore": {
+            "type": "number",
+            "description": "Điểm tối đa của bài thi",
+            "format": "double",
+            "example": 10
+          },
+          "passScore": {
+            "type": "number",
+            "description": "Điểm đạt của bài thi",
+            "format": "double",
+            "nullable": true,
+            "example": 5
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "description": "Số lần được làm bài",
+            "format": "int32",
+            "nullable": true,
+            "example": 2
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Thời gian bắt đầu mở bài thi",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-04-05T08:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Thời gian kết thúc đóng bài thi",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-04-15T23:59:59Z"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Trạng thái kích hoạt của bài thi",
+            "example": true
+          },
+          "showResult": {
+            "type": "boolean",
+            "description": "Hiển thị kết quả sau khi làm bài",
+            "example": true
+          },
+          "showAnswers": {
+            "type": "boolean",
+            "description": "Hiển thị đáp án sau khi làm bài",
+            "example": false
+          },
+          "shuffleQuestions": {
+            "type": "boolean",
+            "description": "Trộn câu hỏi khi hiển thị",
+            "example": true
+          },
+          "shuffleOptions": {
+            "type": "boolean",
+            "description": "Trộn đáp án khi hiển thị (áp dụng cho câu hỏi trắc nghiệm một đáp án)",
+            "example": true
+          },
+          "autoGradeShortAnswer": {
+            "type": "boolean",
+            "description": "Cài đặt chấm tự động câu hỏi trả lời ngắn",
+            "example": true
+          },
+          "allowPartialGrading": {
+            "type": "boolean",
+            "description": "Cài đặt mức điểm đạt (%) cho câu hỏi đúng-sai nhiều ý nếu trả lời đúng một phần",
+            "example": true
+          },
+          "accessCode": {
+            "type": "string",
+            "description": "Mã truy cập bài thi (nếu được bảo vệ)",
+            "nullable": true,
+            "example": "abc123"
+          },
+          "scoringConfig": {
+            "type": "string",
+            "description": "Cấu hình tính điểm (JSON)",
+            "nullable": true
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExamQuestionCreateDTO"
+            },
+            "description": "Danh sách ID câu hỏi đưa vào bài thi",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO tạo mới bài thi"
+      },
       "CreateSubjectDTO": {
         "type": "object",
         "properties": {
@@ -915,6 +1433,31 @@
         },
         "additionalProperties": false,
         "description": "DTO dùng để tạo mới môn học"
+      },
+      "ExamQuestionCreateDTO": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer",
+            "description": "ID của câu hỏi",
+            "format": "int32",
+            "example": 42
+          },
+          "order": {
+            "type": "integer",
+            "description": "Thứ tự câu hỏi trong bài thi",
+            "format": "int32",
+            "example": 1
+          },
+          "score": {
+            "type": "number",
+            "description": "Điểm số cho câu hỏi trong bài thi",
+            "format": "double",
+            "example": 1,5
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO thêm câu hỏi vào bài thi"
       },
       "ForgotPasswordRequest": {
         "type": "object",
