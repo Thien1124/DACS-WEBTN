@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { showErrorToast } from '../utils/toastUtils';
 // Thời gian và người dùng hiện tại
 const currentTime = "2025-04-08 11:17:02";
 const currentUser = "vinhsonvlog";
@@ -19,32 +20,69 @@ const apiClient = axios.create({
 
 // Log requests để debug
 apiClient.interceptors.request.use(
-  config => {
-    console.log(`[${currentTime}] API Request: ${config.method.toUpperCase()} ${config.url}`);
+  (config) => {
+    // Lấy token từ localStorage
+    const token = localStorage.getItem('auth_token');
+    
+    // Log request details
+    console.log(`[${new Date().toISOString()}] API Request:`, {
+      url: config.url,
+      method: config.method,
+      hasToken: !!token,
+    });
+    
+    // Thêm token vào header
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     return config;
   },
-  error => {
-    console.error(`[${currentTime}] API Request Error:`, error);
+  (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
+
 
 // Log responses để debug
 apiClient.interceptors.response.use(
-  response => {
-    console.log(`[${currentTime}] API Response [${response.status}] from: ${response.config.url}`);
+  (response) => {
+    // Log response success
+    console.log(`[${new Date().toISOString()}] API Response Success:`, {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    
     return response;
   },
-  error => {
-    if (error.response) {
-      console.error(`[${currentTime}] API Error [${error.response.status}] from: ${error.config.url}`);
-    } else if (error.request) {
-      console.error(`[${currentTime}] API No Response from: ${error.config.url}`);
-    } else {
-      console.error(`[${currentTime}] API Error:`, error.message);
+  (error) => {
+    // Log response error
+    console.error(`[${new Date().toISOString()}] API Response Error:`, {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    
+    // Xử lý lỗi cụ thể
+    if (error.response?.status === 401) {
+      console.log('Session expired, logging out...');
+      
+      // Xóa token và thông tin người dùng
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      
+      // Hiển thị thông báo
+      showErrorToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      
+      // Chuyển hướng sang trang đăng nhập sau 2 giây
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
     }
+    
     return Promise.reject(error);
   }
 );
-
 export default apiClient;
