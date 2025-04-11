@@ -80,6 +80,168 @@
              <response code="404">Không tìm thấy môn học</response>
              <response code="500">Lỗi máy chủ</response>
         </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.CreateExam(webthitn_backend.DTOs.CreateExamDTO)">
+             <summary>
+             Thêm bài thi mới vào hệ thống
+             </summary>
+             <remarks>
+             API này cho phép giáo viên hoặc admin tạo một bài thi mới.
+             
+             Sample request:
+            
+                 POST /api/Exam
+                 {
+                     "title": "Kiểm tra cuối kỳ Toán 12",
+                     "description": "Bài kiểm tra kiến thức cuối kỳ Toán 12",
+                     "subjectId": 1,
+                     "examTypeId": 2,
+                     "duration": 90,
+                     "totalScore": 10,
+                     "passScore": 5,
+                     "maxAttempts": 1,
+                     "startTime": "2025-04-20T08:00:00Z",
+                     "endTime": "2025-04-30T23:59:59Z",
+                     "isActive": true,
+                     "showResult": true,
+                     "showAnswers": false,
+                     "shuffleQuestions": true,
+                     "shuffleOptions": true,
+                     "autoGradeShortAnswer": true,
+                     "allowPartialGrading": true,
+                     "accessCode": "math12final",
+                     "scoringConfig": "{\"gradingMethod\":\"sum\",\"partialCreditMethod\":\"proportional\",\"penaltyForWrongAnswer\":0}",
+                     "questions": [
+                         {
+                             "questionId": 42,
+                             "order": 1,
+                             "score": 1
+                         },
+                         {
+                             "questionId": 56,
+                             "order": 2,
+                             "score": 2
+                         }
+                     ]
+                 }
+            
+             </remarks>
+             <param name="model">Thông tin bài thi cần tạo</param>
+             <returns>Thông tin bài thi đã tạo</returns>
+             <response code="201">Trả về thông tin bài thi đã tạo</response>
+             <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+             <response code="404">Không tìm thấy môn học hoặc loại bài thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.GetExam(System.Int32)">
+             <summary>
+             Lấy thông tin chi tiết của một bài thi
+             </summary>
+             <remarks>
+             API này cho phép lấy thông tin chi tiết của một bài thi cụ thể theo ID.
+             
+             Sample request:
+            
+                 GET /api/Exam/5
+            
+             </remarks>
+             <param name="id">ID của bài thi</param>
+             <returns>Thông tin chi tiết của bài thi</returns>
+             <response code="200">Trả về thông tin chi tiết bài thi</response>
+             <response code="404">Không tìm thấy bài thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.GetExamWithQuestions(System.Int32)">
+             <summary>
+             Lấy thông tin chi tiết của một bài thi kèm danh sách câu hỏi đầy đủ
+             </summary>
+             <remarks>
+             API này cho phép lấy thông tin chi tiết của một bài thi cụ thể theo ID cùng với danh sách câu hỏi đầy đủ.
+             
+             Sample request:
+            
+                 GET /api/Exam/WithQuestions/5
+            
+             </remarks>
+             <param name="id">ID của bài thi</param>
+             <returns>Thông tin chi tiết của bài thi và danh sách câu hỏi</returns>
+             <response code="200">Trả về thông tin chi tiết bài thi và câu hỏi</response>
+             <response code="404">Không tìm thấy bài thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.UpdateExam(System.Int32,webthitn_backend.DTOs.CreateExamDTO)">
+             <summary>
+             Cập nhật thông tin đề thi
+             </summary>
+             <remarks>
+             API này cho phép giáo viên hoặc admin cập nhật thông tin của một đề thi đã tồn tại.
+             
+             Sample request:
+            
+                 PUT /api/Exam/5
+                 {
+                     "title": "Kiểm tra cuối kỳ Toán 12 (Đã cập nhật)",
+                     "description": "Bài kiểm tra kiến thức cuối kỳ Toán 12 - Phiên bản mới",
+                     "subjectId": 1,
+                     "examTypeId": 2,
+                     "duration": 90,
+                     "totalScore": 10,
+                     "passScore": 6,
+                     "maxAttempts": 2,
+                     "startTime": "2025-04-20T08:00:00Z",
+                     "endTime": "2025-04-30T23:59:59Z",
+                     "isActive": true,
+                     "showResult": true,
+                     "showAnswers": false,
+                     "shuffleQuestions": true,
+                     "shuffleOptions": true,
+                     "autoGradeShortAnswer": true,
+                     "allowPartialGrading": true,
+                     "accessCode": "math12final",
+                     "scoringConfig": "{\"gradingMethod\":\"sum\",\"partialCreditMethod\":\"proportional\",\"penaltyForWrongAnswer\":0}",
+                     "questions": [
+                         {
+                             "questionId": 42,
+                             "order": 1,
+                             "score": 1.5
+                         },
+                         {
+                             "questionId": 56,
+                             "order": 2,
+                             "score": 2.5
+                         }
+                     ]
+                 }
+            
+             </remarks>
+             <param name="id">ID của đề thi cần cập nhật</param>
+             <param name="model">Thông tin cập nhật đề thi</param>
+             <returns>Thông tin đề thi sau khi cập nhật</returns>
+             <response code="200">Trả về thông tin đề thi đã cập nhật thành công</response>
+             <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+             <response code="403">Không có quyền cập nhật đề thi này</response>
+             <response code="404">Không tìm thấy đề thi, môn học hoặc loại đề thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.DeleteExam(System.Int32)">
+             <summary>
+             Xóa một đề thi khỏi hệ thống
+             </summary>
+             <remarks>
+             API này cho phép giáo viên hoặc admin xóa một đề thi đã tồn tại.
+             Lưu ý: Đề thi sẽ bị xóa vĩnh viễn cùng với tất cả các câu hỏi liên quan.
+             
+             Sample request:
+            
+                 DELETE /api/Exam/5
+            
+             </remarks>
+             <param name="id">ID của đề thi cần xóa</param>
+             <returns>Thông báo kết quả xóa đề thi</returns>
+             <response code="200">Đề thi đã được xóa thành công</response>
+             <response code="403">Không có quyền xóa đề thi này</response>
+             <response code="404">Không tìm thấy đề thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
         <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjects(System.Int32,System.Int32,System.Boolean,System.String)">
             <summary>
             Lấy danh sách môn học có phân trang
@@ -717,6 +879,91 @@
         <member name="P:webthitn_backend.DTOs.ExamScoringConfigDTO.PenaltyForWrongAnswer">
             <summary>
             Phần trăm điểm trừ cho câu trả lời sai (0-100)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamQuestionDetailDTO">
+            <summary>
+            DTO chứa thông tin chi tiết của một câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.Id">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.ExamQuestionId">
+            <summary>
+            ID của liên kết giữa câu hỏi và bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.Content">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.QuestionType">
+            <summary>
+            Loại câu hỏi: 1 = Trắc nghiệm một đáp án, 3 = Trả lời ngắn, 5 = Đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.Explanation">
+            <summary>
+            Giải thích đáp án
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.OrderIndex">
+            <summary>
+            Thứ tự câu hỏi trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.Score">
+            <summary>
+            Điểm số của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionDetailDTO.Options">
+            <summary>
+            Danh sách các lựa chọn của câu hỏi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamQuestionOptionDTO">
+            <summary>
+            DTO chứa thông tin của một lựa chọn trong câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionOptionDTO.Id">
+            <summary>
+            ID của lựa chọn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionOptionDTO.Content">
+            <summary>
+            Nội dung của lựa chọn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionOptionDTO.IsCorrect">
+            <summary>
+            Cờ báo hiệu lựa chọn đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamQuestionOptionDTO.OrderIndex">
+            <summary>
+            Thứ tự của lựa chọn
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ExamDetailDTO">
+            <summary>
+            DTO chứa thông tin chi tiết của một bài thi kèm danh sách câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamDetailDTO.ScoringConfig">
+            <summary>
+            Cấu hình tính điểm (JSON)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamDetailDTO.Questions">
+            <summary>
+            Danh sách câu hỏi trong bài thi
             </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.ExamResultListDTO">

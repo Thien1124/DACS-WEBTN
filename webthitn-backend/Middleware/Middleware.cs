@@ -85,6 +85,4 @@ namespace webthitn_backend.Middleware
             await _next(context);
         }
     }
-
-    // Extension method không còn cần thiết vì chúng ta sử dụng UseMiddleware trực tiếp
 }
