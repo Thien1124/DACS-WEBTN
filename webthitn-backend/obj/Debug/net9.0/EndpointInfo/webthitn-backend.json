@@ -849,6 +849,652 @@
         }
       }
     },
+    "/api/Question": {
+      "post": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Thêm một câu hỏi mới vào hệ thống",
+        "description": "API này cho phép giáo viên hoặc admin tạo một câu hỏi mới theo một trong ba dạng:\r\n1. Trắc nghiệm một đáp án (QuestionType=1)\r\n2. Đúng-sai nhiều ý (QuestionType=2)\r\n3. Trả lời ngắn (QuestionType=3)",
+        "requestBody": {
+          "description": "Thông tin câu hỏi cần tạo",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Lấy danh sách câu hỏi với các bộ lọc và phân trang",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "ID của môn học",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "chapterId",
+            "in": "query",
+            "description": "ID của chương",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "levelId",
+            "in": "query",
+            "description": "ID của mức độ câu hỏi",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "questionType",
+            "in": "query",
+            "description": "Loại câu hỏi (1: Một đáp án, 2: Đúng-sai nhiều ý, 3: Trả lời ngắn)",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "searchTerm",
+            "in": "query",
+            "description": "Từ khóa tìm kiếm",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số mục mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "activeOnly",
+            "in": "query",
+            "description": "Chỉ lấy câu hỏi đang hoạt động",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Question/{id}": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Lấy thông tin chi tiết của một câu hỏi theo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của câu hỏi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Cập nhật thông tin của một câu hỏi / chỉnh sửa",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của câu hỏi cần cập nhật",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin cập nhật",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuestionDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuestionDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuestionDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Xóa một câu hỏi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của câu hỏi cần xóa",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Question/{questionId}/options/{optionId}": {
+      "delete": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Xóa một đáp án khỏi câu hỏi",
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "description": "ID của câu hỏi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "optionId",
+            "in": "path",
+            "description": "ID của đáp án cần xóa",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Results": {
+      "post": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Nộp bài và tính điểm",
+        "requestBody": {
+          "description": "Thông tin bài thi và câu trả lời",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Results/user/{userId}": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Lấy danh sách kết quả bài thi theo người dùng",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID của người dùng",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "Lọc theo môn học (không bắt buộc)",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Trang hiện tại",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số lượng kết quả mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Results/{resultId}": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Lấy chi tiết kết quả bài thi",
+        "parameters": [
+          {
+            "name": "resultId",
+            "in": "path",
+            "description": "ID của kết quả bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Results/{id}": {
+      "delete": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Xóa kết quả bài thi (chỉ dành cho admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của kết quả bài thi cần xóa",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Results/{resultId}/grade": {
+      "put": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Cập nhật điểm bài thi (dành cho giáo viên)",
+        "parameters": [
+          {
+            "name": "resultId",
+            "in": "path",
+            "description": "ID của kết quả bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin cập nhật điểm",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResultDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResultDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResultDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/Subject": {
       "get": {
         "tags": [
@@ -1268,6 +1914,56 @@
   },
   "components": {
     "schemas": {
+      "AnswerSubmissionDTO": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer",
+            "description": "ID của câu hỏi",
+            "format": "int32",
+            "example": 42
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Thời gian bắt đầu trả lời câu hỏi",
+            "format": "date-time",
+            "example": "2025-04-12T06:35:20Z"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Thời gian kết thúc trả lời câu hỏi",
+            "format": "date-time",
+            "example": "2025-04-12T06:36:05Z"
+          },
+          "selectedOptionId": {
+            "type": "integer",
+            "description": "ID của đáp án được chọn (cho câu hỏi một đáp án)",
+            "format": "int32",
+            "nullable": true,
+            "example": 15
+          },
+          "textAnswer": {
+            "type": "string",
+            "description": "Văn bản câu trả lời (cho câu hỏi trả lời ngắn)",
+            "nullable": true,
+            "example": "1"
+          },
+          "trueFalseAnswers": {
+            "type": "string",
+            "description": "Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)\r\nVí dụ: {\"1\":true,\"2\":false,\"3\":true,\"4\":true}",
+            "nullable": true,
+            "example": "{\"1\":true,\"2\":false,\"3\":true,\"4\":true}"
+          },
+          "matchingAnswers": {
+            "type": "string",
+            "description": "Câu trả lời ghép đôi (cho câu hỏi ghép đôi)\r\nVí dụ: {\"1\":3,\"2\":1,\"3\":4,\"4\":2} - ghép item bên trái với item bên phải",
+            "nullable": true,
+            "example": "{\"1\":3,\"2\":1,\"3\":4,\"4\":2}"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho một câu trả lời khi nộp bài"
+      },
       "ChangePasswordRequest": {
         "required": [
           "currentPassword",
@@ -1414,6 +2110,150 @@
         },
         "additionalProperties": false,
         "description": "DTO tạo mới bài thi"
+      },
+      "CreateQuestionDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Nội dung câu hỏi",
+            "nullable": true,
+            "example": "Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Giải thích cho câu hỏi",
+            "nullable": true,
+            "example": "Áp dụng định lý L'Hospital ta có giới hạn bằng 1"
+          },
+          "subjectId": {
+            "type": "integer",
+            "description": "ID môn học",
+            "format": "int32",
+            "example": 1
+          },
+          "chapterId": {
+            "type": "integer",
+            "description": "ID chương (không bắt buộc)",
+            "format": "int32",
+            "nullable": true,
+            "example": 3
+          },
+          "questionLevelId": {
+            "type": "integer",
+            "description": "ID mức độ câu hỏi",
+            "format": "int32",
+            "example": 3
+          },
+          "questionType": {
+            "type": "integer",
+            "description": "Loại câu hỏi\r\n1: Một đáp án (trắc nghiệm a,b,c,d)\r\n3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được\r\n5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)",
+            "format": "int32",
+            "example": 1
+          },
+          "tags": {
+            "type": "string",
+            "description": "Tags của câu hỏi, phân cách bởi dấu phẩy",
+            "nullable": true,
+            "example": "giới hạn,đạo hàm"
+          },
+          "suggestedTime": {
+            "type": "integer",
+            "description": "Thời gian làm câu hỏi gợi ý (giây)",
+            "format": "int32",
+            "nullable": true,
+            "example": 60
+          },
+          "defaultScore": {
+            "type": "number",
+            "description": "Điểm mặc định",
+            "format": "double",
+            "example": 1
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Trạng thái kích hoạt",
+            "example": true
+          },
+          "scoringConfig": {
+            "type": "string",
+            "description": "Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)",
+            "nullable": true
+          },
+          "shortAnswerConfig": {
+            "type": "string",
+            "description": "Cấu hình cho câu hỏi trả lời ngắn (JSON)",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateQuestionOptionDTO"
+            },
+            "description": "Danh sách các đáp án",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để tạo mới câu hỏi"
+      },
+      "CreateQuestionOptionDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Nội dung đáp án",
+            "nullable": true,
+            "example": "1"
+          },
+          "isCorrect": {
+            "type": "boolean",
+            "description": "Đánh dấu đáp án đúng",
+            "example": true
+          },
+          "orderIndex": {
+            "type": "integer",
+            "description": "Thứ tự hiển thị",
+            "format": "int32",
+            "example": 1
+          },
+          "label": {
+            "type": "string",
+            "description": "Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án",
+            "nullable": true,
+            "example": "a"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Giải thích cho đáp án",
+            "nullable": true,
+            "example": "Đây là đáp án đúng vì..."
+          },
+          "matchingValue": {
+            "type": "string",
+            "description": "Giá trị ghép đôi (cho câu hỏi ghép đôi)",
+            "nullable": true,
+            "example": "Paris"
+          },
+          "isPartOfTrueFalseGroup": {
+            "type": "boolean",
+            "description": "Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý"
+          },
+          "groupId": {
+            "type": "integer",
+            "description": "Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)",
+            "format": "int32",
+            "nullable": true
+          },
+          "scorePercentage": {
+            "type": "integer",
+            "description": "Mức điểm cho đáp án này (0-100%)",
+            "format": "int32",
+            "example": 100
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để tạo mới đáp án"
       },
       "CreateSubjectDTO": {
         "type": "object",
@@ -1564,6 +2404,267 @@
           }
         },
         "additionalProperties": false
+      },
+      "SubmitExamDTO": {
+        "type": "object",
+        "properties": {
+          "examId": {
+            "type": "integer",
+            "description": "ID của bài thi",
+            "format": "int32",
+            "example": 15
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Thời gian bắt đầu làm bài",
+            "format": "date-time",
+            "example": "2025-04-12T06:30:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Thời gian kết thúc làm bài",
+            "format": "date-time",
+            "example": "2025-04-12T07:15:00Z"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Ghi chú của học sinh",
+            "nullable": true,
+            "example": "Tôi gặp khó khăn với câu hỏi số 5"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "ID của phiên làm bài",
+            "nullable": true,
+            "example": "session_9f8e7d6c5b4a"
+          },
+          "deviceInfo": {
+            "type": "string",
+            "description": "Thông tin thiết bị",
+            "nullable": true,
+            "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          },
+          "isSubmittedManually": {
+            "type": "boolean",
+            "description": "Câu trả lời đã được nộp bởi người dùng (không phải tự động)",
+            "example": true
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnswerSubmissionDTO"
+            },
+            "description": "Danh sách câu trả lời",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để nộp bài thi"
+      },
+      "UpdateAnswerScoreDTO": {
+        "type": "object",
+        "properties": {
+          "studentAnswerId": {
+            "type": "integer",
+            "description": "ID của câu trả lời",
+            "format": "int32",
+            "example": 105
+          },
+          "score": {
+            "type": "number",
+            "description": "Điểm cập nhật",
+            "format": "double",
+            "example": 0,75
+          },
+          "comment": {
+            "type": "string",
+            "description": "Lý do cho điểm",
+            "nullable": true,
+            "example": "Câu trả lời đúng về cơ bản nhưng thiếu giải thích về cách áp dụng quy tắc l'Hôpital"
+          },
+          "status": {
+            "type": "integer",
+            "description": "Đánh dấu là đúng, đúng một phần hay sai\r\n1: Đúng, 2: Đúng một phần, 3: Sai",
+            "format": "int32",
+            "example": 2
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cập nhật điểm cho một câu trả lời"
+      },
+      "UpdateQuestionDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Nội dung câu hỏi",
+            "nullable": true
+          },
+          "questionType": {
+            "type": "integer",
+            "description": "Loại câu hỏi (1: Một đáp án, 2: Đúng-sai nhiều ý, 3: Trả lời ngắn)",
+            "format": "int32",
+            "nullable": true
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Giải thích đáp án",
+            "nullable": true
+          },
+          "subjectId": {
+            "type": "integer",
+            "description": "ID môn học",
+            "format": "int32",
+            "nullable": true
+          },
+          "chapterId": {
+            "type": "integer",
+            "description": "ID chương học",
+            "format": "int32",
+            "nullable": true
+          },
+          "lessonId": {
+            "type": "integer",
+            "description": "ID bài học",
+            "format": "int32",
+            "nullable": true
+          },
+          "questionLevelId": {
+            "type": "integer",
+            "description": "ID mức độ câu hỏi",
+            "format": "int32",
+            "nullable": true
+          },
+          "tags": {
+            "type": "string",
+            "description": "Từ khóa/tag của câu hỏi",
+            "nullable": true
+          },
+          "suggestedTime": {
+            "type": "integer",
+            "description": "Thời gian gợi ý làm câu hỏi (giây)",
+            "format": "int32",
+            "nullable": true
+          },
+          "defaultScore": {
+            "type": "number",
+            "description": "Điểm mặc định của câu hỏi",
+            "format": "double",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Trạng thái hoạt động",
+            "nullable": true
+          },
+          "scoringConfig": {
+            "type": "string",
+            "description": "Cấu hình chấm điểm (JSON)",
+            "nullable": true
+          },
+          "shortAnswerConfig": {
+            "type": "string",
+            "description": "Cấu hình cho câu trả lời ngắn (JSON)",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateQuestionOptionDTO"
+            },
+            "description": "Danh sách các đáp án của câu hỏi",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO dùng để cập nhật thông tin câu hỏi"
+      },
+      "UpdateQuestionOptionDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID đáp án (null nếu đáp án mới)",
+            "format": "int32"
+          },
+          "content": {
+            "type": "string",
+            "description": "Nội dung đáp án",
+            "nullable": true
+          },
+          "isCorrect": {
+            "type": "boolean",
+            "description": "Đánh dấu đáp án đúng"
+          },
+          "orderIndex": {
+            "type": "integer",
+            "description": "Thứ tự hiển thị",
+            "format": "int32"
+          },
+          "label": {
+            "type": "string",
+            "description": "Nhãn hiển thị (A, B, C, D...)",
+            "nullable": true
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Giải thích đáp án",
+            "nullable": true
+          },
+          "isPartOfTrueFalseGroup": {
+            "type": "boolean",
+            "description": "Đáp án thuộc nhóm câu hỏi đúng-sai"
+          },
+          "groupId": {
+            "type": "integer",
+            "description": "ID nhóm cho câu hỏi đúng-sai nhiều ý",
+            "format": "int32",
+            "nullable": true
+          },
+          "scorePercentage": {
+            "type": "integer",
+            "description": "Phần trăm điểm cho đáp án này (dành cho câu trả lời ngắn)",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO đáp án khi cập nhật câu hỏi"
+      },
+      "UpdateResultDTO": {
+        "type": "object",
+        "properties": {
+          "isReviewed": {
+            "type": "boolean",
+            "description": "Đã xem xét và hoàn thành chấm điểm"
+          },
+          "teacherComment": {
+            "type": "string",
+            "description": "Nhận xét của giáo viên",
+            "nullable": true,
+            "example": "Bài làm tốt, cần chú ý về cách tính đạo hàm"
+          },
+          "answerScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateAnswerScoreDTO"
+            },
+            "description": "Danh sách cập nhật điểm cho các câu trả lời",
+            "nullable": true
+          },
+          "reviewerId": {
+            "type": "integer",
+            "description": "ID người chấm điểm",
+            "format": "int32",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "description": "Thời gian chấm điểm",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để giáo viên cập nhật điểm bài thi"
       },
       "UpdateSubjectDTO": {
         "type": "object",
