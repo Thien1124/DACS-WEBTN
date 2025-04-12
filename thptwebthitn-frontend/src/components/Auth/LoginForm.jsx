@@ -428,13 +428,21 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
       });
       
       // Hiển thị thông báo thành công với toast
-      showSuccessToast('Đăng nhập thành công!',onLoginSuccess);
-      setRedirectToHome(true);
-      setTimeout(() => {
-        if (onLoginSuccess && typeof onLoginSuccess === 'function') {
-          onLoginSuccess();
-        }
-      }, 800);
+      showSuccessToast('Đăng nhập thành công!');
+      
+      // Kiểm tra nếu có URL để chuyển hướng
+      const redirectUrl = sessionStorage.getItem('redirectUrl');
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirectUrl');
+        setTimeout(() => navigate(redirectUrl), 800);
+      } else {
+        setRedirectToHome(true);
+        setTimeout(() => {
+          if (onLoginSuccess && typeof onLoginSuccess === 'function') {
+            onLoginSuccess();
+          }
+        }, 800);
+      }
       
     } catch (error) {
       console.error("Lỗi đăng nhập:", error);

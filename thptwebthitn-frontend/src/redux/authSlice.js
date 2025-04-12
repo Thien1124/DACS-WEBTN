@@ -1,32 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as userService from '../services/userService';
-
+import * as authService from '../services/authService';
+import { showErrorToast, showSuccessToast } from '../utils/toastUtils';
 // Thunk để cập nhật thông tin user
-export const updateUserProfile = createAsyncThunk(
-  'auth/updateUserProfile',
-  async (profileData, { rejectWithValue }) => {
-    try {
-      // Gọi API cập nhật thông tin
-      const response = await userService.updateUserProfile(profileData);
-      
-      // Kiểm tra dữ liệu trả về
-      if (response && response.user) {
-        return response.user; // Trả về dữ liệu người dùng đã cập nhật
-      } else if (response) {
-        return profileData; // Nếu API không trả về dữ liệu user, sử dụng dữ liệu đã gửi
-      }
-      
-      return profileData;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      return rejectWithValue(
-        error.response?.data?.message || 
-        error.message || 
-        'Cập nhật thông tin thất bại. Vui lòng thử lại.'
-      );
-    }
-  }
-);
 
 const initialState = {
   isAuthenticated: false,
@@ -47,6 +23,8 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    updateToken: (state, action) => {
+      state.token = action.payload;},
     loginStart: (state) => {
       state.loading = true;
       state.error = null;
@@ -91,11 +69,64 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.loading = false;
       state.error = null;
+    },
+    // Thêm action mới cho refresh token
+    tokenRefreshed: (state, action) => {
+      state.token = action.payload.token;
     }
   },
   extraReducers: (builder) => {
     builder
-      // Xử lý updateUserProfile
+      // loginUser cases
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // logoutUser cases
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.loading = false;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // autoLogin cases
+      .addCase(autoLogin.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(autoLogin.fulfilled, (state, action) => {
+        if (action.payload.isAuthenticated) {
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+        }
+        state.loading = false;
+      })
+      .addCase(autoLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // updateUserProfile cases
       .addCase(updateUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -117,7 +148,6 @@ const authSlice = createSlice({
       });
   }
 });
-
 export const { 
   loginStart, 
   loginSuccess, 
@@ -125,10 +155,70 @@ export const {
   logout, 
   updateUser, 
   updateAvatar, 
-  register 
+  register,
+  tokenRefreshed
 } = authSlice.actions;
-
-// Add a new action to update user avatar
+// Add a new action 
+// to update user avatar
+export const updateToken = (token) => ({
+  type: 'auth/updateToken',
+  payload: token
+});
+export const loginUser = createAsyncThunk(
+  'Auth/login',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      return await authService.login(credentials);
+    } catch (error) {
+      return rejectWithValue(error.message || 'Đăng nhập thất bại');
+    }
+  }
+);
+export const logoutUser = createAsyncThunk(
+  'Auth/logout',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await authService.logout();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Đăng xuất thất bại');
+    }
+  }
+);
+export const autoLogin = createAsyncThunk(
+  'Auth/autoLogin',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await authService.validateAndAutoLogin();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Đăng nhập tự động thất bại');
+    }
+  }
+);
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateUserProfile',
+  async (profileData, { rejectWithValue }) => {
+    try {
+      // Gọi API cập nhật thông tin
+      const response = await userService.updateUserProfile(profileData);
+      
+      // Kiểm tra dữ liệu trả về
+      if (response && response.user) {
+        return response.user; // Trả về dữ liệu người dùng đã cập nhật
+      } else if (response) {
+        return profileData; // Nếu API không trả về dữ liệu user, sử dụng dữ liệu đã gửi
+      }
+      
+      return profileData;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Cập nhật thông tin thất bại. Vui lòng thử lại.'
+      );
+    }
+  }
+);
 export const updateUserAvatar = (avatar) => ({
   type: '/api/User/avatar',
   payload: avatar

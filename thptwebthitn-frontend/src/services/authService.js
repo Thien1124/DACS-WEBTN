@@ -1,5 +1,16 @@
 import apiClient from './apiClient';
-import { setToken, saveUserData, removeToken, removeUserData, getUserData } from '../utils/auth';
+import { 
+  setToken,
+  saveUserData, 
+  removeToken, 
+  removeUserData, 
+  getUserData 
+} from '../utils/auth';
+import { 
+  setRefreshToken,
+  getRefreshToken,
+  clearTokens
+} from '../utils/token';
 
 /**
  * Register a new user
@@ -45,43 +56,6 @@ export const register = async (userData) => {
 };
 
 /**
- * Kiểm tra trạng thái xác thực hiện tại của người dùng
- * @returns {Promise} - Promise resolving to user data or error
- */
-export const checkAuthStatus = async () => {
-  try {
-    const token = localStorage.getItem('auth_token');
-    
-    // Nếu không có token, người dùng chưa đăng nhập
-    if (!token) {
-      return { isAuthenticated: false };
-    }
-    
-    // Gọi API để kiểm tra token có hợp lệ không
-    const response = await apiClient.get('/api/User/me');
-    console.log('Auth status check response:', response.data);
-    
-    // Cập nhật thông tin người dùng trong localStorage nếu cần
-    if (response.data) {
-      saveUserData(response.data);
-    }
-    
-    return {
-      isAuthenticated: true,
-      user: response.data
-    };
-  } catch (error) {
-    console.error('Auth status check failed:', error);
-    
-    // Nếu token không hợp lệ hoặc hết hạn, xóa dữ liệu đăng nhập
-    removeToken();
-    removeUserData();
-    
-    return { isAuthenticated: false, error: error.response?.data || error };
-  }
-};
-
-/**
  * Log in a user
  * @param {object} credentials - User login credentials
  * @returns {Promise} - Promise resolving to response data
@@ -104,11 +78,14 @@ export const login = async (credentials) => {
       throw new Error('Không nhận được token từ server');
     }
     
-    const { token, user } = response.data;
+    const { token, refreshToken, user } = response.data;
     
     // Lưu token và thông tin user
-    console.log('Setting token and user data', { token, user });
+    console.log('Setting token and user data', { token, refreshToken });
     setToken(token);
+    if (refreshToken) {
+      setRefreshToken(refreshToken);
+    }
     if (user) {
       saveUserData(user);
     }
@@ -142,15 +119,21 @@ export const login = async (credentials) => {
   }
 };
 
-
 /**
  * Log out a user
  * @returns {Promise} - Promise resolving to success status
  */
 export const logout = async () => {
   try {
-    // Có thể gọi API để logout phía server (tùy vào yêu cầu)
-    // const response = await apiClient.post('/api/Auth/logout');
+    // Gọi API để logout phía server với refresh token
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
+      try {
+        await apiClient.post('/api/Auth/logout', { refreshToken });
+      } catch (logoutError) {
+        console.error('Error during logout API call:', logoutError);
+      }
+    }
     
     // Xóa token và thông tin người dùng khỏi localStorage
     removeToken();
@@ -170,6 +153,101 @@ export const logout = async () => {
   }
 };
 
+/**
+ * Refresh token
+ * @returns {Promise} Promise resolving to new tokens
+ */
+export const refreshToken = async () => {
+  try {
+    const refreshToken = getRefreshToken();
+    
+    if (!refreshToken) {
+      throw new Error('Không có refresh token');
+    }
+    
+    const response = await apiClient.post('/api/Auth/refresh-token', {
+      refreshToken
+    });
+    
+    const { token, refreshToken: newRefreshToken } = response.data;
+    
+    // Lưu token mới
+    setToken(token);
+    if (newRefreshToken) {
+      setRefreshToken(newRefreshToken);
+    }
+    
+    return {
+      token,
+      refreshToken: newRefreshToken
+    };
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    
+    // Xóa token hiện tại nếu refresh thất bại
+    clearTokens();
+    
+    throw error;
+  }
+};
+
+/**
+ * Validate token và đăng nhập tự động
+ * @returns {Promise} - Promise resolving to auth status
+ */
+export const validateAndAutoLogin = async () => {
+  try {
+    // Kiểm tra token
+    const token = getRawToken();
+    const userData = getUserData();
+    
+    if (!token) {
+      return { isAuthenticated: false };
+    }
+    
+    // Gọi API để kiểm tra token có hợp lệ không
+    const response = await apiClient.get('/api/User/me');
+    
+    // Nếu API trả về thành công, đồng nghĩa với token hợp lệ
+    if (response.data) {
+      saveUserData(response.data);
+    }
+    
+    return {
+      isAuthenticated: true,
+      user: response.data || (userData ? userData : null),
+      token: token
+    };
+  } catch (error) {
+    console.error('Auto-login failed:', error);
+    
+    // Nếu lỗi 401, thử refresh token
+    if (error.response?.status === 401) {
+      try {
+        await refreshToken();
+        
+        // Thử lại API call
+        const retryResponse = await apiClient.get('/api/User/me');
+        if (retryResponse.data) {
+          saveUserData(retryResponse.data);
+          return {
+            isAuthenticated: true,
+            user: retryResponse.data,
+            token: getRawToken()
+          };
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+      }
+    }
+    
+    // Xóa thông tin đăng nhập không hợp lệ
+    removeToken();
+    removeUserData();
+    
+    return { isAuthenticated: false };
+  }
+};
 /**
  * Request password reset
  * @param {string} email - User email
@@ -399,39 +477,3 @@ export const updateUserProfile = async (userData) => {
 };
 
 
-
-/**
- * Validate token và đăng nhập tự động
- * @returns {Promise} - Promise resolving to auth status
- */
-export const validateAndAutoLogin = async () => {
-  try {
-    const token = localStorage.getItem('auth_token');
-    const userData = localStorage.getItem('user_data');
-    
-    if (!token) {
-      return { isAuthenticated: false };
-    }
-    
-    // Gắn token vào header của apiClient
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
-    // Kiểm tra token có hợp lệ không bằng cách gọi API
-    const response = await apiClient.get('/api/User/me');
-    
-    // Nếu API trả về thành công, đồng nghĩa với token hợp lệ
-    return {
-      isAuthenticated: true,
-      user: response.data || (userData ? JSON.parse(userData) : null),
-      token: token
-    };
-  } catch (error) {
-    console.error('Auto-login failed:', error);
-    
-    // Xóa thông tin đăng nhập không hợp lệ
-    removeToken();
-    removeUserData();
-    
-    return { isAuthenticated: false };
-  }
-};
