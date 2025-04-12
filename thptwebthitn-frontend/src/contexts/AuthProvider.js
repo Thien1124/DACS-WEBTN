@@ -107,7 +107,20 @@ export const AuthProvider = ({ children }) => {
   // Kiểm tra trạng thái đăng nhập khi component mount
   useEffect(() => {
     const checkAuthStatus = async () => {
-      try {
+    try{
+      const manualLogout = sessionStorage.getItem('manual_logout') === 'true';
+      if (manualLogout) {
+        // Xóa biến này để không ảnh hưởng lần sau
+        sessionStorage.removeItem('manual_logout');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_data');
+        localStorage.removeItem('remember_me');
+          
+        // Đảm bảo không cố gắng đăng nhập lại
+        setLoading(false);
+        return;
+      }
         const token = localStorage.getItem('auth_token');
         if (!token) {
           setLoading(false);
