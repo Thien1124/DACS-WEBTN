@@ -1,0 +1,26 @@
+/* Toast tối giản */
+.minimalist-toast {
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 8px !important;
+    font-weight: 500;
+  }
+  
+  /* Toast thành công */
+  .Toastify__toast--success {
+    background: linear-gradient(45deg, #48bb78, #68d391) !important;
+  }
+  
+  /* Toast lỗi */
+  .Toastify__toast--error {
+    background: linear-gradient(45deg, #f56565, #fc8181) !important;
+  }
+  
+  /* Toast cảnh báo */
+  .Toastify__toast--warning {
+    background: linear-gradient(45deg, #ed8936, #f6ad55) !important;
+  }
+  
+  /* Toast thông tin */
+  .Toastify__toast--info {
+    background: linear-gradient(45deg, #4299e1, #63b3ed) !important;
+  }

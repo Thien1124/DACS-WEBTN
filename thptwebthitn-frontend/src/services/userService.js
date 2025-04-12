@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import { updateUserProfile } from '../services/authService'; // Import từ authService
 
 /**
  * Get list of users with pagination and filters
@@ -86,37 +87,7 @@ export const getUserProfile = async () => {
 /**
  * Update user profile
  */
-export const updateUserProfile = async (userData) => {
-    try {
-      const response = await apiClient.put('/api/User', userData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Không thể cập nhật thông tin người dùng.' };
-    }
-  };
-  
-  export const updateProfile = async (profileData) => {
-    try {
-      console.log('Sending profile update:', profileData);
-      
-      // Sử dụng endpoint đúng: /api/User/update
-      const response = await apiClient.put('/api/User/update', profileData);
-      
-      console.log('Profile update response:', response);
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      
-      // Log chi tiết lỗi để debug
-      if (error.response) {
-        console.error('Error status:', error.response.status);
-        console.error('Error data:', error.response.data);
-      }
-      
-      throw error;
-    }
-  };
+export { updateUserProfile };
   export const uploadAvatar = async (formData) => {
     try {
       const response = await apiClient.post('/api/Users/avatar', formData, {

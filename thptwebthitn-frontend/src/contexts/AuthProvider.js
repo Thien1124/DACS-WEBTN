@@ -1,0 +1,190 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { loginSuccess, logout } from '../redux/authSlice';
+import * as authService from '../services/authService';
+import { showErrorToast } from '../utils/toastUtils';
+
+// Tạo context cho Auth
+export const AuthContext = createContext(null);
+
+// Hook dùng để truy cập context
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
+  const [tokenRefreshTimer, setTokenRefreshTimer] = useState(null);
+
+  // Hàm kiểm tra JWT token có hợp lệ không
+  const checkTokenValidity = (token) => {
+    if (!token) return false;
+    
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+      
+      const payload = JSON.parse(atob(parts[1]));
+      const exp = payload.exp * 1000; // Chuyển sang milliseconds
+      return Date.now() < exp;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      return false;
+    }
+  };
+
+  // Hàm lấy thời gian hết hạn của token
+  const getTokenExpiration = (token) => {
+    try {
+      const parts = token.split('.');
+      const payload = JSON.parse(atob(parts[1]));
+      return payload.exp * 1000; // Chuyển sang milliseconds
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Hàm tự động refresh token
+  const setupTokenRefresh = () => {
+    // Xóa timer cũ
+    if (tokenRefreshTimer) {
+      clearTimeout(tokenRefreshTimer);
+    }
+    
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    
+    // Nếu token không hợp lệ, đăng xuất luôn
+    if (!checkTokenValidity(token)) {
+      console.log('Token không hợp lệ, tiến hành đăng xuất');
+      dispatch(logout());
+      return;
+    }
+    
+    // Lấy thời gian hết hạn và thiết lập refresh trước 1 phút
+    const expTime = getTokenExpiration(token);
+    if (!expTime) return;
+    
+    const currentTime = Date.now();
+    const timeUntilRefresh = expTime - currentTime - (60 * 1000); // Refresh trước 1 phút
+    
+    // Nếu thời gian refresh hợp lý, thiết lập timer
+    if (timeUntilRefresh > 0) {
+      console.log(`Token sẽ được refresh sau ${Math.round(timeUntilRefresh/1000)} giây`);
+      
+      const timer = setTimeout(async () => {
+        try {
+          // Thực hiện refresh token
+          const refreshToken = localStorage.getItem('refresh_token');
+          if (refreshToken) {
+            const response = await authService.refreshToken(refreshToken);
+            
+            console.log('Token refreshed successfully:', response);
+            
+            if (response.token) {
+              localStorage.setItem('auth_token', response.token);
+              if (response.refreshToken) {
+                localStorage.setItem('refresh_token', response.refreshToken);
+              }
+              
+              // Thiết lập timer mới
+              setupTokenRefresh();
+            }
+          }
+        } catch (error) {
+          console.error('Failed to refresh token:', error);
+          // Đăng xuất nếu không thể refresh
+          dispatch(logout());
+        }
+      }, timeUntilRefresh);
+      
+      setTokenRefreshTimer(timer);
+    } else {
+      console.log('Token đã hết hạn hoặc sắp hết hạn, tiến hành đăng xuất');
+      dispatch(logout());
+    }
+  };
+
+  // Kiểm tra trạng thái đăng nhập khi component mount
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        
+        if (!checkTokenValidity(token)) {
+          // Thử refresh token nếu có
+          const refreshToken = localStorage.getItem('refresh_token');
+          if (refreshToken) {
+            try {
+              const response = await authService.refreshToken(refreshToken);
+              if (response.token) {
+                // Lưu token mới và cập nhật state
+                localStorage.setItem('auth_token', response.token);
+                if (response.refreshToken) {
+                  localStorage.setItem('refresh_token', response.refreshToken);
+                }
+                
+                // Lấy thông tin user
+                const userData = await authService.getCurrentUser();
+                
+                dispatch(loginSuccess({
+                  user: userData,
+                  token: response.token
+                }));
+              }
+            } catch (refreshError) {
+              console.error('Failed to refresh token during init:', refreshError);
+              // Nếu không refresh được, xóa thông tin đăng nhập
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('refresh_token');
+              localStorage.removeItem('user_data');
+            }
+          } else {
+            // Không có refresh token, xóa thông tin đăng nhập
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_data');
+          }
+        } else {
+          // Token còn hạn, thiết lập trạng thái đăng nhập
+          try {
+            const userData = await authService.getCurrentUser();
+            dispatch(loginSuccess({
+              user: userData,
+              token
+            }));
+          } catch (error) {
+            console.error('Error getting current user:', error);
+            // Nếu có lỗi, xóa thông tin đăng nhập
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_data');
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        setLoading(false);
+        // Thiết lập refresh token timer
+        setupTokenRefresh();
+      }
+    };
+    
+    checkAuthStatus();
+    
+    return () => {
+      // Cleanup
+      if (tokenRefreshTimer) {
+        clearTimeout(tokenRefreshTimer);
+      }
+    };
+  }, [dispatch]);
+  
+  return (
+    <AuthContext.Provider value={{ loading, setupTokenRefresh }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

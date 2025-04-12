@@ -4,6 +4,7 @@ import uiReducer from './uiSlice';
 import examReducer from './examSlice';
 import subjectReducer from './subjectSlice';
 import userReducer from './userSlice';
+import authMiddleware from './middleware/authMiddleware';
 
 const store = configureStore({
   reducer: {
@@ -23,7 +24,7 @@ const store = configureStore({
         // Ignore these paths in the state
         ignoredPaths: ['exams.currentExam.startTime'],
       },
-    }),
+    }).concat(authMiddleware),
 });
 
 export default store;

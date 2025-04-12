@@ -162,26 +162,27 @@ const ChangePasswordForm = ({ theme }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        // In a real app, you would make an API call to change the password
-        // For demo purposes, we'll simulate an API call with setTimeout
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await authService.changePassword({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword
+        });
         
-        // Simulate successful password change
-        setIsSubmitted(true);
+        // Hiển thị thông báo thành công
+        showSuccessToast('Mật khẩu đã được thay đổi thành công!');
         
-        // Reset form
         setFormData({
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         });
+        
       } catch (error) {
-        setErrors({
-          general: 'Đã xảy ra lỗi khi thay đổi mật khẩu. Vui lòng thử lại sau.'
-        });
+        showErrorToast(error.message || 'Không thể thay đổi mật khẩu. Vui lòng thử lại.');
       } finally {
         setIsLoading(false);
       }
+    } else {
+      showWarningToast('Vui lòng kiểm tra lại thông tin nhập.');
     }
   };
 

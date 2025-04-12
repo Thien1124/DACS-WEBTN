@@ -11,7 +11,7 @@ import RegisterForm from './components/Auth/RegisterForm';
 import LoginForm from './components/Auth/LoginForm';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/Auth/ResetPasswordForm';
-import ChangePasswordForm from './components/auth/ChangePasswordForm';
+import ChangePasswordForm from './components/Auth/ChangePasswordForm';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -29,6 +29,19 @@ function App() {
   return (
     <Router>
       <Routes>
+      <ToastContainer
+          position="bottom-center"
+          autoClose={3000}
+          hideProgressBar
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme={theme === 'dark' ? 'dark' : 'light'}
+          toastClassName="minimalist-toast"
+        />
         <Route path="/" element={<AppLayout />}>
           {/* Public routes */}
           <Route index element={<HomePage />} />

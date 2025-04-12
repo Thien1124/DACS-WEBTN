@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as authService from '../../services/authService';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -133,7 +134,6 @@ const ResetPasswordForm = ({ theme, onBackToLogin }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Lấy email từ state nếu có
   useEffect(() => {
@@ -217,22 +217,23 @@ const ResetPasswordForm = ({ theme, onBackToLogin }) => {
           email: formData.email,
           resetCode: formData.resetCode,
           newPassword: formData.newPassword,
-          confirmPassword: formData.confirmPassword // Thêm confirmPassword vào request
+          confirmPassword: formData.confirmPassword
         });
         
-        console.log('Đặt lại mật khẩu thành công');
-        setIsSubmitted(true);
+        // Hiển thị thông báo thành công
+        showSuccessToast('Mật khẩu của bạn đã được đặt lại thành công!');
         
-        // Chuyển đến trang đăng nhập sau 3 giây
+        // Chuyển đến trang đăng nhập sau 1.5 giây
         setTimeout(() => {
           if (onBackToLogin) {
             onBackToLogin();
           } else {
             navigate('/login');
           }
-        }, 3000);
+        }, 1500);
       } catch (error) {
         console.error('Lỗi khi đặt lại mật khẩu:', error);
+        showErrorToast(error.message || 'Đã xảy ra lỗi khi đặt lại mật khẩu. Vui lòng thử lại.');
         setErrors({
           general: error.message || 'Đã xảy ra lỗi khi đặt lại mật khẩu. Vui lòng thử lại.'
         });
@@ -251,95 +252,80 @@ const ResetPasswordForm = ({ theme, onBackToLogin }) => {
     >
       <FormTitle>Đặt Lại Mật Khẩu</FormTitle>
       
-      {isSubmitted ? (
-        <>
-          <SuccessMessage theme={theme}>
-            Mật khẩu của bạn đã được đặt lại thành công! Đang chuyển hướng đến trang đăng nhập...
-          </SuccessMessage>
-          <LoginLink theme={theme}>
-            <LoginButton theme={theme} onClick={onBackToLogin}>
-              Quay lại đăng nhập
-            </LoginButton>
-          </LoginLink>
-        </>
-      ) : (
-        <>
-          {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
-          
-          <form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label theme={theme} htmlFor="email">Email</Label>
-              <Input
-                theme={theme}
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="example@gmail.com"
-                readOnly={!!location.state?.email}
-              />
-              {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-            </FormGroup>
-            
-            <FormGroup>
-              <Label theme={theme} htmlFor="resetCode">Mã xác nhận</Label>
-              <Input
-                theme={theme}
-                type="text"
-                id="resetCode"
-                name="resetCode"
-                value={formData.resetCode}
-                onChange={handleInputChange}
-                placeholder="Nhập mã xác nhận từ email"
-              />
-              {errors.resetCode && <ErrorMessage>{errors.resetCode}</ErrorMessage>}
-            </FormGroup>
-            
-            <FormGroup>
-              <Label theme={theme} htmlFor="newPassword">Mật khẩu mới</Label>
-              <Input
-                theme={theme}
-                type="password"
-                id="newPassword"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleInputChange}
-                placeholder="Nhập mật khẩu mới"
-              />
-              {errors.newPassword && <ErrorMessage>{errors.newPassword}</ErrorMessage>}
-              <PasswordRequirements theme={theme}>
-                <li>Ít nhất 6 ký tự</li>
-                <li>Nên bao gồm chữ hoa, chữ thường và số</li>
-              </PasswordRequirements>
-            </FormGroup>
-            
-            <FormGroup>
-              <Label theme={theme} htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-              <Input
-                theme={theme}
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                placeholder="Nhập lại mật khẩu mới"
-              />
-              {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
-            </FormGroup>
-            
-            <SubmitButton type="submit" disabled={isLoading}>
-              {isLoading ? 'Đang xử lý...' : 'Đặt Lại Mật Khẩu'}
-            </SubmitButton>
-          </form>
-          
-          <LoginLink theme={theme}>
-            <LoginButton theme={theme} onClick={onBackToLogin}>
-              Quay lại đăng nhập
-            </LoginButton>
-          </LoginLink>
-        </>
-      )}
+      {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+      
+      <form onSubmit={handleSubmit}>
+        <FormGroup>
+          <Label theme={theme} htmlFor="email">Email</Label>
+          <Input
+            theme={theme}
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="example@gmail.com"
+            readOnly={!!location.state?.email}
+          />
+          {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+        </FormGroup>
+        
+        <FormGroup>
+          <Label theme={theme} htmlFor="resetCode">Mã xác nhận</Label>
+          <Input
+            theme={theme}
+            type="text"
+            id="resetCode"
+            name="resetCode"
+            value={formData.resetCode}
+            onChange={handleInputChange}
+            placeholder="Nhập mã xác nhận từ email"
+          />
+          {errors.resetCode && <ErrorMessage>{errors.resetCode}</ErrorMessage>}
+        </FormGroup>
+        
+        <FormGroup>
+          <Label theme={theme} htmlFor="newPassword">Mật khẩu mới</Label>
+          <Input
+            theme={theme}
+            type="password"
+            id="newPassword"
+            name="newPassword"
+            value={formData.newPassword}
+            onChange={handleInputChange}
+            placeholder="Nhập mật khẩu mới"
+          />
+          {errors.newPassword && <ErrorMessage>{errors.newPassword}</ErrorMessage>}
+          <PasswordRequirements theme={theme}>
+            <li>Ít nhất 6 ký tự</li>
+            <li>Nên bao gồm chữ hoa, chữ thường và số</li>
+          </PasswordRequirements>
+        </FormGroup>
+        
+        <FormGroup>
+          <Label theme={theme} htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+          <Input
+            theme={theme}
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            placeholder="Nhập lại mật khẩu mới"
+          />
+          {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
+        </FormGroup>
+        
+        <SubmitButton type="submit" disabled={isLoading}>
+          {isLoading ? 'Đang xử lý...' : 'Đặt Lại Mật Khẩu'}
+        </SubmitButton>
+      </form>
+      
+      <LoginLink theme={theme}>
+        <LoginButton theme={theme} onClick={onBackToLogin}>
+          Quay lại đăng nhập
+        </LoginButton>
+      </LoginLink>
     </FormContainer>
   );
 };
