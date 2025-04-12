@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
-import { Modal, Button, Row, Col, Card } from 'react-bootstrap';
+import React, { useState } from "react";
+import { Modal, Button, Row, Col, Card } from "react-bootstrap";
 
 const SubjectSelectionModal = ({ show, handleClose, onSelectSubject }) => {
   const [selectedSubject, setSelectedSubject] = useState(null);
-  
+
   const subjects = [
-    { id: 'mathematics', name: 'Toán học', icon: '📐' },
-    { id: 'physics', name: 'Vật lý', icon: '⚛️' },
-    { id: 'chemistry', name: 'Hóa học', icon: '🧪' },
-    { id: 'biology', name: 'Sinh học', icon: '🧬' },
-    { id: 'literature', name: 'Ngữ văn', icon: '📚' },
-    { id: 'history', name: 'Lịch sử', icon: '🏛️' },
-    { id: 'geography', name: 'Địa lý', icon: '🌏' },
-    { id: 'english', name: 'Tiếng Anh', icon: '🔤' }
+    {
+      id: "mathematics",
+      name: "Toán học",
+      icon: "📐",
+      image: "D:WebTNDACS-WEBTN\thptwebthitn-frontendsrcassetsimagesMath.png",
+    },
+    { id: "physics", name: "Vật lý", icon: "⚛️" },
+    { id: "chemistry", name: "Hóa học", icon: "🧪" },
+    { id: "biology", name: "Sinh học", icon: "🧬" },
+    { id: "literature", name: "Ngữ văn", icon: "📚" },
+    { id: "history", name: "Lịch sử", icon: "🏛️" },
+    { id: "geography", name: "Địa lý", icon: "🌏" },
+    { id: "english", name: "Tiếng Anh", icon: "🔤" },
   ];
 
   const handleSubjectSelect = (subject) => {
@@ -35,10 +40,12 @@ const SubjectSelectionModal = ({ show, handleClose, onSelectSubject }) => {
         <Row>
           {subjects.map((subject) => (
             <Col md={3} sm={6} key={subject.id} className="mb-3">
-              <Card 
-                className={`h-100 text-center cursor-pointer ${selectedSubject?.id === subject.id ? 'border-primary' : ''}`}
+              <Card
+                className={`h-100 text-center cursor-pointer ${
+                  selectedSubject?.id === subject.id ? "border-primary" : ""
+                }`}
                 onClick={() => handleSubjectSelect(subject)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
               >
                 <Card.Body>
                   <div className="fs-1 mb-2">{subject.icon}</div>
@@ -53,12 +60,12 @@ const SubjectSelectionModal = ({ show, handleClose, onSelectSubject }) => {
         <Button variant="secondary" onClick={handleClose}>
           Đóng
         </Button>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           onClick={handleConfirm}
           disabled={!selectedSubject}
         >
-          Chọn môn {selectedSubject?.name || ''}
+          Chọn môn {selectedSubject?.name || ""}
         </Button>
       </Modal.Footer>
     </Modal>
