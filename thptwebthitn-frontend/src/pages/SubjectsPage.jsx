@@ -487,7 +487,7 @@ const SubjectsPage = () => {
   // Mock function cho getAllSubjects
   const getAllSubjects = async () => {
     // Trong môi trường thực, đây sẽ là API call
-    const response = await fetch("http://localhost:5000/api/Subject"); // Gọi API thật
+    const response = await fetch("http://localhost:5006/api/Subject"); // Gọi API thật
     const data = await response.json();
     return data;
   };

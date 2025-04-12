@@ -9,7 +9,8 @@ import {
 import { 
   setRefreshToken,
   getRefreshToken,
-  clearTokens
+  clearTokens,
+  getAccessToken // Thêm hàm này vào import
 } from '../utils/token';
 
 /**
@@ -104,18 +105,49 @@ export const login = async (credentials) => {
     };
   } catch (error) {
     console.error('Login error details:', error);
+    
+    // Phân loại lỗi để có thể hiển thị ở đúng vị trí
     let errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+    let field = null;
     
     if (error.response) {
       console.error('Server error response:', error.response.data);
+      
+      // Phân tích phản hồi chi tiết từ server
       if (typeof error.response.data === 'string') {
         errorMessage = error.response.data;
-      } else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
+        
+        // Phân loại lỗi dựa trên nội dung
+        if (error.response.data.toLowerCase().includes('tài khoản') || 
+            error.response.data.toLowerCase().includes('không tồn tại')) {
+          field = 'usernameOrEmail';
+        } else if (error.response.data.toLowerCase().includes('mật khẩu')) {
+          field = 'password';
+        }
+      } else if (error.response.data) {
+        // Xử lý lỗi có cấu trúc
+        if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        // Nếu server trả về lỗi cụ thể cho từng trường
+        if (error.response.data.errors) {
+          errorMessage.errors = error.response.data.errors;
+        }
+        
+        // Kiểm tra xem có thông tin về trường nào bị lỗi không
+        if (error.response.data.field) {
+          field = error.response.data.field;
+        }
       }
     }
     
-    throw { message: errorMessage, isAuthenticated: false };
+    // QUAN TRỌNG: Đảm bảo trả về một đối tượng lỗi với message là một chuỗi
+    throw { 
+      message: errorMessage,
+      field: field,
+      isAuthenticated: false 
+    };
   }
 };
 
@@ -198,7 +230,7 @@ export const refreshToken = async () => {
 export const validateAndAutoLogin = async () => {
   try {
     // Kiểm tra token
-    const token = getRawToken();
+    const token = getAccessToken();
     const userData = getUserData();
     
     if (!token) {
@@ -233,7 +265,7 @@ export const validateAndAutoLogin = async () => {
           return {
             isAuthenticated: true,
             user: retryResponse.data,
-            token: getRawToken()
+            token: getAccessToken()
           };
         }
       } catch (refreshError) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import styled, { keyframes } from 'styled-components';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { validateLoginForm } from '../../utils/validation';
@@ -8,6 +8,25 @@ import * as authService from '../../services/authService';
 import { FaUser, FaLock, FaGoogle, FaFacebook, FaCheckCircle } from 'react-icons/fa';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toastUtils';
+
+const shakeAnimation = keyframes`
+  0% { transform: translateX(0) }
+  25% { transform: translateX(-5px) }
+  50% { transform: translateX(5px) }
+  75% { transform: translateX(-5px) }
+  100% { transform: translateX(0) }
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -20,7 +39,6 @@ const FormContainer = styled(motion.div)`
   overflow: hidden;
   position: relative;
 `;
-
 
 const FormTitle = styled.h2`
   margin-bottom: 1.8rem;
@@ -55,7 +73,10 @@ const InputIcon = styled.div`
   left: 12px;
   top: 58px;
   transform: translateY(-50%);
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
+  color: ${props => props.error 
+    ? '#e74c3c' 
+    : props.theme === 'dark' ? '#a0aec0' : '#aaa'
+  };
   transition: all 0.2s;
 `;
 
@@ -70,7 +91,12 @@ const Label = styled.label`
 const Input = styled.input`
   width: 100%;
   padding: 12px 12px 12px 40px;
-  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
+  border: 2px solid ${props => {
+    if (props.error) {
+      return '#e74c3c'; // Màu đỏ khi có lỗi
+    }
+    return props.theme === 'dark' ? '#444' : '#e0e0e0';
+  }};
   border-radius: 8px;
   font-size: 1rem;
   background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
@@ -79,11 +105,14 @@ const Input = styled.input`
   
   &:focus {
     outline: none;
-    border-color: #4285f4;
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
+    border-color: ${props => props.error ? '#e74c3c' : '#4285f4'};
+    box-shadow: 0 0 0 3px ${props => props.error 
+      ? 'rgba(231, 76, 60, 0.25)' 
+      : 'rgba(66, 133, 244, 0.25)'
+    };
     
     & + ${InputIcon} {
-      color: #4285f4;
+      color: ${props => props.error ? '#e74c3c' : '#4285f4'};
     }
   }
   
@@ -91,6 +120,7 @@ const Input = styled.input`
     color: ${props => props.theme === 'dark' ? '#6c7280' : '#aaa'};
   }
 `;
+
 
 const SubmitButton = styled.button`
   width: 100%;
@@ -137,13 +167,13 @@ const SubmitButton = styled.button`
     transform: translateY(0);
   }
 `;
-
 const ErrorMessage = styled.div`
   color: #e74c3c;
   font-size: 0.85rem;
   margin-top: 0.5rem;
   display: flex;
   align-items: center;
+  animation: ${fadeIn} 0.3s ease, ${shakeAnimation} 0.5s ease;
   
   &:before {
     content: '⚠️';
@@ -352,7 +382,7 @@ const Checkbox = ({ checked, onChange, label, theme }) => (
   </CheckboxContainer>
 );
 
-const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
+const LoginForm = ({ theme, switchToRegister, onLoginSuccess }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -362,15 +392,17 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
     password: '',
     rememberMe: true
   });
+  
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [redirectToHome, setRedirectToHome] = useState(false);
+  
   useEffect(() => {
     if (redirectToHome) {
       const redirectTimer = setTimeout(() => {
         navigate('/');
-      }, 800); // Độ trễ 800ms để đảm bảo toast được hiển thị trước khi chuyển trang
+      }, 800);
       
       return () => clearTimeout(redirectTimer);
     }
@@ -383,10 +415,12 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
       [name]: type === 'checkbox' ? checked : value
     });
     
+    // Xóa lỗi khi người dùng sửa input
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
       });
     }
   };
@@ -398,9 +432,15 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
     }));
   };
 
+  // Sửa trong hàm handleSubmit trong LoginForm.jsx
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Xóa lỗi cũ
+    setErrors({});
+    
+    // Kiểm tra validation form
     const validationErrors = validateLoginForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -446,12 +486,58 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
       
     } catch (error) {
       console.error("Lỗi đăng nhập:", error);
-      // Hiển thị thông báo lỗi với toast
-      showErrorToast(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
       
-      setErrors({
-        general: error.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
-      });
+      // Đảm bảo errorMessage là một chuỗi
+      const errorMessage = typeof error.message === 'string' 
+        ? error.message 
+        : 'Đăng nhập thất bại. Vui lòng thử lại.';
+      
+      console.log('Error type:', typeof errorMessage);
+      console.log('Error value:', errorMessage);
+      
+      // QUAN TRỌNG: Phân tích lỗi và hiển thị ở đúng vị trí
+      // Đảm bảo rằng chúng ta chỉ gọi toLowerCase() trên chuỗi
+      
+      // Nếu server trả về thông tin về trường cụ thể bị lỗi
+      if (error.field) {
+        setErrors({
+          [error.field]: errorMessage
+        });
+      }
+      // Nếu server trả về lỗi cụ thể cho từng trường
+      else if (error.errors) {
+        setErrors(error.errors);
+      }
+      // Phân tích loại lỗi dựa trên nội dung thông báo
+      else if (typeof errorMessage === 'string' && 
+              (errorMessage.toLowerCase().includes('tài khoản') || 
+              errorMessage.toLowerCase().includes('không tồn tại') ||
+              errorMessage.toLowerCase().includes('không tìm thấy') ||
+              errorMessage.toLowerCase().includes('username') ||
+              errorMessage.toLowerCase().includes('email'))) {
+        setErrors({
+          usernameOrEmail: errorMessage
+        });
+      } 
+      else if (typeof errorMessage === 'string' &&
+              (errorMessage.toLowerCase().includes('mật khẩu') || 
+              errorMessage.toLowerCase().includes('password') ||
+              errorMessage.toLowerCase().includes('sai') ||
+              errorMessage.toLowerCase().includes('không chính xác'))) {
+        setErrors({
+          password: errorMessage
+        });
+      }
+      // Trường hợp không xác định được lỗi thuộc về trường nào
+      else {
+        setErrors({
+          // Nếu đã nhập username/email thì giả định lỗi ở mật khẩu
+          [formData.usernameOrEmail ? 'password' : 'general']: errorMessage
+        });
+      }
+      
+      // Hiển thị toast lỗi
+      showErrorToast(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -459,7 +545,6 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
 
   const handleSocialLogin = (provider) => {
     console.log(`Đăng nhập với ${provider}`);
-    // Hiển thị toast thông báo tính năng đang phát triển
     showInfoToast(`Đăng nhập bằng ${provider} đang được phát triển!`);
   };
 
@@ -476,7 +561,9 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
     >
       <FormTitle>Đăng Nhập</FormTitle>
-      {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+      {errors.general && (
+        <ErrorMessage style={{ marginBottom: "1.5rem" }}>{errors.general}</ErrorMessage>
+      )}
       
       <form onSubmit={handleSubmit}>
         <FormGroup>
@@ -489,10 +576,12 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
             value={formData.usernameOrEmail}
             onChange={handleInputChange}
             placeholder="Nhập tên đăng nhập hoặc email"
+            error={!!errors.usernameOrEmail}
           />
-          {/* Đảm bảo icon đúng vị trí */}
-          <InputIcon theme={theme}><FaUser /></InputIcon>
-          {errors.usernameOrEmail && <ErrorMessage>{errors.usernameOrEmail}</ErrorMessage>}
+          <InputIcon theme={theme} error={!!errors.usernameOrEmail}><FaUser /></InputIcon>
+          <AnimatePresence>
+            {errors.usernameOrEmail && <ErrorMessage>{errors.usernameOrEmail}</ErrorMessage>}
+          </AnimatePresence>
         </FormGroup>
         
         <FormGroup>
@@ -505,10 +594,12 @@ const LoginForm = ({ theme, switchToRegister,onLoginSuccess }) => {
             value={formData.password}
             onChange={handleInputChange}
             placeholder="Nhập mật khẩu"
+            error={!!errors.password}
           />
-          {/* Đảm bảo icon đúng vị trí */}
-          <InputIcon theme={theme}><FaLock /></InputIcon>
-          {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+          <InputIcon theme={theme} error={!!errors.password}><FaLock /></InputIcon>
+          <AnimatePresence>
+            {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+          </AnimatePresence>
         </FormGroup>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
