@@ -174,12 +174,14 @@ function QuizQuestion({
   onSelectOption,
   isReviewMode = false,
   correctAnswer,
-  theme
+  theme = 'light'
 }) {
   // Function to render mathematical equations in question text and options
   const renderWithMathJax = (text) => {
+    if (!text) return '';
+    
     // Check if text has any math expressions
-    if (!text || !text.includes('$')) {
+    if (!text.includes('$')) {
       return text;
     }
 
@@ -215,11 +217,11 @@ function QuizQuestion({
       </QuestionHeader>
 
       <QuestionText theme={theme}>
-        {renderWithMathJax(question.text)}
+        {renderWithMathJax(question.text || question.content)}
       </QuestionText>
 
       <OptionsContainer>
-        {question.options.map((option, index) => (
+        {(question.options || []).map((option, index) => (
           <OptionItem 
             key={index} 
             isReviewMode={isReviewMode}
@@ -237,19 +239,19 @@ function QuizQuestion({
               theme={theme}
               isSelected={selectedOption === index}
               isReviewMode={isReviewMode}
-              isCorrect={isReviewMode && index === correctAnswer}
+              isCorrect={isReviewMode && index === (correctAnswer ?? question.correctAnswer)}
             >
               <OptionCircle 
                 theme={theme}
                 isSelected={selectedOption === index}
                 isReviewMode={isReviewMode}
-                isCorrect={isReviewMode && index === correctAnswer}
+                isCorrect={isReviewMode && index === (correctAnswer ?? question.correctAnswer)}
               />
               <OptionText 
                 theme={theme}
                 isSelected={selectedOption === index}
                 isReviewMode={isReviewMode}
-                isCorrect={isReviewMode && index === correctAnswer}
+                isCorrect={isReviewMode && index === (correctAnswer ?? question.correctAnswer)}
               >
                 {renderWithMathJax(option)}
               </OptionText>
@@ -261,10 +263,9 @@ function QuizQuestion({
       {isReviewMode && question.explanation && (
         <ExplanationContainer theme={theme}>
           <ExplanationTitle theme={theme}>Giải thích:</ExplanationTitle>
-          <ExplanationText 
-            theme={theme}
-            dangerouslySetInnerHTML={{ __html: question.explanation }}
-          />
+          <ExplanationText theme={theme}>
+            {renderWithMathJax(question.explanation)}
+          </ExplanationText>
         </ExplanationContainer>
       )}
     </QuestionContainer>

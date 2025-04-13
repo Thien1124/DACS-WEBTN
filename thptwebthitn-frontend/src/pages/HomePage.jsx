@@ -1,8 +1,9 @@
 import React from 'react';
-import { useOutletContext } from 'react-router-dom';
-import styled from 'styled-components';
-import HeroSection from '../components/home/HeroSection';
-import FeaturedSubjects from '../components/home/FeaturedSubjects';
+import FeaturesSection from './home/FeaturesSection';
+import Header from './layout/Header';
+import Footer from './layout/Footer';
+import GradeSection from './home/GradeSection';
+import HeroSection from './home/HeroSection';
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -12,12 +13,13 @@ const HomePage = () => {
   const { theme } = useOutletContext();
 
   return (
-    <HomeContainer>
+    <div>
       <Header />
-      <HeroSection theme={theme} />
-      <FeaturedSubjects theme={theme} />
-      {/* You can add more sections as needed */}
-    </HomeContainer>
+      <HeroSection />
+      <GradeSection />
+      <FeaturesSection />
+      <Footer />
+    </div>
   );
 };
 

@@ -2,7 +2,9 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as subjectService from '../services/subjectService';
 
 import { getAllSubjects, getSubjectById } from '../services/subjectService';
-
+export const fetchAllSubjects = async () => {
+  // Logic code ở đây
+};
 // Async thunks
 export const fetchSubjects = createAsyncThunk(
   'subjects/fetchSubjects',

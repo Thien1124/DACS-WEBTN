@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as userService from '../services/userService';
 import * as authService from '../services/authService';
-import { showErrorToast, showSuccessToast } from '../utils/toastUtils';
 // Thunk để cập nhật thông tin user
+
 
 const initialState = {
   isAuthenticated: false,

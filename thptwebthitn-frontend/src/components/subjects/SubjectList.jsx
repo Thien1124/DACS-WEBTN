@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';  // Loại bỏ useState vì đang dùng Redux
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { getAllSubjects } from '../../services/subjectService';
 import SubjectFilter from './SubjectFilter';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,66 +11,6 @@ const Container = styled(motion.div)`
   max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
-`;
-
-const FiltersContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-`;
-
-const FilterLabel = styled.label`
-  font-weight: 500;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#555'};
-  white-space: nowrap;
-`;
-
-const Select = styled.select`
-  padding: 0.5rem;
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  border-radius: 4px;
-  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  min-width: 120px;
-  
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
-  
-  @media (max-width: 768px) {
-    flex: 1;
-  }
-`;
-
-const SearchInput = styled.input`
-  padding: 0.5rem;
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  border-radius: 4px;
-  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  flex: 1;
-  min-width: 250px;
-  
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
 `;
 
 const SubjectsGrid = styled.div`
@@ -202,115 +141,46 @@ const PaginationButton = styled.button`
   }
 `;
 
-const SubjectList = ({ theme }) => {
+const SubjectList = () => {
   const dispatch = useDispatch();
-  const [ setSubjects] = useState([]);
-  const [filteredSubjects, setFilteredSubjects] = useState([]);
-  const [ setFilters] = useState({
-    grade: '',
-    search: '',
-    sortBy: 'name'
-  });
   const { 
     items: subjects,
-    loading: isLoading,
+    loading,
     error,
     pagination,
     filters 
   } = useSelector(state => state.subjects);
-  const [ setIsLoading] = useState(true);
-  const [ setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0
-  });
-  const [ setError] = useState(null);
+  const { theme } = useSelector(state => state.ui);
 
   useEffect(() => {
-    fetchSubjects();
-  }, [filters.grade, filters.sortBy, pagination.currentPage]);
+    dispatch(fetchSubjects({ ...filters, page: pagination.currentPage }));
+  }, [dispatch, filters.grade, filters.sortBy, pagination.currentPage]);
 
   useEffect(() => {
+    // Debounce search input to avoid too many requests
     const delayDebounceFn = setTimeout(() => {
       if (filters.search !== undefined) {
-        fetchSubjects();
+        dispatch(fetchSubjects({ ...filters, page: pagination.currentPage }));
       }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [filters.search]);
-  useEffect(() => {
-    dispatch(fetchSubjects({ ...filters, page: pagination.currentPage }));
-  }, [dispatch, filters, pagination.currentPage]);
+  }, [dispatch, filters.search, pagination.currentPage]);
 
-  const fetchSubjects = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await getAllSubjects({
-        ...filters,
-        page: pagination.currentPage,
-        limit: 12
-      });
-      
-      setSubjects(result.data);
-      setFilteredSubjects(result.data);
-      setPagination({
-        currentPage: result.currentPage,
-        totalPages: result.totalPages,
-        totalItems: result.totalItems
-      });
-    } catch (error) {
-      console.error('Error fetching subjects:', error);
-      setError('Không thể tải danh sách môn học. Vui lòng thử lại sau.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  const handleResetFilters = () => {
-    dispatch(resetFilters());
-    dispatch(setPagination({ currentPage: 1 }));
-  };
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     dispatch(setFilters({ [name]: value }));
     dispatch(setPagination({ currentPage: 1 }));
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    if (name !== 'search') {
-      setPagination(prev => ({
-        ...prev,
-        currentPage: 1
-      }));
-    }
   };
 
-  const resetFilters = () => {
-    setFilters({
-      grade: '',
-      search: '',
-      sortBy: 'name'
-    });
-    
-    setPagination(prev => ({
-      ...prev, 
-      currentPage: 1
-    }));
-    
-    // Refetch subjects with cleared filters
-    fetchSubjects({ grade: '', search: '', sortBy: 'name', page: 1, limit: 12 });
+  const handleResetFilters = () => {
+    dispatch(resetFilters());
+    dispatch(setPagination({ currentPage: 1 }));
   };
 
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
-    
-    setPagination(prev => ({
-      ...prev,
-      currentPage: newPage
-    }));
+    dispatch(setPagination({ currentPage: newPage }));
   };
 
   const formatGradeLabel = (grade) => {
@@ -326,7 +196,7 @@ const SubjectList = ({ theme }) => {
       <SubjectFilter 
         filters={filters} 
         onChange={handleFilterChange}
-        onClear={resetFilters}
+        onClear={handleResetFilters}
         theme={theme} 
       />
       
@@ -336,32 +206,32 @@ const SubjectList = ({ theme }) => {
         </div>
       )}
       
-      {isLoading ? (
+      {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem 0' }}>
           <LoadingSpinner />
           <p>Đang tải danh sách môn học...</p>
         </div>
-      ) : filteredSubjects.length > 0 ? (
+      ) : subjects && subjects.length > 0 ? (
         <>
           <SubjectsGrid>
-            {filteredSubjects.map(subject => (
+            {subjects.map(subject => (
               <SubjectCard 
                 key={subject.id} 
                 theme={theme}
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <SubjectImage image={subject.image}>
+                <SubjectImage image={subject.image || '/images/default-subject.jpg'}>
                   <SubjectGradeBadge>{formatGradeLabel(subject.grade)}</SubjectGradeBadge>
                 </SubjectImage>
                 
                 <SubjectContent>
-                  <SubjectTitle theme={theme}>{subject.title}</SubjectTitle>
-                  <SubjectDescription theme={theme}>{subject.description}</SubjectDescription>
+                  <SubjectTitle theme={theme}>{subject.name}</SubjectTitle>
+                  <SubjectDescription theme={theme}>{subject.description || 'Không có mô tả'}</SubjectDescription>
                   
                   <SubjectMeta theme={theme}>
-                    <SubjectTests theme={theme}>{subject.testsCount} bài thi</SubjectTests>
-                    <ViewButton to={`/subjects/${subject.id}`}>Xem chi tiết</ViewButton>
+                    <SubjectTests theme={theme}>{subject.examsCount || 0} bài thi</SubjectTests>
+                    <ViewButton to={`/subjects/${subject.id}/exams`}>Xem đề thi</ViewButton>
                   </SubjectMeta>
                 </SubjectContent>
               </SubjectCard>

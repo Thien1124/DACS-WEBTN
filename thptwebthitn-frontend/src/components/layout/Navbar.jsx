@@ -6,7 +6,6 @@ import { logout } from '../../redux/authSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUserData } from '../../utils/auth';
 import { showInfoToast,showSuccessToast } from '../../utils/toastUtils';
-import { useLogout } from '../../hooks/userLogout';
 const NavbarContainer = styled.nav`
   background-color: ${props => props.theme === 'dark' ? '#222' : 'white'};
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -271,7 +270,6 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
   
-  const { logout } = useLogout();
 
   const handleLogout = () => {
     sessionStorage.setItem('manual_logout', 'true');

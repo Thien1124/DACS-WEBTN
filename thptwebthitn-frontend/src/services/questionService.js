@@ -1,4 +1,13 @@
-import apiClient from './api';
+import apiClient from './apiClient';
+import axios from 'axios';
+import { getToken } from '../utils/auth';
+axios.interceptors.request.use(config => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = token;
+  }
+  return config;
+}, error => Promise.reject(error));
 
 /**
  * Get all questions with optional filters
@@ -16,7 +25,7 @@ export const getQuestions = async (filters = {}) => {
     if (filters.page) params.append('page', filters.page);
     if (filters.limit) params.append('limit', filters.limit);
     
-    const response = await apiClient.get(`/questions?${params.toString()}`);
+    const response = await apiClient.get(`/api/Question`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể lấy danh sách câu hỏi.' };
@@ -28,9 +37,9 @@ export const getQuestions = async (filters = {}) => {
  * @param {string} questionId - Question ID
  * @returns {Promise} - Promise resolving to question data
  */
-export const getQuestionById = async (questionId) => {
+export const getQuestionById = async (id) => {
   try {
-    const response = await apiClient.get(`/questions/${questionId}`);
+    const response = await apiClient.get(`/api/Question/${id}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể lấy thông tin câu hỏi.' };
@@ -44,7 +53,7 @@ export const getQuestionById = async (questionId) => {
  */
 export const createQuestion = async (questionData) => {
   try {
-    const response = await apiClient.post('/questions', questionData);
+    const response = await apiClient.post('/api/Question', questionData);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể tạo câu hỏi.' };
@@ -57,9 +66,9 @@ export const createQuestion = async (questionData) => {
  * @param {object} questionData - Updated question data
  * @returns {Promise} - Promise resolving to updated question
  */
-export const updateQuestion = async (questionId, questionData) => {
+export const updateQuestion = async (id, questionData) => {
   try {
-    const response = await apiClient.put(`/questions/${questionId}`, questionData);
+    const response = await apiClient.put(`/api/Question/${id}`, questionData);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể cập nhật câu hỏi.' };
@@ -73,9 +82,18 @@ export const updateQuestion = async (questionId, questionData) => {
  */
 export const deleteQuestion = async (questionId) => {
   try {
-    const response = await apiClient.delete(`/questions/${questionId}`);
+    const response = await apiClient.delete(`/api/Question/${questionId}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể xóa câu hỏi.' };
+  }
+};
+export const deleteOption = async (questionId, optionId) => {
+  try {
+    const response = await apiClient.delete(`/api/Question/${questionId}/options/${optionId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting option ${optionId} from question ${questionId}:`, error);
+    throw error;
   }
 };

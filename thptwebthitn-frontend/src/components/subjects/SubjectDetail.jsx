@@ -9,7 +9,7 @@ import ErrorDisplay from '../common/ErrorDisplay';
 import Header from '../layout/Header';
 import Pagination from '../common/Pagination';
 import { FaRegClock, FaRegFileAlt, FaUserAlt, FaFileDownload, FaLock } from 'react-icons/fa';
-
+import ExamList from '../exams/ExamList';
 // Styled components
 const PageWrapper = styled.div`
   display: flex;
@@ -377,6 +377,7 @@ const SubjectDetail = () => {
   const [difficulty, setDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
+  const [useNewExamList, setUseNewExamList] = useState(false);
 
   // Helper function to get subject image
   const getSubjectImage = () => {
@@ -481,8 +482,6 @@ const SubjectDetail = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            
-            
             <SubjectInfo>
               <SubjectTitle theme={theme}>
                 <span>{selectedSubject.name}</span>
@@ -512,116 +511,141 @@ const SubjectDetail = () => {
         
         <SectionTitle theme={theme}>Danh sách đề thi</SectionTitle>
         
-        <FilterSection>
-          <SearchInput
-            type="text"
-            placeholder="Tìm kiếm đề thi..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            theme={theme}
-          />
-          
-          <FiltersGroup>
-            <FilterSelect 
-              value={difficulty} 
-              onChange={handleDifficultyChange}
-              theme={theme}
-            >
-              <option value="all">Tất cả độ khó</option>
-              <option value="easy">Dễ</option>
-              <option value="medium">Trung bình</option>
-              <option value="hard">Khó</option>
-            </FilterSelect>
-            
-            <FilterSelect 
-              value={sortBy} 
-              onChange={handleSortChange}
-              theme={theme}
-            >
-              <option value="newest">Mới nhất</option>
-              <option value="oldest">Cũ nhất</option>
-              <option value="popular">Phổ biến nhất</option>
-              <option value="attempts">Nhiều lượt thi</option>
-            </FilterSelect>
-          </FiltersGroup>
-        </FilterSection>
+        {/* Toggle button to switch between old and new UI */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button 
+            onClick={() => setUseNewExamList(!useNewExamList)}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: theme === 'dark' ? '#333' : '#f0f0f0',
+              color: theme === 'dark' ? '#e2e8f0' : '#333',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            {useNewExamList ? 'Hiển thị giao diện cũ' : 'Hiển thị giao diện mới'}
+          </button>
+        </div>
         
-        <ExamsContainer>
-          {examsStatus === 'loading' && currentPage > 1 ? (
-            <LoadingContainer theme={theme}>
-              <LoadingSpinner size={40} />
-              <p>Đang tải danh sách đề thi...</p>
-            </LoadingContainer>
-          ) : examsStatus === 'failed' ? (
-            <ErrorDisplay message={examsError} />
-          ) : examsList && examsList.length > 0 ? (
-            <>
-              <ExamsTable theme={theme}>
-                <ExamsHeader theme={theme}>
-                  <div>Tên đề thi</div>
-                  <div>Thời gian</div>
-                  <div>Độ khó</div>
-                  <div>Lượt thi</div>
-                  <div>Hành động</div>
-                </ExamsHeader>
-                
-                {examsList.map((exam, index) => (
-                  <ExamRow 
-                    key={exam.id}
-                    theme={theme}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <ExamTitle theme={theme}>{exam.title}</ExamTitle>
-                    
-                    <ExamDetail theme={theme} data-label="Thời gian:">
-                      <FaRegClock /> {exam.duration || 45} phút
-                    </ExamDetail>
-                    
-                    <ExamDetail theme={theme} data-label="Độ khó:">
-                      {renderDifficulty(exam.difficulty)}
-                    </ExamDetail>
-                    
-                    <ExamDetail theme={theme} data-label="Lượt thi:">
-                      {exam.attemptCount || 0} lượt
-                    </ExamDetail>
-                    
-                    <div>
-                      {exam.isLocked ? (
-                        <ExamAction to="#" className="locked" theme={theme}>
-                          <FaLock /> Đã khóa
-                        </ExamAction>
-                      ) : (
-                        <ExamAction to={`/exams/${exam.id}`}>
-                          <FaFileDownload /> Làm bài
-                        </ExamAction>
-                      )}
-                    </div>
-                  </ExamRow>
-                ))}
-              </ExamsTable>
+        {useNewExamList ? (
+          // Hiển thị ExamList mới
+          <ExamList subjectId={id} theme={theme} />
+        ) : (
+          // Hiển thị danh sách đề thi theo cách hiện tại
+          <>
+            <FilterSection>
+              <SearchInput
+                type="text"
+                placeholder="Tìm kiếm đề thi..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                theme={theme}
+              />
               
-              {examsTotalPages > 1 && (
-                <Pagination 
-                  currentPage={currentPage}
-                  totalPages={examsTotalPages}
-                  onPageChange={handlePageChange}
-                />
+              <FiltersGroup>
+                <FilterSelect 
+                  value={difficulty} 
+                  onChange={handleDifficultyChange}
+                  theme={theme}
+                >
+                  <option value="all">Tất cả độ khó</option>
+                  <option value="easy">Dễ</option>
+                  <option value="medium">Trung bình</option>
+                  <option value="hard">Khó</option>
+                </FilterSelect>
+                
+                <FilterSelect 
+                  value={sortBy} 
+                  onChange={handleSortChange}
+                  theme={theme}
+                >
+                  <option value="newest">Mới nhất</option>
+                  <option value="oldest">Cũ nhất</option>
+                  <option value="popular">Phổ biến nhất</option>
+                  <option value="attempts">Nhiều lượt thi</option>
+                </FilterSelect>
+              </FiltersGroup>
+            </FilterSection>
+          
+            <ExamsContainer>
+              {examsStatus === 'loading' && currentPage > 1 ? (
+                <LoadingContainer theme={theme}>
+                  <LoadingSpinner size={40} />
+                  <p>Đang tải danh sách đề thi...</p>
+                </LoadingContainer>
+              ) : examsStatus === 'failed' ? (
+                <ErrorDisplay message={examsError} />
+              ) : examsList && examsList.length > 0 ? (
+                <>
+                  <ExamsTable theme={theme}>
+                    <ExamsHeader theme={theme}>
+                      <div>Tên đề thi</div>
+                      <div>Thời gian</div>
+                      <div>Độ khó</div>
+                      <div>Lượt thi</div>
+                      <div>Hành động</div>
+                    </ExamsHeader>
+                    
+                    {examsList.map((exam, index) => (
+                      <ExamRow 
+                        key={exam.id}
+                        theme={theme}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <ExamTitle theme={theme}>{exam.title}</ExamTitle>
+                        
+                        <ExamDetail theme={theme} data-label="Thời gian:">
+                          <FaRegClock /> {exam.duration || 45} phút
+                        </ExamDetail>
+                        
+                        <ExamDetail theme={theme} data-label="Độ khó:">
+                          {renderDifficulty(exam.difficulty)}
+                        </ExamDetail>
+                        
+                        <ExamDetail theme={theme} data-label="Lượt thi:">
+                          {exam.attemptCount || 0} lượt
+                        </ExamDetail>
+                        
+                        <div>
+                          {exam.isLocked ? (
+                            <ExamAction to="#" className="locked" theme={theme}>
+                              <FaLock /> Đã khóa
+                            </ExamAction>
+                          ) : (
+                            <ExamAction to={`/exam/${exam.id}`}>
+                              <FaFileDownload /> Làm bài
+                            </ExamAction>
+                          )}
+                        </div>
+                      </ExamRow>
+                    ))}
+                  </ExamsTable>
+                  
+                  {examsTotalPages > 1 && (
+                    <Pagination 
+                      currentPage={currentPage}
+                      totalPages={examsTotalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  )}
+                </>
+              ) : (
+                <NoExamsMessage theme={theme}>
+                  <h3>Chưa có đề thi</h3>
+                  <p>Hiện tại chưa có đề thi nào cho môn học này. Vui lòng quay lại sau.</p>
+                </NoExamsMessage>
               )}
-            </>
-          ) : (
-            <NoExamsMessage theme={theme}>
-              <h3>Chưa có đề thi</h3>
-              <p>Hiện tại chưa có đề thi nào cho môn học này. Vui lòng quay lại sau.</p>
-            </NoExamsMessage>
-          )}
-        </ExamsContainer>
+            </ExamsContainer>
+          </>
+        )}
+        <ExamList subjectId={id} theme={theme} />
       </Container>
     </PageWrapper>
   );
 };
-
-// Bổ sung component LoadingContainer
 
 export default SubjectDetail;
