@@ -88,7 +88,7 @@ namespace webthitn_backend.Models
             // Giá trị thời gian cố định thay vì DateTime.Parse() hoặc DateTime.Now
             var fixedDate1 = new DateTime(2025, 4, 1, 15, 56, 0);
             var fixedDate2 = new DateTime(2025, 4, 1, 15, 56, 40);
-
+            var currentDate = new DateTime(2025, 4, 13, 15, 53, 52);
             // Seed Users
             modelBuilder.Entity<User>().HasData(
                 new User
@@ -152,15 +152,280 @@ namespace webthitn_backend.Models
 
             // Seed Subjects
             modelBuilder.Entity<Subject>().HasData(
-                new Subject { Id = 1, Name = "Toán", Code = "MATH", Description = "Môn Toán", CreatedAt = fixedDate1 },
-                new Subject { Id = 2, Name = "Vật Lý", Code = "PHY", Description = "Môn Vật Lý", CreatedAt = fixedDate1 },
-                new Subject { Id = 3, Name = "Hóa Học", Code = "CHEM", Description = "Môn Hóa Học", CreatedAt = fixedDate1 },
-                new Subject { Id = 4, Name = "Sinh Học", Code = "BIO", Description = "Môn Sinh Học", CreatedAt = fixedDate1 },
-                new Subject { Id = 5, Name = "Ngữ Văn", Code = "LIT", Description = "Môn Ngữ Văn", CreatedAt = fixedDate1 },
-                new Subject { Id = 6, Name = "Tiếng Anh", Code = "ENG", Description = "Môn Tiếng Anh", CreatedAt = fixedDate1 },
-                new Subject { Id = 7, Name = "Lịch Sử", Code = "HIST", Description = "Môn Lịch Sử", CreatedAt = fixedDate1 },
-                new Subject { Id = 8, Name = "Địa Lý", Code = "GEO", Description = "Môn Địa Lý", CreatedAt = fixedDate1 },
-                new Subject { Id = 9, Name = "GDKT&PL", Code = "GDKT&PL", Description = "Giáo dục kinh tế và pháp luật", CreatedAt = fixedDate1 }
+                new Subject
+                {
+                    Id = 1,
+                    Name = "Toán 10",
+                    Code = "MATH10",
+                    Description = "Môn Toán Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 2,
+                    Name = "Vật Lý 10",
+                    Code = "PHY10",
+                    Description = "Môn Vật Lý Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 3,
+                    Name = "Hóa Học 10",
+                    Code = "CHEM10",
+                    Description = "Môn Hóa Học Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 10,
+                    Name = "Sinh Học 10",
+                    Code = "BIO10",
+                    Description = "Môn Sinh Học Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 13,
+                    Name = "Ngữ Văn 10",
+                    Code = "LIT10",
+                    Description = "Môn Ngữ Văn Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 16,
+                    Name = "Tiếng Anh 10",
+                    Code = "ENG10",
+                    Description = "Môn Tiếng Anh Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 19,
+                    Name = "Lịch Sử 10",
+                    Code = "HIST10",
+                    Description = "Môn Lịch Sử Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 22,
+                    Name = "Địa Lý 10",
+                    Code = "GEO10",
+                    Description = "Môn Địa Lý Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 25,
+                    Name = "GDKT&PL 10",
+                    Code = "GDKT&PL10",
+                    Description = "Giáo dục kinh tế và pháp luật Lớp 10",
+                    GradeLevel = 10,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+
+                // Grade 11 Subjects
+                new Subject
+                {
+                    Id = 4,
+                    Name = "Toán 11",
+                    Code = "MATH11",
+                    Description = "Môn Toán Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 5,
+                    Name = "Vật Lý 11",
+                    Code = "PHY11",
+                    Description = "Môn Vật Lý Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 6,
+                    Name = "Hóa Học 11",
+                    Code = "CHEM11",
+                    Description = "Môn Hóa Học Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 11,
+                    Name = "Sinh Học 11",
+                    Code = "BIO11",
+                    Description = "Môn Sinh Học Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 14,
+                    Name = "Ngữ Văn 11",
+                    Code = "LIT11",
+                    Description = "Môn Ngữ Văn Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 17,
+                    Name = "Tiếng Anh 11",
+                    Code = "ENG11",
+                    Description = "Môn Tiếng Anh Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 20,
+                    Name = "Lịch Sử 11",
+                    Code = "HIST11",
+                    Description = "Môn Lịch Sử Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 23,
+                    Name = "Địa Lý 11",
+                    Code = "GEO11",
+                    Description = "Môn Địa Lý Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 26,
+                    Name = "GDKT&PL 11",
+                    Code = "GDKT&PL11",
+                    Description = "Giáo dục kinh tế và pháp luật Lớp 11",
+                    GradeLevel = 11,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+
+                // Grade 12 Subjects
+                new Subject
+                {
+                    Id = 7,
+                    Name = "Toán 12",
+                    Code = "MATH12",
+                    Description = "Môn Toán Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 8,
+                    Name = "Vật Lý 12",
+                    Code = "PHY12",
+                    Description = "Môn Vật Lý Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 9,
+                    Name = "Hóa Học 12",
+                    Code = "CHEM12",
+                    Description = "Môn Hóa Học Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = fixedDate1
+                },
+                new Subject
+                {
+                    Id = 12,
+                    Name = "Sinh Học 12",
+                    Code = "BIO12",
+                    Description = "Môn Sinh Học Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 15,
+                    Name = "Ngữ Văn 12",
+                    Code = "LIT12",
+                    Description = "Môn Ngữ Văn Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 18,
+                    Name = "Tiếng Anh 12",
+                    Code = "ENG12",
+                    Description = "Môn Tiếng Anh Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 21,
+                    Name = "Lịch Sử 12",
+                    Code = "HIST12",
+                    Description = "Môn Lịch Sử Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 24,
+                    Name = "Địa Lý 12",
+                    Code = "GEO12",
+                    Description = "Môn Địa Lý Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                },
+                new Subject
+                {
+                    Id = 27,
+                    Name = "GDKT&PL 12",
+                    Code = "GDKT&PL12",
+                    Description = "Giáo dục kinh tế và pháp luật Lớp 12",
+                    GradeLevel = 12,
+                    IsActive = true,
+                    CreatedAt = currentDate
+                }
             );
 
         }

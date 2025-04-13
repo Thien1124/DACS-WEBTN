@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webthitn_backend.Models;
 
@@ -11,9 +12,11 @@ using webthitn_backend.Models;
 namespace webthitn_backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250412081909_AddGradeLevelToSubject")]
+    partial class AddGradeLevelToSubject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -770,272 +773,92 @@ namespace webthitn_backend.Migrations
                         new
                         {
                             Id = 1,
-                            Code = "MATH10",
+                            Code = "MATH",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Toán Lớp 10",
-                            GradeLevel = 10,
+                            Description = "Môn Toán",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Toán 10"
+                            Name = "Toán"
                         },
                         new
                         {
                             Id = 2,
-                            Code = "PHY10",
+                            Code = "PHY",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Vật Lý Lớp 10",
-                            GradeLevel = 10,
+                            Description = "Môn Vật Lý",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Vật Lý 10"
+                            Name = "Vật Lý"
                         },
                         new
                         {
                             Id = 3,
-                            Code = "CHEM10",
+                            Code = "CHEM",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Hóa Học Lớp 10",
-                            GradeLevel = 10,
+                            Description = "Môn Hóa Học",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Hóa Học 10"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Code = "BIO10",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Sinh Học Lớp 10",
-                            GradeLevel = 10,
-                            IsActive = true,
-                            Name = "Sinh Học 10"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Code = "LIT10",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Ngữ Văn Lớp 10",
-                            GradeLevel = 10,
-                            IsActive = true,
-                            Name = "Ngữ Văn 10"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            Code = "ENG10",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Tiếng Anh Lớp 10",
-                            GradeLevel = 10,
-                            IsActive = true,
-                            Name = "Tiếng Anh 10"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            Code = "HIST10",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Lịch Sử Lớp 10",
-                            GradeLevel = 10,
-                            IsActive = true,
-                            Name = "Lịch Sử 10"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            Code = "GEO10",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Địa Lý Lớp 10",
-                            GradeLevel = 10,
-                            IsActive = true,
-                            Name = "Địa Lý 10"
-                        },
-                        new
-                        {
-                            Id = 25,
-                            Code = "GDKT&PL10",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Giáo dục kinh tế và pháp luật Lớp 10",
-                            GradeLevel = 10,
-                            IsActive = true,
-                            Name = "GDKT&PL 10"
+                            Name = "Hóa Học"
                         },
                         new
                         {
                             Id = 4,
-                            Code = "MATH11",
+                            Code = "BIO",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Toán Lớp 11",
-                            GradeLevel = 11,
+                            Description = "Môn Sinh Học",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Toán 11"
+                            Name = "Sinh Học"
                         },
                         new
                         {
                             Id = 5,
-                            Code = "PHY11",
+                            Code = "LIT",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Vật Lý Lớp 11",
-                            GradeLevel = 11,
+                            Description = "Môn Ngữ Văn",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Vật Lý 11"
+                            Name = "Ngữ Văn"
                         },
                         new
                         {
                             Id = 6,
-                            Code = "CHEM11",
+                            Code = "ENG",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Hóa Học Lớp 11",
-                            GradeLevel = 11,
+                            Description = "Môn Tiếng Anh",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Hóa Học 11"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Code = "BIO11",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Sinh Học Lớp 11",
-                            GradeLevel = 11,
-                            IsActive = true,
-                            Name = "Sinh Học 11"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Code = "LIT11",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Ngữ Văn Lớp 11",
-                            GradeLevel = 11,
-                            IsActive = true,
-                            Name = "Ngữ Văn 11"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            Code = "ENG11",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Tiếng Anh Lớp 11",
-                            GradeLevel = 11,
-                            IsActive = true,
-                            Name = "Tiếng Anh 11"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            Code = "HIST11",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Lịch Sử Lớp 11",
-                            GradeLevel = 11,
-                            IsActive = true,
-                            Name = "Lịch Sử 11"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            Code = "GEO11",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Địa Lý Lớp 11",
-                            GradeLevel = 11,
-                            IsActive = true,
-                            Name = "Địa Lý 11"
-                        },
-                        new
-                        {
-                            Id = 26,
-                            Code = "GDKT&PL11",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Giáo dục kinh tế và pháp luật Lớp 11",
-                            GradeLevel = 11,
-                            IsActive = true,
-                            Name = "GDKT&PL 11"
+                            Name = "Tiếng Anh"
                         },
                         new
                         {
                             Id = 7,
-                            Code = "MATH12",
+                            Code = "HIST",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Toán Lớp 12",
-                            GradeLevel = 12,
+                            Description = "Môn Lịch Sử",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Toán 12"
+                            Name = "Lịch Sử"
                         },
                         new
                         {
                             Id = 8,
-                            Code = "PHY12",
+                            Code = "GEO",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Vật Lý Lớp 12",
-                            GradeLevel = 12,
+                            Description = "Môn Địa Lý",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Vật Lý 12"
+                            Name = "Địa Lý"
                         },
                         new
                         {
                             Id = 9,
-                            Code = "CHEM12",
+                            Code = "GDKT&PL",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Hóa Học Lớp 12",
-                            GradeLevel = 12,
+                            Description = "Giáo dục kinh tế và pháp luật",
+                            GradeLevel = 0,
                             IsActive = true,
-                            Name = "Hóa Học 12"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Code = "BIO12",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Sinh Học Lớp 12",
-                            GradeLevel = 12,
-                            IsActive = true,
-                            Name = "Sinh Học 12"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Code = "LIT12",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Ngữ Văn Lớp 12",
-                            GradeLevel = 12,
-                            IsActive = true,
-                            Name = "Ngữ Văn 12"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            Code = "ENG12",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Tiếng Anh Lớp 12",
-                            GradeLevel = 12,
-                            IsActive = true,
-                            Name = "Tiếng Anh 12"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            Code = "HIST12",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Lịch Sử Lớp 12",
-                            GradeLevel = 12,
-                            IsActive = true,
-                            Name = "Lịch Sử 12"
-                        },
-                        new
-                        {
-                            Id = 24,
-                            Code = "GEO12",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Địa Lý Lớp 12",
-                            GradeLevel = 12,
-                            IsActive = true,
-                            Name = "Địa Lý 12"
-                        },
-                        new
-                        {
-                            Id = 27,
-                            Code = "GDKT&PL12",
-                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
-                            Description = "Giáo dục kinh tế và pháp luật Lớp 12",
-                            GradeLevel = 12,
-                            IsActive = true,
-                            Name = "GDKT&PL 12"
+                            Name = "GDCD"
                         });
                 });
 
@@ -1136,7 +959,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$nuZo4EJrXIv77pJfOI717u2OpAmslirkpemcPuBXYxjGAsa2QXU6e",
+                            Password = "$2a$11$bXLYIcsB25MI8WsJ0W2dJe.cr1WnPB/0AezW/mXLIPq0CCPkSF762",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1151,7 +974,7 @@ namespace webthitn_backend.Migrations
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$EVQEwvyrm9N2psm9ZPOe.eDoC.eZKGsj52ifsmisUz32aY/zyhJ8i",
+                            Password = "$2a$11$JOJGjRvonVXPYEpa7B.aVeDbclE0OzLFJrZ/hlGw3XS3q8leMtaBy",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1165,7 +988,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$/Y3qhgcDtzCkbJQYTdZPV.PwuUCWG0UqmyGiBCfp8BwJ0IJN8oycy",
+                            Password = "$2a$11$47VE7ffdBIPAIT0uQpz1LeWwgm8TCIG.izcBXCioeOhZOJ.32g7QC",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",

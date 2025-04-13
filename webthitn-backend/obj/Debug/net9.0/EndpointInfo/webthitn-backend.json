@@ -1219,7 +1219,7 @@
         "tags": [
           "Results"
         ],
-        "summary": "Lấy danh sách kết quả bài thi theo người dùng",
+        "summary": "Lịch sử bài thi theo người dùng",
         "parameters": [
           {
             "name": "userId",
@@ -2256,6 +2256,9 @@
         "description": "DTO để tạo mới đáp án"
       },
       "CreateSubjectDTO": {
+        "required": [
+          "gradeLevel"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -2269,6 +2272,12 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "gradeLevel": {
+            "maximum": 12,
+            "minimum": 10,
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false,
@@ -2293,7 +2302,7 @@
             "type": "number",
             "description": "Điểm số cho câu hỏi trong bài thi",
             "format": "double",
-            "example": 1,5
+            "example": 1.5
           }
         },
         "additionalProperties": false,
@@ -2474,7 +2483,7 @@
             "type": "number",
             "description": "Điểm cập nhật",
             "format": "double",
-            "example": 0,75
+            "example": 0.75
           },
           "comment": {
             "type": "string",
@@ -2667,6 +2676,9 @@
         "description": "DTO để giáo viên cập nhật điểm bài thi"
       },
       "UpdateSubjectDTO": {
+        "required": [
+          "gradeLevel"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -2680,6 +2692,12 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "gradeLevel": {
+            "maximum": 12,
+            "minimum": 10,
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false,

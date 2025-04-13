@@ -1,7 +1,44 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250413155836_FixSubjectsGradeLevels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Migrations\\20250413155836_FixSubjectsGradeLevels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\migrations\\applicationdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:migrations\\applicationdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\migrations\\20250413154708_updatesubjectswithgradelevels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:migrations\\20250413154708_updatesubjectswithgradelevels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\migrations\\20250412081909_addgradeleveltosubject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:migrations\\20250412081909_addgradeleveltosubject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\models\\academics\\subjects.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\academics\\subjects.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\models\\questions\\questions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\questions\\questions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,11 +46,124 @@
       "DocumentGroups": [
         {
           "DockedWidth": 95,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 1,
           "Children": [
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "20250413155836_FixSubjectsGradeLevels.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250413155836_FixSubjectsGradeLevels.cs",
+              "RelativeDocumentMoniker": "Migrations\\20250413155836_FixSubjectsGradeLevels.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250413155836_FixSubjectsGradeLevels.cs",
+              "RelativeToolTip": "Migrations\\20250413155836_FixSubjectsGradeLevels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:58:36.664Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Models\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Models\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAAAFEAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:53:06.876Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "20250413154708_UpdateSubjectsWithGradeLevels.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250413154708_UpdateSubjectsWithGradeLevels.cs",
+              "RelativeDocumentMoniker": "Migrations\\20250413154708_UpdateSubjectsWithGradeLevels.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250413154708_UpdateSubjectsWithGradeLevels.cs",
+              "RelativeToolTip": "Migrations\\20250413154708_UpdateSubjectsWithGradeLevels.cs",
+              "ViewState": "AgIAABUBAAAAAAAAAAAAwCcBAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:47:08.943Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ApplicationDbContextModelSnapshot.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "RelativeDocumentMoniker": "Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "RelativeToolTip": "Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "ViewState": "AgIAAHgFAAAAAAAAAAAAwIIFAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:38:06.415Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": ".gitignore",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\.gitignore",
+              "RelativeDocumentMoniker": ".gitignore",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\.gitignore",
+              "RelativeToolTip": ".gitignore",
+              "ViewState": "AgIAADMAAAAAAAAAAAAgwFAAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-04-13T15:24:07.414Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "20250412081909_AddGradeLevelToSubject.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250412081909_AddGradeLevelToSubject.cs",
+              "RelativeDocumentMoniker": "Migrations\\20250412081909_AddGradeLevelToSubject.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250412081909_AddGradeLevelToSubject.cs",
+              "RelativeToolTip": "Migrations\\20250412081909_AddGradeLevelToSubject.cs",
+              "ViewState": "AgIAAIQCAAAAAAAAAAAQwJ0CAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:16:48.71Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Subjects.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\Academics\\Subjects.cs",
+              "RelativeDocumentMoniker": "Models\\Academics\\Subjects.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\Academics\\Subjects.cs",
+              "RelativeToolTip": "Models\\Academics\\Subjects.cs",
+              "ViewState": "AgIAACIAAAAAAAAAAAA5wCcAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:04:24.714Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Questions.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\Questions\\Questions.cs",
+              "RelativeDocumentMoniker": "Models\\Questions\\Questions.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\Questions\\Questions.cs",
+              "RelativeToolTip": "Models\\Questions\\Questions.cs",
+              "ViewState": "AgIAADIAAAAAAAAAAAAswAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-13T15:04:12.857Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-04-13T11:57:20.483Z",
+              "EditorCaption": ""
             }
           ]
         }
