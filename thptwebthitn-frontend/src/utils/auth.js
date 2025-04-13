@@ -1,21 +1,19 @@
 import axios from 'axios';
+import { setAccessToken, getAccessToken, clearTokens, getTokenPayload } from './token';
 
-// Constants for storage keys and token prefix
+// Constants for storage keys
 const STORAGE_KEYS = {
-  TOKEN: 'auth_token',
   USER: 'user_data',
   REMEMBER_ME: 'remember_me'
 };
-
-const TOKEN_PREFIX = 'Bearer';
 
 /**
  * Get the authentication token from local storage
  * @returns {string|null} - The token or null if not found
  */
 export const getToken = () => {
-  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-  return token ? `${TOKEN_PREFIX} ${token}` : null;
+  const token = getAccessToken();
+  return token ? `Bearer ${token}` : null;
 };
 
 /**
@@ -23,7 +21,7 @@ export const getToken = () => {
  * @returns {string|null} - The raw token or null if not found
  */
 export const getRawToken = () => {
-  return localStorage.getItem(STORAGE_KEYS.TOKEN);
+  return getAccessToken();
 };
 
 /**
@@ -32,17 +30,17 @@ export const getRawToken = () => {
  */
 export const setToken = (token) => {
   // Remove 'Bearer ' prefix if it exists
-  const rawToken = token.startsWith(`${TOKEN_PREFIX} `) 
-    ? token.slice(TOKEN_PREFIX.length + 1) 
+  const rawToken = token.startsWith('Bearer ') 
+    ? token.slice(7) 
     : token;
-  localStorage.setItem(STORAGE_KEYS.TOKEN, rawToken);
+  setAccessToken(rawToken);
 };
 
 /**
  * Remove the authentication token from local storage
  */
 export const removeToken = () => {
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  clearTokens();
 };
 
 /**
@@ -50,17 +48,14 @@ export const removeToken = () => {
  * @returns {boolean} - True if authenticated
  */
 export const isTokenValid = () => {
-  const token = getRawToken();
+  const token = getAccessToken();
   if (!token) return false;
 
   try {
-    // Basic token validation (you might want to add more sophisticated validation)
-    const tokenParts = token.split('.');
-    if (tokenParts.length !== 3) return false;
-
-    const payload = JSON.parse(atob(tokenParts[1]));
-    const expirationTime = payload.exp * 1000; // Convert to milliseconds
+    const payload = getTokenPayload(token);
+    if (!payload) return false;
     
+    const expirationTime = payload.exp * 1000; // Convert to milliseconds
     return Date.now() < expirationTime;
   } catch {
     return false;
@@ -110,32 +105,13 @@ export const removeUserData = () => {
 };
 
 /**
- * Set remember me preference
- * @param {boolean} remember - Whether to remember the user
- */
-export const setRememberMe = (remember) => {
-  localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, remember);
-};
-
-/**
- * Get remember me preference
- * @returns {boolean} - Whether user chose to be remembered
- */
-export const getRememberMe = () => {
-  return localStorage.getItem(STORAGE_KEYS.REMEMBER_ME) === 'true';
-};
-
-/**
  * Handle logout - clear all auth-related data
  */
 export const logout = () => {
   // Clear all auth-related data
-  Object.values(STORAGE_KEYS).forEach(key => {
-    localStorage.removeItem(key);
-  });
-
-  // Optional: Reload the page to clear any sensitive data in memory
-  // window.location.reload();
+  clearTokens();
+  removeUserData();
+  localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
 };
 
 /**

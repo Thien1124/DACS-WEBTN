@@ -107,6 +107,7 @@ const GlassEffect2 = styled.div`
 
 const AuthModal = ({ show, handleClose, theme }) => {
   const [formType, setFormType] = useState('login');
+  const [isClosing, setIsClosing] = useState(false);
   
   // Tự động cuộn lên đầu khi form chuyển đổi
   useEffect(() => {
@@ -114,12 +115,37 @@ const AuthModal = ({ show, handleClose, theme }) => {
       window.scrollTo(0, 0);
     }
   }, [show, formType]);
+  
+  // Effect xử lý đóng modal với animation
+  useEffect(() => {
+    if (isClosing) {
+      const timer = setTimeout(() => {
+        handleClose();
+        setIsClosing(false);
+      }, 1000); // Thời gian để animation exit hoàn thành
+      return () => clearTimeout(timer);
+    }
+  }, [isClosing, handleClose]);
 
+  // Hàm xử lý đăng nhập thành công
   const handleLoginSuccess = () => {
-    // Close modal after successful login
-    handleClose();
+    console.log(`[${new Date().toISOString().replace('T', ' ').substring(0, 19)}] Login successful, closing modal...`);
+    console.log(`Current User: vinhsonvlog`);
+    
+    // Không đóng ngay lập tức, mà đặt state để đóng với animation
+    setIsClosing(true);
   };
 
+  // Hàm xử lý đăng ký thành công
+  const handleRegisterSuccess = () => {
+    console.log(`[${new Date().toISOString().replace('T', ' ').substring(0, 19)}] Registration successful, switching to login...`);
+    console.log(`Current User: vinhsonvlog`);
+    
+    // Sau khi đăng ký thành công, chuyển sang form đăng nhập
+    setFormType('login');
+  };
+
+  // Hàm chuyển đổi form
   const switchToRegister = () => setFormType('register');
   const switchToLogin = () => setFormType('login');
 
@@ -130,7 +156,7 @@ const AuthModal = ({ show, handleClose, theme }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={handleClose}
+          onClick={isClosing ? null : handleClose} // Vô hiệu hóa onClick khi đang đóng
         >
           <ModalContainer
             onClick={e => e.stopPropagation()}
@@ -139,9 +165,11 @@ const AuthModal = ({ show, handleClose, theme }) => {
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           >
-            <CloseButton theme={theme} onClick={handleClose}>
-              ✕
-            </CloseButton>
+            {!isClosing && (
+              <CloseButton theme={theme} onClick={handleClose}>
+                ✕
+              </CloseButton>
+            )}
             
             <GlassEffect />
             <GlassEffect2 />
@@ -171,7 +199,8 @@ const AuthModal = ({ show, handleClose, theme }) => {
                 >
                   <RegisterForm 
                     theme={theme} 
-                    switchToLogin={switchToLogin} 
+                    switchToLogin={switchToLogin}
+                    onRegisterSuccess={handleRegisterSuccess}
                   />
                 </motion.div>
               )}
