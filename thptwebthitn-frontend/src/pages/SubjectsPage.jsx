@@ -10,6 +10,7 @@ import {
   FaFilter,
   FaRedo,
   FaFileAlt,
+  FaUserShield,
   // Loại bỏ các icon không sử dụng
 } from "react-icons/fa";
 import Header from "../components/layout/Header";
@@ -523,7 +524,19 @@ const SubjectsPage = () => {
   const currentUser = "vinhsonvlog";
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-
+  const { user } = useSelector(state => state.auth);
+  const formatRole = (role) => {
+    if (!role) return 'Học sinh';
+    
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return 'Admin';
+      case 'teacher':
+        return 'Giáo viên';
+      default:
+        return 'Học sinh';
+    }
+  };
   // Debug function để xem dữ liệu và bộ lọc
   const debugInfo = () => {
     console.log("Current filters:", filters);
@@ -681,7 +694,7 @@ const SubjectsPage = () => {
     'Tiếng Anh': EnglishImg,
     'Lịch Sử': HistoryImg,
     'Địa Lý': GeographyImg,
-    'GDCD': CivicEdu
+    'GDKT&PL': CivicEdu
   };
   
   // Hàm lấy ảnh cho môn học
@@ -714,6 +727,11 @@ const SubjectsPage = () => {
     
     // Reset to first page when filters change
     setCurrentPage(1);
+  };
+  const hasEditAccess = () => {
+    if (!user || !user.role) return false;
+    const role = user.role.toLowerCase();
+    return role === 'admin' || role === 'teacher';
   };
   
   const handleClearFilters = () => {
@@ -799,10 +817,10 @@ const SubjectsPage = () => {
       <ContentContainer>
         <PageTitle theme={theme}>Danh sách môn học</PageTitle>
         <UserInfo theme={theme}>
-          <span>Giáo viên</span>
-          <span>
-            Truy cập vào: lúc {currentTime} | Người dùng: {currentUser}
-          </span>
+        <span>{formatRole(user?.role)}</span>
+        <span>
+          Truy cập vào: lúc {currentTime} | Người dùng: {currentUser}
+        </span>
         </UserInfo>
 
         {/* API connection status */}
@@ -813,7 +831,7 @@ const SubjectsPage = () => {
         </EndpointStatus>
 
         {/* Navigation and filters... */}
-        <SubjectNavigation theme={theme} showOnlyCreateButton={true} />
+        <SubjectNavigation theme={theme} showOnlyCreateButton={hasEditAccess()} />
 
         <FiltersContainer theme={theme}>
           <FiltersTitle theme={theme}>Tìm kiếm môn học phù hợp</FiltersTitle>
@@ -892,9 +910,7 @@ const SubjectsPage = () => {
                 >
                   <SubjectImageContainer>
                     <SubjectImage image={getSubjectImage(subject)} />
-                    <SubjectImageOverlay>
-                      <FaFileAlt /> {subject.examCount || 0} đề thi
-                    </SubjectImageOverlay>
+                    
                   </SubjectImageContainer>
                   
                   <SubjectHeader>
@@ -924,6 +940,7 @@ const SubjectsPage = () => {
                       >
                         Xem
                       </ButtonAction>
+                      {hasEditAccess() && (
                       <ButtonAction
                         className="edit"
                         onClick={() => navigate(`/subject/edit/${subject.id}`)}
@@ -931,6 +948,7 @@ const SubjectsPage = () => {
                       >
                         Sửa
                       </ButtonAction>
+                      )}
                     </ButtonGroup>
                   </SubjectFooter>
                 </SubjectCard>
@@ -959,12 +977,14 @@ const SubjectsPage = () => {
               <HomeButton onClick={() => navigate("/")} theme={theme}>
                 <FaHome /> Quay về trang chủ
               </HomeButton>
+              {hasEditAccess() && (
               <CreateButton
                 onClick={() => navigate("/subject/create")}
                 theme={theme}
               >
                 <FaPlus /> Tạo môn học mới
               </CreateButton>
+              )}
               {(filters.search || filters.grade !== "all") && (
                 <ClearFiltersButton
                   onClick={handleClearFilters}

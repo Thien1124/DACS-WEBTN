@@ -360,6 +360,9 @@ function Header() {
                 <Link to="/subjects">Môn học</Link>
               </NavItem>
               <NavItem theme={theme}>
+                <Link to="/exams">Bài thi</Link>
+              </NavItem>
+              <NavItem theme={theme}>
                 <Link to="/about">Giới thiệu</Link>
               </NavItem>
               <NavItem theme={theme}>

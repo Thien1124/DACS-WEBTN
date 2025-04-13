@@ -3,13 +3,23 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { fetchSubjectById, fetchSubjectExams } from '../../redux/subjectSlice';
+import { fetchSubjectById } from '../../redux/subjectSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorDisplay from '../common/ErrorDisplay';
 import Header from '../layout/Header';
-import Pagination from '../common/Pagination';
-import { FaRegClock, FaRegFileAlt, FaUserAlt, FaFileDownload, FaLock } from 'react-icons/fa';
-import ExamList from '../exams/ExamList';
+import Footer from '../layout/Footer';
+import { 
+  FaArrowLeft, 
+  FaRegFileAlt, 
+  FaUserAlt, 
+  FaChalkboardTeacher, 
+  FaGraduationCap, 
+  FaBookOpen,
+  FaCalendarAlt,
+  FaCode,
+  FaInfoCircle
+} from 'react-icons/fa';
+
 // Styled components
 const PageWrapper = styled.div`
   display: flex;
@@ -83,6 +93,19 @@ const SubjectImage = styled.div`
   }
 `;
 
+const GradeBadge = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: #4285f4;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  z-index: 2;
+  box-shadow: 0 2px 10px rgba(66, 133, 244, 0.4);
+`;
+
 const SubjectInfo = styled.div`
   flex: 1;
   padding-left: 2.5rem;
@@ -103,6 +126,17 @@ const SubjectTitle = styled.h1`
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+`;
+
+const SubjectCode = styled.div`
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#edf2f7'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
 `;
 
 const SubjectDescription = styled.p`
@@ -164,166 +198,149 @@ const SectionTitle = styled.h2`
     background: linear-gradient(45deg, #4285f4, #34a853);
     border-radius: 3px;
   }
-`;
 
-const FilterSection = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  flex-wrap: wrap;
-  gap: 15px;
-`;
-
-const SearchInput = styled.input`
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  width: 250px;
-  font-size: 0.95rem;
-  
-  &:focus {
-    outline: none;
-    border-color: #4285f4;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
-  }
-
-  &::placeholder {
-    color: ${props => props.theme === 'dark' ? '#a0aec0' : '#aaa'};
+  svg {
+    color: #4285f4;
   }
 `;
 
-const FiltersGroup = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const FilterSelect = styled.select`
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  background-color: ${props => props.theme === 'dark' ? '#333' : 'white'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  font-size: 0.95rem;
-  
-  &:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-`;
-
-const ExamsTable = styled.div`
+const DetailSection = styled.div`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 `;
 
-const ExamsHeader = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  background-color: ${props => props.theme === 'dark' ? '#333' : '#f5f7fa'};
-  padding: 15px 20px;
-  font-weight: 600;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#eee'};
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const ExamRow = styled(motion.div)`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  padding: 15px 20px;
-  align-items: center;
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#eee'};
-  transition: background-color 0.2s;
+const DetailItem = styled.div`
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
   
   &:last-child {
-    border-bottom: none;
-  }
-  
-  &:hover {
-    background-color: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    grid-gap: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0;
   }
 `;
 
-const ExamTitle = styled.div`
+const DetailLabel = styled.div`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-size: 1rem;
   font-weight: 500;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-
-  @media (max-width: 768px) {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-  }
-`;
-
-const ExamDetail = styled.div`
-  font-size: 0.9rem;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#666'};
-  display: flex;
-  align-items: center;
+  width: 180px;
+  flex-shrink: 0;
   
-  svg {
-    margin-right: 6px;
-    font-size: 0.95rem;
-  }
-
   @media (max-width: 768px) {
-    &:before {
-      content: attr(data-label);
-      font-weight: 500;
-      margin-right: 10px;
-    }
+    width: 100%;
+    margin-bottom: 0.5rem;
   }
 `;
 
-const ExamAction = styled(Link)`
+const DetailValue = styled.div`
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  font-size: 1rem;
+  flex: 1;
+`;
+
+const GradeTag = styled.span`
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background-color: #4285f4;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+`;
+
+const ButtonsRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const ActionButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0.75rem 1.5rem;
   background: linear-gradient(45deg, #4285f4, #34a853);
   color: white;
-  padding: 8px 15px;
-  border-radius: 5px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 500;
-  text-decoration: none;
-  font-size: 0.9rem;
+  cursor: pointer;
   transition: all 0.2s ease;
-  
-  svg {
-    margin-right: 5px;
-  }
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(0, 123, 255, 0.2);
   
   &:hover {
-    opacity: 0.9;
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
   }
   
-  &.locked {
-    background: ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
-    cursor: not-allowed;
-    color: ${props => props.theme === 'dark' ? '#aaa' : '#666'};
-    
-    &:hover {
-      transform: none;
-      opacity: 1;
-    }
+  svg {
+    margin-right: 0.5rem;
   }
 `;
+
+const BackButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+  
+  svg {
+    margin-right: 0.5rem;
+  }
+`;
+
+const ContentBox = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  border-radius: 15px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  line-height: 1.8;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  
+  h3 {
+    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+  }
+  
+  p {
+    margin-bottom: 1rem;
+  }
+  
+  ul, ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+`;
+
+const NoContentMessage = styled.div`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+`;
+
 const LoadingContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -338,117 +355,87 @@ const LoadingContainer = styled.div`
   }
 `;
 
-const NoExamsMessage = styled.div`
-  text-align: center;
-  padding: 3rem;
-  background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : 'white'};
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#4a5568'};
-  margin-top: 2rem;
-  
-  h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  }
-  
-  p {
-    font-size: 1.1rem;
-  }
-`;
-const ExamsContainer = styled.div``;
-
-
 const SubjectDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
-  const { 
-    selectedSubject, 
-    examsList, 
-    examsStatus, 
-    examsError, 
-    examsTotalPages 
-  } = useSelector(state => state.subjects);
+  const { selectedSubject, loading, error } = useSelector(state => state.subjects);
   
-  const [searchTerm, setSearchTerm] = useState('');
-  const [difficulty, setDifficulty] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [useNewExamList, setUseNewExamList] = useState(false);
-
+  // Sử dụng thời gian và người dùng hiện tại
+  const currentTime = "2025-04-13 16:57:17";
+  const currentUser = "vinhsonvlog";
+  
+  useEffect(() => {
+    // Gọi API để lấy thông tin chi tiết môn học
+    dispatch(fetchSubjectById(id));
+  }, [dispatch, id]);
+  
   // Helper function to get subject image
   const getSubjectImage = () => {
     if (!selectedSubject) return 'https://via.placeholder.com/320x220?text=Môn+học';
     
+    // Thử lấy từ các thuộc tính có thể chứa hình ảnh
+    const possibleImageProps = ['image', 'imageUrl', 'img', 'thumbnail'];
+    for (const prop of possibleImageProps) {
+      if (selectedSubject[prop]) {
+        return selectedSubject[prop];
+      }
+    }
+    
+    // Nếu không có, dùng ảnh mặc định theo tên môn học
     const defaultImages = {
-      'Toán': '/images/math-subject.jpg',
-      'Vật Lý': '/images/physics-subject.jpg',
-      'Hóa Học': '/images/chemistry-subject.jpg',
-      'Sinh Học': '/images/biology-subject.jpg',
-      'Văn Học': '/images/literature-subject.jpg',
-      'Tiếng Anh': '/images/english-subject.jpg',
-      'Lịch Sử': '/images/history-subject.jpg',
-      'Địa Lý': '/images/geography-subject.jpg',
+      'Toán': '/images/math.png',
+      'Vật Lý': '/images/physics.png',
+      'Hóa Học': '/images/chemistry.png',
+      'Sinh Học': '/images/biology.png',
+      'Ngữ Văn': '/images/literature.png',
+      'Tiếng Anh': '/images/english.png',
+      'Lịch Sử': '/images/history.png',
+      'Địa Lý': '/images/geography.png',
     };
     
-    return selectedSubject.imageUrl || defaultImages[selectedSubject.name] || 'https://via.placeholder.com/320x220?text=Môn+học';
+    return defaultImages[selectedSubject.name] || 'https://via.placeholder.com/320x220?text=Môn+học';
   };
   
-  useEffect(() => {
-    dispatch(fetchSubjectById(id));
-  }, [dispatch, id]);
-  
-  useEffect(() => {
-    dispatch(fetchSubjectExams({ 
-      subjectId: id, 
-      page: currentPage, 
-      search: searchTerm,
-      difficulty,
-      sortBy
-    }));
-  }, [dispatch, id, currentPage, searchTerm, difficulty, sortBy]);
-  
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-  
-  const handleDifficultyChange = (e) => {
-    setDifficulty(e.target.value);
-    setCurrentPage(1);
-  };
-  
-  const handleSortChange = (e) => {
-    setSortBy(e.target.value);
-    setCurrentPage(1);
-  };
-  
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo(0, 0);
+  // Hàm để lấy mô tả về nội dung môn học dựa trên khối lớp
+  const getSubjectContentDescription = (grade) => {
+    if (!grade) return null;
+    
+    const gradeContent = {
+      '10': {
+        'Toán': 'Chương trình Toán lớp 10 bao gồm Đại số và Hình học, giúp học sinh nắm vững kiến thức cơ bản về tập hợp, hàm số, phương trình, hệ phương trình và hình học phẳng Oxy.',
+        'Vật Lý': 'Chương trình Vật lý lớp 10 bao gồm các chủ đề về động học, động lực học, công và năng lượng, giúp học sinh hiểu rõ các quy luật vận động cơ bản.',
+        'Hóa Học': 'Chương trình Hóa học lớp 10 tập trung vào cấu tạo nguyên tử, bảng tuần hoàn, liên kết hóa học và các định luật cơ bản của hóa học.',
+        'Sinh Học': 'Chương trình Sinh học lớp 10 giới thiệu về tế bào học, sinh học phân tử và di truyền học cơ bản.',
+        'Địa Lý': 'Chương trình Địa lý lớp 10 nghiên cứu về địa lý tự nhiên của Việt Nam và thế giới, bao gồm các đặc điểm về địa hình, khí hậu và tài nguyên.',
+      },
+      '11': {
+        'Toán': 'Chương trình Toán lớp 11 nâng cao kiến thức với các chủ đề về giới hạn, đạo hàm, tích phân và hình học không gian.',
+        'Vật Lý': 'Chương trình Vật lý lớp 11 nghiên cứu về điện từ học, dao động và sóng, giúp học sinh hiểu rõ các hiện tượng vật lý phức tạp hơn.',
+        'Hóa Học': 'Chương trình Hóa học lớp 11 bao gồm các chủ đề về phản ứng oxi hóa khử, dung dịch, điện hóa và các nguyên tố phi kim.',
+        'Sinh Học': 'Chương trình Sinh học lớp 11 tập trung vào sinh lý học thực vật và động vật, sinh thái học và tiến hóa.',
+        'Địa Lý': 'Chương trình Địa lý lớp 11 nghiên cứu về địa lý kinh tế - xã hội của Việt Nam và thế giới.',
+      },
+      '12': {
+        'Toán': 'Chương trình Toán lớp 12 hoàn thiện kiến thức với các chủ đề về số phức, tổ hợp, xác suất, thống kê và nâng cao hình học không gian.',
+        'Vật Lý': 'Chương trình Vật lý lớp 12 nghiên cứu về vật lý lượng tử, vật lý hạt nhân và quang học sóng, giúp hoàn thiện kiến thức vật lý THPT.',
+        'Hóa Học': 'Chương trình Hóa học lớp 12 tập trung vào hóa học hữu cơ và các ứng dụng của hóa học trong đời sống và công nghiệp.',
+        'Sinh Học': 'Chương trình Sinh học lớp 12 nghiên cứu về di truyền nâng cao, công nghệ sinh học và ứng dụng của sinh học trong đời sống.',
+        'Địa Lý': 'Chương trình Địa lý lớp 12 hoàn thiện kiến thức về địa lý kinh tế - xã hội của các vùng miền Việt Nam và các khu vực trên thế giới.',
+      },
+    };
+    
+    // Lấy thông tin theo khối lớp và tên môn học
+    if (gradeContent[grade] && selectedSubject && gradeContent[grade][selectedSubject.name]) {
+      return gradeContent[grade][selectedSubject.name];
+    }
+    
+    // Mô tả chung nếu không có thông tin cụ thể
+    return `Chương trình học lớp ${grade} theo chuẩn của Bộ Giáo dục và Đào tạo, giúp học sinh xây dựng nền tảng kiến thức vững chắc cho kỳ thi THPT Quốc gia.`;
   };
 
-  // Function to render difficulty level
-  const renderDifficulty = (difficulty) => {
-    const levels = {
-      easy: { text: 'Dễ', color: '#34a853' },
-      medium: { text: 'Trung bình', color: '#fbbc05' },
-      hard: { text: 'Khó', color: '#ea4335' },
-    };
-    
-    const level = levels[difficulty?.toLowerCase()] || { text: 'Không xác định', color: '#888' };
-    
-    return (
-      <span style={{ color: level.color, fontWeight: 500 }}>
-        {level.text}
-      </span>
-    );
-  };
-  
-  if (examsStatus === 'loading' && currentPage === 1) {
+  if (loading) {
     return (
       <PageWrapper theme={theme}>
         <Header />
@@ -461,6 +448,22 @@ const SubjectDetail = () => {
       </PageWrapper>
     );
   }
+  
+  if (error) {
+    return (
+      <PageWrapper theme={theme}>
+        <Header />
+        <Container>
+          <ErrorDisplay message={error} />
+          <BackButton to="/subjects" theme={theme}>
+            <FaArrowLeft /> Quay lại danh sách môn học
+          </BackButton>
+        </Container>
+      </PageWrapper>
+    );
+  }
+
+  const subjectContent = selectedSubject?.content || getSubjectContentDescription(selectedSubject?.grade);
 
   return (
     <PageWrapper theme={theme}>
@@ -477,173 +480,171 @@ const SubjectDetail = () => {
         </BreadcrumbNav>
         
         {selectedSubject && (
-          <SubjectHeader
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <SubjectInfo>
-              <SubjectTitle theme={theme}>
-                <span>{selectedSubject.name}</span>
-              </SubjectTitle>
-              <SubjectDescription theme={theme}>
-                {selectedSubject.description || 'Không có mô tả cho môn học này.'}
-              </SubjectDescription>
-              
-              <SubjectStats>
-                <StatItem>
-                  <StatIcon theme={theme}>
-                    <FaRegFileAlt />
-                  </StatIcon>
-                  <StatText theme={theme}>{selectedSubject.examCount || 0} đề thi</StatText>
-                </StatItem>
-                
-                <StatItem>
-                  <StatIcon theme={theme}>
-                    <FaUserAlt />
-                  </StatIcon>
-                  <StatText theme={theme}>{selectedSubject.teacherCount || 0} giáo viên</StatText>
-                </StatItem>
-              </SubjectStats>
-            </SubjectInfo>
-          </SubjectHeader>
-        )}
-        
-        <SectionTitle theme={theme}>Danh sách đề thi</SectionTitle>
-        
-        {/* Toggle button to switch between old and new UI */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-          <button 
-            onClick={() => setUseNewExamList(!useNewExamList)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: theme === 'dark' ? '#333' : '#f0f0f0',
-              color: theme === 'dark' ? '#e2e8f0' : '#333',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.9rem'
-            }}
-          >
-            {useNewExamList ? 'Hiển thị giao diện cũ' : 'Hiển thị giao diện mới'}
-          </button>
-        </div>
-        
-        {useNewExamList ? (
-          // Hiển thị ExamList mới
-          <ExamList subjectId={id} theme={theme} />
-        ) : (
-          // Hiển thị danh sách đề thi theo cách hiện tại
           <>
-            <FilterSection>
-              <SearchInput
-                type="text"
-                placeholder="Tìm kiếm đề thi..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                theme={theme}
-              />
+            <SubjectHeader
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <SubjectImage image={getSubjectImage()}>
+                {selectedSubject.grade && (
+                  <GradeBadge>Lớp {selectedSubject.grade}</GradeBadge>
+                )}
+              </SubjectImage>
               
-              <FiltersGroup>
-                <FilterSelect 
-                  value={difficulty} 
-                  onChange={handleDifficultyChange}
-                  theme={theme}
-                >
-                  <option value="all">Tất cả độ khó</option>
-                  <option value="easy">Dễ</option>
-                  <option value="medium">Trung bình</option>
-                  <option value="hard">Khó</option>
-                </FilterSelect>
+              <SubjectInfo>
+                <SubjectTitle theme={theme}>
+                  <span>{selectedSubject.name}</span>
+                </SubjectTitle>
                 
-                <FilterSelect 
-                  value={sortBy} 
-                  onChange={handleSortChange}
-                  theme={theme}
-                >
-                  <option value="newest">Mới nhất</option>
-                  <option value="oldest">Cũ nhất</option>
-                  <option value="popular">Phổ biến nhất</option>
-                  <option value="attempts">Nhiều lượt thi</option>
-                </FilterSelect>
-              </FiltersGroup>
-            </FilterSection>
-          
-            <ExamsContainer>
-              {examsStatus === 'loading' && currentPage > 1 ? (
-                <LoadingContainer theme={theme}>
-                  <LoadingSpinner size={40} />
-                  <p>Đang tải danh sách đề thi...</p>
-                </LoadingContainer>
-              ) : examsStatus === 'failed' ? (
-                <ErrorDisplay message={examsError} />
-              ) : examsList && examsList.length > 0 ? (
-                <>
-                  <ExamsTable theme={theme}>
-                    <ExamsHeader theme={theme}>
-                      <div>Tên đề thi</div>
-                      <div>Thời gian</div>
-                      <div>Độ khó</div>
-                      <div>Lượt thi</div>
-                      <div>Hành động</div>
-                    </ExamsHeader>
-                    
-                    {examsList.map((exam, index) => (
-                      <ExamRow 
-                        key={exam.id}
-                        theme={theme}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <ExamTitle theme={theme}>{exam.title}</ExamTitle>
-                        
-                        <ExamDetail theme={theme} data-label="Thời gian:">
-                          <FaRegClock /> {exam.duration || 45} phút
-                        </ExamDetail>
-                        
-                        <ExamDetail theme={theme} data-label="Độ khó:">
-                          {renderDifficulty(exam.difficulty)}
-                        </ExamDetail>
-                        
-                        <ExamDetail theme={theme} data-label="Lượt thi:">
-                          {exam.attemptCount || 0} lượt
-                        </ExamDetail>
-                        
-                        <div>
-                          {exam.isLocked ? (
-                            <ExamAction to="#" className="locked" theme={theme}>
-                              <FaLock /> Đã khóa
-                            </ExamAction>
-                          ) : (
-                            <ExamAction to={`/exam/${exam.id}`}>
-                              <FaFileDownload /> Làm bài
-                            </ExamAction>
-                          )}
-                        </div>
-                      </ExamRow>
-                    ))}
-                  </ExamsTable>
+                {selectedSubject.code && (
+                  <SubjectCode theme={theme}>
+                    Mã môn: {selectedSubject.code}
+                  </SubjectCode>
+                )}
+                
+                <SubjectDescription theme={theme}>
+                  {selectedSubject.description || 'Không có mô tả cho môn học này.'}
+                </SubjectDescription>
+                
+                <SubjectStats>
+                  <StatItem>
+                    <StatIcon theme={theme}>
+                      <FaGraduationCap />
+                    </StatIcon>
+                    <StatText theme={theme}>
+                      {selectedSubject.grade ? `Lớp ${selectedSubject.grade}` : 'Tất cả các lớp'}
+                    </StatText>
+                  </StatItem>
                   
-                  {examsTotalPages > 1 && (
-                    <Pagination 
-                      currentPage={currentPage}
-                      totalPages={examsTotalPages}
-                      onPageChange={handlePageChange}
-                    />
+                  <StatItem>
+                    <StatIcon theme={theme}>
+                      <FaRegFileAlt />
+                    </StatIcon>
+                    <StatText theme={theme}>{selectedSubject.examCount || 0} đề thi</StatText>
+                  </StatItem>
+                  
+                  <StatItem>
+                    <StatIcon theme={theme}>
+                      <FaUserAlt />
+                    </StatIcon>
+                    <StatText theme={theme}>{selectedSubject.teacherCount || 0} giáo viên</StatText>
+                  </StatItem>
+                </SubjectStats>
+              </SubjectInfo>
+            </SubjectHeader>
+            
+            <SectionTitle theme={theme}>
+              <FaInfoCircle />
+              Thông tin môn học
+            </SectionTitle>
+            
+            <DetailSection theme={theme}>
+              <DetailItem>
+                <DetailLabel theme={theme}>Khối lớp</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.grade ? (
+                    <GradeTag>Lớp {selectedSubject.grade}</GradeTag>
+                  ) : (
+                    'Tất cả các lớp'
                   )}
-                </>
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Mã môn học</DetailLabel>
+                <DetailValue theme={theme}>{selectedSubject.code || 'Không có mã'}</DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Số tiết/tuần</DetailLabel>
+                <DetailValue theme={theme}>{selectedSubject.numberOfLessons || '3-5'} tiết</DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Loại môn học</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.type || (selectedSubject.isOptional ? 'Môn tự chọn' : 'Môn bắt buộc')}
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Trạng thái</DetailLabel>
+                <DetailValue theme={theme}>
+                  <span style={{ 
+                    color: selectedSubject.isActive ? '#34a853' : '#ea4335',
+                    fontWeight: 500
+                  }}>
+                    {selectedSubject.isActive ? '● Đang hoạt động' : '● Đã khóa'}
+                  </span>
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Năm học</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.schoolYear || '2025-2026'}
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Ngày cập nhật</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.updatedAt ? new Date(selectedSubject.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                </DetailValue>
+              </DetailItem>
+            </DetailSection>
+            
+            <SectionTitle theme={theme}>
+              <FaBookOpen />
+              Nội dung chương trình học
+            </SectionTitle>
+            
+            <ContentBox theme={theme}>
+              {subjectContent ? (
+                <div dangerouslySetInnerHTML={{ __html: subjectContent }} />
               ) : (
-                <NoExamsMessage theme={theme}>
-                  <h3>Chưa có đề thi</h3>
-                  <p>Hiện tại chưa có đề thi nào cho môn học này. Vui lòng quay lại sau.</p>
-                </NoExamsMessage>
+                <NoContentMessage theme={theme}>
+                  Chưa có thông tin chi tiết về nội dung chương trình học của môn này.
+                </NoContentMessage>
               )}
-            </ExamsContainer>
+            </ContentBox>
+            
+            <ButtonsRow>
+              <BackButton to="/subjects" theme={theme}>
+                <FaArrowLeft /> Quay lại danh sách môn học
+              </BackButton>
+              
+              <div>
+                <ActionButton onClick={() => navigate(`/subjects/${id}/exams`)} style={{ marginRight: '1rem' }}>
+                  <FaRegFileAlt /> Xem danh sách đề thi
+                </ActionButton>
+                
+                {selectedSubject.canEdit && (
+                  <ActionButton 
+                    onClick={() => navigate(`/subject/edit/${id}`)}
+                    style={{ background: theme === 'dark' ? '#2d3748' : '#f5f7fa', color: theme === 'dark' ? '#e2e8f0' : '#4a5568' }}
+                  >
+                    <FaChalkboardTeacher /> Chỉnh sửa môn học
+                  </ActionButton>
+                )}
+              </div>
+            </ButtonsRow>
           </>
         )}
-        <ExamList subjectId={id} theme={theme} />
+        
+        {/* Thông tin truy cập */}
+        <div style={{ 
+          marginTop: '3rem',
+          fontSize: '0.8rem',
+          color: theme === 'dark' ? '#718096' : '#a0aec0',
+          textAlign: 'right'
+        }}>
+          Truy cập vào lúc: {currentTime} | Người dùng: {currentUser}
+        </div>
       </Container>
+      
+      <Footer />
     </PageWrapper>
   );
 };

@@ -8,13 +8,14 @@ import {
   startExamSession, 
   setUserAnswer, 
   submitExamAnswers 
-} from '../../redux/examSlice';
+} from '../../redux/examSlice1';
 import QuestionDisplay from './QuestionDisplay';
 import QuestionNavigation from './QuestionNavigation';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { showWarningToast, showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import { FaClock, FaExclamationTriangle, FaPaperPlane, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import ConfirmModal from '../common/ConfirmModal';
+import { mockExam } from '../../data/mockExamData';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -197,37 +198,52 @@ const formatTime = (timeInSeconds) => {
 const ExamInterface = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { currentExam, examQuestions, userAnswers, loading, error } = useSelector(state => state.exams);
-  const { theme } = useSelector(state => state.ui);
   
+  // State cục bộ thay vì dùng Redux
+  const [exam, setExam] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [isTimeWarning, setIsTimeWarning] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Sử dụng theme mặc định là 'light' nếu không có redux
+  const theme = 'light';
+  
   // Bắt đầu bài thi khi component được mount
   useEffect(() => {
-    if (examId) {
-      dispatch(startExamSession(examId))
-        .unwrap()
-        .then(() => {
-          dispatch(fetchExamWithQuestions(examId));
-        })
-        .catch(error => {
-          showErrorToast('Không thể bắt đầu bài thi');
-          navigate('/subjects');
-        });
-    }
-  }, [dispatch, examId, navigate]);
+    // Giả lập việc tải đề thi từ API
+    setLoading(true);
+    setTimeout(() => {
+      try {
+        // Tìm đề thi theo ID từ mock data
+        // Trong thực tế, bạn sẽ gọi API ở đây
+        const foundExam = {
+          ...mockExam,
+          startTime: new Date().toISOString(),
+          endTime: new Date(Date.now() + mockExam.duration * 60 * 1000).toISOString()
+        };
+        
+        setExam(foundExam);
+        setQuestions(foundExam.questions);
+        setLoading(false);
+      } catch (err) {
+        setError("Không thể tải đề thi. Vui lòng thử lại sau.");
+        setLoading(false);
+      }
+    }, 1000); // giả lập độ trễ mạng 1 giây
+  }, [examId]);
   
   // Thiết lập bộ đếm thời gian
   useEffect(() => {
-    if (!currentExam || !currentExam.startTime || !currentExam.endTime) return;
+    if (!exam || !exam.startTime || !exam.endTime) return;
     
-    const startTime = new Date(currentExam.startTime).getTime();
-    const endTime = new Date(currentExam.endTime).getTime();
+    const startTime = new Date(exam.startTime).getTime();
+    const endTime = new Date(exam.endTime).getTime();
     const duration = Math.floor((endTime - startTime) / 1000);
     
     setTimeRemaining(duration);
@@ -242,8 +258,8 @@ const ExamInterface = () => {
         
         // Cảnh báo khi còn 5 phút
         if (prev === 300) {
-          showWarningToast('Còn 5 phút nữa hết giờ làm bài!');
           setIsTimeWarning(true);
+          alert('Còn 5 phút nữa hết giờ làm bài!');
         }
         
         return prev - 1;
@@ -251,15 +267,15 @@ const ExamInterface = () => {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [currentExam]);
+  }, [exam]);
   
   const handleTimeUp = useCallback(() => {
-    showWarningToast('Hết thời gian làm bài!');
+    alert('Hết thời gian làm bài!');
     handleSubmitExam();
   }, []);
   
   const handleNextQuestion = () => {
-    if (currentQuestion < examQuestions.length) {
+    if (currentQuestion < questions.length) {
       setCurrentQuestion(currentQuestion + 1);
     }
   };
@@ -271,7 +287,10 @@ const ExamInterface = () => {
   };
   
   const handleAnswerSelect = (questionId, answerId) => {
-    dispatch(setUserAnswer({ questionId, answerId }));
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: answerId
+    }));
   };
   
   const handleQuestionSelect = (questionNumber) => {
@@ -289,37 +308,65 @@ const ExamInterface = () => {
   const handleSubmitExam = useCallback(() => {
     setIsSubmitting(true);
     
-    // Chuyển đổi từ đối tượng userAnswers thành mảng câu trả lời
-    const answersArray = Object.keys(userAnswers).map(questionId => ({
-      questionId: parseInt(questionId),
-      selectedOptionId: userAnswers[questionId]
-    }));
-    
-    dispatch(submitExamAnswers({ examId, answers: answersArray }))
-      .unwrap()
-      .then(result => {
-        showSuccessToast('Đã nộp bài thành công!');
-        navigate(`/exam-results/${result.id}`);
-      })
-      .catch(error => {
-        showErrorToast('Không thể nộp bài. Vui lòng thử lại.');
-        setIsSubmitting(false);
-      });
-  }, [dispatch, examId, navigate, userAnswers]);
+    // Giả lập việc nộp bài
+    setTimeout(() => {
+      // Tính toán kết quả
+      const correctCount = questions.reduce((count, question) => {
+        if (userAnswers[question.id] === question.correctOption) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
+      
+      // Tính điểm
+      const score = Math.round((correctCount / questions.length) * 100);
+      
+      // Lưu kết quả vào localStorage để hiển thị trang kết quả
+      const result = {
+        id: Date.now(), // giả lập ID kết quả
+        examId: parseInt(examId),
+        score,
+        totalCorrect: correctCount,
+        totalQuestions: questions.length,
+        timeTaken: exam.duration - Math.floor(timeRemaining / 60), // phút
+        completedAt: new Date().toISOString(),
+        answers: Object.keys(userAnswers).map(questionId => {
+          const qId = parseInt(questionId);
+          const question = questions.find(q => q.id === qId);
+          
+          return {
+            questionId: qId,
+            selectedOption: userAnswers[qId],
+            isCorrect: question?.correctOption === userAnswers[qId]
+          };
+        })
+      };
+      
+      localStorage.setItem('lastExamResult', JSON.stringify(result));
+      showSuccessToast('Đã nộp bài thành công!');
+      navigate(`/exam-results/${result.id}`);
+    }, 1500);
+  }, [examId, questions, userAnswers, exam, timeRemaining, navigate]);
   
-  if (loading && !currentExam) {
-    return <LoadingSpinner />;
+  if (loading) {
+    return (
+      <Container>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <div>Đang tải đề thi...</div>
+        </div>
+      </Container>
+    );
   }
   
   if (error) {
     return (
       <Container>
-        <div>Đã xảy ra lỗi: {error}</div>
+        <div>{error}</div>
       </Container>
     );
   }
   
-  if (!currentExam || !examQuestions) {
+  if (!exam || !questions) {
     return (
       <Container>
         <div>Không tìm thấy thông tin bài thi</div>
@@ -328,15 +375,15 @@ const ExamInterface = () => {
   }
   
   const answeredCount = Object.keys(userAnswers).length;
-  const totalQuestions = examQuestions.length;
+  const totalQuestions = questions.length;
   const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
   
-  const currentQuestionData = examQuestions[currentQuestion - 1] || null;
+  const currentQuestionData = questions[currentQuestion - 1] || null;
   
   return (
     <Container>
       <Header>
-        <ExamTitle theme={theme}>{currentExam.title}</ExamTitle>
+        <ExamTitle theme={theme}>{exam.title}</ExamTitle>
         <TimerContainer theme={theme} isWarning={isTimeWarning}>
           <TimerIcon />
           <TimerText>{formatTime(timeRemaining || 0)}</TimerText>
@@ -410,8 +457,8 @@ const ExamInterface = () => {
               totalQuestions={totalQuestions}
               currentQuestion={currentQuestion}
               answeredQuestions={Object.keys(userAnswers).map(id => {
-                // Tìm vị trí của câu hỏi trong mảng examQuestions
-                const index = examQuestions.findIndex(q => q.id === parseInt(id)) + 1;
+                // Tìm vị trí của câu hỏi trong mảng questions
+                const index = questions.findIndex(q => q.id === parseInt(id)) + 1;
                 return index;
               })}
               onQuestionSelect={handleQuestionSelect}
@@ -426,7 +473,7 @@ const ExamInterface = () => {
         title="Xác nhận nộp bài"
         message={
           <div>
-            <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px' }} />
+            <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px', display: 'inline' }} />
             <span>Bạn có chắc chắn muốn nộp bài?</span>
             <p style={{ marginTop: '10px' }}>
               Đã làm: <strong>{answeredCount}/{totalQuestions}</strong> câu hỏi

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaSave, FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
-import { createNewExam } from '../../redux/examSlice';
+import { createNewExam } from '../../redux/examSlice1';
 import { fetchAllSubjects } from '../../redux/subjectSlice';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 

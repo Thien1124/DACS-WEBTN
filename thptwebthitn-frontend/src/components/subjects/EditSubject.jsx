@@ -122,7 +122,24 @@ const SuccessMessage = styled.div`
   margin-bottom: 1.5rem;
   text-align: center;
 `;
+// ...existing code...
+const Select = styled.select`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid ${props => props.theme === 'dark' ? '#4A5568' : '#E2E8F0'};
+  border-radius: 0.375rem;
+  background-color: ${props => props.theme === 'dark' ? '#2D3748' : '#ffffff'};
+  color: ${props => props.theme === 'dark' ? '#E2E8F0' : '#2D3748'};
+  font-size: 1rem;
+  transition: border-color 0.2s;
 
+  &:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 1px #4299e1;
+  }
+`;
+// ...existing code...
 const LoadingSpinner = styled.div`
   border: 4px solid rgba(0, 0, 0, 0.1);
   width: 40px;
@@ -149,7 +166,8 @@ const EditSubject = () => {
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    description: ''
+    description: '',
+    grade: ''
   });
 
   useEffect(() => {
@@ -169,7 +187,8 @@ const EditSubject = () => {
         setFormData({
           name: subjectData.name || '',
           code: subjectData.code || '',
-          description: subjectData.description || ''
+          description: subjectData.description || '',
+          grade: response.grade || ''
         });
         
         setLoading(false);
@@ -284,7 +303,21 @@ const EditSubject = () => {
               disabled={loading}
             />
           </FormGroup>
-          
+          <FormGroup>
+            <Label theme={theme}>Khối lớp</Label>
+            <Select
+              name="grade"
+              value={formData.grade}
+              onChange={handleChange}
+              theme={theme}
+              disabled={loading}
+            >
+              <option value="">-- Chọn khối lớp --</option>
+              <option value="10">Lớp 10</option>
+              <option value="11">Lớp 11</option>
+              <option value="12">Lớp 12</option>
+            </Select>
+          </FormGroup>
           <FormGroup>
             <Label theme={theme}>Mô tả</Label>
             <TextArea

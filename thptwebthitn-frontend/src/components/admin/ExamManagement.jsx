@@ -14,7 +14,7 @@ import {
   FaFileExport, 
   FaFileImport 
 } from 'react-icons/fa';
-import { fetchExams, removeExam } from '../../redux/examSlice';
+import { fetchExams, removeExam } from '../../redux/examSlice1';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { showErrorToast, showSuccessToast, showConfirmToast } from '../../utils/toastUtils';
 import ConfirmModal from '../common/ConfirmModal';

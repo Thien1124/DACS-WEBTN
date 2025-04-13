@@ -34,6 +34,7 @@ import QuestionManagement from './components/admin/QuestionManagement';
 import CreateQuestion from './components/admin/CreateQuestion';
 import EditQuestion from './components/admin/EditQuestion';
 import UserManagement from './components/admin/UserManagement';
+import StudentExamList from './components/exams/StudentExamList';
 
 // Auth Components
 import LoginForm from './components/Auth/LoginForm';
@@ -156,6 +157,7 @@ function App() {
               } />
               
               {/* Exam Routes */}
+              <Route path="/exams" element={<StudentExamList />} />
               <Route path="/exams/:examId" element={
                 <ProtectedRoute>
                   <ExamInterface />
