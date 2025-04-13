@@ -178,6 +178,7 @@ export const logoutUser = createAsyncThunk(
   'Auth/logout',
   async (_, { rejectWithValue }) => {
     try {
+      
       return await authService.logout();
     } catch (error) {
       return rejectWithValue(error.message || 'Đăng xuất thất bại');

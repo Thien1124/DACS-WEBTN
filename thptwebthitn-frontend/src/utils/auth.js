@@ -40,7 +40,10 @@ export const setToken = (token) => {
  * Remove the authentication token from local storage
  */
 export const removeToken = () => {
-  clearTokens();
+  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  // Đồng bộ hóa: đảm bảo xóa tất cả các token
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('refresh_token');
 };
 
 /**
@@ -102,6 +105,8 @@ export const getUserData = () => {
  */
 export const removeUserData = () => {
   localStorage.removeItem(STORAGE_KEYS.USER);
+  // Đồng bộ hóa: đảm bảo xóa tất cả dữ liệu người dùng
+  localStorage.removeItem('user_data');
 };
 
 /**

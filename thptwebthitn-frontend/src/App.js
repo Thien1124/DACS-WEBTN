@@ -48,19 +48,34 @@ function App() {
     // Auto-play animations in sequence
     const animationSequence = ['fadeIn', 'slideUp', 'pulse', 'idle'];
     let currentIndex = 0;
-
+    const token = localStorage.getItem('auth_token');
+    const userData = localStorage.getItem('user_data');
+    const manualLogout = sessionStorage.getItem('manual_logout');
+  
     const animationInterval = setInterval(() => {
       dispatch(setAnimation(animationSequence[currentIndex]));
       currentIndex = (currentIndex + 1) % animationSequence.length;
     }, 3000);
-
+    if (manualLogout === 'true') {
+      console.log('Phát hiện đăng xuất thủ công, xóa dữ liệu đăng nhập');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('remember_me');
+    }
+    if ((token && !userData) || (!token && userData)) {
+      console.log('Phát hiện trạng thái không nhất quán, xóa dữ liệu đăng nhập');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_data');
+    }
     // Lưu thông tin thời gian hiện tại
     const currentDate = formatDateTime();
     console.log(`App initialized at: ${currentDate} by user: ${currentUser}`);
 
     return () => clearInterval(animationInterval);
   }, [dispatch, currentUser]);
-
+  
   return (
     <AuthProvider>
       <AppContainer theme={theme}>

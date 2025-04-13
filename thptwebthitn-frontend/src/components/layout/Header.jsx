@@ -7,6 +7,8 @@ import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/images/logo.png";
 import AuthModal from "../Auth/AuthModal";
+import * as authService from "../../services/authService";
+import { toast } from "react-toastify"; // Import toast từ react-toastify
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -302,11 +304,18 @@ function Header() {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
-    setShowUserDropdown(false);
-    // Điều hướng về trang chủ sau khi đăng xuất
-    navigate("/");
-  };
+      authService.logout();
+      dispatch(logout());
+      toast.info('Đã đăng xuất thành công', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
+      navigate('/');
+    };
 
   // Hàm lấy chữ cái đầu của tên người dùng
   const getInitials = (name) => {

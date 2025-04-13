@@ -1,0 +1,74 @@
+[
+    {
+      "id": 1,
+      "name": "Toán",
+      "description": "Học phần bao gồm các kiến thức nền tảng về đại số, giải tích và hình học. Học sinh sẽ được tiếp cận các phương pháp giải toán hiện đại và ứng dụng.",
+      "imageUrl": "/images/math-subject.jpg",
+      "examCount": 35,
+      "teacherCount": 8,
+      "isActive": true
+    },
+    {
+      "id": 2,
+      "name": "Vật Lý",
+      "description": "Khám phá các định luật vật lý cơ bản và ứng dụng trong thực tiễn. Học phần bao gồm cơ học, nhiệt học, điện từ học và vật lý hiện đại.",
+      "imageUrl": "/images/physics-subject.jpg",
+      "examCount": 28,
+      "teacherCount": 6,
+      "isActive": true
+    },
+    {
+      "id": 3,
+      "name": "Hóa Học",
+      "description": "Tìm hiểu về thành phần, cấu trúc và tính chất của vật chất cùng với các phản ứng hóa học. Học phần bao gồm hóa đại cương, hữu cơ và vô cơ.",
+      "imageUrl": "/images/chemistry-subject.jpg",
+      "examCount": 22,
+      "teacherCount": 5,
+      "isActive": true
+    },
+    {
+      "id": 4,
+      "name": "Sinh Học",
+      "description": "Nghiên cứu về sự sống, từ cấp độ phân tử đến hệ sinh thái. Học phần bao gồm sinh học tế bào, di truyền học, tiến hóa và sinh thái học.",
+      "imageUrl": "/images/biology-subject.jpg",
+      "examCount": 19,
+      "teacherCount": 4,
+      "isActive": true
+    },
+    {
+      "id": 5,
+      "name": "Văn Học",
+      "description": "Khám phá các tác phẩm văn học Việt Nam và thế giới. Phân tích và đánh giá các giá trị văn hóa, nghệ thuật thông qua các tác phẩm tiêu biểu.",
+      "imageUrl": "/images/literature-subject.jpg",
+      "examCount": 25,
+      "teacherCount": 7,
+      "isActive": true
+    },
+    {
+      "id": 6,
+      "name": "Tiếng Anh",
+      "description": "Phát triển kỹ năng nghe, nói, đọc, viết tiếng Anh và kiến thức văn hóa Anh-Mỹ. Chuẩn bị cho các kỳ thi chuẩn quốc tế.",
+      "imageUrl": "/images/english-subject.jpg",
+      "examCount": 42,
+      "teacherCount": 12,
+      "isActive": true
+    },
+    {
+      "id": 7,
+      "name": "Lịch Sử",
+      "description": "Tìm hiểu về lịch sử Việt Nam và thế giới. Phân tích các sự kiện, nhân vật và quá trình phát triển của các nền văn minh qua các thời kỳ.",
+      "imageUrl": "/images/history-subject.jpg",
+      "examCount": 18,
+      "teacherCount": 5,
+      "isActive": true
+    },
+    {
+      "id": 8,
+      "name": "Địa Lý",
+      "description": "Nghiên cứu về Trái Đất, các hiện tượng tự nhiên và mối quan hệ giữa con người với môi trường. Bao gồm địa lý tự nhiên và địa lý kinh tế-xã hội.",
+      "imageUrl": "/images/geography-subject.jpg",
+      "examCount": 15,
+      "teacherCount": 4,
+      "isActive": true
+    }
+  ]

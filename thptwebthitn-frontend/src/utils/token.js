@@ -46,6 +46,17 @@ export const getRefreshToken = () => {
 export const clearTokens = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  // Đảm bảo xóa token theo các tên khóa khác có thể tồn tại
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('refresh_token');
+  
+  // Xóa cả trong sessionStorage nếu có
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+  sessionStorage.removeItem('auth_token');
+  sessionStorage.removeItem('refresh_token');
+  
+  console.log('[AUTH] All tokens cleared');
 };
 
 /**

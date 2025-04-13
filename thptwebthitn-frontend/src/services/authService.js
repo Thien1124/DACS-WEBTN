@@ -9,7 +9,8 @@ import {
 import { 
   setRefreshToken,
   getRefreshToken,
-  clearTokens
+  clearTokens,
+  getAccessToken // Thêm hàm này vào import
 } from '../utils/token';
 
 /**
@@ -104,18 +105,49 @@ export const login = async (credentials) => {
     };
   } catch (error) {
     console.error('Login error details:', error);
+    
+    // Phân loại lỗi để có thể hiển thị ở đúng vị trí
     let errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+    let field = null;
     
     if (error.response) {
       console.error('Server error response:', error.response.data);
+      
+      // Phân tích phản hồi chi tiết từ server
       if (typeof error.response.data === 'string') {
         errorMessage = error.response.data;
-      } else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
+        
+        // Phân loại lỗi dựa trên nội dung
+        if (error.response.data.toLowerCase().includes('tài khoản') || 
+            error.response.data.toLowerCase().includes('không tồn tại')) {
+          field = 'usernameOrEmail';
+        } else if (error.response.data.toLowerCase().includes('mật khẩu')) {
+          field = 'password';
+        }
+      } else if (error.response.data) {
+        // Xử lý lỗi có cấu trúc
+        if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        // Nếu server trả về lỗi cụ thể cho từng trường
+        if (error.response.data.errors) {
+          errorMessage.errors = error.response.data.errors;
+        }
+        
+        // Kiểm tra xem có thông tin về trường nào bị lỗi không
+        if (error.response.data.field) {
+          field = error.response.data.field;
+        }
       }
     }
     
-    throw { message: errorMessage, isAuthenticated: false };
+    // QUAN TRỌNG: Đảm bảo trả về một đối tượng lỗi với message là một chuỗi
+    throw { 
+      message: errorMessage,
+      field: field,
+      isAuthenticated: false 
+    };
   }
 };
 
@@ -125,28 +157,46 @@ export const login = async (credentials) => {
  */
 export const logout = async () => {
   try {
-    // Gọi API để logout phía server với refresh token
+    // Đặt cờ đánh dấu đăng xuất thủ công
+    console.log('[AUTH SERVICE] Setting manual logout flag');
+    sessionStorage.setItem('manual_logout', 'true');
+    
+    // Lưu refreshToken để gửi API nếu có
     const refreshToken = getRefreshToken();
+    
+    // Xóa tất cả dữ liệu trước khi gọi API để tránh race condition
+    console.log('[AUTH SERVICE] Clearing all authentication data');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('remember_me');
+    
+    // Đảm bảo gọi các hàm xóa khác
+    clearTokens();
+    removeToken();
+    removeUserData();
+    
+    // Sau khi xóa dữ liệu, gọi API để đăng xuất phía server
     if (refreshToken) {
       try {
+        console.log('[AUTH SERVICE] Calling logout API with refresh token');
         await apiClient.post('/api/Auth/logout', { refreshToken });
+        console.log('[AUTH SERVICE] Logout API called successfully');
       } catch (logoutError) {
-        console.error('Error during logout API call:', logoutError);
+        console.error('[AUTH SERVICE] Error during logout API call:', logoutError);
+        // Vẫn tiếp tục, vì đã xóa dữ liệu cục bộ
       }
     }
     
-    // Xóa token và thông tin người dùng khỏi localStorage
-    removeToken();
-    removeUserData();
-    localStorage.removeItem('remember_me');
-    
+    console.log('[AUTH SERVICE] Logout completed successfully');
     return { success: true };
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('[AUTH SERVICE] Logout error:', error);
     
-    // Vẫn xóa dữ liệu cục bộ ngay cả khi API thất bại
-    removeToken();
-    removeUserData();
+    // Dù có lỗi, vẫn đảm bảo xóa tất cả dữ liệu
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
     localStorage.removeItem('remember_me');
     
     return { success: false, error: error.message };
@@ -198,7 +248,7 @@ export const refreshToken = async () => {
 export const validateAndAutoLogin = async () => {
   try {
     // Kiểm tra token
-    const token = getRawToken();
+    const token = getAccessToken();
     const userData = getUserData();
     
     if (!token) {
@@ -233,7 +283,7 @@ export const validateAndAutoLogin = async () => {
           return {
             isAuthenticated: true,
             user: retryResponse.data,
-            token: getRawToken()
+            token: getAccessToken()
           };
         }
       } catch (refreshError) {
