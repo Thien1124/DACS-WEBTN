@@ -9,6 +9,14 @@ using webthitn_backend.Models;
 
 namespace webthitn_backend.Services
 {
+    public interface IExamGradingService
+    {
+        Task<ExamResult> GradeAndSaveExamResult(SubmitExamDTO submitDto, int userId);
+        Task<ExamResultDetailDTO> GetExamResultDetail(ExamResult examResult, bool showAllDetails);
+        Task<bool> DeleteExamResult(ExamResult examResult);
+        Task<bool> UpdateExamResult(int resultId, UpdateResultDTO updateDto, int reviewerId);
+    }
+
     public class ExamGradingService : IExamGradingService
     {
         private readonly ApplicationDbContext _context;
@@ -130,9 +138,14 @@ namespace webthitn_backend.Services
                             Status = 0, // 0: Chưa chấm, 1: Đúng, 2: Đúng một phần, 3: Sai
                             // Lưu trực tiếp giá trị câu trả lời
                             SelectedOptionId = answer.SelectedOptionId,
-                            TextAnswer = answer.TextAnswer,
-                            TrueFalseAnswers = answer.TrueFalseAnswers
+                            TextAnswer = answer.TextAnswer
                         };
+
+                        // Lưu câu trả lời đúng/sai nhiều ý dưới dạng JSON
+                        if (answer.TrueFalseAnswers != null && answer.TrueFalseAnswers.Any())
+                        {
+                            studentAnswer.TrueFalseAnswers = System.Text.Json.JsonSerializer.Serialize(answer.TrueFalseAnswers);
+                        }
 
                         // Xử lý điểm số dựa trên loại câu hỏi
                         var needsReview = false;
@@ -297,7 +310,7 @@ namespace webthitn_backend.Services
                     CompletedAt = examResult.CompletedAt,
                     TeacherComment = examResult.TeacherComment,
                     IsSubmittedManually = examResult.IsSubmittedManually,
-                    StudentAnswers = GetStudentAnswerDTOs(studentAnswers, canShowCorrectAnswers),
+                    StudentAnswers = (IEnumerable<DTOs.StudentAnswerDTO>)CreateAnswerDetailsList(studentAnswers, canShowCorrectAnswers), // Đổi từ Answers sang StudentAnswers
                     LevelStats = GetQuestionLevelStats(studentAnswers)
                 };
 
@@ -351,6 +364,12 @@ namespace webthitn_backend.Services
                 _logger.LogError($"Lỗi khi xóa kết quả bài thi: {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task<bool> UpdateExamResult(int resultId, UpdateResultDTO updateDto, int reviewerId)
+        {
+            // Implement this method based on your requirements
+            return await Task.FromResult(true);
         }
 
         #region Helper Methods
@@ -429,6 +448,9 @@ namespace webthitn_backend.Services
                     studentAnswer.IsPartiallyCorrect = correctAnswersCount > 0 && correctAnswersCount < totalQuestions;
                     studentAnswer.Score = scaledScore;
                 }
+
+                // Lưu số lượng câu trả lời đúng
+                studentAnswer.TrueFalseCorrectCount = correctAnswersCount;
             }
             catch (Exception ex)
             {
@@ -506,6 +528,20 @@ namespace webthitn_backend.Services
                 studentAnswer.IsPartiallyCorrect = !isExactMatch && isPartialMatch;
                 studentAnswer.Score = scaledScore;
 
+                // Tạo và lưu thông tin đánh giá
+                var evaluationInfo = new ShortAnswerEvaluationInfo
+                {
+                    OriginalAnswer = answer.TextAnswer,
+                    MatchedAnswer = correctAnswers.FirstOrDefault()?.Content ?? "",
+                    IsExactMatch = isExactMatch,
+                    IsPartialMatch = isPartialMatch,
+                    SimilarityScore = isExactMatch ? 100 : (isPartialMatch ? 80 : 0),
+                    RequiresManualReview = !isExactMatch && !isPartialMatch
+                };
+
+                // Chuyển đối tượng đánh giá thành JSON và lưu
+                studentAnswer.ShortAnswerEvaluation = System.Text.Json.JsonSerializer.Serialize(evaluationInfo);
+
                 // Kiểm tra nếu không có kết quả khớp, đánh dấu cần review thủ công
                 studentAnswer.RequiresManualReview = !isExactMatch && !isPartialMatch;
                 return studentAnswer.RequiresManualReview;
@@ -521,21 +557,21 @@ namespace webthitn_backend.Services
         }
 
         /// <summary>
-        /// Tạo danh sách DTO cho câu trả lời của học sinh
+        /// Tạo danh sách chi tiết câu trả lời từ StudentAnswer
         /// </summary>
-        private List<StudentAnswerDTO> GetStudentAnswerDTOs(List<StudentAnswer> answers, bool showExplanation)
+        private List<AnswerDetailDTO> CreateAnswerDetailsList(List<StudentAnswer> answers, bool showExplanation)
         {
-            var result = new List<StudentAnswerDTO>();
+            var result = new List<AnswerDetailDTO>();
 
             foreach (var answer in answers)
             {
-                var answerDto = new StudentAnswerDTO
+                var answerDto = new AnswerDetailDTO
                 {
                     Id = answer.Id,
                     QuestionId = answer.QuestionId,
                     QuestionContent = answer.Question?.Content ?? "Không tìm thấy câu hỏi",
-                    QuestionType = GetQuestionTypeName(answer.Question?.QuestionType ?? 0),
-                    QuestionTypeValue = answer.Question?.QuestionType ?? 0,
+                    QuestionType = answer.Question?.QuestionType ?? 0,
+                    QuestionTypeName = GetQuestionTypeName(answer.Question?.QuestionType ?? 0),
                     QuestionOrder = answer.QuestionOrder,
                     IsCorrect = answer.IsCorrect,
                     IsPartiallyCorrect = answer.IsPartiallyCorrect,
@@ -547,8 +583,10 @@ namespace webthitn_backend.Services
                     Explanation = showExplanation ? answer.Question?.Explanation : null,
                     TextAnswer = answer.TextAnswer,
                     SelectedOptionId = answer.SelectedOptionId,
-                    SelectedOptions = new List<SelectedOptionDTO>(),
-                    TrueFalseAnswers = new Dictionary<string, bool>()
+                    SelectedOptions = new List<OptionDetailDTO>(),
+                    TrueFalseAnswers = new Dictionary<string, bool>(),
+                    TrueFalseCorrectCount = answer.TrueFalseCorrectCount,
+                    ShortAnswerEvaluation = GetShortAnswerEvaluation(answer)
                 };
 
                 // Xử lý chi tiết câu trả lời dựa trên loại câu hỏi
@@ -564,9 +602,37 @@ namespace webthitn_backend.Services
         }
 
         /// <summary>
+        /// Lấy thông tin đánh giá câu trả lời ngắn
+        /// </summary>
+        private ShortAnswerEvaluationDetail GetShortAnswerEvaluation(StudentAnswer answer)
+        {
+            if (string.IsNullOrEmpty(answer.ShortAnswerEvaluation))
+                return null;
+
+            try
+            {
+                var evaluationInfo = System.Text.Json.JsonSerializer
+                    .Deserialize<ShortAnswerEvaluationInfo>(answer.ShortAnswerEvaluation);
+
+                return new ShortAnswerEvaluationDetail
+                {
+                    OriginalAnswer = evaluationInfo.OriginalAnswer,
+                    MatchedAnswer = evaluationInfo.MatchedAnswer,
+                    IsExactMatch = evaluationInfo.IsExactMatch,
+                    IsPartialMatch = evaluationInfo.IsPartialMatch,
+                    SimilarityScore = evaluationInfo.SimilarityScore
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Xử lý chi tiết câu trả lời dựa trên loại câu hỏi
         /// </summary>
-        private void ProcessAnswerDetails(StudentAnswer answer, StudentAnswerDTO answerDto)
+        private void ProcessAnswerDetails(StudentAnswer answer, AnswerDetailDTO answerDto)
         {
             var question = answer.Question;
 
@@ -578,9 +644,9 @@ namespace webthitn_backend.Services
                         var option = question.Options.FirstOrDefault(o => o.Id == answer.SelectedOptionId.Value);
                         if (option != null)
                         {
-                            answerDto.SelectedOptions.Add(new SelectedOptionDTO
+                            answerDto.SelectedOptions.Add(new OptionDetailDTO
                             {
-                                OptionId = option.Id,
+                                Id = option.Id,
                                 Content = option.Content,
                                 Label = option.Label,
                                 IsCorrect = option.IsCorrect
@@ -596,50 +662,11 @@ namespace webthitn_backend.Services
                         {
                             answerDto.TrueFalseAnswers = System.Text.Json.JsonSerializer
                                 .Deserialize<Dictionary<string, bool>>(answer.TrueFalseAnswers);
-
-                            // Đếm số lượng đúng
-                            if (question.Options.Any())
-                            {
-                                int correctCount = 0;
-                                foreach (var opt in question.Options.Where(o => o.IsPartOfTrueFalseGroup))
-                                {
-                                    string groupId = opt.GroupId.ToString();
-                                    if (answerDto.TrueFalseAnswers.ContainsKey(groupId) &&
-                                        answerDto.TrueFalseAnswers[groupId] == opt.IsCorrect)
-                                    {
-                                        correctCount++;
-                                    }
-                                }
-                                answerDto.TrueFalseCorrectCount = correctCount;
-                            }
                         }
                         catch
                         {
                             answerDto.TrueFalseAnswers = new Dictionary<string, bool>();
                         }
-                    }
-                    break;
-
-                case 3: // Trả lời ngắn
-                    // Tạo đánh giá trả lời ngắn tự động dựa trên thông tin có sẵn
-                    if (!string.IsNullOrEmpty(answer.TextAnswer))
-                    {
-                        var bestMatch = "";
-                        // Tìm đáp án đúng để hiển thị cho người dùng
-                        var correctOption = question.Options.FirstOrDefault(o => o.IsCorrect);
-                        if (correctOption != null)
-                        {
-                            bestMatch = correctOption.Content;
-                        }
-
-                        answerDto.ShortAnswerEvaluation = new ShortAnswerEvaluationDTO
-                        {
-                            OriginalAnswer = answer.TextAnswer,
-                            MatchedAnswer = bestMatch,
-                            IsExactMatch = answer.IsCorrect,
-                            IsPartialMatch = answer.IsPartiallyCorrect,
-                            SimilarityScore = answer.IsCorrect ? 100 : (answer.IsPartiallyCorrect ? 80 : 0)
-                        };
                     }
                     break;
             }
@@ -752,11 +779,96 @@ namespace webthitn_backend.Services
             };
         }
 
-        public Task<bool> UpdateExamResult(int resultId, UpdateResultDTO updateDto, int reviewerId)
-        {
-            throw new NotImplementedException();
-        }
-
         #endregion
     }
+
+    #region DTOs
+
+    /// <summary>
+    /// DTO cho thông tin đánh giá câu trả lời ngắn
+    /// </summary>
+    public class ShortAnswerEvaluationInfo
+    {
+        /// <summary>
+        /// Câu trả lời gốc của học sinh
+        /// </summary>
+        public string OriginalAnswer { get; set; } = "";
+
+        /// <summary>
+        /// Đáp án khớp nhất từ danh sách đáp án đúng
+        /// </summary>
+        public string MatchedAnswer { get; set; } = "";
+
+        /// <summary>
+        /// Đánh dấu khớp chính xác
+        /// </summary>
+        public bool IsExactMatch { get; set; }
+
+        /// <summary>
+        /// Đánh dấu khớp một phần
+        /// </summary>
+        public bool IsPartialMatch { get; set; }
+
+        /// <summary>
+        /// Độ tương đồng (0-100)
+        /// </summary>
+        public int SimilarityScore { get; set; }
+
+        /// <summary>
+        /// Cần đánh giá thủ công
+        /// </summary>
+        public bool RequiresManualReview { get; set; } = true;
+    }
+
+    /// <summary>
+    /// Chi tiết đánh giá câu trả lời ngắn
+    /// </summary>
+    public class ShortAnswerEvaluationDetail
+    {
+        public string OriginalAnswer { get; set; }
+        public string MatchedAnswer { get; set; }
+        public bool IsExactMatch { get; set; }
+        public bool IsPartialMatch { get; set; }
+        public int SimilarityScore { get; set; }
+    }
+
+    /// <summary>
+    /// DTO chi tiết cho câu trả lời
+    /// </summary>
+    public class AnswerDetailDTO
+    {
+        public int Id { get; set; }
+        public int QuestionId { get; set; }
+        public string QuestionContent { get; set; }
+        public int QuestionType { get; set; }
+        public string QuestionTypeName { get; set; }
+        public int QuestionOrder { get; set; }
+        public int? SelectedOptionId { get; set; }
+        public string TextAnswer { get; set; }
+        public List<OptionDetailDTO> SelectedOptions { get; set; }
+        public Dictionary<string, bool> TrueFalseAnswers { get; set; }
+        public int? TrueFalseCorrectCount { get; set; }
+        public bool IsCorrect { get; set; }
+        public bool IsPartiallyCorrect { get; set; }
+        public decimal Score { get; set; }
+        public decimal MaxScore { get; set; }
+        public int? AnswerTime { get; set; }
+        public int Status { get; set; }
+        public bool RequiresManualReview { get; set; }
+        public string Explanation { get; set; }
+        public ShortAnswerEvaluationDetail ShortAnswerEvaluation { get; set; }
+    }
+
+    /// <summary>
+    /// Chi tiết về đáp án
+    /// </summary>
+    public class OptionDetailDTO
+    {
+        public int Id { get; set; }
+        public string Content { get; set; }
+        public string Label { get; set; }
+        public bool IsCorrect { get; set; }
+    }
+
+    #endregion
 }

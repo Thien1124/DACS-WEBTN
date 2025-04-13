@@ -222,6 +222,7 @@ namespace webthitn_backend.DTOs
         /// Thống kê theo loại câu hỏi
         /// </summary>
         public QuestionTypeStatisticsDTO QuestionTypeStats { get; set; }
+        public List<Services.AnswerDetailDTO> Answers { get; internal set; }
     }
 
     /// <summary>

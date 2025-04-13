@@ -918,6 +918,111 @@
     ]
   },
   {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "GetExamDetails",
+    "RelativePath": "api/student/exams/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "GetExamQuestions",
+    "RelativePath": "api/student/exams/{id}/questions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "StartExam",
+    "RelativePath": "api/student/exams/{id}/start",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "SubmitExam",
+    "RelativePath": "api/student/exams/{id}/submit",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "submitDto",
+        "Type": "webthitn_backend.DTOs.SubmitExamDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "GetAvailableExams",
+    "RelativePath": "api/student/exams/available",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "GetStudentResults",
+    "RelativePath": "api/student/exams/results",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.StudentExamsController",
+    "Method": "GetStudentResultDetail",
+    "RelativePath": "api/student/exams/results/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "webthitn_backend.Controllers.SubjectController",
     "Method": "GetSubjects",
     "RelativePath": "api/Subject",
@@ -942,6 +1047,11 @@
       },
       {
         "Name": "searchTerm",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "grade",
         "Type": "System.String",
         "IsRequired": false
       }
@@ -1045,6 +1155,22 @@
         "Name": "activeOnly",
         "Type": "System.Boolean",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.SubjectController",
+    "Method": "GetSubjectsByGrade",
+    "RelativePath": "api/Subject/by-grade/{grade}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "grade",
+        "Type": "System.String",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

@@ -356,5 +356,10 @@ namespace webthitn_backend.Models
         /// Cần đánh giá thủ công
         /// </summary>
         public bool RequiresManualReview { get; set; } = true;
+
+        public static implicit operator ShortAnswerEvaluationInfo(Services.ShortAnswerEvaluationInfo v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

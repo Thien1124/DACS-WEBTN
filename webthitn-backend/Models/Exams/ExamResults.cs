@@ -35,7 +35,7 @@ namespace webthitn_backend.Models
         /// ID của học sinh
         /// </summary>
         public required int StudentId { get; set; }
-
+        public int? ClassId { get; set; }
         /// <summary>
         /// Số điểm đạt được
         /// </summary>
@@ -175,6 +175,7 @@ namespace webthitn_backend.Models
         /// <summary>
         /// Giáo viên chấm bài
         /// </summary>
+        [ForeignKey("GradedById")]
         public virtual User GradedBy { get; set; }
 
         /// <summary>
@@ -189,6 +190,28 @@ namespace webthitn_backend.Models
         /// <summary>
         /// Lịch sử hoạt động liên quan đến kết quả này
         /// </summary>
+        #endregion
+
+        #region Navigation Properties
+
+        // Các bài thi đã tạo (chỉ áp dụng cho Teacher và Admin)
+        public virtual ICollection<Exam> CreatedExams { get; set; }
+
+        // Các câu hỏi đã tạo (chỉ áp dụng cho Teacher và Admin)
+        public virtual ICollection<Question> CreatedQuestions { get; set; }
+
+        // Kết quả các bài thi đã làm (chỉ áp dụng cho Student)
+        [InverseProperty("Student")]
+        public virtual ICollection<ExamResult> ExamResults { get; set; }
+
+        // Kết quả bài thi đã chấm (chỉ áp dụng cho Teacher và Admin)
+        [InverseProperty("GradedBy")]
+        public virtual ICollection<ExamResult> GradedExamResults { get; set; }
+
+        // Lớp học của học sinh (chỉ áp dụng cho Student)
+        [ForeignKey("ClassId")]
+        public virtual Class Class { get; set; }
+
         #endregion
 
         #region Methods and computed properties

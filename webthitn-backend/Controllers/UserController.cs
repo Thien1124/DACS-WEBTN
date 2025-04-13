@@ -220,6 +220,7 @@ namespace webthitn_backend.Controllers
             {
                 currentDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
                 currentUser = User.Identity.IsAuthenticated ? User.FindFirst(ClaimTypes.NameIdentifier)?.Value : null
+
             });
         }
     }

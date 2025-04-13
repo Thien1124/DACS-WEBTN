@@ -1219,7 +1219,7 @@
         "tags": [
           "Results"
         ],
-        "summary": "Lấy danh sách kết quả bài thi theo người dùng",
+        "summary": "Lịch sử bài thi theo người dùng",
         "parameters": [
           {
             "name": "userId",
@@ -1495,6 +1495,201 @@
         }
       }
     },
+    "/api/student/exams/available": {
+      "get": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Lấy danh sách các bài thi khả dụng cho học sinh",
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách bài thi"
+          },
+          "404": {
+            "description": "Không tìm thấy thông tin học sinh"
+          }
+        }
+      }
+    },
+    "/api/student/exams/{id}": {
+      "get": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Lấy thông tin chi tiết của bài thi và lần làm gần nhất của học sinh",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin chi tiết bài thi"
+          },
+          "404": {
+            "description": "Không tìm thấy bài thi hoặc bài thi không khả dụng"
+          }
+        }
+      }
+    },
+    "/api/student/exams/{id}/start": {
+      "post": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Bắt đầu làm bài thi và tạo bản ghi kết quả mới",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin kết quả thi mới được tạo"
+          },
+          "400": {
+            "description": "Học sinh đang làm bài thi khác"
+          },
+          "404": {
+            "description": "Không tìm thấy bài thi hoặc bài thi không khả dụng"
+          }
+        }
+      }
+    },
+    "/api/student/exams/{id}/questions": {
+      "get": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Lấy danh sách câu hỏi của bài thi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách câu hỏi"
+          },
+          "400": {
+            "description": "Học sinh chưa bắt đầu làm bài thi này hoặc bài thi đã kết thúc"
+          }
+        }
+      }
+    },
+    "/api/student/exams/{id}/submit": {
+      "post": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Nộp bài thi và chấm điểm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Dữ liệu nộp bài",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trả về kết quả chấm điểm"
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ hoặc có lỗi khi chấm điểm"
+          }
+        }
+      }
+    },
+    "/api/student/exams/results": {
+      "get": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Lấy danh sách kết quả bài thi của học sinh",
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách kết quả bài thi"
+          }
+        }
+      }
+    },
+    "/api/student/exams/results/{id}": {
+      "get": {
+        "tags": [
+          "StudentExams"
+        ],
+        "summary": "Lấy chi tiết kết quả bài thi của học sinh",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id của kết quả bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về chi tiết kết quả bài thi"
+          },
+          "400": {
+            "description": "Có lỗi xảy ra khi lấy chi tiết kết quả bài thi"
+          },
+          "404": {
+            "description": "Không tìm thấy kết quả bài thi"
+          }
+        }
+      }
+    },
     "/api/Subject": {
       "get": {
         "tags": [
@@ -1533,6 +1728,13 @@
           },
           {
             "name": "searchTerm",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "grade",
             "in": "query",
             "schema": {
               "type": "string"
@@ -1707,6 +1909,29 @@
             "schema": {
               "type": "boolean",
               "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Subject/by-grade/{grade}": {
+      "get": {
+        "tags": [
+          "Subject"
+        ],
+        "summary": "Lấy danh sách môn học theo lớp",
+        "parameters": [
+          {
+            "name": "grade",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2266,6 +2491,10 @@
             "type": "string",
             "nullable": true
           },
+          "grades": {
+            "type": "string",
+            "nullable": true
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -2674,6 +2903,10 @@
             "nullable": true
           },
           "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "grades": {
             "type": "string",
             "nullable": true
           },

@@ -23,6 +23,12 @@ namespace webthitn_backend.Models
         public string Name { get; set; }
 
         /// <summary>
+        /// Lớp học áp dụng (10, 11, 12). Định dạng: "10,11,12" hoặc một lớp cụ thể
+        /// </summary>
+        [StringLength(20, ErrorMessage = "Thông tin lớp không được vượt quá 20 ký tự")]
+        public string Grades { get; set; } = "10,11,12";
+
+        /// <summary>
         /// Mã môn học: MATH, PHY, CHEM, LIT, ENG,...
         /// </summary>
         [StringLength(10, ErrorMessage = "Mã môn học không được vượt quá 10 ký tự")]

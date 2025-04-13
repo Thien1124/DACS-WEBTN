@@ -9,9 +9,22 @@ using System;
 using System.Reflection;
 using System.IO;
 using webthitn_backend.Models;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddHttpContextAccessor();
+
+// Các services
 builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
+builder.Services.AddScoped<ExamService>();
+builder.Services.AddScoped<ExamSessionService>();
+
 // Email service
 builder.Services.AddSingleton<EmailService>();
 

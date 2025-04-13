@@ -313,7 +313,7 @@
         </member>
         <member name="M:webthitn_backend.Controllers.ResultsController.GetUserResults(System.Int32,System.Nullable{System.Int32},System.Int32,System.Int32)">
             <summary>
-            Lấy danh sách kết quả bài thi theo người dùng
+             Lịch sử bài thi theo người dùng 
             </summary>
             <param name="userId">ID của người dùng</param>
             <param name="subjectId">Lọc theo môn học (không bắt buộc)</param>
@@ -353,7 +353,89 @@
             Định dạng thời gian từ giây sang định dạng phút:giây
             </summary>
         </member>
-        <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjects(System.Int32,System.Int32,System.Boolean,System.String)">
+        <member name="T:webthitn_backend.Controllers.StudentExamsController">
+            <summary>
+            Controller quản lý các chức năng liên quan đến bài thi cho học sinh
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.#ctor(webthitn_backend.Models.ApplicationDbContext,webthitn_backend.Services.IExamGradingService)">
+            <summary>
+            Khởi tạo controller với các service cần thiết
+            </summary>
+            <param name="context">Database context</param>
+            <param name="examGradingService">Service chấm điểm bài thi</param>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.GetAvailableExams">
+            <summary>
+            Lấy danh sách các bài thi khả dụng cho học sinh
+            </summary>
+            <returns>Danh sách bài thi đang hoạt động</returns>
+            <response code="200">Trả về danh sách bài thi</response>
+            <response code="404">Không tìm thấy thông tin học sinh</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.GetExamDetails(System.Int32)">
+            <summary>
+            Lấy thông tin chi tiết của bài thi và lần làm gần nhất của học sinh
+            </summary>
+            <param name="id">Id của bài thi</param>
+            <returns>Chi tiết bài thi và lần làm gần nhất</returns>
+            <response code="200">Trả về thông tin chi tiết bài thi</response>
+            <response code="404">Không tìm thấy bài thi hoặc bài thi không khả dụng</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.StartExam(System.Int32)">
+            <summary>
+            Bắt đầu làm bài thi và tạo bản ghi kết quả mới
+            </summary>
+            <param name="id">Id của bài thi</param>
+            <returns>Thông tin về bài thi đã bắt đầu</returns>
+            <response code="200">Trả về thông tin kết quả thi mới được tạo</response>
+            <response code="400">Học sinh đang làm bài thi khác</response>
+            <response code="404">Không tìm thấy bài thi hoặc bài thi không khả dụng</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.GetExamQuestions(System.Int32)">
+            <summary>
+            Lấy danh sách câu hỏi của bài thi
+            </summary>
+            <param name="id">Id của bài thi</param>
+            <returns>Danh sách câu hỏi của bài thi</returns>
+            <response code="200">Trả về danh sách câu hỏi</response>
+            <response code="400">Học sinh chưa bắt đầu làm bài thi này hoặc bài thi đã kết thúc</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.SubmitExam(System.Int32,webthitn_backend.DTOs.SubmitExamDTO)">
+            <summary>
+            Nộp bài thi và chấm điểm
+            </summary>
+            <param name="id">Id của bài thi</param>
+            <param name="submitDto">Dữ liệu nộp bài</param>
+            <returns>Kết quả chấm điểm</returns>
+            <response code="200">Trả về kết quả chấm điểm</response>
+            <response code="400">Dữ liệu không hợp lệ hoặc có lỗi khi chấm điểm</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.GetStudentResults">
+            <summary>
+            Lấy danh sách kết quả bài thi của học sinh
+            </summary>
+            <returns>Danh sách kết quả bài thi</returns>
+            <response code="200">Trả về danh sách kết quả bài thi</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.GetStudentResultDetail(System.Int32)">
+            <summary>
+            Lấy chi tiết kết quả bài thi của học sinh
+            </summary>
+            <param name="id">Id của kết quả bài thi</param>
+            <returns>Chi tiết kết quả bài thi</returns>
+            <response code="200">Trả về chi tiết kết quả bài thi</response>
+            <response code="400">Có lỗi xảy ra khi lấy chi tiết kết quả bài thi</response>
+            <response code="404">Không tìm thấy kết quả bài thi</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamsController.FormatDuration(System.Int32)">
+            <summary>
+            Định dạng thời gian từ giây sang định dạng phút:giây
+            </summary>
+            <param name="seconds">Thời gian tính bằng giây</param>
+            <returns>Chuỗi thời gian theo định dạng HH:MM:SS hoặc MM:SS</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjects(System.Int32,System.Int32,System.Boolean,System.String,System.String)">
             <summary>
             Lấy danh sách môn học có phân trang
             </summary>
@@ -404,6 +486,11 @@
             </summary>
             <param name="activeOnly">Chỉ lấy môn học đang hoạt động</param>
             <returns>Danh sách môn học đơn giản</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjectsByGrade(System.String)">
+            <summary>
+            Lấy danh sách môn học theo lớp
+            </summary>
         </member>
         <member name="T:webthitn_backend.Data.IRepository`1">
             <summary>
@@ -2730,6 +2817,90 @@
         <member name="M:webthitn_backend.Migrations.AddExamResultTables.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:webthitn_backend.Migrations.AddGradesToSubjects">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradesToSubjects.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradesToSubjects.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradesToSubjects.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddClassAndGradedByRelationships">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddClassAndGradedByRelationships.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddClassAndGradedByRelationships.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddClassAndGradedByRelationships.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Models.Class">
+            <summary>
+            Model đại diện cho lớp học trong hệ thống
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Models.Class.#ctor">
+            <summary>
+            Constructor để khởi tạo collections
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.Id">
+            <summary>
+            ID của lớp học, là khóa chính
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.Name">
+            <summary>
+            Tên lớp học: 10A1, 11B2, 12C3,...
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.Grade">
+            <summary>
+            Khối lớp: 10, 11, 12
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.Description">
+            <summary>
+            Mô tả về lớp học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.SchoolYear">
+            <summary>
+            Năm học: 2025-2026
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.IsActive">
+            <summary>
+            Trạng thái của lớp học: true - đang hoạt động, false - đã vô hiệu hóa
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.OrderIndex">
+            <summary>
+            Thứ tự hiển thị
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.CreatedAt">
+            <summary>
+            Thời gian tạo lớp học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.UpdatedAt">
+            <summary>
+            Thời gian cập nhật lớp học gần nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Class.Students">
+            <summary>
+            Danh sách học sinh của lớp
+            </summary>
+        </member>
         <member name="T:webthitn_backend.Models.Subject">
             <summary>
             Model đại diện cho môn học trong hệ thống
@@ -2743,6 +2914,11 @@
         <member name="P:webthitn_backend.Models.Subject.Name">
             <summary>
             Tên môn học: Toán, Lý, Hóa, Văn, Anh,...
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Subject.Grades">
+            <summary>
+            Lớp học áp dụng (10, 11, 12). Định dạng: "10,11,12" hoặc một lớp cụ thể
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.Subject.Code">
@@ -2985,9 +3161,14 @@
             Danh sách câu trả lời của học sinh
             </summary>
         </member>
-        <member name="P:webthitn_backend.Models.ExamResult.Statistics">
+        <member name="P:webthitn_backend.Models.ExamResult.CreatedExams">
             <summary>
             Phiên làm bài tạo ra kết quả này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.Statistics">
+            <summary>
+            Thống kê chi tiết theo loại câu hỏi
             </summary>
         </member>
         <member name="M:webthitn_backend.Models.ExamResult.UpdateStatistics">
@@ -3188,6 +3369,81 @@
         <member name="P:webthitn_backend.Models.ScoringConfiguration.PenaltyForWrongAnswer">
             <summary>
             Phần trăm điểm trừ cho câu trả lời sai (0-100)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.ExamSession">
+            <summary>
+            Entity đại diện cho một phiên làm bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.Id">
+            <summary>
+            ID của phiên làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.ExamId">
+            <summary>
+            ID của bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.StudentId">
+            <summary>
+            ID của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.ExamResultId">
+            <summary>
+            ID của kết quả bài thi liên kết
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.BrowserInfo">
+            <summary>
+            Thông tin trình duyệt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.IPAddress">
+            <summary>
+            Địa chỉ IP
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.StartTime">
+            <summary>
+            Thời điểm bắt đầu phiên
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.EndTime">
+            <summary>
+            Thời điểm kết thúc phiên (có thể null nếu phiên chưa kết thúc)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.LastActivityTime">
+            <summary>
+            Thời gian hoạt động cuối cùng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.IsActive">
+            <summary>
+            Trạng thái hoạt động của phiên
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.EndReason">
+            <summary>
+            Lý do kết thúc phiên (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.Exam">
+            <summary>
+            Bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.Student">
+            <summary>
+            Học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamSession.ExamResult">
+            <summary>
+            Kết quả bài thi
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.ExamType">
@@ -3861,6 +4117,11 @@
             Lớp hoặc khối
             </summary>
         </member>
+        <member name="P:webthitn_backend.Models.Users.User.ClassId">
+            <summary>
+            ID lớp học (chỉ áp dụng cho Student)
+            </summary>
+        </member>
         <member name="P:webthitn_backend.Models.Users.User.IsActive">
             <summary>
             Trạng thái kích hoạt
@@ -3931,6 +4192,16 @@
             Kết quả các bài thi đã làm (chỉ áp dụng cho Student)
             </summary>
         </member>
+        <member name="P:webthitn_backend.Models.Users.User.GradedExamResults">
+            <summary>
+            Kết quả bài thi đã chấm (chỉ áp dụng cho Teacher và Admin)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Class">
+            <summary>
+            Lớp học của học sinh (chỉ áp dụng cho Student)
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Services.ExamGradingService.GradeAndSaveExamResult(webthitn_backend.DTOs.SubmitExamDTO,System.Int32)">
             <summary>
             Chấm điểm và lưu kết quả bài thi
@@ -3962,12 +4233,17 @@
             </summary>
             <returns>True nếu cần review thủ công</returns>
         </member>
-        <member name="M:webthitn_backend.Services.ExamGradingService.GetStudentAnswerDTOs(System.Collections.Generic.List{webthitn_backend.Models.StudentAnswer},System.Boolean)">
+        <member name="M:webthitn_backend.Services.ExamGradingService.CreateAnswerDetailsList(System.Collections.Generic.List{webthitn_backend.Models.StudentAnswer},System.Boolean)">
             <summary>
-            Tạo danh sách DTO cho câu trả lời của học sinh
+            Tạo danh sách chi tiết câu trả lời từ StudentAnswer
             </summary>
         </member>
-        <member name="M:webthitn_backend.Services.ExamGradingService.ProcessAnswerDetails(webthitn_backend.Models.StudentAnswer,webthitn_backend.DTOs.StudentAnswerDTO)">
+        <member name="M:webthitn_backend.Services.ExamGradingService.GetShortAnswerEvaluation(webthitn_backend.Models.StudentAnswer)">
+            <summary>
+            Lấy thông tin đánh giá câu trả lời ngắn
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamGradingService.ProcessAnswerDetails(webthitn_backend.Models.StudentAnswer,webthitn_backend.Services.AnswerDetailDTO)">
             <summary>
             Xử lý chi tiết câu trả lời dựa trên loại câu hỏi
             </summary>
@@ -3997,25 +4273,197 @@
             Lấy tên loại câu hỏi từ giá trị số
             </summary>
         </member>
-        <member name="M:webthitn_backend.Services.IExamGradingService.GradeAndSaveExamResult(webthitn_backend.DTOs.SubmitExamDTO,System.Int32)">
+        <member name="T:webthitn_backend.Services.ShortAnswerEvaluationInfo">
             <summary>
-            Chấm điểm và lưu kết quả bài thi
+            DTO cho thông tin đánh giá câu trả lời ngắn
             </summary>
         </member>
-        <member name="M:webthitn_backend.Services.IExamGradingService.GetExamResultDetail(webthitn_backend.Models.ExamResult,System.Boolean)">
+        <member name="P:webthitn_backend.Services.ShortAnswerEvaluationInfo.OriginalAnswer">
             <summary>
-            Lấy chi tiết kết quả bài thi
+            Câu trả lời gốc của học sinh
             </summary>
         </member>
-        <member name="M:webthitn_backend.Services.IExamGradingService.DeleteExamResult(webthitn_backend.Models.ExamResult)">
+        <member name="P:webthitn_backend.Services.ShortAnswerEvaluationInfo.MatchedAnswer">
             <summary>
-            Xóa kết quả bài thi
+            Đáp án khớp nhất từ danh sách đáp án đúng
             </summary>
         </member>
-        <member name="M:webthitn_backend.Services.IExamGradingService.UpdateExamResult(System.Int32,webthitn_backend.DTOs.UpdateResultDTO,System.Int32)">
+        <member name="P:webthitn_backend.Services.ShortAnswerEvaluationInfo.IsExactMatch">
             <summary>
-            Cập nhật kết quả bài thi (dành cho giáo viên chấm điểm)
+            Đánh dấu khớp chính xác
             </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ShortAnswerEvaluationInfo.IsPartialMatch">
+            <summary>
+            Đánh dấu khớp một phần
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ShortAnswerEvaluationInfo.SimilarityScore">
+            <summary>
+            Độ tương đồng (0-100)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ShortAnswerEvaluationInfo.RequiresManualReview">
+            <summary>
+            Cần đánh giá thủ công
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Services.ShortAnswerEvaluationDetail">
+            <summary>
+            Chi tiết đánh giá câu trả lời ngắn
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Services.AnswerDetailDTO">
+            <summary>
+            DTO chi tiết cho câu trả lời
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Services.OptionDetailDTO">
+            <summary>
+            Chi tiết về đáp án
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Services.ExamService">
+            <summary>
+            Service xử lý nghiệp vụ liên quan đến bài thi và kết quả thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamService.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.AspNetCore.Http.IHttpContextAccessor)">
+            <summary>
+            Khởi tạo đối tượng ExamService
+            </summary>
+            <param name="context">Database context</param>
+            <param name="httpContextAccessor">HTTP Context Accessor</param>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamService.StartExamAsync(System.Int32,System.Int32)">
+            <summary>
+            Bắt đầu làm bài thi cho học sinh
+            </summary>
+            <param name="studentId">ID của học sinh</param>
+            <param name="examId">ID của bài thi</param>
+            <returns>Kết quả bài thi mới được tạo</returns>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamService.SubmitExamAsync(System.Int32,System.Int32,System.Collections.Generic.List{webthitn_backend.Services.StudentAnswerDTO},System.Int32,System.Boolean)">
+            <summary>
+            Nộp bài thi
+            </summary>
+            <param name="studentId">ID của học sinh</param>
+            <param name="examId">ID của bài thi</param>
+            <param name="answers">Danh sách câu trả lời</param>
+            <param name="timeSpent">Thời gian làm bài (giây)</param>
+            <param name="isManuallySubmitted">Nộp bài tự nguyện hay hết thời gian tự nộp</param>
+            <returns>Kết quả bài thi sau khi nộp</returns>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamService.CalculateScoreAsync(System.Int32)">
+            <summary>
+            Tính điểm cho bài thi dựa trên câu trả lời
+            </summary>
+            <param name="examResultId">ID kết quả bài thi</param>
+            <returns>Thành công hay không</returns>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamService.GradeManuallyAsync(System.Collections.Generic.List{webthitn_backend.Services.ManualGradeDTO},System.Int32,System.String)">
+            <summary>
+            Chấm điểm thủ công cho câu trả lời ngắn
+            </summary>
+            <param name="gradeItems">Danh sách thông tin chấm điểm</param>
+            <param name="teacherId">ID của giáo viên chấm điểm</param>
+            <param name="comment">Nhận xét của giáo viên</param>
+            <returns>Kết quả bài thi sau khi chấm</returns>
+        </member>
+        <member name="T:webthitn_backend.Services.StudentAnswerDTO">
+            <summary>
+            DTO cho câu trả lời của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.StudentAnswerDTO.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.StudentAnswerDTO.SelectedOptionId">
+            <summary>
+            ID của đáp án được chọn (cho câu hỏi trắc nghiệm)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.StudentAnswerDTO.TextAnswer">
+            <summary>
+            Câu trả lời văn bản (cho câu hỏi trả lời ngắn)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.StudentAnswerDTO.TrueFalseAnswers">
+            <summary>
+            Câu trả lời đúng-sai nhiều ý
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.StudentAnswerDTO.IsFlagged">
+            <summary>
+            Đánh dấu xem lại câu hỏi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Services.ManualGradeDTO">
+            <summary>
+            DTO cho chấm điểm thủ công
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ManualGradeDTO.AnswerId">
+            <summary>
+            ID của câu trả lời
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ManualGradeDTO.Score">
+            <summary>
+            Điểm cho câu trả lời
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ManualGradeDTO.IsCorrect">
+            <summary>
+            Câu trả lời có đúng hoàn toàn không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ManualGradeDTO.IsPartiallyCorrect">
+            <summary>
+            Câu trả lời có đúng một phần không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Services.ManualGradeDTO.Comment">
+            <summary>
+            Nhận xét của giáo viên
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Services.ExamSessionService">
+            <summary>
+            Service quản lý phiên làm bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamSessionService.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.AspNetCore.Http.IHttpContextAccessor)">
+            <summary>
+            Khởi tạo service
+            </summary>
+            <param name="context">Database context</param>
+            <param name="httpContextAccessor">HTTP Context Accessor</param>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamSessionService.CreateSessionAsync(System.Int32,System.Int32)">
+            <summary>
+            Tạo phiên làm bài thi mới
+            </summary>
+            <param name="studentId">ID học sinh</param>
+            <param name="examId">ID bài thi</param>
+            <returns>Phiên thi mới được tạo</returns>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamSessionService.EndSessionAsync(System.Int32,System.Boolean)">
+            <summary>
+            Kết thúc phiên làm bài thi
+            </summary>
+            <param name="sessionId">ID phiên làm bài</param>
+            <param name="isCompleted">Đã hoàn thành bài thi</param>
+            <returns>Thành công hay không</returns>
+        </member>
+        <member name="M:webthitn_backend.Services.ExamSessionService.UpdateSessionActivityAsync(System.Int32)">
+            <summary>
+            Cập nhật thời gian hoạt động mới nhất của phiên làm bài
+            </summary>
+            <param name="sessionId">ID phiên làm bài</param>
+            <returns>Thành công hay không</returns>
         </member>
         <member name="T:UpdateQuestionOptionDTO">
             <summary>

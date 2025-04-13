@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webthitn_backend.Models;
 
@@ -11,9 +12,11 @@ using webthitn_backend.Models;
 namespace webthitn_backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250412111201_AddGradesToSubjects")]
+    partial class AddGradesToSubjects
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,51 +63,6 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("Chapters");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.Class", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Grade")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SchoolYear")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Classes");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.Exam", b =>
@@ -902,7 +860,7 @@ namespace webthitn_backend.Migrations
                             Description = "Giáo dục kinh tế và pháp luật",
                             Grades = "10,11,12",
                             IsActive = true,
-                            Name = "Giáo dục kinh tế và Pháp luật"
+                            Name = "GDKT&PL"
                         });
                 });
 
@@ -917,9 +875,6 @@ namespace webthitn_backend.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<int?>("ClassId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -995,8 +950,6 @@ namespace webthitn_backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClassId");
-
                     b.ToTable("Users");
 
                     b.HasData(
@@ -1008,7 +961,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$LW9D4sFu.MZ785L/H8//F.hO6R3OGK1rYuLUo2u8uE.EOSOdmUOfe",
+                            Password = "$2a$11$1ibBiPptKFT/BXBynYoexO/nLsXnyEa/DNgnV/zvLHKKlseVTwyeS",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1023,7 +976,7 @@ namespace webthitn_backend.Migrations
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$NRRNERSi7nYFGXGe9VvyYOnqJi6NbOgGfAMzoumXK1bBYuR4RjUWK",
+                            Password = "$2a$11$I9MGhO638G8uHtvUz9EXCu7dxdGw1Orotw.KbIu3UW4oNH7eGBe8W",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1037,7 +990,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$rTMQ2t3OPjHnDyPf4e5J0udzBG0mdMzgcEuI14wUNHmoElF5LNMvC",
+                            Password = "$2a$11$1d6uW0yoqof1WmyKZHP6Tu5zevpvatryzWM5fC7V4gHYElY/j9xSu",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",
@@ -1115,9 +1068,8 @@ namespace webthitn_backend.Migrations
                         .IsRequired();
 
                     b.HasOne("webthitn_backend.Models.Users.User", "GradedBy")
-                        .WithMany("GradedExamResults")
-                        .HasForeignKey("GradedById")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .WithMany()
+                        .HasForeignKey("GradedById");
 
                     b.HasOne("webthitn_backend.Models.Users.User", "Student")
                         .WithMany("ExamResults")
@@ -1235,24 +1187,9 @@ namespace webthitn_backend.Migrations
                     b.Navigation("StudentAnswer");
                 });
 
-            modelBuilder.Entity("webthitn_backend.Models.Users.User", b =>
-                {
-                    b.HasOne("webthitn_backend.Models.Class", "Class")
-                        .WithMany("Students")
-                        .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Class");
-                });
-
             modelBuilder.Entity("webthitn_backend.Models.Chapter", b =>
                 {
                     b.Navigation("Lessons");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.Class", b =>
-                {
-                    b.Navigation("Students");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.Exam", b =>
@@ -1308,8 +1245,6 @@ namespace webthitn_backend.Migrations
                     b.Navigation("CreatedQuestions");
 
                     b.Navigation("ExamResults");
-
-                    b.Navigation("GradedExamResults");
                 });
 #pragma warning restore 612, 618
         }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using webthitn_backend.Models;
 
 namespace webthitn_backend.Models.Users
@@ -17,6 +18,7 @@ namespace webthitn_backend.Models.Users
             CreatedExams = new HashSet<Exam>();
             CreatedQuestions = new HashSet<Question>();
             ExamResults = new HashSet<ExamResult>();
+            GradedExamResults = new HashSet<ExamResult>();
         }
 
         /// <summary>
@@ -81,6 +83,10 @@ namespace webthitn_backend.Models.Users
         [MaxLength(20)]
         public string Grade { get; set; }
 
+        /// <summary>
+        /// ID lớp học (chỉ áp dụng cho Student)
+        /// </summary>
+        public int? ClassId { get; set; }
         /// <summary>
         /// Trạng thái kích hoạt
         /// </summary>
@@ -156,9 +162,18 @@ namespace webthitn_backend.Models.Users
         /// Kết quả các bài thi đã làm (chỉ áp dụng cho Student)
         /// </summary>
         public virtual ICollection<ExamResult> ExamResults { get; set; }
+        /// <summary>
+        /// Kết quả bài thi đã chấm (chỉ áp dụng cho Teacher và Admin)
+        /// </summary>
+        [InverseProperty("GradedBy")]
+        public virtual ICollection<ExamResult> GradedExamResults { get; set; }
 
-        #endregion
-        #region Navigation Properties
+        /// <summary>
+        /// Lớp học của học sinh (chỉ áp dụng cho Student)
+        /// </summary>
+        [ForeignKey("ClassId")]
+        public virtual Class Class { get; set; }
+
         #endregion
     }
 }

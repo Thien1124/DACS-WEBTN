@@ -11,6 +11,11 @@ namespace webthitn_backend.Models
     /// </summary>
     public class Exam
     {
+        public Exam()
+        {
+            ExamQuestions = new HashSet<ExamQuestion>();
+            ExamResults = new HashSet<ExamResult>();
+        }
         /// <summary>
         /// ID của bài thi
         /// </summary>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using webthitn_backend.Models.Users;
 
 namespace webthitn_backend.Models
@@ -14,6 +15,7 @@ namespace webthitn_backend.Models
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Chapter> Chapters { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
+        public DbSet<Class> Classes { get; set; }
         public DbSet<QuestionLevel> QuestionLevels { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuestionOption> QuestionOptions { get; set; }
@@ -23,6 +25,7 @@ namespace webthitn_backend.Models
         public DbSet<ExamResult> ExamResults { get; set; }
         public DbSet<StudentAnswer> StudentAnswers { get; set; }
         public DbSet<Setting> Settings { get; set; }
+        public DbSet<ExamSession> ExamSessions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -72,13 +75,47 @@ namespace webthitn_backend.Models
                 .HasForeignKey(e => e.CreatorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ExamResult - User
+            // ExamResult - User (Student)
             modelBuilder.Entity<ExamResult>()
                 .HasOne(er => er.Student)
                 .WithMany(u => u.ExamResults)
                 .HasForeignKey(er => er.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
+            // User - Class
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Class)
+                .WithMany(c => c.Students)
+                .HasForeignKey(u => u.ClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ExamResult - User (GradedBy)
+            modelBuilder.Entity<ExamResult>()
+                .HasOne(er => er.GradedBy)
+                .WithMany(u => u.GradedExamResults)
+                .HasForeignKey(er => er.GradedById)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+            // ExamSession - Student
+            modelBuilder.Entity<ExamSession>()
+                .HasOne(es => es.Student)
+                .WithMany()
+                .HasForeignKey(es => es.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ExamSession - Exam
+            modelBuilder.Entity<ExamSession>()
+                .HasOne(es => es.Exam)
+                .WithMany()
+                .HasForeignKey(es => es.ExamId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ExamSession - ExamResult
+            modelBuilder.Entity<ExamSession>()
+                .HasOne(es => es.ExamResult)
+                .WithMany()
+                .HasForeignKey(es => es.ExamResultId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Seed data
             SeedData(modelBuilder);
         }
@@ -152,15 +189,15 @@ namespace webthitn_backend.Models
 
             // Seed Subjects
             modelBuilder.Entity<Subject>().HasData(
-                new Subject { Id = 1, Name = "Toán", Code = "MATH", Description = "Môn Toán", CreatedAt = fixedDate1 },
-                new Subject { Id = 2, Name = "Vật Lý", Code = "PHY", Description = "Môn Vật Lý", CreatedAt = fixedDate1 },
-                new Subject { Id = 3, Name = "Hóa Học", Code = "CHEM", Description = "Môn Hóa Học", CreatedAt = fixedDate1 },
-                new Subject { Id = 4, Name = "Sinh Học", Code = "BIO", Description = "Môn Sinh Học", CreatedAt = fixedDate1 },
-                new Subject { Id = 5, Name = "Ngữ Văn", Code = "LIT", Description = "Môn Ngữ Văn", CreatedAt = fixedDate1 },
-                new Subject { Id = 6, Name = "Tiếng Anh", Code = "ENG", Description = "Môn Tiếng Anh", CreatedAt = fixedDate1 },
-                new Subject { Id = 7, Name = "Lịch Sử", Code = "HIST", Description = "Môn Lịch Sử", CreatedAt = fixedDate1 },
-                new Subject { Id = 8, Name = "Địa Lý", Code = "GEO", Description = "Môn Địa Lý", CreatedAt = fixedDate1 },
-                new Subject { Id = 9, Name = "GDKT&PL", Code = "GDKT&PL", Description = "Giáo dục kinh tế và pháp luật", CreatedAt = fixedDate1 }
+               new Subject { Id = 1, Name = "Toán", Code = "MATH", Description = "Môn Toán", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 2, Name = "Vật Lý", Code = "PHY", Description = "Môn Vật Lý", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 3, Name = "Hóa Học", Code = "CHEM", Description = "Môn Hóa Học", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 4, Name = "Sinh Học", Code = "BIO", Description = "Môn Sinh Học", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 5, Name = "Ngữ Văn", Code = "LIT", Description = "Môn Ngữ Văn", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 6, Name = "Tiếng Anh", Code = "ENG", Description = "Môn Tiếng Anh", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 7, Name = "Lịch Sử", Code = "HIST", Description = "Môn Lịch Sử", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 8, Name = "Địa Lý", Code = "GEO", Description = "Môn Địa Lý", Grades = "10,11,12", CreatedAt = fixedDate1 },
+        new Subject { Id = 9, Name = "Giáo dục kinh tế và Pháp luật", Code = "GDKT&PL", Description = "Giáo dục kinh tế và pháp luật", Grades = "10,11,12", CreatedAt = fixedDate1 }
             );
 
         }

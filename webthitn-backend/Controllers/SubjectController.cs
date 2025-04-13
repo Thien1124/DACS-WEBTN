@@ -33,10 +33,11 @@ namespace webthitn_backend.Controllers
         /// <returns>Danh sách môn học được phân trang</returns>
         [HttpGet]
         public async Task<IActionResult> GetSubjects(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] bool includeInactive = false,
-            [FromQuery] string searchTerm = null)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] string searchTerm = null,
+        [FromQuery] string grade = null) // Thêm tham số grade
         {
             try
             {
@@ -49,7 +50,12 @@ namespace webthitn_backend.Controllers
                 {
                     query = query.Where(s => s.IsActive);
                 }
-
+                // Lọc theo lớp nếu có
+                if (!string.IsNullOrEmpty(grade))
+                {
+                    // Tìm các môn học có chứa lớp cụ thể trong trường Grades
+                    query = query.Where(s => s.Grades != null && s.Grades.Contains(grade));
+                }
                 // Lọc theo từ khóa tìm kiếm
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
@@ -73,6 +79,7 @@ namespace webthitn_backend.Controllers
                         Id = s.Id,
                         Name = s.Name,
                         Code = s.Code,
+                        Grades = s.Grades,
                         Description = s.Description,
                         IsActive = s.IsActive,
                         CreatedAt = s.CreatedAt,
@@ -174,6 +181,21 @@ namespace webthitn_backend.Controllers
                 {
                     return BadRequest(new { message = "Tên môn học không được để trống" });
                 }
+                // Validate thông tin lớp nếu có
+                if (!string.IsNullOrEmpty(model.Grades))
+                {
+                    // Kiểm tra định dạng hợp lệ (10, 11, 12 hoặc kết hợp)
+                    var validGrades = new[] { "10", "11", "12" };
+                    var grades = model.Grades.Split(',').Select(g => g.Trim());
+
+                    foreach (var grade in grades)
+                    {
+                        if (!validGrades.Contains(grade))
+                        {
+                            return BadRequest(new { message = "Thông tin lớp không hợp lệ. Chỉ chấp nhận các giá trị: 10, 11, 12" });
+                        }
+                    }
+                }
 
                 // Kiểm tra xem mã môn học đã tồn tại chưa
                 if (!string.IsNullOrEmpty(model.Code))
@@ -193,6 +215,7 @@ namespace webthitn_backend.Controllers
                 {
                     Name = model.Name.Trim(),
                     Code = model.Code?.Trim() ?? "", // Đảm bảo không null
+                    Grades = model.Grades?.Trim() ?? "10,11,12", // Mặc định là tất cả các lớp nếu không được chỉ định
                     Description = model.Description?.Trim() ?? "", // Đảm bảo không null
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -209,6 +232,7 @@ namespace webthitn_backend.Controllers
                     Id = subject.Id,
                     Name = subject.Name,
                     Code = subject.Code,
+                    Grades = subject.Grades,
                     Description = subject.Description,
                     IsActive = subject.IsActive,
                     CreatedAt = subject.CreatedAt,
@@ -249,7 +273,21 @@ namespace webthitn_backend.Controllers
                 {
                     return BadRequest(new { message = "Tên môn học không được để trống" });
                 }
+                // Validate thông tin lớp nếu được cập nhật
+                if (!string.IsNullOrEmpty(model.Grades))
+                {
+                    // Kiểm tra định dạng hợp lệ (10, 11, 12 hoặc kết hợp)
+                    var validGrades = new[] { "10", "11", "12" };
+                    var grades = model.Grades.Split(',').Select(g => g.Trim());
 
+                    foreach (var grade in grades)
+                    {
+                        if (!validGrades.Contains(grade))
+                        {
+                            return BadRequest(new { message = "Thông tin lớp không hợp lệ. Chỉ chấp nhận các giá trị: 10, 11, 12" });
+                        }
+                    }
+                }
                 // Kiểm tra xem mã môn học mới có trùng với môn học khác không
                 if (!string.IsNullOrEmpty(model.Code) && model.Code != subject.Code)
                 {
@@ -269,6 +307,13 @@ namespace webthitn_backend.Controllers
                 subject.Description = model.Description?.Trim() ?? subject.Description;
                 subject.UpdatedAt = DateTime.UtcNow;
 
+                // Cập nhật thông tin lớp nếu được cung cấp
+                if (!string.IsNullOrEmpty(model.Grades))
+                {
+                    subject.Grades = model.Grades.Trim();
+                }
+                subject.UpdatedAt = DateTime.UtcNow;
+
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Cập nhật thành công môn học ID: {id}");
 
@@ -278,6 +323,7 @@ namespace webthitn_backend.Controllers
                     Id = subject.Id,
                     Name = subject.Name,
                     Code = subject.Code,
+                    Grades = subject.Grades,
                     Description = subject.Description,
                     IsActive = subject.IsActive,
                     CreatedAt = subject.CreatedAt,
@@ -422,6 +468,54 @@ namespace webthitn_backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Lỗi khi lấy danh sách tất cả môn học: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách môn học" });
+            }
+        }
+        /// <summary>
+        /// Lấy danh sách môn học theo lớp
+        /// </summary>
+        [HttpGet("by-grade/{grade}")]
+        public async Task<IActionResult> GetSubjectsByGrade(string grade)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(grade))
+                {
+                    return BadRequest(new { message = "Vui lòng cung cấp lớp học" });
+                }
+
+                // Kiểm tra grade có hợp lệ không
+                if (!new[] { "10", "11", "12" }.Contains(grade))
+                {
+                    return BadRequest(new { message = "Lớp học không hợp lệ. Chỉ chấp nhận các giá trị: 10, 11, 12" });
+                }
+
+                _logger.LogInformation($"Lấy danh sách môn học của lớp: {grade}");
+
+                // Lọc môn học theo lớp
+                var subjects = await _context.Subjects
+                    .Where(s => s.IsActive && s.Grades != null && s.Grades.Contains(grade))
+                    .OrderBy(s => s.Name)
+                    .Select(s => new SubjectListDTO
+                    {
+                        Id = s.Id,
+                        Name = s.Name,
+                        Code = s.Code,
+                        Description = s.Description,
+                        IsActive = s.IsActive,
+                        CreatedAt = s.CreatedAt,
+                        UpdatedAt = s.UpdatedAt,
+                        ChaptersCount = s.Chapters.Count(c => c.IsActive),
+                        ExamsCount = s.Exams.Count,
+                        Grades = s.Grades
+                    })
+                    .ToListAsync();
+
+                return Ok(subjects);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi lấy danh sách môn học cho lớp {grade}: {ex.Message}");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách môn học" });
             }
         }

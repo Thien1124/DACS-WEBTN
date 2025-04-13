@@ -10,6 +10,7 @@ namespace webthitn_backend.DTOs
         public int Id { get; set; }
         public string Name { get; set; }
         public string Code { get; set; }
+        public string Grades { get; set; }
         public string Description { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -26,6 +27,7 @@ namespace webthitn_backend.DTOs
         public int Id { get; set; }
         public string Name { get; set; }
         public string Code { get; set; }
+        public string Grades { get; set; }
         public string Description { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -54,7 +56,9 @@ namespace webthitn_backend.DTOs
     {
         public string Name { get; set; }
         public string Code { get; set; }
+        public string Grades { get; set; } = "10,11,12";
         public string Description { get; set; }
+        
     }
 
     /// <summary>
@@ -64,6 +68,7 @@ namespace webthitn_backend.DTOs
     {
         public string Name { get; set; }
         public string Code { get; set; }
+        public string Grades { get; set; }
         public string Description { get; set; }
     }
 

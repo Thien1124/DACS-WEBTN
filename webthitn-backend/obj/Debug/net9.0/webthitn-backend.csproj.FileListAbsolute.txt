@@ -343,7 +343,6 @@ C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\sta
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.webthitn-backend.props
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.webthitn-backend.props
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.pack.json
-C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\webthitn.81648C40.Up2Date
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\webthitn-backend.dll
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\refint\webthitn-backend.dll
@@ -351,3 +350,4 @@ C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\web
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\webthitn-backend.pdb
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\webthitn-backend.genruntimeconfig.cache
 C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\ref\webthitn-backend.dll
+C:\Users\Thien\OneDrive\Desktop\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
