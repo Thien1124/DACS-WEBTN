@@ -707,10 +707,23 @@ const SubjectsPage = () => {
                     <SubjectCode theme={theme}>{subject.code}</SubjectCode>
                   </div>
                   <img
-                    src={subject.img}
+                    src={
+                      "/assets/images/" +
+                      (subject.code
+                        ? subject.code.charAt(0).toUpperCase() +
+                          subject.code.slice(1).toLowerCase()
+                        : "default") +
+                      ".png"
+                    }
                     alt={subject.name}
                     width="80"
                     height="60"
+                    onError={(e) => {
+                      e.target.src = `/assets/images/${
+                        subject.code.charAt(0).toUpperCase() +
+                        subject.code.slice(1).toLowerCase()
+                      }.jpg`;
+                    }}
                   />
                 </SubjectHeader>
 
