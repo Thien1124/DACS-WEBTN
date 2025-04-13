@@ -11,7 +11,7 @@ using System.IO;
 using webthitn_backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
 // Email service
 builder.Services.AddSingleton<EmailService>();
 
