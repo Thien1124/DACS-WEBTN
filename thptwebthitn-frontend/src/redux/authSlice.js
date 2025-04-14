@@ -6,14 +6,7 @@ import * as authService from '../services/authService';
 
 const initialState = {
   isAuthenticated: false,
-  user: {
-    id: 1,
-    fullName: 'Vinh Sơn',
-    email: 'vinhsonvlog@example.com',
-    role: 'Teacher', //  đổi thành 'Admin' hoặc 'Student' để test các vai trò khác
-    isActive: true,
-    phoneNumber: '0987654321'
-  },
+  user: null, // Không đặt giá trị mặc định
   token: null,
   error: null,
   loading: false
@@ -83,11 +76,17 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        const existingRole = state.user?.role;
         state.isAuthenticated = true;
-        state.user = action.payload.user;
+        state.user = action.payload.user = {
+          ...action.payload.user,
+          // Đảm bảo role luôn được duy trì
+          role: existingRole || action.payload.user.role || 'Student'
+        }
         state.token = action.payload.token;
         state.loading = false;
         state.error = null;
+        
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -114,9 +113,13 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(autoLogin.fulfilled, (state, action) => {
-        if (action.payload.isAuthenticated) {
+        if (action.payload.isAuthenticated && action.payload.user) {
           state.isAuthenticated = true;
-          state.user = action.payload.user;
+          state.user = {
+            ...action.payload.user,
+            // Đảm bảo role luôn được duy trì
+            role: action.payload.user.role || 'Student'
+          };
           state.token = action.payload.token;
         }
         state.loading = false;
@@ -160,6 +163,7 @@ export const {
 } = authSlice.actions;
 // Add a new action 
 // to update user avatar
+
 export const updateToken = (token) => ({
   type: 'auth/updateToken',
   payload: token

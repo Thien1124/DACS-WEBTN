@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom"; // Import useNavigate và Link
+import { useNavigate, Link } from "react-router-dom";
 import { toggleTheme, toggleMenu } from "../../redux/uiSlice";
-import { logout } from "../../redux/authSlice"; // Import action logout
+import { logout } from "../../redux/authSlice";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/images/logo.png";
 import AuthModal from "../Auth/AuthModal";
 import * as authService from "../../services/authService";
-import { toast } from "react-toastify"; // Import toast từ react-toastify
+import { toast } from "react-toastify";
+// Import thêm icons
+import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog } from 'react-icons/fa';
 
+// Styled components hiện tại...
 const HeaderContainer = styled.header`
   position: fixed;
   top: 0;
@@ -61,8 +64,8 @@ const Nav = styled.nav`
 
 const NavItems = styled.ul`
   display: flex;
-  justify-content: center; /* Căn giữa ngang */
-  align-items: center; /* Căn giữa dọc */
+  justify-content: center;
+  align-items: center;
   list-style: none;
   padding: 10;
   margin: 0;
@@ -111,6 +114,7 @@ const ThemeToggle = styled.button`
       props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"};
   }
 `;
+
 const UserProfile = styled.div`
   display: flex;
   align-items: center;
@@ -151,7 +155,7 @@ const UserDropdown = styled(motion.div)`
   position: absolute;
   top: 100%;
   right: 0;
-  width: 200px;
+  width: 240px;
   background-color: ${(props) =>
     props.theme === "dark" ? "#2d2d2d" : "#ffffff"};
   border-radius: 8px;
@@ -162,11 +166,17 @@ const UserDropdown = styled(motion.div)`
 `;
 
 const DropdownItem = styled(Link)`
-  display: block;
+  display: flex;
+  align-items: center;
   padding: 10px 16px;
   color: ${(props) => (props.theme === "dark" ? "#e0e0e0" : "#333333")};
   text-decoration: none;
   transition: background-color 0.2s;
+  
+  svg {
+    margin-right: 10px;
+    color: ${props => props.theme === "dark" ? "#4285f4" : "#4285f4"};
+  }
 
   &:hover {
     background-color: ${(props) =>
@@ -174,8 +184,26 @@ const DropdownItem = styled(Link)`
   }
 `;
 
+const DropdownSeparator = styled.div`
+  height: 1px;
+  background-color: ${props => 
+    props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
+  };
+  margin: 8px 0;
+`;
+
+const DropdownSection = styled.div`
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  color: ${props => props.theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)"};
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+`;
+
 const LogoutButton = styled.button`
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   text-align: left;
   padding: 10px 16px;
@@ -184,12 +212,17 @@ const LogoutButton = styled.button`
   color: #e74c3c;
   cursor: pointer;
   transition: background-color 0.2s;
+  
+  svg {
+    margin-right: 10px;
+  }
 
   &:hover {
     background-color: ${(props) =>
       props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"};
   }
 `;
+
 const MenuButton = styled.button`
   display: none;
   background: none;
@@ -200,7 +233,6 @@ const MenuButton = styled.button`
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
@@ -262,7 +294,7 @@ function Header() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { theme, isMenuVisible } = useSelector((state) => state.ui);
-  const { isAuthenticated, user } = useSelector((state) => state.auth); // Updated selector
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
@@ -304,18 +336,27 @@ function Header() {
   };
 
   const handleLogout = () => {
-      authService.logout();
-      dispatch(logout());
-      toast.info('Đã đăng xuất thành công', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      });
-      navigate('/');
-    };
+    authService.logout();
+    dispatch(logout());
+    toast.info('Đã đăng xuất thành công', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true
+    });
+    navigate('/');
+  };
+  
+  // Kiểm tra xem người dùng có phải admin không
+  const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
+  
+  // Kiểm tra xem người dùng có phải teacher không
+  const isTeacher = user && user.role && user.role.toLowerCase() === 'teacher';
+  
+  // Định nghĩa đường dẫn tới trang bài thi tùy theo vai trò
+  const examsPath = isAdmin ? '/admin/exams' : '/exams';
 
   // Hàm lấy chữ cái đầu của tên người dùng
   const getInitials = (name) => {
@@ -326,14 +367,13 @@ function Header() {
   // Hàm lấy tên hiển thị
   const getDisplayName = () => {
     if (!user) return "Người dùng";
-    return user.fullName || user.username || user.email.split("@")[0];
+    return user.fullName || user.username || user.email?.split("@")[0] || "Người dùng";
   };
 
   // Callback sau khi đăng nhập thành công
   const handleLoginSuccess = () => {
     handleCloseAuthModal();
-    // Điều hướng đến trang chính sau đăng nhập, ví dụ: dashboard
-    navigate("/dashboard"); // Thay đổi đường dẫn theo yêu cầu của bạn
+    navigate("/dashboard");
   };
 
   return (
@@ -358,6 +398,9 @@ function Header() {
               </NavItem>
               <NavItem theme={theme}>
                 <Link to="/subjects">Môn học</Link>
+              </NavItem>
+              <NavItem theme={theme}>
+                <Link to={examsPath}>Bài thi</Link>
               </NavItem>
               <NavItem theme={theme}>
                 <Link to="/about">Giới thiệu</Link>
@@ -388,15 +431,63 @@ function Header() {
                       transition={{ duration: 0.2 }}
                     >
                       <DropdownItem to="/profile" theme={theme}>
+                        <FaUserCog />
                         Hồ sơ cá nhân
                       </DropdownItem>
                       <DropdownItem to="/dashboard" theme={theme}>
+                        <FaChartBar />
                         Bảng điều khiển
                       </DropdownItem>
+                      {isAdmin && (
+                        <>
+                          <DropdownSeparator theme={theme} />
+                          <DropdownSection theme={theme}>
+                            Quản trị viên
+                          </DropdownSection>
+                          <DropdownItem to="/admin/users" theme={theme}>
+                            <FaUsers />
+                            Quản lý người dùng
+                          </DropdownItem>
+                          <DropdownItem to="/admin/exams" theme={theme}>
+                            <FaClipboardList />
+                            Quản lý đề thi
+                          </DropdownItem>
+                          <DropdownItem to="/admin/subjects" theme={theme}>
+                            <FaBook />
+                            Quản lý môn học
+                          </DropdownItem>
+                          <DropdownItem to="/admin/questions" theme={theme}>
+                            <FaQuestion />
+                            Quản lý câu hỏi
+                          </DropdownItem>
+                        </>
+                      )}
+                      {isTeacher && !isAdmin && (
+                        <>
+                          <DropdownSeparator theme={theme} />
+                          <DropdownSection theme={theme}>
+                            Giáo viên
+                          </DropdownSection>
+                          <DropdownItem to="/teacher/exams" theme={theme}>
+                            <FaClipboardList />
+                            Quản lý đề thi
+                          </DropdownItem>
+                          <DropdownItem to="/teacher/questions" theme={theme}>
+                            <FaQuestion />
+                            Quản lý câu hỏi
+                          </DropdownItem>
+                        </>
+                      )}
+                      <DropdownSeparator theme={theme} />
                       <DropdownItem to="/settings" theme={theme}>
+                        <FaCog />
                         Cài đặt tài khoản
                       </DropdownItem>
                       <LogoutButton onClick={handleLogout}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                          <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                        </svg>
                         Đăng xuất
                       </LogoutButton>
                     </UserDropdown>
@@ -419,7 +510,6 @@ function Header() {
       </HeaderContainer>
       <HeaderSpacer />
 
-      {/* Truyền thêm callback onLoginSuccess cho AuthModal */}
       <AuthModal
         show={showAuthModal}
         handleClose={handleCloseAuthModal}

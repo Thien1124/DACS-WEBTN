@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { fetchExamsBySubject, fetchExamsForStudents } from '../../redux/examSlice';
+import { fetchExamsBySubject, fetchExamsForStudents } from '../../redux/examSlice1';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { FaClock, FaChalkboardTeacher, FaClipboardList, FaPlay } from 'react-icons/fa';
 

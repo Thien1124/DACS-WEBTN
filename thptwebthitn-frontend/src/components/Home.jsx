@@ -12,7 +12,6 @@ const Home = () => {
       <HeroSection />
       <GradeSection />
       <FeaturesSection />
-      <Footer />
     </div>
   );
 };

@@ -247,54 +247,43 @@ export const refreshToken = async () => {
  */
 export const validateAndAutoLogin = async () => {
   try {
-    // Kiểm tra token
     const token = getAccessToken();
     const userData = getUserData();
     
-    if (!token) {
+    if (!token || !userData) {
+      console.log('Không có token hoặc dữ liệu người dùng');
       return { isAuthenticated: false };
     }
     
     // Gọi API để kiểm tra token có hợp lệ không
     const response = await apiClient.get('/api/User/me');
     
-    // Nếu API trả về thành công, đồng nghĩa với token hợp lệ
-    if (response.data) {
-      saveUserData(response.data);
+    // Đảm bảo cập nhật đúng vai trò từ phản hồi API
+    if (response && response.data) {
+      // Cập nhật dữ liệu người dùng với dữ liệu mới nhất từ server
+      saveUserData({
+        ...userData,
+        ...response.data,
+        // Đảm bảo giữ nguyên vai trò từ API trả về
+        role: response.data.role || userData.role
+      });
+      
+      return {
+        isAuthenticated: true,
+        user: {
+          ...userData,
+          ...response.data,
+          role: response.data.role || userData.role
+        },
+        token
+      };
     }
     
-    return {
-      isAuthenticated: true,
-      user: response.data || (userData ? userData : null),
-      token: token
-    };
+    return { isAuthenticated: true, user: userData, token };
   } catch (error) {
-    console.error('Auto-login failed:', error);
-    
-    // Nếu lỗi 401, thử refresh token
-    if (error.response?.status === 401) {
-      try {
-        await refreshToken();
-        
-        // Thử lại API call
-        const retryResponse = await apiClient.get('/api/User/me');
-        if (retryResponse.data) {
-          saveUserData(retryResponse.data);
-          return {
-            isAuthenticated: true,
-            user: retryResponse.data,
-            token: getAccessToken()
-          };
-        }
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
-      }
-    }
-    
-    // Xóa thông tin đăng nhập không hợp lệ
-    removeToken();
+    console.error('Auto login error:', error);
+    clearTokens();
     removeUserData();
-    
     return { isAuthenticated: false };
   }
 };

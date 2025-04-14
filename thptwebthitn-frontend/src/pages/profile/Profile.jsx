@@ -395,7 +395,11 @@ const Profile = () => {
     
     setRecentTests([]);
   }, [currentDate, currentUser]);
-  
+  useEffect(() => {
+    if (user?.role) {
+      localStorage.setItem('user_role', user.role);
+    }
+  }, [user?.role]);
   // Lấy ký tự đầu của tên cho avatar
   const getInitials = (name) => {
     return name ? name.charAt(0).toUpperCase() : 'U';
@@ -457,7 +461,9 @@ const Profile = () => {
     }).format(date);
   };
 
-  const role = user?.role || 'student';
+  // In src/pages/profile/Profile.jsx (line 427)
+  const role = user?.role || (localStorage.getItem('user_role') || 'student');
+ // This sets role to 'student' as fallback
   
   return (
     <PageWrapper theme={theme}>
