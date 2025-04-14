@@ -259,7 +259,7 @@ const ExamInterface = () => {
         // Cảnh báo khi còn 5 phút
         if (prev === 300) {
           setIsTimeWarning(true);
-          alert('Còn 5 phút nữa hết giờ làm bài!');
+          showWarningToast('Còn 5 phút nữa hết giờ làm bài!');
         }
         
         return prev - 1;
@@ -269,10 +269,10 @@ const ExamInterface = () => {
     return () => clearInterval(timer);
   }, [exam]);
   
-  const handleTimeUp = useCallback(() => {
-    alert('Hết thời gian làm bài!');
-    handleSubmitExam();
-  }, []);
+  
+  
+  // Also update the handleSubmitExam function to check for exam before using it
+  
   
   const handleNextQuestion = () => {
     if (currentQuestion < questions.length) {
@@ -347,7 +347,17 @@ const ExamInterface = () => {
       navigate(`/exam-results/${result.id}`);
     }, 1500);
   }, [examId, questions, userAnswers, exam, timeRemaining, navigate]);
-  
+  const handleTimeUp = useCallback(() => {
+    showErrorToast('Hết thời gian làm bài!');
+    // Check if exam exists before submitting
+    if (exam) {
+      handleSubmitExam();
+    } else {
+      console.error('Cannot submit exam: exam object is null');
+      // Handle the case where exam is null, perhaps navigate to a different page
+      navigate('/exams');
+    }
+  }, [exam, handleSubmitExam, navigate]);
   if (loading) {
     return (
       <Container>

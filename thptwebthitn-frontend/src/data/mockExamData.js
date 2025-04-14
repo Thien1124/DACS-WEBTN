@@ -3,7 +3,7 @@ export const mockExam = {
     id: 1,
     title: "Đề kiểm tra Toán học THPT Quốc Gia",
     description: "Đề thi trắc nghiệm môn Toán học, chuẩn bị cho kỳ thi THPT Quốc Gia",
-    duration: 90, // thời gian làm bài tính bằng phút
+    duration: 60, // thời gian làm bài tính bằng phút
     subject: {
       id: 1,
       name: "Toán học"

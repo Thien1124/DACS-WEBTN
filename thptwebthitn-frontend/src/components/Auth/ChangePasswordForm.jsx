@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
+import { changePassword } from '../../services/authService';
+import { showErrorToast, showSuccessToast, showWarningToast } from '../../utils/toastUtils';
 
 const FormContainer = styled(motion.div)`
   background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
@@ -162,9 +164,10 @@ const ChangePasswordForm = ({ theme }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        await authService.changePassword({
+        await changePassword({
           currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
+          newPassword: formData.newPassword,
+          confirmPassword: formData.confirmPassword,
         });
         
         // Hiển thị thông báo thành công

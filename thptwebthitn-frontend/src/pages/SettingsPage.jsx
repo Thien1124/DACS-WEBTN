@@ -24,14 +24,12 @@ const respondTo = Object.keys(breakpoints).reduce((acc, label) => {
   return acc;
 }, {});
 
-const respondBelow = Object.keys(breakpoints).reduce((acc, label) => {
-  acc[label] = (...args) => `
-    @media (max-width: ${breakpoints[label]}) {
-      ${args[0]};
-    }
-  `;
-  return acc;
-}, {});
+const respondBelow = {
+  sm: (content) => `@media (max-width: 576px) { ${content} }`,
+  md: (content) => `@media (max-width: 768px) { ${content} }`,
+  lg: (content) => `@media (max-width: 992px) { ${content} }`,
+  xl: (content) => `@media (max-width: 1200px) { ${content} }`
+};
 
 // Styled components với kích thước lớn hơn cho desktop
 const PageWrapper = styled.div`

@@ -5,6 +5,7 @@ import examReducer from './examSlice';
 import subjectReducer from './subjectSlice';
 import userReducer from './userSlice';
 import authMiddleware from './middleware/authMiddleware';
+import thunk from 'redux-thunk';
 
 const store = configureStore({
   reducer: {
