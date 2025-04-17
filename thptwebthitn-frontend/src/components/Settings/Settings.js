@@ -8,7 +8,7 @@ import { logout, updateUserProfile } from '../../redux/authSlice';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import { respondTo, respondBelow } from '../../assets/styles/responsive';
-
+import { toast } from 'react-toastify';
 const SettingsLayout = styled.div`
   display: flex;
   gap: 30px;
@@ -391,22 +391,40 @@ const handleProfileSubmit = async (e) => {
         });
         
         // Hiển thị thông báo thành công
-        setProfileSuccess('Thông tin cá nhân đã được cập nhật thành công!');
-        
-        setTimeout(() => {
-          setProfileSuccess('');
-        }, 3000);
+        toast.success('Thông tin cá nhân đã được cập nhật thành công!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
       } else {
         console.error('Profile update failed:', resultAction);
         
-        // Hiển thị thông báo lỗi
+        // Hiển thị thông báo lỗi bằng react-toastify
+        toast.error(resultAction.payload || 'Cập nhật thông tin thất bại. Vui lòng thử lại.', {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
         setProfileErrors({
           general: resultAction.payload || 'Cập nhật thông tin thất bại. Vui lòng thử lại.'
         });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      
+      toast.error(error.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
       // Hiển thị thông báo lỗi
       setProfileErrors({
         general: error.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.'
@@ -431,8 +449,14 @@ const handleProfileSubmit = async (e) => {
           confirmPassword: passwordForm.confirmPassword
         });
         
-        setPasswordSuccess('Mật khẩu đã được thay đổi thành công!');
-        
+        toast.success('Mật khẩu đã được thay đổi thành công!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
         setPasswordForm({
           currentPassword: '',
           newPassword: '',
@@ -443,6 +467,14 @@ const handleProfileSubmit = async (e) => {
           setPasswordSuccess('');
         }, 3000);
       } catch (error) {
+        toast.error(error.message || 'Thay đổi mật khẩu thất bại. Vui lòng kiểm tra mật khẩu hiện tại.', {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
         setPasswordErrors({
           general: error.message || 'Thay đổi mật khẩu thất bại. Vui lòng kiểm tra mật khẩu hiện tại.'
         });
@@ -456,6 +488,14 @@ const handleProfileSubmit = async (e) => {
   const handleLogout = () => {
     authService.logout();
     dispatch(logout());
+    toast.info('Đã đăng xuất thành công', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true
+    });
     navigate('/');
   };
   

@@ -1,21 +1,19 @@
 import axios from 'axios';
+import { setAccessToken, getAccessToken, clearTokens, getTokenPayload } from './token';
 
-// Constants for storage keys and token prefix
+// Constants for storage keys
 const STORAGE_KEYS = {
-  TOKEN: 'auth_token',
   USER: 'user_data',
   REMEMBER_ME: 'remember_me'
 };
-
-const TOKEN_PREFIX = 'Bearer';
 
 /**
  * Get the authentication token from local storage
  * @returns {string|null} - The token or null if not found
  */
 export const getToken = () => {
-  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-  return token ? `${TOKEN_PREFIX} ${token}` : null;
+  const token = getAccessToken();
+  return token ? `Bearer ${token}` : null;
 };
 
 /**
@@ -23,7 +21,7 @@ export const getToken = () => {
  * @returns {string|null} - The raw token or null if not found
  */
 export const getRawToken = () => {
-  return localStorage.getItem(STORAGE_KEYS.TOKEN);
+  return getAccessToken();
 };
 
 /**
@@ -32,10 +30,10 @@ export const getRawToken = () => {
  */
 export const setToken = (token) => {
   // Remove 'Bearer ' prefix if it exists
-  const rawToken = token.startsWith(`${TOKEN_PREFIX} `) 
-    ? token.slice(TOKEN_PREFIX.length + 1) 
+  const rawToken = token.startsWith('Bearer ') 
+    ? token.slice(7) 
     : token;
-  localStorage.setItem(STORAGE_KEYS.TOKEN, rawToken);
+  setAccessToken(rawToken);
 };
 
 /**
@@ -43,6 +41,9 @@ export const setToken = (token) => {
  */
 export const removeToken = () => {
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  // Đồng bộ hóa: đảm bảo xóa tất cả các token
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('refresh_token');
 };
 
 /**
@@ -50,17 +51,14 @@ export const removeToken = () => {
  * @returns {boolean} - True if authenticated
  */
 export const isTokenValid = () => {
-  const token = getRawToken();
+  const token = getAccessToken();
   if (!token) return false;
 
   try {
-    // Basic token validation (you might want to add more sophisticated validation)
-    const tokenParts = token.split('.');
-    if (tokenParts.length !== 3) return false;
-
-    const payload = JSON.parse(atob(tokenParts[1]));
-    const expirationTime = payload.exp * 1000; // Convert to milliseconds
+    const payload = getTokenPayload(token);
+    if (!payload) return false;
     
+    const expirationTime = payload.exp * 1000; // Convert to milliseconds
     return Date.now() < expirationTime;
   } catch {
     return false;
@@ -79,9 +77,12 @@ export const saveUserData = (userData) => {
       email: userData.email,
       fullName: userData.fullName,
       phoneNumber: userData.phoneNumber,
+      // Đảm bảo lưu đúng vai trò
+      role: userData.role || (userData.roles && userData.roles[0]) || 'Student',
+      // Lưu mảng roles nếu có
       roles: userData.roles || [],
     };
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(sanitizedData));
+    localStorage.setItem('user_data', JSON.stringify(sanitizedData));
   } catch (error) {
     console.error('Error saving user data:', error);
     throw new Error('Không thể lưu thông tin người dùng');
@@ -107,22 +108,8 @@ export const getUserData = () => {
  */
 export const removeUserData = () => {
   localStorage.removeItem(STORAGE_KEYS.USER);
-};
-
-/**
- * Set remember me preference
- * @param {boolean} remember - Whether to remember the user
- */
-export const setRememberMe = (remember) => {
-  localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, remember);
-};
-
-/**
- * Get remember me preference
- * @returns {boolean} - Whether user chose to be remembered
- */
-export const getRememberMe = () => {
-  return localStorage.getItem(STORAGE_KEYS.REMEMBER_ME) === 'true';
+  // Đồng bộ hóa: đảm bảo xóa tất cả dữ liệu người dùng
+  localStorage.removeItem('user_data');
 };
 
 /**
@@ -130,12 +117,9 @@ export const getRememberMe = () => {
  */
 export const logout = () => {
   // Clear all auth-related data
-  Object.values(STORAGE_KEYS).forEach(key => {
-    localStorage.removeItem(key);
-  });
-
-  // Optional: Reload the page to clear any sensitive data in memory
-  // window.location.reload();
+  clearTokens();
+  removeUserData();
+  localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
 };
 
 /**

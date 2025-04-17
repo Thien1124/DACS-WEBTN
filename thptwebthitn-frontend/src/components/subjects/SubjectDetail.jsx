@@ -4,9 +4,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { fetchSubjectById } from '../../redux/subjectSlice';
-import { getSubjectExams } from '../../services/subjectService';
 import LoadingSpinner from '../common/LoadingSpinner';
+import ErrorDisplay from '../common/ErrorDisplay';
 import Header from '../layout/Header';
+import Footer from '../layout/Footer';
+import { 
+  FaArrowLeft, 
+  FaRegFileAlt, 
+  FaUserAlt, 
+  FaChalkboardTeacher, 
+  FaGraduationCap, 
+  FaBookOpen,
+  FaCalendarAlt,
+  FaCode,
+  FaInfoCircle
+} from 'react-icons/fa';
 
 // Styled components
 const PageWrapper = styled.div`
@@ -81,17 +93,17 @@ const SubjectImage = styled.div`
   }
 `;
 
-const SubjectGradeBadge = styled.div`
+const GradeBadge = styled.div`
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: linear-gradient(45deg, #4285f4, #34a853);
+  background-color: #4285f4;
   color: white;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  border-radius: 25px;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  box-shadow: 0 2px 10px rgba(66, 133, 244, 0.4);
 `;
 
 const SubjectInfo = styled.div`
@@ -114,6 +126,17 @@ const SubjectTitle = styled.h1`
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+`;
+
+const SubjectCode = styled.div`
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#edf2f7'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
 `;
 
 const SubjectDescription = styled.p`
@@ -175,128 +198,147 @@ const SectionTitle = styled.h2`
     background: linear-gradient(45deg, #4285f4, #34a853);
     border-radius: 3px;
   }
-`;
 
-const ExamsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
-  margin-top: 1.5rem;
-`;
-
-const ExamCard = styled(motion.div)`
-  background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : 'white'};
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  svg {
+    color: #4285f4;
   }
 `;
 
-const ExamContent = styled.div`
+const DetailSection = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  border-radius: 15px;
   padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 `;
 
-const ExamTitle = styled.h3`
-  font-size: 1.25rem;
-  margin-bottom: 0.75rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  font-weight: 600;
-`;
-
-const ExamInfo = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  font-size: 0.95rem;
-  margin-bottom: 1rem;
-`;
-
-const ExamDescription = styled.p`
-  font-size: 0.95rem;
+const DetailItem = styled.div`
   margin-bottom: 1.5rem;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#4a5568'};
-  min-height: 4em;
-  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
-const ExamMeta = styled.div`
+const DetailLabel = styled.div`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-size: 1rem;
+  font-weight: 500;
+  width: 180px;
+  flex-shrink: 0;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+const DetailValue = styled.div`
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  font-size: 1rem;
+  flex: 1;
+`;
+
+const GradeTag = styled.span`
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background-color: #4285f4;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+`;
+
+const ButtonsRow = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid ${props => props.theme === 'dark' ? '#3d4852' : '#edf2f7'};
-  padding-top: 1.25rem;
-  margin-top: 0.5rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
-const ExamDifficulty = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const DifficultyDot = styled.span`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: ${props => {
-    if (props.level === 'easy') return '#38a169';
-    if (props.level === 'medium') return '#ecc94b';
-    return '#e53e3e';
-  }};
-`;
-
-const DifficultyText = styled.span`
-  font-size: 0.9rem;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-`;
-
-const StartButton = styled(Link)`
-  background: linear-gradient(45deg, #4285f4, #34a853);
-  color: white;
-  padding: 0.6rem 1.25rem;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
+const ActionButton = styled.button`
   display: inline-flex;
   align-items: center;
-  
-  svg {
-    margin-left: 0.5rem;
-  }
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(45deg, #4285f4, #34a853);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(0, 123, 255, 0.2);
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+  }
+  
+  svg {
+    margin-right: 0.5rem;
   }
 `;
 
-const NoExamsMessage = styled.div`
-  text-align: center;
-  padding: 3rem;
-  background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : 'white'};
-  border-radius: 12px;
+const BackButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+  
+  svg {
+    margin-right: 0.5rem;
+  }
+`;
+
+const ContentBox = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  border-radius: 15px;
+  padding: 2rem;
+  margin-top: 1.5rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#4a5568'};
-  margin-top: 2rem;
+  line-height: 1.8;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
   
   h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
     color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
   }
   
   p {
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
   }
+  
+  ul, ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+`;
+
+const NoContentMessage = styled.div`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
 `;
 
 const LoadingContainer = styled.div`
@@ -304,7 +346,7 @@ const LoadingContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  min-height: 300px;
   
   p {
     margin-top: 1rem;
@@ -313,100 +355,87 @@ const LoadingContainer = styled.div`
   }
 `;
 
-const ErrorMessage = styled.div`
-  text-align: center;
-  padding: 2rem;
-  background-color: ${props => props.theme === 'dark' ? '#3d2a2a' : '#fff5f5'};
-  border-radius: 12px;
-  margin: 2rem 0;
-  
-  h3 {
-    color: ${props => props.theme === 'dark' ? '#feb2b2' : '#c53030'};
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  p {
-    color: ${props => props.theme === 'dark' ? '#feb2b2' : '#c53030'};
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  a {
-    display: inline-block;
-    background-color: ${props => props.theme === 'dark' ? '#742a2a' : '#fff5f5'};
-    color: ${props => props.theme === 'dark' ? '#feb2b2' : '#c53030'};
-    border: 1px solid ${props => props.theme === 'dark' ? '#feb2b2' : '#c53030'};
-    padding: 0.6rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      background-color: ${props => props.theme === 'dark' ? '#9b2c2c' : '#fed7d7'};
-    }
-  }
-`;
-
 const SubjectDetail = () => {
-  const { subjectId } = useParams();
-  const navigate = useNavigate();
+  const { id } = useParams();
   const dispatch = useDispatch();
-  const { currentSubject: subject, loading: subjectLoading, error: subjectError } = useSelector(state => state.subjects);
-  const [exams, setExams] = useState([]);
-  const [examsLoading, setExamsLoading] = useState(true);
-  const [examsError, setExamsError] = useState(null);
-  const [theme, setTheme] = useState('light');
+  const navigate = useNavigate();
+  const { theme } = useSelector(state => state.ui);
+  const { selectedSubject, loading, error } = useSelector(state => state.subjects);
+  
+  // Sử dụng thời gian và người dùng hiện tại
+  const currentTime = "2025-04-13 16:57:17";
+  const currentUser = "vinhsonvlog";
   
   useEffect(() => {
-    // Lấy theme từ localStorage
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
+    // Gọi API để lấy thông tin chi tiết môn học
+    dispatch(fetchSubjectById(id));
+  }, [dispatch, id]);
+  
+  // Helper function to get subject image
+  const getSubjectImage = () => {
+    if (!selectedSubject) return 'https://via.placeholder.com/320x220?text=Môn+học';
     
-    // Fetch subject details
-    dispatch(fetchSubjectById(subjectId));
-  }, [dispatch, subjectId]);
-  
-  useEffect(() => {
-    const fetchExams = async () => {
-      if (!subject) return;
-      
-      setExamsLoading(true);
-      setExamsError(null);
-      try {
-        // Fetch subject exams
-        const examsData = await getSubjectExams(subjectId);
-        setExams(examsData);
-      } catch (error) {
-        console.error('Error fetching subject exams:', error);
-        setExamsError('Không thể tải danh sách đề thi. Vui lòng thử lại sau.');
-      } finally {
-        setExamsLoading(false);
+    // Thử lấy từ các thuộc tính có thể chứa hình ảnh
+    const possibleImageProps = ['image', 'imageUrl', 'img', 'thumbnail'];
+    for (const prop of possibleImageProps) {
+      if (selectedSubject[prop]) {
+        return selectedSubject[prop];
       }
+    }
+    
+    // Nếu không có, dùng ảnh mặc định theo tên môn học
+    const defaultImages = {
+      'Toán': '/images/math.png',
+      'Vật Lý': '/images/physics.png',
+      'Hóa Học': '/images/chemistry.png',
+      'Sinh Học': '/images/biology.png',
+      'Ngữ Văn': '/images/literature.png',
+      'Tiếng Anh': '/images/english.png',
+      'Lịch Sử': '/images/history.png',
+      'Địa Lý': '/images/geography.png',
     };
     
-    fetchExams();
-  }, [subject, subjectId]);
-  
-  const formatGradeLabel = (grade) => {
-    return `Lớp ${grade}`;
+    return defaultImages[selectedSubject.name] || 'https://via.placeholder.com/320x220?text=Môn+học';
   };
   
-  const getDifficultyLabel = (difficulty) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'Dễ';
-      case 'medium':
-        return 'Trung bình';
-      case 'hard':
-        return 'Khó';
-      default:
-        return 'Không xác định';
+  // Hàm để lấy mô tả về nội dung môn học dựa trên khối lớp
+  const getSubjectContentDescription = (grade) => {
+    if (!grade) return null;
+    
+    const gradeContent = {
+      '10': {
+        'Toán': 'Chương trình Toán lớp 10 bao gồm Đại số và Hình học, giúp học sinh nắm vững kiến thức cơ bản về tập hợp, hàm số, phương trình, hệ phương trình và hình học phẳng Oxy.',
+        'Vật Lý': 'Chương trình Vật lý lớp 10 bao gồm các chủ đề về động học, động lực học, công và năng lượng, giúp học sinh hiểu rõ các quy luật vận động cơ bản.',
+        'Hóa Học': 'Chương trình Hóa học lớp 10 tập trung vào cấu tạo nguyên tử, bảng tuần hoàn, liên kết hóa học và các định luật cơ bản của hóa học.',
+        'Sinh Học': 'Chương trình Sinh học lớp 10 giới thiệu về tế bào học, sinh học phân tử và di truyền học cơ bản.',
+        'Địa Lý': 'Chương trình Địa lý lớp 10 nghiên cứu về địa lý tự nhiên của Việt Nam và thế giới, bao gồm các đặc điểm về địa hình, khí hậu và tài nguyên.',
+      },
+      '11': {
+        'Toán': 'Chương trình Toán lớp 11 nâng cao kiến thức với các chủ đề về giới hạn, đạo hàm, tích phân và hình học không gian.',
+        'Vật Lý': 'Chương trình Vật lý lớp 11 nghiên cứu về điện từ học, dao động và sóng, giúp học sinh hiểu rõ các hiện tượng vật lý phức tạp hơn.',
+        'Hóa Học': 'Chương trình Hóa học lớp 11 bao gồm các chủ đề về phản ứng oxi hóa khử, dung dịch, điện hóa và các nguyên tố phi kim.',
+        'Sinh Học': 'Chương trình Sinh học lớp 11 tập trung vào sinh lý học thực vật và động vật, sinh thái học và tiến hóa.',
+        'Địa Lý': 'Chương trình Địa lý lớp 11 nghiên cứu về địa lý kinh tế - xã hội của Việt Nam và thế giới.',
+      },
+      '12': {
+        'Toán': 'Chương trình Toán lớp 12 hoàn thiện kiến thức với các chủ đề về số phức, tổ hợp, xác suất, thống kê và nâng cao hình học không gian.',
+        'Vật Lý': 'Chương trình Vật lý lớp 12 nghiên cứu về vật lý lượng tử, vật lý hạt nhân và quang học sóng, giúp hoàn thiện kiến thức vật lý THPT.',
+        'Hóa Học': 'Chương trình Hóa học lớp 12 tập trung vào hóa học hữu cơ và các ứng dụng của hóa học trong đời sống và công nghiệp.',
+        'Sinh Học': 'Chương trình Sinh học lớp 12 nghiên cứu về di truyền nâng cao, công nghệ sinh học và ứng dụng của sinh học trong đời sống.',
+        'Địa Lý': 'Chương trình Địa lý lớp 12 hoàn thiện kiến thức về địa lý kinh tế - xã hội của các vùng miền Việt Nam và các khu vực trên thế giới.',
+      },
+    };
+    
+    // Lấy thông tin theo khối lớp và tên môn học
+    if (gradeContent[grade] && selectedSubject && gradeContent[grade][selectedSubject.name]) {
+      return gradeContent[grade][selectedSubject.name];
     }
+    
+    // Mô tả chung nếu không có thông tin cụ thể
+    return `Chương trình học lớp ${grade} theo chuẩn của Bộ Giáo dục và Đào tạo, giúp học sinh xây dựng nền tảng kiến thức vững chắc cho kỳ thi THPT Quốc gia.`;
   };
-  
-  if (subjectLoading) {
+
+  if (loading) {
     return (
       <PageWrapper theme={theme}>
         <Header />
@@ -420,36 +449,22 @@ const SubjectDetail = () => {
     );
   }
   
-  if (subjectError) {
+  if (error) {
     return (
       <PageWrapper theme={theme}>
         <Header />
         <Container>
-          <ErrorMessage theme={theme}>
-            <h3>Đã xảy ra lỗi</h3>
-            <p>{subjectError}</p>
-            <Link to="/subjects">Quay lại danh sách môn học</Link>
-          </ErrorMessage>
+          <ErrorDisplay message={error} />
+          <BackButton to="/subjects" theme={theme}>
+            <FaArrowLeft /> Quay lại danh sách môn học
+          </BackButton>
         </Container>
       </PageWrapper>
     );
   }
-  
-  if (!subject) {
-    return (
-      <PageWrapper theme={theme}>
-        <Header />
-        <Container>
-          <ErrorMessage theme={theme}>
-            <h3>Không tìm thấy môn học</h3>
-            <p>Môn học yêu cầu không tồn tại hoặc đã bị xóa.</p>
-            <Link to="/subjects">Quay lại danh sách môn học</Link>
-          </ErrorMessage>
-        </Container>
-      </PageWrapper>
-    );
-  }
-  
+
+  const subjectContent = selectedSubject?.content || getSubjectContentDescription(selectedSubject?.grade);
+
   return (
     <PageWrapper theme={theme}>
       <Header />
@@ -461,104 +476,175 @@ const SubjectDetail = () => {
         <BreadcrumbNav theme={theme}>
           <Link to="/subjects">Các môn học</Link>
           <span>›</span>
-          <span>{subject.title}</span>
+          <span>{selectedSubject?.name || 'Chi tiết môn học'}</span>
         </BreadcrumbNav>
         
-        <SubjectHeader
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <SubjectImage image={subject.image}>
-            <SubjectGradeBadge>{formatGradeLabel(subject.grade)}</SubjectGradeBadge>
-          </SubjectImage>
-          
-          <SubjectInfo>
-            <SubjectTitle theme={theme}>
-              <span>{subject.title}</span>
-            </SubjectTitle>
-            <SubjectDescription theme={theme}>{subject.description}</SubjectDescription>
+        {selectedSubject && (
+          <>
+            <SubjectHeader
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <SubjectImage image={getSubjectImage()}>
+                {selectedSubject.grade && (
+                  <GradeBadge>Lớp {selectedSubject.grade}</GradeBadge>
+                )}
+              </SubjectImage>
+              
+              <SubjectInfo>
+                <SubjectTitle theme={theme}>
+                  <span>{selectedSubject.name}</span>
+                </SubjectTitle>
+                
+                {selectedSubject.code && (
+                  <SubjectCode theme={theme}>
+                    Mã môn: {selectedSubject.code}
+                  </SubjectCode>
+                )}
+                
+                <SubjectDescription theme={theme}>
+                  {selectedSubject.description || 'Không có mô tả cho môn học này.'}
+                </SubjectDescription>
+                
+                <SubjectStats>
+                  <StatItem>
+                    <StatIcon theme={theme}>
+                      <FaGraduationCap />
+                    </StatIcon>
+                    <StatText theme={theme}>
+                      {selectedSubject.grade ? `Lớp ${selectedSubject.grade}` : 'Tất cả các lớp'}
+                    </StatText>
+                  </StatItem>
+                  
+                  <StatItem>
+                    <StatIcon theme={theme}>
+                      <FaRegFileAlt />
+                    </StatIcon>
+                    <StatText theme={theme}>{selectedSubject.examCount || 0} đề thi</StatText>
+                  </StatItem>
+                  
+                  <StatItem>
+                    <StatIcon theme={theme}>
+                      <FaUserAlt />
+                    </StatIcon>
+                    <StatText theme={theme}>{selectedSubject.teacherCount || 0} giáo viên</StatText>
+                  </StatItem>
+                </SubjectStats>
+              </SubjectInfo>
+            </SubjectHeader>
             
-            <SubjectStats>
-              <StatItem>
-                <StatIcon theme={theme}>📝</StatIcon>
-                <StatText theme={theme}>{subject.testsCount || 0} bài thi</StatText>
-              </StatItem>
-              <StatItem>
-                <StatIcon theme={theme}>👥</StatIcon>
-                <StatText theme={theme}>
-                  {subject.popularity === 'high' && 'Độ phổ biến: Cao'}
-                  {subject.popularity === 'medium' && 'Độ phổ biến: Trung bình'}
-                  {subject.popularity === 'low' && 'Độ phổ biến: Thấp'}
-                </StatText>
-              </StatItem>
-              <StatItem>
-                <StatIcon theme={theme}>🔄</StatIcon>
-                <StatText theme={theme}>Cập nhật: {subject.lastUpdated || 'Mới'}</StatText>
-              </StatItem>
-            </SubjectStats>
-          </SubjectInfo>
-        </SubjectHeader>
-        
-        <SectionTitle theme={theme}>
-          <span>📋</span> Danh sách đề thi
-        </SectionTitle>
-        
-        {examsLoading ? (
-          <LoadingContainer theme={theme}>
-            <LoadingSpinner size={40} />
-            <p>Đang tải danh sách đề thi...</p>
-          </LoadingContainer>
-        ) : examsError ? (
-          <ErrorMessage theme={theme}>
-            <h3>Đã xảy ra lỗi</h3>
-            <p>{examsError}</p>
-          </ErrorMessage>
-        ) : exams && exams.length > 0 ? (
-          <ExamsGrid>
-            {exams.map(exam => (
-              <ExamCard 
-                key={exam.id} 
-                theme={theme}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ExamContent>
-                  <ExamTitle theme={theme}>{exam.title}</ExamTitle>
-                  
-                  <ExamInfo theme={theme}>
-                    <span>{exam.questions || 0} câu hỏi</span>
-                    <span>{exam.time || 45} phút</span>
-                  </ExamInfo>
-                  
-                  <ExamDescription theme={theme}>{exam.description || 'Không có mô tả'}</ExamDescription>
-                  
-                  <ExamMeta theme={theme}>
-                    <ExamDifficulty>
-                      <DifficultyDot level={exam.difficulty} />
-                      <DifficultyText theme={theme}>
-                        Độ khó: {getDifficultyLabel(exam.difficulty)}
-                      </DifficultyText>
-                    </ExamDifficulty>
-                    
-                    <StartButton to={`/exams/${exam.id}`}>
-                      Bắt đầu làm bài
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path fillRule="evenodd" d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"/>
-                      </svg>
-                    </StartButton>
-                  </ExamMeta>
-                </ExamContent>
-              </ExamCard>
-            ))}
-          </ExamsGrid>
-        ) : (
-          <NoExamsMessage theme={theme}>
-            <h3>Chưa có đề thi</h3>
-            <p>Hiện tại chưa có đề thi nào cho môn học này. Vui lòng quay lại sau.</p>
-          </NoExamsMessage>
+            <SectionTitle theme={theme}>
+              <FaInfoCircle />
+              Thông tin môn học
+            </SectionTitle>
+            
+            <DetailSection theme={theme}>
+              <DetailItem>
+                <DetailLabel theme={theme}>Khối lớp</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.grade ? (
+                    <GradeTag>Lớp {selectedSubject.grade}</GradeTag>
+                  ) : (
+                    'Tất cả các lớp'
+                  )}
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Mã môn học</DetailLabel>
+                <DetailValue theme={theme}>{selectedSubject.code || 'Không có mã'}</DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Số tiết/tuần</DetailLabel>
+                <DetailValue theme={theme}>{selectedSubject.numberOfLessons || '3-5'} tiết</DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Loại môn học</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.type || (selectedSubject.isOptional ? 'Môn tự chọn' : 'Môn bắt buộc')}
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Trạng thái</DetailLabel>
+                <DetailValue theme={theme}>
+                  <span style={{ 
+                    color: selectedSubject.isActive ? '#34a853' : '#ea4335',
+                    fontWeight: 500
+                  }}>
+                    {selectedSubject.isActive ? '● Đang hoạt động' : '● Đã khóa'}
+                  </span>
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Năm học</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.schoolYear || '2025-2026'}
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel theme={theme}>Ngày cập nhật</DetailLabel>
+                <DetailValue theme={theme}>
+                  {selectedSubject.updatedAt ? new Date(selectedSubject.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                </DetailValue>
+              </DetailItem>
+            </DetailSection>
+            
+            <SectionTitle theme={theme}>
+              <FaBookOpen />
+              Nội dung chương trình học
+            </SectionTitle>
+            
+            <ContentBox theme={theme}>
+              {subjectContent ? (
+                <div dangerouslySetInnerHTML={{ __html: subjectContent }} />
+              ) : (
+                <NoContentMessage theme={theme}>
+                  Chưa có thông tin chi tiết về nội dung chương trình học của môn này.
+                </NoContentMessage>
+              )}
+            </ContentBox>
+            
+            <ButtonsRow>
+              <BackButton to="/subjects" theme={theme}>
+                <FaArrowLeft /> Quay lại danh sách môn học
+              </BackButton>
+              
+              <div>
+                <ActionButton onClick={() => navigate(`/subjects/${id}/exams`)} style={{ marginRight: '1rem' }}>
+                  <FaRegFileAlt /> Xem danh sách đề thi
+                </ActionButton>
+                
+                {selectedSubject.canEdit && (
+                  <ActionButton 
+                    onClick={() => navigate(`/subject/edit/${id}`)}
+                    style={{ background: theme === 'dark' ? '#2d3748' : '#f5f7fa', color: theme === 'dark' ? '#e2e8f0' : '#4a5568' }}
+                  >
+                    <FaChalkboardTeacher /> Chỉnh sửa môn học
+                  </ActionButton>
+                )}
+              </div>
+            </ButtonsRow>
+          </>
         )}
+        
+        {/* Thông tin truy cập */}
+        <div style={{ 
+          marginTop: '3rem',
+          fontSize: '0.8rem',
+          color: theme === 'dark' ? '#718096' : '#a0aec0',
+          textAlign: 'right'
+        }}>
+          Truy cập vào lúc: {currentTime} | Người dùng: {currentUser}
+        </div>
       </Container>
+      
+      <Footer />
     </PageWrapper>
   );
 };

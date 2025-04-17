@@ -1,40 +1,45 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 // Cập nhật thời gian và người dùng hiện tại
-const currentTime = "2025-04-08 10:30:14";
+const currentTime = new Date().toISOString().replace('T', ' ').substring(0, 19);
 const currentUser = "vinhsonvlog";
 
 const ProtectedRoute = ({ children, roles = [], role }) => {
+  const location = useLocation();
   // QUAN TRỌNG: useSelector phải được gọi ở cấp cao nhất của component
   // KHÔNG đặt nó sau điều kiện if
-  const { isAuthenticated, user } = useSelector(state => state.auth);
+  const { isAuthenticated, user, loading } = useSelector(state => state.auth);
   
   // Log cho mục đích gỡ lỗi
   console.log(`ProtectedRoute check at ${currentTime} by ${currentUser}:`, {
     roles, 
     role,
     childrenType: children?.type?.name || 'Unknown',
-    authState: { isAuthenticated, userRole: user?.role }
+    authState: { isAuthenticated, userRole: user?.role, loading }
   });
   
   // === DEV MODE ===
   // Set thành true để bỏ qua kiểm tra xác thực trong quá trình phát triển
-  const DEV_MODE = true;
+  const DEV_MODE = false; // Tắt DEV_MODE để sử dụng JWT authentication
   
   if (DEV_MODE) {
     console.log(`[${currentTime}] DEV MODE enabled - skipping authentication`);
     return children;
   }
   
-  // === PRODUCTION MODE ===
-  // Hooks đã được gọi trước tất cả các điều kiện rồi, nên phần này an toàn
+  // Hiển thị loading nếu đang kiểm tra xác thực
+  if (loading) {
+    return <div>Loading...</div>;
+  }
   
   // Kiểm tra xác thực
   if (!isAuthenticated) {
     console.log(`User not authenticated, redirecting to login`);
-    return <Navigate to="/login" replace />;
+    // Lưu lại đường dẫn hiện tại để chuyển hướng lại sau khi đăng nhập
+    sessionStorage.setItem('redirectUrl', location.pathname);
+    return <Navigate to="/" replace />;
   }
   
   // Kiểm tra roles array

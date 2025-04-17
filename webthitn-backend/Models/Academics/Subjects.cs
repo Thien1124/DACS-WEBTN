@@ -37,6 +37,10 @@ namespace webthitn_backend.Models
         /// <summary>
         /// Trạng thái của môn học: true - đang hoạt động, false - đã vô hiệu hóa
         /// </summary>
+        /// 
+        [Required]
+        [Range(10, 12)] // Giới hạn giá trị từ 10 đến 12
+        public int GradeLevel { get; set; }
         public bool IsActive { get; set; } = true;
 
         /// <summary>

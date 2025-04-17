@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaList } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const NavigationContainer = styled.div`
   display: grid;
@@ -53,6 +54,13 @@ const Title = styled.h2`
 
 const SubjectNavigation = ({ theme = 'light', showOnlyCreateButton = false }) => {
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
+  
+  const hasAccessRights = () => {
+    if (!user || !user.role) return false;
+    const role = user.role.toLowerCase();
+    return role === 'admin' || role === 'teacher';
+  };
   
   // Cập nhật thời gian và user
   const currentTime = "2025-04-08 11:22:37";
@@ -62,47 +70,32 @@ const SubjectNavigation = ({ theme = 'light', showOnlyCreateButton = false }) =>
   React.useEffect(() => {
     console.log(`SubjectNavigation component accessed at: ${currentTime} by user: ${currentUser}`);
   }, []);
-  
+  const handleCreateClick = (e) => {
+    e.preventDefault();
+    console.log('Navigating to subject creation page...');
+    try {
+      navigate('/subject/create');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
   return (
     <>
-      <Title theme={theme}>Quản lý môn học</Title>
-      
-      <NavigationContainer>
-        {/* Luôn hiển thị nút Tạo Môn Học Mới */}
-        <NavButton
-          theme={theme}
-          onClick={() => navigate('/subject/create')}
-        >
-          <FaPlus /> Tạo Môn Học Mới
-        </NavButton>
-        
-        {/* Chỉ hiển thị các nút khác nếu showOnlyCreateButton = false */}
-        {!showOnlyCreateButton && (
-          <>
+    {hasAccessRights() && (
+        <>
+          <Title theme={theme}>Quản lý môn học</Title>
+          
+          <NavigationContainer>
             <NavButton
               theme={theme}
-              onClick={() => navigate('/subject/edit')}
+              onClick={handleCreateClick}
             >
-              <FaEdit /> Cập Nhật Môn Học
+              <FaPlus /> Tạo Môn Học Mới
             </NavButton>
-            
-            <NavButton
-              theme={theme}
-              onClick={() => navigate('/subject/delete')}
-            >
-              <FaTrash /> Xóa Môn Học
-            </NavButton>
-            
-            <NavButton
-              theme={theme}
-              onClick={() => navigate('/subject/toggle-status')}
-            >
-              <FaToggleOn /> Trạng Thái Môn Học
-            </NavButton>
-          </>
-        )}
-      </NavigationContainer>
-    </>
+          </NavigationContainer>
+        </>
+      )}
+      </>
   );
 };
 

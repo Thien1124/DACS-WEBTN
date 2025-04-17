@@ -74,6 +74,12 @@ namespace webthitn_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("AllowPartialGrading")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AutoGradeShortAnswer")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -102,10 +108,17 @@ namespace webthitn_backend.Migrations
                     b.Property<decimal?>("PassScore")
                         .HasColumnType("decimal(5, 2)");
 
+                    b.Property<string>("ScoringConfig")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("ShowAnswers")
                         .HasColumnType("bit");
 
                     b.Property<bool>("ShowResult")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShuffleOptions")
                         .HasColumnType("bit");
 
                     b.Property<bool>("ShuffleQuestions")
@@ -142,58 +155,6 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Exams");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.ExamActivity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ActivityType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AdditionalData")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ExamResultId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("IPAddress")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamResultId");
-
-                    b.ToTable("ExamActivities");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.ExamQuestion", b =>
@@ -278,11 +239,24 @@ namespace webthitn_backend.Migrations
                     b.Property<bool>("IsSubmittedManually")
                         .HasColumnType("bit");
 
+                    b.Property<int>("PartiallyCorrectAnswers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PendingManualGradeCount")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PercentageScore")
                         .HasColumnType("decimal(5, 2)");
 
+                    b.Property<string>("QuestionTypeStatistics")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Score")
                         .HasColumnType("decimal(5, 2)");
+
+                    b.Property<int?>("SessionId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("datetime2");
@@ -306,66 +280,6 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("ExamResults");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.ExamSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("EndTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ExamResultId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("IPAddress")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PausedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SessionData")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TotalPausedTime")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamResultId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("ExamSessions");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.ExamType", b =>
@@ -507,6 +421,14 @@ namespace webthitn_backend.Migrations
                     b.Property<int>("QuestionType")
                         .HasColumnType("int");
 
+                    b.Property<string>("ScoringConfig")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShortAnswerConfig")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
@@ -607,6 +529,9 @@ namespace webthitn_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImagePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -614,14 +539,21 @@ namespace webthitn_backend.Migrations
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("bit");
 
-                    b.Property<string>("MatchingValue")
+                    b.Property<bool>("IsPartOfTrueFalseGroup")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ScorePercentage")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -696,14 +628,14 @@ namespace webthitn_backend.Migrations
                     b.Property<decimal?>("ManualScore")
                         .HasColumnType("decimal(5, 2)");
 
-                    b.Property<string>("MatchingData")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("MaxScore")
                         .HasColumnType("decimal(5, 2)");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("Order")
+                        .HasColumnType("int");
 
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
@@ -711,10 +643,16 @@ namespace webthitn_backend.Migrations
                     b.Property<int>("QuestionOrder")
                         .HasColumnType("int");
 
+                    b.Property<bool>("RequiresManualReview")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("Score")
                         .HasColumnType("decimal(5, 2)");
 
-                    b.Property<string>("SelectedOptionIds")
+                    b.Property<int?>("SelectedOptionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShortAnswerEvaluation")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
@@ -726,6 +664,12 @@ namespace webthitn_backend.Migrations
                     b.Property<string>("TextAnswer")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TrueFalseAnswers")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TrueFalseCorrectCount")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ExamQuestionId");
@@ -733,6 +677,8 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("ExamResultId");
 
                     b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId");
 
                     b.ToTable("StudentAnswers");
                 });
@@ -748,15 +694,18 @@ namespace webthitn_backend.Migrations
                     b.Property<DateTime>("ChangedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DeviceInfo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("IPAddress")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("MatchingData")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
 
-                    b.Property<string>("SelectedOptionIds")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("SelectedOptionId")
+                        .HasColumnType("int");
 
                     b.Property<string>("SessionId")
                         .HasMaxLength(100)
@@ -768,11 +717,14 @@ namespace webthitn_backend.Migrations
                     b.Property<string>("TextAnswer")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TrueFalseAnswers")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StudentAnswerId");
 
-                    b.ToTable("StudentAnswerHistories");
+                    b.ToTable("StudentAnswerHistory");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.Subject", b =>
@@ -796,6 +748,9 @@ namespace webthitn_backend.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("GradeLevel")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -815,83 +770,272 @@ namespace webthitn_backend.Migrations
                         new
                         {
                             Id = 1,
-                            Code = "MATH",
+                            Code = "MATH10",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Toán",
+                            Description = "Môn Toán Lớp 10",
+                            GradeLevel = 10,
                             IsActive = true,
-                            Name = "Toán"
+                            Name = "Toán 10"
                         },
                         new
                         {
                             Id = 2,
-                            Code = "PHY",
+                            Code = "PHY10",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Vật Lý",
+                            Description = "Môn Vật Lý Lớp 10",
+                            GradeLevel = 10,
                             IsActive = true,
-                            Name = "Vật Lý"
+                            Name = "Vật Lý 10"
                         },
                         new
                         {
                             Id = 3,
-                            Code = "CHEM",
+                            Code = "CHEM10",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Hóa Học",
+                            Description = "Môn Hóa Học Lớp 10",
+                            GradeLevel = 10,
                             IsActive = true,
-                            Name = "Hóa Học"
+                            Name = "Hóa Học 10"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Code = "BIO10",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Sinh Học Lớp 10",
+                            GradeLevel = 10,
+                            IsActive = true,
+                            Name = "Sinh Học 10"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Code = "LIT10",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Ngữ Văn Lớp 10",
+                            GradeLevel = 10,
+                            IsActive = true,
+                            Name = "Ngữ Văn 10"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Code = "ENG10",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Tiếng Anh Lớp 10",
+                            GradeLevel = 10,
+                            IsActive = true,
+                            Name = "Tiếng Anh 10"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Code = "HIST10",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Lịch Sử Lớp 10",
+                            GradeLevel = 10,
+                            IsActive = true,
+                            Name = "Lịch Sử 10"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Code = "GEO10",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Địa Lý Lớp 10",
+                            GradeLevel = 10,
+                            IsActive = true,
+                            Name = "Địa Lý 10"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Code = "GDKT&PL10",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Giáo dục kinh tế và pháp luật Lớp 10",
+                            GradeLevel = 10,
+                            IsActive = true,
+                            Name = "GDKT&PL 10"
                         },
                         new
                         {
                             Id = 4,
-                            Code = "BIO",
+                            Code = "MATH11",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Sinh Học",
+                            Description = "Môn Toán Lớp 11",
+                            GradeLevel = 11,
                             IsActive = true,
-                            Name = "Sinh Học"
+                            Name = "Toán 11"
                         },
                         new
                         {
                             Id = 5,
-                            Code = "LIT",
+                            Code = "PHY11",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Ngữ Văn",
+                            Description = "Môn Vật Lý Lớp 11",
+                            GradeLevel = 11,
                             IsActive = true,
-                            Name = "Ngữ Văn"
+                            Name = "Vật Lý 11"
                         },
                         new
                         {
                             Id = 6,
-                            Code = "ENG",
+                            Code = "CHEM11",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Tiếng Anh",
+                            Description = "Môn Hóa Học Lớp 11",
+                            GradeLevel = 11,
                             IsActive = true,
-                            Name = "Tiếng Anh"
+                            Name = "Hóa Học 11"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Code = "BIO11",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Sinh Học Lớp 11",
+                            GradeLevel = 11,
+                            IsActive = true,
+                            Name = "Sinh Học 11"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Code = "LIT11",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Ngữ Văn Lớp 11",
+                            GradeLevel = 11,
+                            IsActive = true,
+                            Name = "Ngữ Văn 11"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Code = "ENG11",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Tiếng Anh Lớp 11",
+                            GradeLevel = 11,
+                            IsActive = true,
+                            Name = "Tiếng Anh 11"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Code = "HIST11",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Lịch Sử Lớp 11",
+                            GradeLevel = 11,
+                            IsActive = true,
+                            Name = "Lịch Sử 11"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Code = "GEO11",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Địa Lý Lớp 11",
+                            GradeLevel = 11,
+                            IsActive = true,
+                            Name = "Địa Lý 11"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Code = "GDKT&PL11",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Giáo dục kinh tế và pháp luật Lớp 11",
+                            GradeLevel = 11,
+                            IsActive = true,
+                            Name = "GDKT&PL 11"
                         },
                         new
                         {
                             Id = 7,
-                            Code = "HIST",
+                            Code = "MATH12",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Lịch Sử",
+                            Description = "Môn Toán Lớp 12",
+                            GradeLevel = 12,
                             IsActive = true,
-                            Name = "Lịch Sử"
+                            Name = "Toán 12"
                         },
                         new
                         {
                             Id = 8,
-                            Code = "GEO",
+                            Code = "PHY12",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Địa Lý",
+                            Description = "Môn Vật Lý Lớp 12",
+                            GradeLevel = 12,
                             IsActive = true,
-                            Name = "Địa Lý"
+                            Name = "Vật Lý 12"
                         },
                         new
                         {
                             Id = 9,
-                            Code = "CIVIC",
+                            Code = "CHEM12",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Môn Giáo dục công dân",
+                            Description = "Môn Hóa Học Lớp 12",
+                            GradeLevel = 12,
                             IsActive = true,
-                            Name = "GDCD"
+                            Name = "Hóa Học 12"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Code = "BIO12",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Sinh Học Lớp 12",
+                            GradeLevel = 12,
+                            IsActive = true,
+                            Name = "Sinh Học 12"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Code = "LIT12",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Ngữ Văn Lớp 12",
+                            GradeLevel = 12,
+                            IsActive = true,
+                            Name = "Ngữ Văn 12"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Code = "ENG12",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Tiếng Anh Lớp 12",
+                            GradeLevel = 12,
+                            IsActive = true,
+                            Name = "Tiếng Anh 12"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Code = "HIST12",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Lịch Sử Lớp 12",
+                            GradeLevel = 12,
+                            IsActive = true,
+                            Name = "Lịch Sử 12"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Code = "GEO12",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Môn Địa Lý Lớp 12",
+                            GradeLevel = 12,
+                            IsActive = true,
+                            Name = "Địa Lý 12"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Code = "GDKT&PL12",
+                            CreatedAt = new DateTime(2025, 4, 13, 15, 53, 52, 0, DateTimeKind.Unspecified),
+                            Description = "Giáo dục kinh tế và pháp luật Lớp 12",
+                            GradeLevel = 12,
+                            IsActive = true,
+                            Name = "GDKT&PL 12"
                         });
                 });
 
@@ -992,7 +1136,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$8EofiCh2B7/l4znGFzdvbu9zs9pU0xj.yrTJ.gKKZw2QnJb9EB80.",
+                            Password = "$2a$11$nuZo4EJrXIv77pJfOI717u2OpAmslirkpemcPuBXYxjGAsa2QXU6e",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1007,7 +1151,7 @@ namespace webthitn_backend.Migrations
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$2j4mu42e9X9x4rBaHNZnZuW6SEzquupJenslRoZu0zweCrWJ1lh3S",
+                            Password = "$2a$11$EVQEwvyrm9N2psm9ZPOe.eDoC.eZKGsj52ifsmisUz32aY/zyhJ8i",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1021,7 +1165,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$1RxW5fIaeetk.rU7Vi85xOe4uFBHU9iVhGANzO7Lj6wl5kcbw0q4C",
+                            Password = "$2a$11$/Y3qhgcDtzCkbJQYTdZPV.PwuUCWG0UqmyGiBCfp8BwJ0IJN8oycy",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",
@@ -1071,17 +1215,6 @@ namespace webthitn_backend.Migrations
                     b.Navigation("Subject");
                 });
 
-            modelBuilder.Entity("webthitn_backend.Models.ExamActivity", b =>
-                {
-                    b.HasOne("webthitn_backend.Models.ExamResult", "ExamResult")
-                        .WithMany()
-                        .HasForeignKey("ExamResultId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ExamResult");
-                });
-
             modelBuilder.Entity("webthitn_backend.Models.ExamQuestion", b =>
                 {
                     b.HasOne("webthitn_backend.Models.Exam", "Exam")
@@ -1106,13 +1239,12 @@ namespace webthitn_backend.Migrations
                     b.HasOne("webthitn_backend.Models.Exam", "Exam")
                         .WithMany("ExamResults")
                         .HasForeignKey("ExamId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("webthitn_backend.Models.Users.User", "GradedBy")
                         .WithMany()
-                        .HasForeignKey("GradedById")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("GradedById");
 
                     b.HasOne("webthitn_backend.Models.Users.User", "Student")
                         .WithMany("ExamResults")
@@ -1123,25 +1255,6 @@ namespace webthitn_backend.Migrations
                     b.Navigation("Exam");
 
                     b.Navigation("GradedBy");
-
-                    b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.ExamSession", b =>
-                {
-                    b.HasOne("webthitn_backend.Models.ExamResult", "ExamResult")
-                        .WithMany("ExamSessions")
-                        .HasForeignKey("ExamResultId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("webthitn_backend.Models.Users.User", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ExamResult");
 
                     b.Navigation("Student");
                 });
@@ -1173,7 +1286,7 @@ namespace webthitn_backend.Migrations
                         .WithMany("Questions")
                         .HasForeignKey("LessonId");
 
-                    b.HasOne("webthitn_backend.Models.QuestionLevel", "QuestionLevel")
+                    b.HasOne("webthitn_backend.Models.QuestionLevel", "Level")
                         .WithMany("Questions")
                         .HasForeignKey("QuestionLevelId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1189,7 +1302,7 @@ namespace webthitn_backend.Migrations
 
                     b.Navigation("Creator");
 
-                    b.Navigation("QuestionLevel");
+                    b.Navigation("Level");
 
                     b.Navigation("Subject");
                 });
@@ -1210,7 +1323,7 @@ namespace webthitn_backend.Migrations
                     b.HasOne("webthitn_backend.Models.ExamQuestion", "ExamQuestion")
                         .WithMany()
                         .HasForeignKey("ExamQuestionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("webthitn_backend.Models.ExamResult", "ExamResult")
@@ -1222,14 +1335,20 @@ namespace webthitn_backend.Migrations
                     b.HasOne("webthitn_backend.Models.Question", "Question")
                         .WithMany()
                         .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.QuestionOption", "SelectedOption")
+                        .WithMany()
+                        .HasForeignKey("SelectedOptionId");
 
                     b.Navigation("ExamQuestion");
 
                     b.Navigation("ExamResult");
 
                     b.Navigation("Question");
+
+                    b.Navigation("SelectedOption");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.StudentAnswerHistory", b =>
@@ -1257,8 +1376,6 @@ namespace webthitn_backend.Migrations
 
             modelBuilder.Entity("webthitn_backend.Models.ExamResult", b =>
                 {
-                    b.Navigation("ExamSessions");
-
                     b.Navigation("StudentAnswers");
                 });
 

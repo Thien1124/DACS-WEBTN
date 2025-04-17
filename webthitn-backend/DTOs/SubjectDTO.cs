@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace webthitn_backend.DTOs
 {
@@ -11,6 +12,7 @@ namespace webthitn_backend.DTOs
         public string Name { get; set; }
         public string Code { get; set; }
         public string Description { get; set; }
+        public int GradeLevel { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
@@ -55,6 +57,9 @@ namespace webthitn_backend.DTOs
         public string Name { get; set; }
         public string Code { get; set; }
         public string Description { get; set; }
+        [Required]
+        [Range(10, 12)] // Giới hạn giá trị từ 10 đến 12
+        public int GradeLevel { get; set; }
     }
 
     /// <summary>
@@ -65,6 +70,9 @@ namespace webthitn_backend.DTOs
         public string Name { get; set; }
         public string Code { get; set; }
         public string Description { get; set; }
+        [Required]
+    [Range(10, 12)] // Giới hạn giá trị từ 10 đến 12
+    public int GradeLevel { get; set; }
     }
 
     /// <summary>

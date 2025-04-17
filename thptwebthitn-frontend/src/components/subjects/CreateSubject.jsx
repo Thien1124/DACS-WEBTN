@@ -75,6 +75,22 @@ const TextArea = styled.textarea`
   }
 `;
 
+const Select = styled.select`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  border-radius: 5px;
+  font-size: 1rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : 'white'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme === 'dark' ? '#4da3ff' : '#4285f4'};
+    box-shadow: 0 0 0 2px ${props => props.theme === 'dark' ? 'rgba(77, 163, 255, 0.2)' : 'rgba(66, 133, 244, 0.2)'};
+  }
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
   justify-content: space-between;
@@ -147,7 +163,8 @@ const CreateSubject = ({ theme: propTheme }) => {
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    description: ''
+    description: '',
+    grade: ''
   });
 
   // Updated time and user
@@ -265,7 +282,21 @@ const handleSubmit = async (e) => {
               disabled={loading}
             />
           </FormGroup>
-          
+          <FormGroup>
+            <Label theme={theme}>Khối lớp</Label>
+            <Select
+              name="grade"
+              value={formData.grade}
+              onChange={handleChange}
+              theme={theme}
+              disabled={loading}
+            >
+              <option value="">-- Chọn khối lớp --</option>
+              <option value="10">Lớp 10</option>
+              <option value="11">Lớp 11</option>
+              <option value="12">Lớp 12</option>
+            </Select>
+          </FormGroup>
           <FormGroup>
             <Label theme={theme}>Mô tả</Label>
             <TextArea

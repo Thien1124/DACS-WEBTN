@@ -438,4 +438,92 @@ namespace webthitn_backend.DTOs
         /// </summary>
         public decimal PenaltyForWrongAnswer { get; set; } = 0;
     }
+
+    /// <summary>
+    /// DTO chứa thông tin chi tiết của một câu hỏi
+    /// </summary>
+    public class ExamQuestionDetailDTO
+    {
+        /// <summary>
+        /// ID của câu hỏi
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
+        /// ID của liên kết giữa câu hỏi và bài thi
+        /// </summary>
+        public int ExamQuestionId { get; set; }
+
+        /// <summary>
+        /// Nội dung câu hỏi
+        /// </summary>
+        public string Content { get; set; }
+
+        /// <summary>
+        /// Loại câu hỏi: 1 = Trắc nghiệm một đáp án, 3 = Trả lời ngắn, 5 = Đúng-sai nhiều ý
+        /// </summary>
+        public int QuestionType { get; set; }
+
+        /// <summary>
+        /// Giải thích đáp án
+        /// </summary>
+        public string Explanation { get; set; }
+
+        /// <summary>
+        /// Thứ tự câu hỏi trong bài thi
+        /// </summary>
+        public int OrderIndex { get; set; }
+
+        /// <summary>
+        /// Điểm số của câu hỏi
+        /// </summary>
+        public decimal Score { get; set; }
+
+        /// <summary>
+        /// Danh sách các lựa chọn của câu hỏi
+        /// </summary>
+        public List<QuestionOptionDTO> Options { get; set; }
+    }
+
+    /// <summary>
+    /// DTO chứa thông tin của một lựa chọn trong câu hỏi
+    /// </summary>
+    public class ExamQuestionOptionDTO
+    {
+        /// <summary>
+        /// ID của lựa chọn
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
+        /// Nội dung của lựa chọn
+        /// </summary>
+        public string Content { get; set; }
+
+        /// <summary>
+        /// Cờ báo hiệu lựa chọn đúng
+        /// </summary>
+        public bool IsCorrect { get; set; }
+
+        /// <summary>
+        /// Thứ tự của lựa chọn
+        /// </summary>
+        public int OrderIndex { get; set; }
+    }
+
+    /// <summary>
+    /// DTO chứa thông tin chi tiết của một bài thi kèm danh sách câu hỏi
+    /// </summary>
+    public class ExamDetailDTO : ExamListDTO
+    {
+        /// <summary>
+        /// Cấu hình tính điểm (JSON)
+        /// </summary>
+        public string ScoringConfig { get; set; }
+
+        /// <summary>
+        /// Danh sách câu hỏi trong bài thi
+        /// </summary>
+        public List<ExamQuestionDetailDTO> Questions { get; set; }
+    }
 }

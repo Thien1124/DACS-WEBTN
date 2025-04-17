@@ -1,127 +1,168 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as examService from '../services/examService';
+import { createSlice } from '@reduxjs/toolkit';
+import { mockExam, mockExamResult } from '../data/mockExamData';
 
-// Async thunks
-export const fetchExams = createAsyncThunk(
-  'exam/fetchExams',
-  async (filters) => {
-    const response = await examService.getAllExams(filters);
-    return response;
-  }
-);
+// Mô phỏng async thunks cho testing UI
+export const fetchExamWithQuestions = () => {
+  return async (dispatch) => {
+    dispatch(setLoading(true));
+    
+    try {
+      // Giả lập trễ mạng
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Set dữ liệu mẫu từ mockExam
+      dispatch(setCurrentExam(mockExam));
+      dispatch(setExamQuestions(mockExam.questions));
+      return mockExam;
+    } catch (error) {
+      dispatch(setError('Không thể tải bài thi'));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+};
 
-export const fetchExamsForStudent = createAsyncThunk(
-  'exam/fetchExamsForStudent',
-  async ({ subjectId, filters }) => {
-    const response = await examService.getExamsForStudent(subjectId, filters);
-    return response;
-  }
-);
+export const startExamSession = () => {
+  return async (dispatch) => {
+    dispatch(setLoading(true));
+    
+    try {
+      // Giả lập trễ mạng
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Tính thời gian bắt đầu và kết thúc
+      const startTime = new Date();
+      const endTime = new Date(startTime.getTime() + mockExam.duration * 60 * 1000);
+      
+      const examWithTime = {
+        ...mockExam,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      };
+      
+      dispatch(setCurrentExam(examWithTime));
+      return { success: true, exam: examWithTime };
+    } catch (error) {
+      dispatch(setError('Không thể bắt đầu bài thi'));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+};
 
-export const startExamSession = createAsyncThunk(
-  'exam/startExam',
-  async (examId) => {
-    const response = await examService.startExam(examId);
-    return response;
-  }
-);
-
-export const submitExam = createAsyncThunk(
-  'exam/submitExam',
-  async ({ examId, answers, timeSpent }) => {
-    const response = await examService.submitExam(examId, answers, timeSpent);
-    return response;
-  }
-);
-
-export const fetchExamHistory = createAsyncThunk(
-  'exam/fetchHistory',
-  async (filters) => {
-    const response = await examService.getExamHistory(filters);
-    return response;
-  }
-);
-
-export const fetchExamResult = createAsyncThunk(
-  'exam/fetchResult',
-  async (resultId) => {
-    const response = await examService.getExamResult(resultId);
-    return response;
-  }
-);
+export const submitExamAnswers = () => {
+  return async (dispatch, getState) => {
+    dispatch(setLoading(true));
+    
+    try {
+      // Giả lập trễ mạng
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const { userAnswers } = getState().exams;
+      
+      // Tính toán các câu trả lời đúng
+      const correctCount = mockExam.questions.reduce((count, question) => {
+        if (userAnswers[question.id] === question.correctOption) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
+      
+      // Tính điểm
+      const score = Math.round((correctCount / mockExam.questions.length) * 100);
+      
+      // Tạo kết quả bài thi
+      const result = {
+        ...mockExamResult,
+        score,
+        totalCorrect: correctCount,
+        totalQuestions: mockExam.questions.length,
+        completedAt: new Date().toISOString(),
+        // Chuyển đổi câu trả lời từ những gì người dùng đã chọn
+        answers: Object.keys(userAnswers).map(questionId => {
+          const qId = parseInt(questionId);
+          const question = mockExam.questions.find(q => q.id === qId);
+          
+          return {
+            questionId: qId,
+            selectedOption: userAnswers[qId],
+            isCorrect: question?.correctOption === userAnswers[qId]
+          };
+        })
+      };
+      
+      dispatch(setExamResult(result));
+      return result;
+      
+    } catch (error) {
+      dispatch(setError('Không thể nộp bài'));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+};
 
 const examSlice = createSlice({
-  name: 'exam',
+  name: 'exams',
   initialState: {
-    items: [],
+    list: [],
     currentExam: null,
-    examHistory: [],
-    currentResult: null,
+    examQuestions: [],
+    userAnswers: {},
+    examResult: null,
     loading: false,
     error: null,
     pagination: {
       currentPage: 1,
       totalPages: 1,
       totalItems: 0
-    },
-    activeSession: null
-  },
-  reducers: {
-    resetExamState: (state) => {
-      state.currentExam = null;
-      state.activeSession = null;
-      state.error = null;
-    },
-    updateExamTimer: (state, action) => {
-      if (state.activeSession) {
-        state.activeSession.timeRemaining = action.payload;
-      }
     }
   },
-  extraReducers: (builder) => {
-    builder
-      // Fetch exams
-      .addCase(fetchExams.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchExams.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload.items;
-        state.pagination = action.payload.pagination;
-      })
-      .addCase(fetchExams.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      })
-
-      // Start exam
-      .addCase(startExamSession.fulfilled, (state, action) => {
-        state.activeSession = {
-          ...action.payload,
-          startTime: new Date().toISOString(),
-          timeRemaining: action.payload.duration * 60 // Convert to seconds
-        };
-      })
-
-      // Submit exam
-      .addCase(submitExam.fulfilled, (state, action) => {
-        state.activeSession = null;
-        state.currentResult = action.payload;
-      })
-
-      // Fetch history
-      .addCase(fetchExamHistory.fulfilled, (state, action) => {
-        state.examHistory = action.payload.items;
-        state.pagination = action.payload.pagination;
-      })
-
-      // Fetch result
-      .addCase(fetchExamResult.fulfilled, (state, action) => {
-        state.currentResult = action.payload;
-      });
+  reducers: {
+    setCurrentExam: (state, action) => {
+      state.currentExam = action.payload;
+    },
+    setExamQuestions: (state, action) => {
+      state.examQuestions = action.payload;
+    },
+    setUserAnswer: (state, action) => {
+      const { questionId, answerId } = action.payload;
+      state.userAnswers = {
+        ...state.userAnswers,
+        [questionId]: answerId
+      };
+    },
+    resetUserAnswers: (state) => {
+      state.userAnswers = {};
+    },
+    setExamResult: (state, action) => {
+      state.examResult = action.payload;
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+    },
+    clearCurrentExam: (state) => {
+      state.currentExam = null;
+      state.examQuestions = [];
+    }
   }
 });
 
-export const { resetExamState, updateExamTimer } = examSlice.actions;
+export const { 
+  setCurrentExam, 
+  setExamQuestions, 
+  setUserAnswer, 
+  resetUserAnswers,
+  setExamResult,
+  setLoading,
+  setError,
+  clearCurrentExam
+} = examSlice.actions;
 
 export default examSlice.reducer;
