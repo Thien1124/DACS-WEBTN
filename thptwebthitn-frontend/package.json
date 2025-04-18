@@ -17,12 +17,12 @@
     "express": "^5.1.0",
     "framer-motion": "^12.6.2",
     "jsonwebtoken": "^9.0.2",
+    "mathjax-react": "^2.0.1",
     "mongoose": "^8.13.2",
-    "react": "^19.0.0",
+    "react": "^18.2.0",
     "react-bootstrap": "^2.10.9",
-    "react-dom": "^19.0.0",
+    "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
-    "react-mathjax": "^1.0.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.5.0",
     "react-scripts": "^5.0.1",
@@ -55,6 +55,7 @@
     ]
   },
   "devDependencies": {
-    "http-proxy-middleware": "^3.0.5"
+    "http-proxy-middleware": "^3.0.5",
+    "redux-thunk": "^3.1.0"
   }
 }

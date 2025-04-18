@@ -1,5 +1,5 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 // Cập nhật thời gian và người dùng hiện tại
@@ -64,6 +64,33 @@ const ProtectedRoute = ({ children, roles = [], role }) => {
   }
   
   console.log(`Access granted to protected route`);
+  return children;
+};
+
+// Trong AdminRoute
+const AdminRoute = ({ children }) => {
+  const { user, isAuthenticated } = useSelector(state => state.auth);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Đọc trực tiếp từ localStorage để double-check
+    const storedRole = localStorage.getItem('user_role');
+    const userData = JSON.parse(localStorage.getItem('user_data'));
+    
+    // Kiểm tra xem người dùng có quyền admin từ cả Redux và localStorage
+    const isAdmin = 
+      (user && user.role === 'Admin') || 
+      storedRole === 'Admin' || 
+      (userData && userData.role === 'Admin');
+      
+    if (!isAuthenticated || !isAdmin) {
+      console.log('Redirecting: Not authenticated or not admin');
+      console.log('Redux role:', user?.role);
+      console.log('LocalStorage role:', storedRole);
+      navigate('/unauthorized');
+    }
+  }, [user, isAuthenticated, navigate]);
+  
   return children;
 };
 

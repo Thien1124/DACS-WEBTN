@@ -23,11 +23,20 @@ const authSlice = createSlice({
       state.error = null;
     },
     loginSuccess: (state, action) => {
+      const { user, token } = action.payload;
+      
+      // Đảm bảo role luôn được đặt đúng
+      const role = user.role || (user.roles && user.roles[0]) || localStorage.getItem('user_role');
+      
+      state.user = { ...user, role };
+      state.token = token;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
-      state.token = action.payload.token;
       state.loading = false;
       state.error = null;
+      
+      // Đồng bộ với localStorage
+      localStorage.setItem('user_role', role);
+      localStorage.setItem('user_data', JSON.stringify({ ...user, role }));
     },
     loginFailure: (state, action) => {
       state.isAuthenticated = false;
@@ -113,12 +122,12 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(autoLogin.fulfilled, (state, action) => {
-        if (action.payload.isAuthenticated && action.payload.user) {
+        if (action.payload) {
           state.isAuthenticated = true;
           state.user = {
             ...action.payload.user,
-            // Đảm bảo role luôn được duy trì
-            role: action.payload.user.role || 'Student'
+            // Đảm bảo lưu role đúng
+            role: action.payload.user.role || action.payload.user.roles?.[0] || 'Student'
           };
           state.token = action.payload.token;
         }

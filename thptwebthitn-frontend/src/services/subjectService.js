@@ -7,56 +7,22 @@ import axios from 'axios';
 const currentTime = "2025-04-08 10:41:07";
 const currentUser = "vinhsonvlog";
 
-/**
+/**getAllSubjects
  * Get all subjects
  * @param {object} filters - Optional filters (grade, search query, sortBy, etc.)
  * @returns {Promise} - Promise resolving to subjects array
  */
-export const getAllSubjects = async (filters = {}) => {
-  console.log(`[${currentTime}] getAllSubjects called by ${currentUser}`);
-  
+export const getAllSubjects = async () => {
   try {
-    console.log(`[${currentTime}] Calling API: /api/Subject`);
+    // You might need to adjust the endpoint based on your API
+    const response = await apiClient.get('/api/Subject');
     
-    // Thêm tham số lọc vào URL
-    const params = new URLSearchParams();
-    if (filters.search) params.append('searchTerm', filters.search);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('pageSize', filters.limit);
+    // Add console logging to see the response
+    console.log('API response for subjects:', response.data);
     
-    // Thêm tham số _t để tránh cache
-    params.append('_t', new Date().getTime());
-    
-    // Gọi API với các tham số
-    const response = await apiClient.get(`/api/Subject?${params.toString()}`);
-    
-    console.log(`[${currentTime}] API response status:`, response.status);
-    
-    // Kiểm tra dữ liệu và cố gắng trích xuất mảng đối tượng
-    if (!response.data) {
-      return [];
-    }
-    
-    // Nếu response là mảng, trả về ngay
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    
-    // Nếu response là object có thuộc tính data là mảng
-    if (response.data && response.data.data && Array.isArray(response.data.data)) {
-      return {
-        data: response.data.data,
-        currentPage: response.data.page || 1,
-        totalPages: response.data.totalPages || 1,
-        totalItems: response.data.totalCount || response.data.data.length
-      };
-    }
-    
-    // Trường hợp khác, cố gắng chuyển về mảng rỗng
-    console.warn(`[${currentTime}] Unexpected API response format, returning empty array`);
-    return [];
+    return response.data;
   } catch (error) {
-    console.error(`[${currentTime}] Error in getAllSubjects:`, error);
+    console.error('Error fetching subjects:', error);
     throw error;
   }
 };

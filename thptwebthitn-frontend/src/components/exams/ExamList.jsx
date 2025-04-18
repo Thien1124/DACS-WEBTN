@@ -3,9 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { fetchExamsBySubject, fetchExamsForStudents } from '../../redux/examSlice1';
+import { fetchExamsBySubject, fetchExamsForStudents } from '../../redux/examSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { FaClock, FaChalkboardTeacher, FaClipboardList, FaPlay } from 'react-icons/fa';
+import { FaClock, FaChalkboardTeacher, FaClipboardList, FaPlay,FaHistory,FaArrowLeft} from 'react-icons/fa';
+import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -14,9 +15,33 @@ const Container = styled.div`
 `;
 
 const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
 `;
-
+const Button = styled.button`
+  background: ${props => props.primary ? 'linear-gradient(135deg, #4285f4, #34a853)' : 'transparent'};
+  color: ${props => props.primary ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  border: 1px solid ${props => props.primary ? 'transparent' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  svg {
+    margin-right: 0.5rem;
+  }
+  
+  &:hover {
+    background: ${props => props.primary ? 'linear-gradient(135deg, #3b78dc, #2d9348)' : props.theme === 'dark' ? '#4a5568' : '#edf2f7'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+`;
 const Title = styled.h1`
   font-size: 2rem;
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
@@ -170,20 +195,43 @@ const ExamList = () => {
   
   useEffect(() => {
     if (subjectId) {
+      // Different API call based on user role
+      const params = { 
+        subjectId, 
+        page, 
+        limit: 9 
+      };
+      
       if (user?.role === 'Admin' || user?.role === 'Teacher') {
-        dispatch(fetchExamsBySubject(subjectId));
+        dispatch(fetchExamsBySubject(params));
       } else {
-        dispatch(fetchExamsForStudents(subjectId));
+        dispatch(fetchExamsForStudents(params));
       }
     }
   }, [dispatch, subjectId, user, page]);
   
+  const handleViewHistory = () => {
+    navigate('/exam-history');
+  };
+  
+  const handleBackToSubjects = () => {
+    navigate('/subjects');
+  };
   const handleStartExam = (examId) => {
-    navigate(`/exams/${examId}`);
+    try {
+      // Navigate to exam interface page
+      navigate(`/exams/${examId}`);
+    } catch (error) {
+      showErrorToast('Không thể bắt đầu bài thi. Vui lòng thử lại sau.');
+    }
   };
   
   const handlePageChange = (newPage) => {
-    setPage(newPage);
+    if (newPage !== page) {
+      setPage(newPage);
+      // Scroll to top when changing page
+      window.scrollTo(0, 0);
+    }
   };
   
   if (loading) {
@@ -193,8 +241,18 @@ const ExamList = () => {
   return (
     <Container>
       <Header>
-        <Title theme={theme}>Danh sách đề thi</Title>
-        <Subtitle theme={theme}>Chọn đề thi bạn muốn làm bài</Subtitle>
+        <div>
+          <Title theme={theme}>Danh sách đề thi</Title>
+          <Subtitle theme={theme}>Chọn đề thi bạn muốn làm bài</Subtitle>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Button theme={theme} onClick={handleBackToSubjects}>
+            <FaArrowLeft /> Quay lại môn học
+          </Button>
+          <Button theme={theme} primary onClick={handleViewHistory}>
+            <FaHistory /> Xem lịch sử
+          </Button>
+        </div>
       </Header>
       
       {exams?.length === 0 ? (

@@ -1,10 +1,25 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as subjectService from '../services/subjectService';
 
-import { getAllSubjects, getSubjectById } from '../services/subjectService';
-export const fetchAllSubjects = async () => {
-  // Logic code ở đây
-};
+export const fetchAllSubjects = createAsyncThunk(
+  'subjects/fetchAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await subjectService.getAllSubjects();
+      console.log('Subject API response:', response);
+      
+      // Ensure we're returning an array
+      const subjectsArray = Array.isArray(response) ? response : 
+                           (response && response.items ? response.items : []);
+      
+      return subjectsArray;
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to load subjects');
+    }
+  }
+);
+
 // Async thunks
 export const fetchSubjects = createAsyncThunk(
   'subjects/fetchSubjects',
@@ -23,10 +38,13 @@ export const fetchAllSubjectsNoPaging = createAsyncThunk(
   'subjects/fetchAllSubjectsNoPaging',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Fetching all subjects with no paging...');
       const response = await subjectService.getAllSubjectsNoPaging();
+      console.log('API response for subjects:', response);
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể tải danh sách môn học');
+      console.error('Error fetching subjects:', error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to load subjects');
     }
   }
 );
@@ -145,10 +163,27 @@ const subjectSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-    .addCase(fetchSubjects.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
+      // Add these cases for fetchAllSubjects
+      .addCase(fetchAllSubjects.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllSubjects.fulfilled, (state, action) => {
+        state.loading = false;
+        // Ensure we always set an array
+        state.items = Array.isArray(action.payload) ? action.payload : [];
+        console.log('Subjects loaded successfully:', state.items);
+      })
+      .addCase(fetchAllSubjects.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        console.error('Failed to load subjects:', action.payload);
+      })
+      // Keep the existing cases
+      .addCase(fetchSubjects.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
     .addCase(fetchSubjects.fulfilled, (state, action) => {
       state.loading = false;
       state.items = action.payload.items || action.payload;

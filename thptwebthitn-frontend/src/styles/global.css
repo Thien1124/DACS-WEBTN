@@ -1,0 +1,25 @@
+/* Đảm bảo tất cả container có padding đầu trang phù hợp */
+.page-container {
+  padding-top: 70px; /* Điều chỉnh theo chiều cao header */
+}
+
+/* Đảm bảo các nút không bị che khuất */
+.button-container {
+  margin: 1rem 0;
+  position: relative;
+  z-index: 5; /* Thấp hơn header nhưng đủ cao để không bị các element khác che */
+}
+
+/* Links không đổi màu khi hover trong form authentication */
+.auth-link {
+  color: #4a90e2;
+  text-decoration: none;
+}
+
+.auth-link:hover,
+.auth-link:focus,
+.auth-link:active,
+.auth-link:visited {
+  color: #4a90e2;
+  text-decoration: underline;
+}

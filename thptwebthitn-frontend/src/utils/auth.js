@@ -71,18 +71,14 @@ export const isTokenValid = () => {
  */
 export const saveUserData = (userData) => {
   try {
+    const userRole = userData.role || (userData.roles && userData.roles.length > 0 ? userData.roles[0] : 'Student');
     const sanitizedData = {
-      id: userData.id,
-      username: userData.username,
-      email: userData.email,
-      fullName: userData.fullName,
-      phoneNumber: userData.phoneNumber,
-      // Đảm bảo lưu đúng vai trò
-      role: userData.role || (userData.roles && userData.roles[0]) || 'Student',
-      // Lưu mảng roles nếu có
-      roles: userData.roles || [],
+      ...userData,
+      role: userRole,
+      roles: userData.roles || [userRole],
     };
     localStorage.setItem('user_data', JSON.stringify(sanitizedData));
+    localStorage.setItem('user_role', userRole);
   } catch (error) {
     console.error('Error saving user data:', error);
     throw new Error('Không thể lưu thông tin người dùng');

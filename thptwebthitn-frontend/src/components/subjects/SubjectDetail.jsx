@@ -17,7 +17,12 @@ import {
   FaBookOpen,
   FaCalendarAlt,
   FaCode,
-  FaInfoCircle
+  FaInfoCircle,
+  FaHistory,
+  FaSearch,
+  FaClock,
+  FaQuestionCircle,
+  FaChartLine
 } from 'react-icons/fa';
 
 // Styled components
@@ -212,15 +217,7 @@ const DetailSection = styled.div`
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 `;
 
-const DetailItem = styled.div`
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
+
 
 const DetailLabel = styled.div`
   color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
@@ -355,16 +352,206 @@ const LoadingContainer = styled.div`
   }
 `;
 
+const BackNavigationRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+`;
+
+const HistoryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+  
+  svg {
+    margin-right: 0.5rem;
+  }
+`;
+
+const FiltersRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  border-radius: 8px;
+  padding: 0.5rem;
+`;
+
+const SearchInput = styled.input`
+  border: none;
+  background: none;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  padding: 0.5rem;
+  font-size: 1rem;
+  outline: none;
+  width: 200px;
+`;
+
+const SearchButton = styled.button`
+  background: none;
+  border: none;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  cursor: pointer;
+  padding: 0.5rem;
+`;
+
+const FilterButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const FilterButton = styled.button`
+  background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.active ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  
+  &:hover {
+    background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+`;
+
+const ExamsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+`;
+
+const ExamCard = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+`;
+
+const ExamTitle = styled.h3`
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+`;
+
+const ExamDetails = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+`;
+
+const ExamActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const StartButton = styled.button`
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  
+  &:hover {
+    background-color: #357ae8;
+  }
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-style: italic;
+  padding: 2rem;
+`;
+
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+`;
+
+const PageButton = styled.button`
+  background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.active ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin: 0 0.25rem;
+  
+  &:hover {
+    background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+`;
+
 const SubjectDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
   const { selectedSubject, loading, error } = useSelector(state => state.subjects);
+  const user = useSelector(state => state.auth.user);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [difficulty, setDifficulty] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const exams = selectedSubject?.exams || [];
+  const filteredExams = exams.filter(exam => 
+    exam.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (difficulty === 'all' || exam.difficulty === difficulty)
+  );
+  const totalPages = Math.ceil(filteredExams.length / 10);
   
   // Sử dụng thời gian và người dùng hiện tại
   const currentTime = "2025-04-13 16:57:17";
   const currentUser = "vinhsonvlog";
+  
+  // Handle search button click
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page when searching
+    // The filtering is already handled by the filteredExams variable
+  };
+  
+  // Convert difficulty code to readable text
+  const getDifficultyText = (difficulty) => {
+    const difficultyMap = {
+      'easy': 'Dễ',
+      'medium': 'Trung bình',
+      'hard': 'Khó'
+    };
+    return difficultyMap[difficulty] || 'Không xác định';
+  };
+  
+  // Handle exam start button click
+  const handleStartExam = (examId) => {
+    navigate(`/exams/${examId}`);
+  };
   
   useEffect(() => {
     // Gọi API để lấy thông tin chi tiết môn học
@@ -481,6 +668,15 @@ const SubjectDetail = () => {
         
         {selectedSubject && (
           <>
+            <BackNavigationRow>
+              <BackButton onClick={() => navigate('/subjects')}>
+                <FaArrowLeft /> Quay lại danh sách môn học
+              </BackButton>
+              {user && <HistoryButton onClick={() => navigate('/exam-history')}>
+                <FaHistory /> Xem lịch sử bài thi
+              </HistoryButton>}
+            </BackNavigationRow>
+
             <SubjectHeader
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -609,6 +805,76 @@ const SubjectDetail = () => {
                 </NoContentMessage>
               )}
             </ContentBox>
+
+            <SectionTitle>Đề Thi Có Sẵn</SectionTitle>
+            
+            {/* Khu vực lọc đề thi */}
+            <FiltersRow>
+              <SearchContainer>
+                <SearchInput 
+                  type="text" 
+                  placeholder="Tìm kiếm đề thi..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <SearchButton onClick={handleSearch}>
+                  <FaSearch />
+                </SearchButton>
+              </SearchContainer>
+              
+              <FilterButtons>
+                <FilterButton active={difficulty === 'all'} onClick={() => setDifficulty('all')}>
+                  Tất cả
+                </FilterButton>
+                <FilterButton active={difficulty === 'easy'} onClick={() => setDifficulty('easy')}>
+                  Dễ
+                </FilterButton>
+                <FilterButton active={difficulty === 'medium'} onClick={() => setDifficulty('medium')}>
+                  Trung bình
+                </FilterButton>
+                <FilterButton active={difficulty === 'hard'} onClick={() => setDifficulty('hard')}>
+                  Khó
+                </FilterButton>
+              </FilterButtons>
+            </FiltersRow>
+
+            {/* Hiển thị danh sách đề thi */}
+            {loading ? (
+              <LoadingSpinner />
+            ) : exams.length > 0 ? (
+              <ExamsGrid>
+                {filteredExams.map(exam => (
+                  <ExamCard key={exam.id}>
+                    <ExamTitle>{exam.title}</ExamTitle>
+                    <ExamDetails>
+                      <DetailItem><FaClock /> {exam.duration} phút</DetailItem>
+                      <DetailItem><FaQuestionCircle /> {exam.questionCount} câu hỏi</DetailItem>
+                      <DetailItem><FaChartLine /> Độ khó: {getDifficultyText(exam.difficulty)}</DetailItem>
+                    </ExamDetails>
+                    <ExamActions>
+                      <StartButton onClick={() => handleStartExam(exam.id)}>Bắt đầu làm bài</StartButton>
+                    </ExamActions>
+                  </ExamCard>
+                ))}
+              </ExamsGrid>
+            ) : (
+              <EmptyMessage>Không có đề thi nào cho môn học này</EmptyMessage>
+            )}
+
+            {/* Phân trang */}
+            {totalPages > 1 && (
+              <Pagination>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PageButton 
+                    key={i} 
+                    active={currentPage === i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </PageButton>
+                ))}
+              </Pagination>
+            )}
             
             <ButtonsRow>
               <BackButton to="/subjects" theme={theme}>

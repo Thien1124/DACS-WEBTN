@@ -60,6 +60,9 @@ import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './assets/styles/toast.css';
 
+// Thêm import
+import useRoleSynchronizer from './hooks/useRoleSynchronizer';
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#121212' : '#f7f7f7'};
@@ -74,8 +77,12 @@ const formatDateTime = (date = new Date()) => {
 
 function App() {
   const { theme, currentAnimation } = useSelector(state => state.ui);
+  const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const currentUser = 'vinhsonvlog'; // hoặc lấy từ state/localStorage
+
+  // Sử dụng hook đồng bộ hóa
+  useRoleSynchronizer();
 
   useEffect(() => {
     // Auto-play animations in sequence
@@ -111,6 +118,23 @@ function App() {
 
     return () => clearInterval(animationInterval);
   }, [dispatch, currentUser]);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('user_data'));
+    const userRole = localStorage.getItem('user_role');
+    console.log('LocalStorage - user_data.role:', userData?.role);
+    console.log('LocalStorage - user_role:', userRole);
+    console.log('Redux state user role:', user?.role);
+    
+    // Kiểm tra nếu có sự không nhất quán
+    if (userData?.role !== userRole || (user && user.role !== userData?.role)) {
+      console.warn('ROLE INCONSISTENCY DETECTED!', {
+        localStorageUserData: userData?.role,
+        localStorageUserRole: userRole,
+        reduxStateRole: user?.role
+      });
+    }
+  }, [user]);
   
   return (
     <Router>
@@ -169,6 +193,11 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/results/history" element={
+                <ProtectedRoute>
+                  <ExamHistory />
+                </ProtectedRoute>
+              } />
+              <Route path="/exam-history" element={
                 <ProtectedRoute>
                   <ExamHistory />
                 </ProtectedRoute>

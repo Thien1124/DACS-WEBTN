@@ -47,7 +47,17 @@ export const authMiddleware = store => next => async action => {
       window.location.href = '/';
     });
   }
-  
+  if (action.type === 'auth/tokenRefreshed') {
+    const state = store.getState();
+    const userData = state.auth?.user;
+    if (userData) {
+      // Cập nhật lại user data trong localStorage với role
+      localStorage.setItem('user_data', JSON.stringify({
+        ...userData,
+        role: userData.role || userData.roles?.[0] || 'Student'
+      }));
+    }
+  }
   // Mọi trường hợp khác, cho phép action tiếp tục bình thường
   return next(action);
 };

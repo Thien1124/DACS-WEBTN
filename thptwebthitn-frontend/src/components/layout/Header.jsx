@@ -9,8 +9,9 @@ import logo from "../../assets/images/logo.png";
 import AuthModal from "../Auth/AuthModal";
 import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
+import { updateUser } from '../../redux/authSlice';
 // Import thêm icons
-import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog } from 'react-icons/fa';
+import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory } from 'react-icons/fa';
 
 // Styled components hiện tại...
 const HeaderContainer = styled.header`
@@ -348,6 +349,23 @@ function Header() {
     });
     navigate('/');
   };
+  useEffect(() => {
+    // Đồng bộ role từ localStorage
+    const userData = JSON.parse(localStorage.getItem('user_data'));
+    const storedRole = localStorage.getItem('user_role'); // Đọc trực tiếp từ user_role
+    
+    if (userData) {
+      // Ưu tiên role từ user_role nếu có
+      const role = storedRole || userData.role || (userData.roles && userData.roles[0]);
+      if (role) {
+        console.log('Synchronizing role from localStorage:', role);
+        dispatch(updateUser({
+          ...userData,
+          role: role
+        }));
+      }
+    }
+  }, [dispatch]);
   
   // Kiểm tra xem người dùng có phải admin không
   const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
@@ -408,6 +426,7 @@ function Header() {
               <NavItem theme={theme}>
                 <Link to="/contact">Liên hệ</Link>
               </NavItem>
+              
             </NavItems>
           </Nav>
 
@@ -438,6 +457,13 @@ function Header() {
                         <FaChartBar />
                         Bảng điều khiển
                       </DropdownItem>
+                      {/* Thêm mục Lịch sử bài thi ở đây, chỉ hiển thị cho học sinh */}
+                      {user.role === 'Student' && (
+                        <DropdownItem to="/exam-history" theme={theme}>
+                          <FaHistory />
+                          Lịch sử bài thi
+                        </DropdownItem>
+                      )}
                       {isAdmin && (
                         <>
                           <DropdownSeparator theme={theme} />

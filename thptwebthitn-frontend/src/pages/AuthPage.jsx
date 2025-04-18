@@ -43,6 +43,22 @@ const AppName = styled.h1`
   margin: 0;
 `;
 
+const AuthLink = styled.span`
+  color: #4a90e2; /* Màu của link */
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  
+  &:hover {
+    text-decoration: underline;
+    color: #4a90e2; /* Giữ nguyên màu khi hover */
+  }
+  
+  &:visited {
+    color: #4a90e2; /* Giữ màu sau khi đã click */
+  }
+`;
+
 const AuthPage = ({ type }) => {
   const location = useLocation();
   const navigate = useNavigate();

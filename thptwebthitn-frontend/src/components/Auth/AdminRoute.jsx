@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 import Unauthorized from '../error/Unauthorized';
+import Header from '../layout/Header';
 
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, user } = useSelector(state => state.auth);
@@ -14,7 +15,14 @@ const AdminRoute = ({ children }) => {
     return <Unauthorized />;
   }
   
-  return children;
+  return (
+    <>
+      <Header />
+      <main className="admin-main-content">
+        {children}
+      </main>
+    </>
+  );
 };
 
 export default AdminRoute;

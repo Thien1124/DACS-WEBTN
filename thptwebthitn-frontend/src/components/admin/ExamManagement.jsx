@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { 
-  FaPlus, 
-  FaEdit, 
-  FaTrash, 
-  FaEye, 
-  FaSearch, 
-  FaFilter, 
-  FaSort, 
-  FaFileExport, 
-  FaFileImport 
+  FaEdit, FaEye, FaPlus, FaTrash, FaSearch, 
+  FaSort, FaList, FaFileImport, FaFileExport, FaFilter 
 } from 'react-icons/fa';
-import { fetchExams, removeExam } from '../../redux/examSlice1';
+import { fetchExams, removeExam } from '../../redux/examSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { showErrorToast, showSuccessToast, showConfirmToast } from '../../utils/toastUtils';
 import ConfirmModal from '../common/ConfirmModal';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -264,39 +257,39 @@ const PageButton = styled.button`
 `;
 
 const ExamManagement = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { list: exams, loading, pagination } = useSelector(state => state.exams);
+  const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
+  const { list: exams, loading } = useSelector(state => state.exams);
   
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [sortField, setSortField] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [page, setPage] = useState(1);
-  const [deleteId, setDeleteId] = useState(null);
+  const [sortField, setSortField] = useState('id');
+  const [sortOrder, setSortOrder] = useState('asc');
+  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  
+  const loadExams = () => {
+    dispatch(fetchExams({ 
+      page, 
+      limit, 
+      search: searchTerm,
+      status: filterStatus !== 'all' ? filterStatus : undefined,
+      sortField,
+      sortOrder
+    }));
+  };
   
   useEffect(() => {
     loadExams();
-  }, [dispatch, page, sortField, sortOrder, filterStatus]);
-  
-  const loadExams = () => {
-    const params = {
-      page,
-      limit: 10,
-      sort: sortField,
-      order: sortOrder,
-      status: filterStatus !== 'all' ? filterStatus : undefined,
-      search: searchTerm || undefined
-    };
-    
-    dispatch(fetchExams(params));
-  };
+  }, [page, limit, filterStatus, sortField, sortOrder]);
   
   const handleSearch = (e) => {
     e.preventDefault();
-    setPage(1);  // Reset to page 1
+    setPage(1); // Reset to first page when searching
     loadExams();
   };
   
@@ -307,7 +300,15 @@ const ExamManagement = () => {
       setSortField(field);
       setSortOrder('asc');
     }
-    setPage(1);  // Reset to page 1
+    setPage(1);
+  };
+  
+  const navigateToExam = (examId) => {
+    navigate(`/exams/${examId}`);
+  };
+  
+  const handleManageQuestions = (examId) => {
+    navigate(`/admin/exams/${examId}/questions`);
   };
   
   const handleCreateExam = () => {
@@ -319,7 +320,7 @@ const ExamManagement = () => {
   };
   
   const handleViewExam = (id) => {
-    navigate(`/exams/${id}`);
+    navigateToExam(id);
   };
   
   const openDeleteModal = (id) => {
@@ -334,7 +335,6 @@ const ExamManagement = () => {
         .then(() => {
           showSuccessToast('Xóa đề thi thành công!');
           setShowDeleteModal(false);
-          // Reload data if needed
           if (exams.length === 1 && page > 1) {
             setPage(page - 1);
           } else {
@@ -436,9 +436,6 @@ const ExamManagement = () => {
                   Thời gian (phút) {getSortIcon('duration')}
                 </TableHeader>
                 <TableHeader theme={theme}>Trạng thái</TableHeader>
-                <TableHeader theme={theme} sortable onClick={() => handleSort('createdAt')}>
-                  Ngày tạo {getSortIcon('createdAt')}
-                </TableHeader>
                 <TableHeader theme={theme}>Thao tác</TableHeader>
               </TableRow>
             </TableHead>
@@ -456,16 +453,16 @@ const ExamManagement = () => {
                     </StatusBadge>
                   </TableCell>
                   <TableCell theme={theme}>
-                    {new Date(exam.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell theme={theme}>
-                    <ActionButton onClick={() => handleViewExam(exam.id)}>
+                    <ActionButton onClick={() => handleViewExam(exam.id)} title="Xem đề thi">
                       <FaEye />
                     </ActionButton>
-                    <ActionButton edit onClick={() => handleEditExam(exam.id)}>
+                    <ActionButton onClick={() => handleManageQuestions(exam.id)} title="Quản lý câu hỏi" color="#805ad5">
+                      <FaList />
+                    </ActionButton>
+                    <ActionButton onClick={() => handleEditExam(exam.id)} title="Chỉnh sửa" color="#4299e1">
                       <FaEdit />
                     </ActionButton>
-                    <ActionButton delete onClick={() => openDeleteModal(exam.id)}>
+                    <ActionButton onClick={() => openDeleteModal(exam.id)} title="Xóa" color="#f56565">
                       <FaTrash />
                     </ActionButton>
                   </TableCell>
@@ -474,36 +471,37 @@ const ExamManagement = () => {
             </tbody>
           </Table>
           
-          {pagination && pagination.totalPages > 1 && (
-            <PaginationContainer>
-              <PageButton 
-                theme={theme} 
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                &lt;
-              </PageButton>
-              
-              {[...Array(pagination.totalPages).keys()].map(num => (
+          <PaginationContainer>
+            <PageButton 
+              theme={theme} 
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              &lt;
+            </PageButton>
+            
+            {[...Array(5)].map((_, index) => {
+              const pageNum = page - 2 + index;
+              if (pageNum < 1) return null;
+              return (
                 <PageButton 
-                  key={num + 1}
+                  key={index}
                   theme={theme}
-                  active={page === num + 1}
-                  onClick={() => setPage(num + 1)}
+                  active={pageNum === page}
+                  onClick={() => setPage(pageNum)}
                 >
-                  {num + 1}
+                  {pageNum}
                 </PageButton>
-              ))}
-              
-              <PageButton 
-                theme={theme}
-                disabled={page === pagination.totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                &gt;
-              </PageButton>
-            </PaginationContainer>
-          )}
+              );
+            })}
+            
+            <PageButton 
+              theme={theme} 
+              onClick={() => setPage(page + 1)}
+            >
+              &gt;
+            </PageButton>
+          </PaginationContainer>
         </>
       )}
       
@@ -519,5 +517,7 @@ const ExamManagement = () => {
     </Container>
   );
 };
+
+// Styled Components (giữ nguyên từ file hiện tại)
 
 export default ExamManagement;

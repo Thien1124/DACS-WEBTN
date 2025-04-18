@@ -6,12 +6,11 @@ import Footer from './Footer';
 import { useSelector } from 'react-redux';
 
 const MainContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: ${props => props.theme === 'dark' ? '#1a1a1a' : '#f5f5f5'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  transition: background-color 0.3s ease, color 0.3s ease;
+  padding-top: 70px; /* Điều chỉnh kích thước này bằng hoặc lớn hơn chiều cao của header */
+  min-height: calc(100vh - 70px);
+  width: 100%;
+  margin: 0 auto;
+  transition: all 0.3s ease;
 `;
 
 const Content = styled.main`

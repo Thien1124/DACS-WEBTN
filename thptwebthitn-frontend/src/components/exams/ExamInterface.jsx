@@ -8,7 +8,7 @@ import {
   startExamSession, 
   setUserAnswer, 
   submitExamAnswers 
-} from '../../redux/examSlice1';
+} from '../../redux/examSlice';
 import QuestionDisplay from './QuestionDisplay';
 import QuestionNavigation from './QuestionNavigation';
 import LoadingSpinner from '../common/LoadingSpinner';

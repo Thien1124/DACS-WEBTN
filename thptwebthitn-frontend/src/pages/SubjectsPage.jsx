@@ -809,7 +809,19 @@ const SubjectsPage = () => {
     if (!subject.grade) return "Tất cả các lớp";
     return `Lớp ${subject.grade}`;
   };
-
+  const GradeBadge = styled.div`
+    position: absolute;
+    left: 0;
+    top: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  `;
   return (
     <PageContainer theme={theme}>
       <Header />
@@ -910,7 +922,11 @@ const SubjectsPage = () => {
                 >
                   <SubjectImageContainer>
                     <SubjectImage image={getSubjectImage(subject)} />
-                    
+                    {subject.grade && (
+                      <GradeBadge>
+                      Lớp {subject.grade}
+                      </GradeBadge>
+                    )}
                   </SubjectImageContainer>
                   
                   <SubjectHeader>
@@ -923,15 +939,7 @@ const SubjectsPage = () => {
                   </SubjectDescription>
                   
                   <SubjectFooter>
-                    <SubjectGrade theme={theme} style={{ 
-                      backgroundColor: subject.grade ? '#4285f4' : '#9CA3AF',
-                      color: 'white',
-                      borderRadius: '20px',
-                      padding: '5px 12px',
-                      fontWeight: 'bold'
-                    }}>
-                      {displayGrade(subject)}
-                    </SubjectGrade>
+                    
                     <ButtonGroup>
                       <ButtonAction
                         className="view"

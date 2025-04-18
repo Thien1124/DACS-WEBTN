@@ -164,10 +164,25 @@ export const AuthProvider = ({ children }) => {
           // Token còn hạn, thiết lập trạng thái đăng nhập
           try {
             const userData = await authService.getCurrentUser();
-            dispatch(loginSuccess({
-              user: userData,
-              token
-            }));
+              if (userData) {
+                // Đảm bảo lưu role vào localStorage
+                const userRole = userData.role || (userData.roles && userData.roles.length > 0 ? userData.roles[0] : null);
+                if (userRole) {
+                  localStorage.setItem('user_data', JSON.stringify({
+                    ...userData,
+                    role: userRole
+                  }));
+                  localStorage.setItem('user_role', userRole); // Thêm dòng này để đảm bảo nhất quán
+                }
+                
+                dispatch(loginSuccess({
+                  user: {
+                    ...userData,
+                    role: userRole
+                  },
+                  token
+                }));
+              }
           } catch (error) {
             console.error('Error getting current user:', error);
             // Nếu có lỗi, xóa thông tin đăng nhập
@@ -193,6 +208,58 @@ export const AuthProvider = ({ children }) => {
         clearTimeout(tokenRefreshTimer);
       }
     };
+  }, [dispatch]);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        try {
+          // Đọc từ localStorage trước
+          const storedUserData = JSON.parse(localStorage.getItem('user_data'));
+          const storedRole = localStorage.getItem('user_role');
+          
+          if (storedUserData) {
+            // Đặt role ưu tiên từ user_role nếu có, nếu không thì lấy từ userData
+            const role = storedRole || storedUserData.role || 
+              (storedUserData.roles && storedUserData.roles[0]) || 'Student';
+            
+            // Cập nhật Redux store với thông tin từ localStorage
+            dispatch(loginSuccess({
+              user: { ...storedUserData, role },
+              token
+            }));
+            
+            console.log('Auth restored from localStorage, role:', role);
+          }
+          
+          // Sau đó cập nhật từ server nếu cần
+          const userData = await authService.getCurrentUser();
+          if (userData) {
+            const userRole = userData.role || 
+              (userData.roles && userData.roles.length > 0 ? userData.roles[0] : storedRole);
+            
+            // Lưu vào localStorage
+            const userToSave = { ...userData, role: userRole };
+            localStorage.setItem('user_data', JSON.stringify(userToSave));
+            localStorage.setItem('user_role', userRole);
+            
+            // Cập nhật Redux store
+            dispatch(loginSuccess({
+              user: userToSave,
+              token
+            }));
+            
+            console.log('Auth refreshed from server, role:', userRole);
+          }
+        } catch (error) {
+          console.error('Error during auth initialization:', error);
+          // Không xóa localStorage/logout ở đây để tránh vòng lặp
+        }
+      }
+    };
+    
+    initializeAuth();
   }, [dispatch]);
   
   return (

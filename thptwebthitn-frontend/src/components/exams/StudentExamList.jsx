@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { fetchExams, removeExam } from '../../redux/examSlice1';
+import { fetchExams, removeExam } from '../../redux/examSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { FaClock, FaChalkboardTeacher, FaClipboardList, FaPlay, FaFilter, FaSearch, FaSortAmountDown, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';

@@ -3,10 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaSave, FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
-import { createNewExam } from '../../redux/examSlice1';
-import { fetchAllSubjects } from '../../redux/subjectSlice';
-import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
+import { createNewExam } from '../../redux/examSlice';
+import { fetchAllSubjectsNoPaging } from '../../redux/subjectSlice';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 const Container = styled.div`
   max-width: 900px;
@@ -148,7 +147,7 @@ const CancelButton = styled(Button)`
   }
 `;
 
-const SaveButton = styled(Button)`
+const SubmitButton = styled(Button)`
   background: linear-gradient(135deg, #4285f4, #34a853);
   color: white;
   border: none;
@@ -182,11 +181,12 @@ const ErrorMessage = styled.p`
 `;
 
 const CreateExam = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { subjects } = useSelector(state => state.subjects);
-  const { loading } = useSelector(state => state.exams);
+  const navigate = useNavigate();
+  
   const { theme } = useSelector(state => state.ui);
+  const { items: subjectsData = [], loading: subjectsLoading } = useSelector(state => state.subjects);
+  const subjects = Array.isArray(subjectsData) ? subjectsData : [];
   
   const [formData, setFormData] = useState({
     title: '',
@@ -203,7 +203,8 @@ const CreateExam = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
-    dispatch(fetchAllSubjects());
+    console.log('Component mounted, dispatching subject fetch action');
+    dispatch(fetchAllSubjectsNoPaging());
   }, [dispatch]);
   
   const handleChange = (e) => {
@@ -241,30 +242,29 @@ const CreateExam = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const handleSubmit = async (e) => {
+  
+  const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
-    
-    setIsSubmitting(true);
-    
-    const examData = {
-      ...formData,
-      subjectId: parseInt(formData.subjectId),
-      duration: parseInt(formData.duration),
-      passingScore: parseFloat(formData.passingScore)
-    };
-    
-    dispatch(createNewExam(examData))
-      .unwrap()
-      .then(response => {
-        showSuccessToast('Tạo đề thi thành công!');
-        navigate(`/admin/exams/${response.id}/edit`);
-      })
-      .catch(error => {
-        showErrorToast(`Lỗi khi tạo đề thi: ${error}`);
-        setIsSubmitting(false);
-      });
+    if (validateForm()) {
+      setIsSubmitting(true);
+      
+      dispatch(createNewExam(formData))
+        .then((result) => {
+          if (result.meta.requestStatus === 'fulfilled') {
+            showSuccessToast('Tạo đề thi thành công!');
+            navigate('/admin/exams');
+          } else if (result.meta.requestStatus === 'rejected') {
+            showErrorToast(result.payload || 'Có lỗi xảy ra khi tạo đề thi');
+          }
+        })
+        .catch((error) => {
+          showErrorToast(error.message || 'Có lỗi xảy ra khi tạo đề thi');
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
+    }
   };
   
   const handleCancel = () => {
@@ -300,7 +300,7 @@ const CreateExam = () => {
             </FormGroup>
             
             <FormGroup>
-              <Label theme={theme}>Môn học *</Label>
+              <Label theme={theme}>Môn học * {subjectsLoading ? '(Đang tải...)' : `(${subjects.length} môn học)`}</Label>
               <Select
                 name="subjectId"
                 value={formData.subjectId}
@@ -308,7 +308,7 @@ const CreateExam = () => {
                 theme={theme}
               >
                 <option value="">-- Chọn môn học --</option>
-                {subjects?.map(subject => (
+                {subjects.map(subject => (
                   <option key={subject.id} value={subject.id}>
                     {subject.name}
                   </option>
@@ -402,14 +402,19 @@ const CreateExam = () => {
           </FormGroup>
           
           <ButtonContainer>
-            <CancelButton theme={theme} type="button" onClick={handleCancel}>
-              <FaTimes />
+            <CancelButton 
+              type="button" 
+              onClick={handleCancel}
+              theme={theme}
+            >
               Hủy bỏ
             </CancelButton>
-            <SaveButton type="submit" disabled={isSubmitting}>
-              <FaSave />
-              {isSubmitting ? 'Đang lưu...' : 'Lưu đề thi'}
-            </SaveButton>
+            <SubmitButton 
+              type="submit" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Đang tạo...' : 'Tạo đề thi'}
+            </SubmitButton>
           </ButtonContainer>
         </FormCard>
       </form>
