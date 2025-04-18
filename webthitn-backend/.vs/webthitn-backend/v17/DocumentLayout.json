@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\onedrive\\desktop\\dacs-webtn\\webthitn-backend\\models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\onedrive\\desktop\\dacs-webtn\\webthitn-backend\\controllers\\examresultcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\examresultcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -34,11 +38,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 95,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Models\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Models\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-16T09:50:07.074Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "UserController.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Controllers\\UserController.cs",
               "RelativeDocumentMoniker": "Controllers\\UserController.cs",
@@ -50,7 +67,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "SubjectController.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Controllers\\SubjectController.cs",
               "RelativeDocumentMoniker": "Controllers\\SubjectController.cs",
@@ -62,7 +79,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "ExamResultController.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExamResultController.cs",
               "RelativeDocumentMoniker": "Controllers\\ExamResultController.cs",
@@ -75,7 +92,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "StudentExamsController.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Controllers\\StudentExamsController.cs",
               "RelativeDocumentMoniker": "Controllers\\StudentExamsController.cs",
@@ -87,7 +104,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
@@ -99,7 +116,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "ExamGradingService.cs",
               "DocumentMoniker": "C:\\Users\\Thien\\OneDrive\\Desktop\\DACS-WEBTN\\webthitn-backend\\Services\\ExamGradingService.cs",
               "RelativeDocumentMoniker": "Services\\ExamGradingService.cs",
