@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using Swashbuckle.AspNetCore.Filters; 
 
 namespace webthitn_backend.DTOs
 {
@@ -276,22 +279,26 @@ namespace webthitn_backend.DTOs
         /// Giá trị ghép đôi (cho câu hỏi ghép đôi)
         /// </summary>
         /// <example>Paris</example>
-        public string MatchingValue { get; set; }
+        [DefaultValue("")]
+        public string MatchingValue { get; set; } = "";
 
         /// <summary>
         /// Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
         /// </summary>
-        public bool IsPartOfTrueFalseGroup { get; set; }
+        [DefaultValue(false)]
+        public bool IsPartOfTrueFalseGroup { get; set; } = false;
 
         /// <summary>
         /// Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
         /// </summary>
-        public int? GroupId { get; set; }
+        [DefaultValue(0)]
+        public int? GroupId { get; set; } = 0;
 
         /// <summary>
         /// Mức điểm cho đáp án này (0-100%)
         /// </summary>
         /// <example>100</example>
+        [DefaultValue(100)]
         public int ScorePercentage { get; set; } = 100;
     }
 
@@ -304,6 +311,7 @@ namespace webthitn_backend.DTOs
         /// Nội dung câu hỏi
         /// </summary>
         /// <example>Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0</example>
+        [Required(ErrorMessage = "Nội dung câu hỏi không được để trống")]
         public string Content { get; set; }
 
         /// <summary>
@@ -316,6 +324,7 @@ namespace webthitn_backend.DTOs
         /// ID môn học
         /// </summary>
         /// <example>1</example>
+        [Required(ErrorMessage = "ID môn học không được để trống")]
         public int SubjectId { get; set; }
 
         /// <summary>
@@ -328,6 +337,7 @@ namespace webthitn_backend.DTOs
         /// ID mức độ câu hỏi
         /// </summary>
         /// <example>3</example>
+        [Required(ErrorMessage = "ID mức độ câu hỏi không được để trống")]
         public int QuestionLevelId { get; set; }
 
         /// <summary>
@@ -337,6 +347,8 @@ namespace webthitn_backend.DTOs
         /// 5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)
         /// </summary>
         /// <example>1</example>
+        [Required(ErrorMessage = "Loại câu hỏi không được để trống")]
+        [Range(1, 5, ErrorMessage = "Loại câu hỏi phải từ 1 đến 5")]
         public int QuestionType { get; set; }
 
         /// <summary>
@@ -355,12 +367,15 @@ namespace webthitn_backend.DTOs
         /// Điểm mặc định
         /// </summary>
         /// <example>1</example>
-        public decimal DefaultScore { get; set; }
+        [Range(0.1, 10, ErrorMessage = "Điểm mặc định phải từ 0.1 đến 10")]
+        [DefaultValue(1)]
+        public decimal DefaultScore { get; set; } = 1;
 
         /// <summary>
         /// Trạng thái kích hoạt
         /// </summary>
         /// <example>true</example>
+        [DefaultValue(true)]
         public bool IsActive { get; set; } = true;
 
         /// <summary>
@@ -376,6 +391,7 @@ namespace webthitn_backend.DTOs
         /// <summary>
         /// Danh sách các đáp án
         /// </summary>
+        [Required(ErrorMessage = "Danh sách đáp án không được để trống")]
         public List<CreateQuestionOptionDTO> Options { get; set; }
     }
 
@@ -384,6 +400,153 @@ namespace webthitn_backend.DTOs
     /// </summary>
     public class CreateQuestionOptionDTO
     {
+        /// <summary>
+        /// Nội dung đáp án
+        /// </summary>
+        /// <example>1</example>
+        [Required(ErrorMessage = "Nội dung đáp án không được để trống")]
+        public string Content { get; set; }
+
+        /// <summary>
+        /// Đánh dấu đáp án đúng
+        /// </summary>
+        /// <example>true</example>
+        public bool IsCorrect { get; set; }
+
+        /// <summary>
+        /// Thứ tự hiển thị
+        /// </summary>
+        /// <example>1</example>
+        [DefaultValue(0)]
+        public int OrderIndex { get; set; } = 0;
+
+        /// <summary>
+        /// Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án
+        /// </summary>
+        /// <example>a</example>
+        public string Label { get; set; }
+
+        /// <summary>
+        /// Giải thích cho đáp án
+        /// </summary>
+        /// <example>Đây là đáp án đúng vì...</example>
+        public string Explanation { get; set; }
+
+        /// <summary>
+        /// Giá trị ghép đôi (cho câu hỏi ghép đôi)
+        /// </summary>
+        /// <example>Paris</example>
+        [DefaultValue("")]
+        public string MatchingValue { get; set; } = "";
+
+        /// <summary>
+        /// Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
+        /// </summary>
+        [DefaultValue(false)]
+        public bool IsPartOfTrueFalseGroup { get; set; } = false;
+
+        /// <summary>
+        /// Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
+        /// </summary>
+        [DefaultValue(0)]
+        public int? GroupId { get; set; } = 0;
+
+        /// <summary>
+        /// Mức điểm cho đáp án này (0-100%)
+        /// </summary>
+        /// <example>100</example>
+        [Range(0, 100, ErrorMessage = "Phần trăm điểm phải từ 0 đến 100")]
+        [DefaultValue(100)]
+        public int ScorePercentage { get; set; } = 100;
+    }
+
+    /// <summary>
+    /// DTO để cập nhật câu hỏi
+    /// </summary>
+    public class UpdateQuestionDTO
+    {
+        /// <summary>
+        /// Nội dung câu hỏi
+        /// </summary>
+        /// <example>Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0</example>
+        public string Content { get; set; }
+
+        /// <summary>
+        /// Giải thích cho câu hỏi
+        /// </summary>
+        /// <example>Áp dụng định lý L'Hospital ta có giới hạn bằng 1</example>
+        public string Explanation { get; set; }
+
+        /// <summary>
+        /// ID môn học
+        /// </summary>
+        /// <example>1</example>
+        public int? SubjectId { get; set; }
+
+        /// <summary>
+        /// ID chương
+        /// </summary>
+        /// <example>3</example>
+        public int? ChapterId { get; set; }
+
+        /// <summary>
+        /// ID mức độ câu hỏi
+        /// </summary>
+        /// <example>3</example>
+        public int? QuestionLevelId { get; set; }
+
+        /// <summary>
+        /// Tags của câu hỏi, phân cách bởi dấu phẩy
+        /// </summary>
+        /// <example>giới hạn,đạo hàm</example>
+        public string Tags { get; set; }
+
+        /// <summary>
+        /// Thời gian làm câu hỏi gợi ý (giây)
+        /// </summary>
+        /// <example>60</example>
+        public int? SuggestedTime { get; set; }
+
+        /// <summary>
+        /// Điểm mặc định
+        /// </summary>
+        /// <example>1</example>
+        [Range(0.1, 10, ErrorMessage = "Điểm mặc định phải từ 0.1 đến 10")]
+        public decimal? DefaultScore { get; set; }
+
+        /// <summary>
+        /// Trạng thái kích hoạt
+        /// </summary>
+        /// <example>true</example>
+        public bool? IsActive { get; set; }
+
+        /// <summary>
+        /// Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)
+        /// </summary>
+        public string ScoringConfig { get; set; }
+
+        /// <summary>
+        /// Cấu hình cho câu hỏi trả lời ngắn (JSON)
+        /// </summary>
+        public string ShortAnswerConfig { get; set; }
+
+        /// <summary>
+        /// Danh sách các đáp án (để cập nhật)
+        /// </summary>
+        public List<UpdateQuestionOptionDTO> Options { get; set; }
+    }
+
+    /// <summary>
+    /// DTO để cập nhật đáp án
+    /// </summary>
+    public class UpdateQuestionOptionDTO
+    {
+        /// <summary>
+        /// ID của đáp án (nếu cập nhật đáp án hiện có, không có ID sẽ tạo mới)
+        /// </summary>
+        /// <example>1</example>
+        public int Id { get; set; }
+
         /// <summary>
         /// Nội dung đáp án
         /// </summary>
@@ -418,22 +581,26 @@ namespace webthitn_backend.DTOs
         /// Giá trị ghép đôi (cho câu hỏi ghép đôi)
         /// </summary>
         /// <example>Paris</example>
-        public string MatchingValue { get; set; }
+        [DefaultValue("")]
+        public string MatchingValue { get; set; } = "";
 
         /// <summary>
         /// Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý
         /// </summary>
-        public bool IsPartOfTrueFalseGroup { get; set; }
+        [DefaultValue(false)]
+        public bool IsPartOfTrueFalseGroup { get; set; } = false;
 
         /// <summary>
         /// Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)
         /// </summary>
-        public int? GroupId { get; set; }
+        [DefaultValue(0)]
+        public int? GroupId { get; set; } = 0;
 
         /// <summary>
         /// Mức điểm cho đáp án này (0-100%)
         /// </summary>
         /// <example>100</example>
+        [Range(0, 100, ErrorMessage = "Phần trăm điểm phải từ 0 đến 100")]
         public int ScorePercentage { get; set; } = 100;
     }
 

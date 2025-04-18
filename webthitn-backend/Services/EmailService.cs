@@ -82,7 +82,7 @@ namespace webthitn_backend.Services
                         <p>Xin chào,</p>
                         <p>Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu tài khoản ExamDG của bạn.</p>
                         <p>Mã đặt lại mật khẩu của bạn là: <strong style='font-size: 18px; color: #2a76d2;'>{resetCode}</strong></p>
-                        <p>Mã này sẽ hết hạn sau 24 giờ.</p>
+                        <p>Mã này sẽ hết hạn sau 15 phút.</p>
                         <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
                         <div style='margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;'>
                             <p style='margin: 0;'>Trân trọng,<br>Đội ngũ ExamDG</p>
@@ -95,7 +95,7 @@ namespace webthitn_backend.Services
             string textBody = $"Đặt Lại Mật Khẩu\n\n" +
                             $"Xin chào,\n\n" +
                             $"Mã đặt lại mật khẩu của bạn là: {resetCode}\n\n" +
-                            $"Mã này sẽ hết hạn sau 24 giờ.\n\n" +
+                            $"Mã này sẽ hết hạn sau 15 phút.\n\n" +
                             $"Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n" +
                             $"Trân trọng,\nĐội ngũ ExamDG";
 
