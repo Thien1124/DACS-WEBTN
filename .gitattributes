@@ -1,0 +1,17 @@
+# Đảm bảo tất cả các file văn bản sử dụng LF
+* text=auto
+
+# Chỉ định các file cụ thể sử dụng LF
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+
+# Loại trừ node_modules khỏi xử lý
+node_modules/
+
+# Giữ nguyên kiểu xuống dòng cho file nhị phân
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
