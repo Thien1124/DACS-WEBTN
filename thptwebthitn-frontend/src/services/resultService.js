@@ -2,7 +2,6 @@ import apiClient from './apiClient';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 
-
 // Thiết lập axios interceptor
 axios.interceptors.request.use(config => {
   const token = getToken();
@@ -12,10 +11,30 @@ axios.interceptors.request.use(config => {
   return config;
 }, error => Promise.reject(error));
 
-// Lấy lịch sử bài thi theo người dùng
-export const getUserResults = async (userId) => {
+/**
+ * Submit exam answers and calculate score
+ * @param {Object} resultData - Result data with answers
+ * @returns {Promise} - Promise resolving to exam result
+ */
+export const submitExam = async (resultData) => {
   try {
-    const response = await apiClient.get(`/api/Results/user/${userId}`);
+    const response = await apiClient.post('/api/Results', resultData);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting exam:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user's exam history
+ * @param {string} userId - User ID
+ * @param {Object} params - Query parameters
+ * @returns {Promise} - Promise resolving to exam history
+ */
+export const getUserResults = async (userId, params = {}) => {
+  try {
+    const response = await apiClient.get(`/api/Results/user/${userId}`, { params });
     return response.data;
   } catch (error) {
     console.error(`Error fetching results for user ${userId}:`, error);
@@ -23,7 +42,11 @@ export const getUserResults = async (userId) => {
   }
 };
 
-// Lấy chi tiết kết quả bài thi
+/**
+ * Get exam result details
+ * @param {string} resultId - Result ID
+ * @returns {Promise} - Promise resolving to result details
+ */
 export const getResultById = async (resultId) => {
   try {
     const response = await apiClient.get(`/api/Results/${resultId}`);
@@ -34,7 +57,11 @@ export const getResultById = async (resultId) => {
   }
 };
 
-// Xóa kết quả bài thi (chỉ dành cho admin)
+/**
+ * Delete an exam result
+ * @param {string} id - Result ID
+ * @returns {Promise} - Promise resolving to deletion status
+ */
 export const deleteResult = async (id) => {
   try {
     const response = await apiClient.delete(`/api/Results/${id}`);
@@ -45,7 +72,12 @@ export const deleteResult = async (id) => {
   }
 };
 
-// Cập nhật điểm bài thi (dành cho giáo viên)
+/**
+ * Update result grade (for teachers)
+ * @param {string} resultId - Result ID
+ * @param {Object} gradeData - Updated grade data
+ * @returns {Promise} - Promise resolving to updated result
+ */
 export const updateResultGrade = async (resultId, gradeData) => {
   try {
     const response = await apiClient.put(`/api/Results/${resultId}/grade`, gradeData);

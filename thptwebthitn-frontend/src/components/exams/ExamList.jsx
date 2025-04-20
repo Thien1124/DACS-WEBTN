@@ -192,22 +192,68 @@ const ExamList = () => {
   const { user } = useSelector(state => state.auth);
   const { theme } = useSelector(state => state.ui);
   const [page, setPage] = useState(1);
+  const [localExams, setExams] = useState([]);
   
-  useEffect(() => {
-    if (subjectId) {
-      // Different API call based on user role
-      const params = { 
-        subjectId, 
-        page, 
-        limit: 9 
-      };
-      
-      if (user?.role === 'Admin' || user?.role === 'Teacher') {
-        dispatch(fetchExamsBySubject(params));
-      } else {
-        dispatch(fetchExamsForStudents(params));
-      }
+  const [fallbackExams] = useState([
+    {
+      id: "demo-1",
+      title: "Đề thi thử (dữ liệu offline)",
+      description: "Đề thi dùng khi không kết nối được API",
+      duration: 90,
+      questionCount: 40,
+      createdBy: "Hệ thống"
     }
+  ]);
+  
+  const useMockData = () => {
+    useEffect(() => {
+      // Only use this for testing when backend is unavailable
+      if (process.env.REACT_APP_USE_MOCK_DATA === 'true') {
+        setExams([
+          {
+            id: 1,
+            title: "Đề kiểm tra Toán học THPT Quốc Gia",
+            description: "Đề thi trắc nghiệm môn Toán học",
+            duration: 60,
+            questionCount: 40,
+            subject: { name: "Toán học" },
+            createdBy: "Admin",
+            isActive: true,
+            isPublic: true
+          },
+          // Add more mock exams as needed
+        ]);
+      }
+    }, []);
+  };
+
+  useMockData();
+
+  useEffect(() => {
+    const loadExams = async () => {
+      try {
+        if (!subjectId) return;
+        
+        const params = { 
+          subjectId, 
+          page, 
+          limit: 9 
+        };
+        
+        console.log('Loading exams with params:', params);
+        
+        if (user?.role === 'Admin' || user?.role === 'Teacher') {
+          await dispatch(fetchExamsBySubject(params)).unwrap();
+        } else {
+          await dispatch(fetchExamsForStudents(params)).unwrap();
+        }
+      } catch (error) {
+        console.error('Error loading exams:', error);
+        showErrorToast(`Không thể tải danh sách đề thi: ${error.message || 'Lỗi kết nối API'}`);
+      }
+    };
+    
+    loadExams();
   }, [dispatch, subjectId, user, page]);
   
   const handleViewHistory = () => {
@@ -233,7 +279,8 @@ const ExamList = () => {
       window.scrollTo(0, 0);
     }
   };
-  
+  const displayExams = localExams.length > 0 ? localExams : (exams?.length > 0 ? exams : fallbackExams);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -259,8 +306,9 @@ const ExamList = () => {
         <div>Không tìm thấy đề thi cho môn học này.</div>
       ) : (
         <>
+          {/* Hiển thị danh sách đề thi */}
           <ExamsGrid>
-            {exams?.map(exam => (
+            {displayExams.map(exam => (
               <ExamCard 
                 key={exam.id} 
                 theme={theme}
@@ -272,6 +320,7 @@ const ExamList = () => {
                   <ExamAuthor>Tạo bởi: {exam.createdBy || 'Admin'}</ExamAuthor>
                 </ExamHeader>
                 <ExamContent theme={theme}>
+                  {/* Thông tin đề thi */}
                   <ExamInfo theme={theme}>
                     <FaClock />
                     <span>Thời gian: {exam.duration} phút</span>
@@ -280,10 +329,7 @@ const ExamList = () => {
                     <FaClipboardList />
                     <span>Số câu hỏi: {exam.questionCount || exam.questions?.length || 'N/A'}</span>
                   </ExamInfo>
-                  <ExamInfo theme={theme}>
-                    <FaChalkboardTeacher />
-                    <span>Độ khó: <DifficultyBadge difficulty={exam.difficulty}>{exam.difficulty || 'Trung bình'}</DifficultyBadge></span>
-                  </ExamInfo>
+                  {/* Độ khó */}
                 </ExamContent>
                 <ExamFooter theme={theme}>
                   <div>
@@ -297,6 +343,7 @@ const ExamList = () => {
             ))}
           </ExamsGrid>
           
+          {/* Phân trang */}
           {pagination && pagination.totalPages > 1 && (
             <PaginationContainer>
               <PageButton 
@@ -307,6 +354,7 @@ const ExamList = () => {
                 &lt;
               </PageButton>
               
+              {/* Các nút phân trang */}
               {[...Array(pagination.totalPages).keys()].map(num => (
                 <PageButton 
                   key={num + 1}

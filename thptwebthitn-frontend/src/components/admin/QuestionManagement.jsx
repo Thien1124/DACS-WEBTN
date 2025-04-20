@@ -301,9 +301,18 @@ const cleanHTML = (html) => {
 const QuestionManagement = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { list: questions, loading, pagination } = useSelector(state => state.questions);
+  const questions = useSelector(state => state.questions);
+  
+  // Replace this line:
+  // const list = questions?.list || [];
+  
+  // With this more robust check:
+  const list = Array.isArray(questions?.list) ? questions.list : [];
+  
   const { subjects } = useSelector(state => state.subjects);
   const { theme } = useSelector(state => state.ui);
+  const { loading } = useSelector(state => state.questions) || { loading: false };
+  const { pagination } = useSelector(state => state.questions) || { pagination: {} };
   
   const [searchTerm, setSearchTerm] = useState('');
   const [difficulty, setDifficulty] = useState('all');
@@ -436,17 +445,15 @@ const QuestionManagement = () => {
       
       {loading ? (
         <LoadingSpinner />
-      ) : questions.length === 0 ? (
+      ) : list.length === 0 ? (
         <EmptyState theme={theme}>
           <p>Không tìm thấy câu hỏi nào.</p>
-          <Button theme={theme} primary onClick={handleCreateQuestion} style={{ margin: '1rem auto', display: 'flex' }}>
-            <FaPlus /> Thêm câu hỏi mới
-          </Button>
+          
         </EmptyState>
       ) : (
         <>
           <QuestionsGrid>
-            {questions.map(question => (
+            {list.map(question => (
               <QuestionCard key={question.id} theme={theme}>
                 <QuestionHeader theme={theme}>
                   <QuestionSubject theme={theme}>

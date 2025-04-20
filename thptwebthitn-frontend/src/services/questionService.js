@@ -10,45 +10,38 @@ axios.interceptors.request.use(config => {
 }, error => Promise.reject(error));
 
 /**
- * Get all questions with optional filters
- * @param {object} filters - Optional filters (subject, difficulty, etc.)
- * @returns {Promise} - Promise resolving to questions array
+ * Get questions with pagination and filters
+ * @param {Object} params - Query parameters
+ * @returns {Promise} - Promise resolving to questions data
  */
-export const getQuestions = async (filters = {}) => {
+export const getQuestions = async (params = {}) => {
   try {
-    const params = new URLSearchParams();
-    
-    // Add filters to query parameters
-    if (filters.subject) params.append('subject', filters.subject);
-    if (filters.difficulty) params.append('difficulty', filters.difficulty);
-    if (filters.search) params.append('search', filters.search);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
-    
-    const response = await apiClient.get(`/api/Question`, { params });
+    const response = await apiClient.get('/api/Question', { params });
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể lấy danh sách câu hỏi.' };
+    console.error('Error fetching questions:', error);
+    throw error;
   }
 };
 
 /**
- * Get a question by ID
- * @param {string} questionId - Question ID
- * @returns {Promise} - Promise resolving to question data
+ * Get question details by ID
+ * @param {string} id - Question ID
+ * @returns {Promise} - Promise resolving to question details
  */
 export const getQuestionById = async (id) => {
   try {
     const response = await apiClient.get(`/api/Question/${id}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể lấy thông tin câu hỏi.' };
+    console.error(`Error fetching question ${id}:`, error);
+    throw error;
   }
 };
 
 /**
  * Create a new question
- * @param {object} questionData - Question data
+ * @param {Object} questionData - Question data
  * @returns {Promise} - Promise resolving to created question
  */
 export const createQuestion = async (questionData) => {
@@ -56,14 +49,15 @@ export const createQuestion = async (questionData) => {
     const response = await apiClient.post('/api/Question', questionData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể tạo câu hỏi.' };
+    console.error('Error creating question:', error);
+    throw error;
   }
 };
 
 /**
- * Update an existing question
- * @param {string} questionId - Question ID
- * @param {object} questionData - Updated question data
+ * Update question details
+ * @param {string} id - Question ID
+ * @param {Object} questionData - Updated question data
  * @returns {Promise} - Promise resolving to updated question
  */
 export const updateQuestion = async (id, questionData) => {
@@ -71,24 +65,33 @@ export const updateQuestion = async (id, questionData) => {
     const response = await apiClient.put(`/api/Question/${id}`, questionData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể cập nhật câu hỏi.' };
+    console.error(`Error updating question ${id}:`, error);
+    throw error;
   }
 };
 
 /**
  * Delete a question
- * @param {string} questionId - Question ID
- * @returns {Promise} - Promise resolving to success message
+ * @param {string} id - Question ID
+ * @returns {Promise} - Promise resolving to deletion status
  */
-export const deleteQuestion = async (questionId) => {
+export const deleteQuestion = async (id) => {
   try {
-    const response = await apiClient.delete(`/api/Question/${questionId}`);
+    const response = await apiClient.delete(`/api/Question/${id}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể xóa câu hỏi.' };
+    console.error(`Error deleting question ${id}:`, error);
+    throw error;
   }
 };
-export const deleteOption = async (questionId, optionId) => {
+
+/**
+ * Delete an option from a question
+ * @param {string} questionId - Question ID
+ * @param {string} optionId - Option ID
+ * @returns {Promise} - Promise resolving to deletion status
+ */
+export const deleteQuestionOption = async (questionId, optionId) => {
   try {
     const response = await apiClient.delete(`/api/Question/${questionId}/options/${optionId}`);
     return response.data;

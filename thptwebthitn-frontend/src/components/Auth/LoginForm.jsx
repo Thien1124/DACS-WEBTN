@@ -348,6 +348,11 @@ const SwitchFormButton = styled.button`
   
   &:hover:after {
     width: 100%;
+  } */
+  
+  /* Add this instead for a simple hover effect without underline */
+  &:hover {
+    opacity: 0.8;
   }
 `;
 

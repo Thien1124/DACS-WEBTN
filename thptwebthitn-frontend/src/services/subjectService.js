@@ -1,49 +1,67 @@
 import apiClient from './apiClient';
 import axios from 'axios';
 
-
-
 // Cập nhật thời gian và người dùng hiện tại
 const currentTime = "2025-04-08 10:41:07";
 const currentUser = "vinhsonvlog";
 
-/**getAllSubjects
- * Get all subjects
- * @param {object} filters - Optional filters (grade, search query, sortBy, etc.)
- * @returns {Promise} - Promise resolving to subjects array
+/**
+ * Get list of subjects with pagination and filters
  */
-export const getAllSubjects = async () => {
+export const getSubjects = async (params = {}) => {
   try {
-    // You might need to adjust the endpoint based on your API
-    const response = await apiClient.get('/api/Subject');
+    const defaultParams = {
+      page: 1,
+      pageSize: 10,
+      ...params
+    };
     
-    // Add console logging to see the response
-    console.log('API response for subjects:', response.data);
+    const queryParams = new URLSearchParams(defaultParams).toString();
+    console.log(`Fetching subjects with params: ${queryParams}`);
     
-    return response.data;
+    const response = await apiClient.get(`/api/Subject/list?${queryParams}`);
+    
+    if (response.data) {
+      if (Array.isArray(response.data)) {
+        return {
+          items: response.data,
+          totalItems: response.data.length,
+          totalPages: 1,
+          currentPage: defaultParams.page,
+          pageSize: defaultParams.pageSize
+        };
+      } else if (response.data.items && Array.isArray(response.data.items)) {
+        return response.data;
+      }
+    }
+    
+    return {
+      items: [],
+      totalItems: 0,
+      totalPages: 0,
+      currentPage: defaultParams.page,
+      pageSize: defaultParams.pageSize
+    };
   } catch (error) {
     console.error('Error fetching subjects:', error);
     throw error;
   }
 };
 
-// Lấy chi tiết môn học theo ID
-export const getSubjectById = async (id) => {
+/**
+ * Get subject by ID
+ * @param {string} id - Subject ID
+ * @returns {Promise} - Promise resolving to subject data
+ */
+export const getSubjectById = async (subjectId) => {
   try {
-    console.log(`[${currentTime}] ${currentUser} is fetching subject with ID: ${id}`);
-    
-    // Gọi API endpoint chính xác
-    const response = await apiClient.get(`/api/Subject/${id}`);
-    
-    // Log kết quả
-    console.log(`[${currentTime}] Subject details:`, response.data);
-    
+    const response = await apiClient.get(`/api/Subject/${subjectId}`);
     return response.data;
   } catch (error) {
-    console.error(`[${currentTime}] Error fetching subject:`, error);
-    throw error;
+    throw error.response?.data || { message: 'Không thể lấy thông tin môn học.' };
   }
 };
+
 export const queryMultipleEndpoints = async () => {
   try {
     // Define response before using it
@@ -57,11 +75,30 @@ export const queryMultipleEndpoints = async () => {
 // Lấy tất cả môn học không phân trang
 export const getAllSubjectsNoPaging = async () => {
   try {
-    console.log(`[${currentTime}] Fetching all subjects without paging`);
-    const response = await apiClient.get('/api/Subject/all');
-    return response.data;
+    console.log(`[${new Date().toISOString()}] Fetching all subjects without paging`);
+    
+    // Try fetching with 'nopaging' parameter first
+    try {
+      const response = await apiClient.get('/api/Subject');
+      console.log('Subjects response with noPaging:', response.data);
+      return response.data;
+    } catch (innerError) {
+      console.log('Failed with noPaging parameter, trying alternate endpoint');
+      
+      // Fallback to regular endpoint with a large page size
+      const fallbackResponse = await apiClient.get('/api/Subject');
+      console.log('Subjects fallback response:', fallbackResponse.data);
+      
+      // If the response contains items, return those
+      if (fallbackResponse.data && Array.isArray(fallbackResponse.data.items)) {
+        return fallbackResponse.data.items;
+      }
+      
+      // Otherwise return the whole response
+      return fallbackResponse.data;
+    }
   } catch (error) {
-    console.error(`[${currentTime}] Error fetching all subjects:`, error);
+    console.error(`[${new Date().toISOString()}] Error fetching all subjects:`, error);
     throw error;
   }
 };
@@ -69,39 +106,30 @@ export const getAllSubjectsNoPaging = async () => {
 // Tạo môn học mới
 export const createSubject = async (subjectData) => {
   try {
-    console.log(`[${currentTime}] Creating new subject:`, subjectData);
     const response = await apiClient.post('/api/Subject', subjectData);
-    console.log(`[${currentTime}] Subject created successfully:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`[${currentTime}] Error creating subject:`, error);
-    throw error;
+    throw error.response?.data || { message: 'Không thể tạo môn học mới.' };
   }
 };
 
 // Cập nhật thông tin môn học
-export const updateSubject = async (id, subjectData) => {
+export const updateSubject = async (subjectId, subjectData) => {
   try {
-    console.log(`[${currentTime}] Updating subject with ID ${id}:`, subjectData);
-    const response = await apiClient.put(`/api/Subject/${id}`, subjectData);
-    console.log(`[${currentTime}] Subject updated successfully:`, response.data);
+    const response = await apiClient.put(`/api/Subject/${subjectId}`, subjectData);
     return response.data;
   } catch (error) {
-    console.error(`[${currentTime}] Error updating subject:`, error);
-    throw error;
+    throw error.response?.data || { message: 'Không thể cập nhật môn học.' };
   }
 };
 
 // Xóa môn học
-export const deleteSubject = async (id) => {
+export const deleteSubject = async (subjectId) => {
   try {
-    console.log(`[${currentTime}] Deleting subject with ID: ${id}`);
-    const response = await apiClient.delete(`/api/Subject/${id}`);
-    console.log(`[${currentTime}] Subject deleted successfully`);
+    const response = await apiClient.delete(`/api/Subject/${subjectId}`);
     return response.data;
   } catch (error) {
-    console.error(`[${currentTime}] Error deleting subject:`, error);
-    throw error;
+    throw error.response?.data || { message: 'Không thể xóa môn học.' };
   }
 };
 
@@ -134,6 +162,4 @@ export const getSubjectExams = async (subjectId) => {
   }
 };
 
-
-
-// Exam vi du môn toán thôi nha 
+// Exam vi du môn toán thôi nha

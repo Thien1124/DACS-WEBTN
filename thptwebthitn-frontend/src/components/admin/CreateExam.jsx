@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { createNewExam } from '../../redux/examSlice';
-import { fetchAllSubjectsNoPaging } from '../../redux/subjectSlice';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+import { getSubjects } from '../../services/subjectService';
+import { fetchAllSubjects } from '../../redux/subjectSlice';
+import { getAllSubjectsNoPaging } from '../../services/subjectService';
 
 const Container = styled.div`
   max-width: 900px;
@@ -185,27 +187,113 @@ const CreateExam = () => {
   const navigate = useNavigate();
   
   const { theme } = useSelector(state => state.ui);
-  const { items: subjectsData = [], loading: subjectsLoading } = useSelector(state => state.subjects);
-  const subjects = Array.isArray(subjectsData) ? subjectsData : [];
+  const { items: reduxSubjects, loading } = useSelector(state => state.subjects);
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     subjectId: '',
+    examTypeId: 2, // Default exam type
     duration: 60,
-    difficulty: 'medium',
-    isPublic: true,
-    instructions: 'Hãy đọc kỹ câu hỏi và chọn đáp án đúng.',
-    passingScore: 5
+    totalScore: 10,
+    passScore: 5,
+    maxAttempts: 1,
+    startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Tomorrow
+    endTime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Two weeks from now
+    isActive: true,
+    showResult: true,
+    showAnswers: false,
+    shuffleQuestions: true,
+    shuffleOptions: true,
+    autoGradeShortAnswer: true,
+    allowPartialGrading: true,
+    accessCode: '',
+    scoringConfig: JSON.stringify({
+      gradingMethod: "sum",
+      partialCreditMethod: "proportional",
+      penaltyForWrongAnswer: 0
+    }),
+    questions: []
   });
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localSubjects, setLocalSubjects] = useState([]);
+  const [isLoadingLocal, setIsLoadingLocal] = useState(false);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
-    console.log('Component mounted, dispatching subject fetch action');
-    dispatch(fetchAllSubjectsNoPaging());
+    // Method 1: Redux
+    dispatch(fetchAllSubjects());
+    
+    // Method 2: Direct API call as backup
+    const loadSubjectsDirectly = async () => {
+      setIsLoadingLocal(true);
+      setError(null);
+      try {
+        const data = await getAllSubjectsNoPaging();
+        console.log('Directly loaded subjects:', data);
+        
+        // Handle different response formats
+        if (data && Array.isArray(data)) {
+          setLocalSubjects(data);
+        } else if (data && data.items && Array.isArray(data.items)) {
+          setLocalSubjects(data.items);
+        } else {
+          console.warn('Unexpected response format from API:', data);
+          setError('Định dạng dữ liệu không hợp lệ');
+          setLocalSubjects([]);
+        }
+      } catch (err) {
+        console.error('Error loading subjects directly:', err);
+        setError(`Lỗi khi tải môn học: ${err.message || 'Lỗi không xác định'}`);
+        setLocalSubjects([]);
+      } finally {
+        setIsLoadingLocal(false);
+      }
+    };
+    
+    loadSubjectsDirectly();
   }, [dispatch]);
+  
+  // Use subjects from Redux or local state
+  const subjects = reduxSubjects?.length > 0 ? reduxSubjects : localSubjects;
+  const isLoading = loading || isLoadingLocal;
+  
+  // Debug info
+  console.log('Redux subjects:', reduxSubjects);
+  console.log('Local subjects:', localSubjects);
+  console.log('Using subjects:', subjects);
+  
+  // Function to retry loading subjects
+  const handleRetryLoadSubjects = () => {
+    dispatch(fetchAllSubjects());
+    
+    const retryLoadSubjects = async () => {
+      setIsLoadingLocal(true);
+      setError(null);
+      try {
+        const data = await getAllSubjectsNoPaging();
+        
+        if (data && Array.isArray(data)) {
+          setLocalSubjects(data);
+        } else if (data && data.items && Array.isArray(data.items)) {
+          setLocalSubjects(data.items);
+        } else {
+          setError('Định dạng dữ liệu không hợp lệ');
+          setLocalSubjects([]);
+        }
+      } catch (err) {
+        console.error('Error loading subjects directly:', err);
+        setError(`Lỗi khi tải môn học: ${err.message || 'Lỗi không xác định'}`);
+        setLocalSubjects([]);
+      } finally {
+        setIsLoadingLocal(false);
+      }
+    };
+    
+    retryLoadSubjects();
+  };
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -235,8 +323,20 @@ const CreateExam = () => {
       newErrors.duration = 'Thời gian làm bài phải lớn hơn 0';
     }
     
-    if (!formData.passingScore || formData.passingScore < 0 || formData.passingScore > 10) {
-      newErrors.passingScore = 'Điểm đạt phải từ 0 đến 10';
+    if (!formData.passScore || formData.passScore < 0 || formData.passScore > formData.totalScore) {
+      newErrors.passScore = `Điểm đạt phải từ 0 đến ${formData.totalScore}`;
+    }
+    
+    if (!formData.totalScore || formData.totalScore <= 0) {
+      newErrors.totalScore = 'Tổng điểm phải lớn hơn 0';
+    }
+    
+    if (!formData.maxAttempts || formData.maxAttempts <= 0) {
+      newErrors.maxAttempts = 'Số lần làm bài phải lớn hơn 0';
+    }
+    
+    if (new Date(formData.startTime) >= new Date(formData.endTime)) {
+      newErrors.endTime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
     }
     
     setErrors(newErrors);
@@ -300,20 +400,36 @@ const CreateExam = () => {
             </FormGroup>
             
             <FormGroup>
-              <Label theme={theme}>Môn học * {subjectsLoading ? '(Đang tải...)' : `(${subjects.length} môn học)`}</Label>
-              <Select
-                name="subjectId"
-                value={formData.subjectId}
-                onChange={handleChange}
-                theme={theme}
-              >
-                <option value="">-- Chọn môn học --</option>
-                {subjects.map(subject => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))}
-              </Select>
+              <Label theme={theme}>Môn học *</Label>
+              {isLoading ? (
+                <p>Loading subjects...</p>
+              ) : (
+                <>
+                  <Select
+                    name="subjectId"
+                    value={formData.subjectId}
+                    onChange={handleChange}
+                    theme={theme}
+                  >
+                    <option value="">-- Chọn môn học --</option>
+                    {subjects && subjects.length > 0 ? (
+                      subjects.map(subject => (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>Không có môn học nào</option>
+                    )}
+                  </Select>
+                  {subjects.length === 0 && (
+                    <div className="alert alert-warning mt-2">
+                      <strong>Cảnh báo:</strong> Không tìm thấy môn học nào trong hệ thống. 
+                      Vui lòng thêm môn học trước khi tạo đề thi.
+                    </div>
+                  )}
+                </>
+              )}
               {errors.subjectId && <ErrorMessage>{errors.subjectId}</ErrorMessage>}
             </FormGroup>
           </Grid>

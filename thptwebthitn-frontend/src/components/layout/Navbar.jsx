@@ -345,6 +345,7 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
           <NavLink theme={theme} to="/subjects">Môn học</NavLink>
           <NavLink theme={theme} to="/about">Giới thiệu</NavLink>
           <NavLink theme={theme} to="/contact">Liên hệ</NavLink>
+          <NavLink theme={theme} to="/leaderboard/subjects">Bảng xếp hạng</NavLink>
         </NavLinks>
         
         {isAuthenticated ? (
@@ -400,6 +401,7 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
             <MobileNavLink theme={theme} to="/subjects">Môn học</MobileNavLink>
             <MobileNavLink theme={theme} to="/about">Giới thiệu</MobileNavLink>
             <MobileNavLink theme={theme} to="/contact">Liên hệ</MobileNavLink>
+            <MobileNavLink theme={theme} to="/leaderboard/subjects">Bảng xếp hạng</MobileNavLink>
             
             {isAuthenticated ? (
               <>

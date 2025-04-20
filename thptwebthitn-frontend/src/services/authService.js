@@ -81,12 +81,17 @@ export const login = async (credentials) => {
     
     const { token, refreshToken, user } = response.data;
     
-    // Lưu token và thông tin user
+    // Lưu token và thông tin user - standardize token storage
     console.log('Setting token and user data', { token, refreshToken });
-    setToken(token);
+    
+    // Store token in multiple locations for compatibility
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('token', token);
+    
     if (refreshToken) {
-      setRefreshToken(refreshToken);
+      localStorage.setItem('refresh_token', refreshToken);
     }
+    
     if (user) {
       saveUserData(user);
     }
@@ -512,6 +517,20 @@ export const updateUserProfile = async (userData) => {
     }
     
     throw { message: errorMessage };
+  }
+};
+
+/**
+ * Verify token validity
+ * @returns {Promise} - Promise resolving to verification result
+ */
+export const verifyToken = async () => {
+  try {
+    const response = await apiClient.get('/api/Auth/verify-token');
+    return response.data;
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    throw new Error('Phiên đăng nhập không hợp lệ');
   }
 };
 

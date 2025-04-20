@@ -3,8 +3,19 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
 
+
+//Teacher
+import TeacherExamManagement from './pages/teacher/TeacherExamManagement';
+import TeacherCreateExam from './pages/teacher/TeacherCreateExam';
+import TeacherEditExam from './pages/teacher//TeacherEditExam';
+import TeacherImportExam from './pages/teacher/TeacherImportExam';
+
 // Layout
 import AppLayout from './components/layout/AppLayout';
+
+// Add these new imports
+import AdminStatistics from './pages/admin/AdminStatistics';
+import TeacherStatistics from './pages/teacher/TeacherStatistics';
 
 // Pages
 import HomePage from './components/Home';
@@ -14,6 +25,8 @@ import SettingsPage from './components/Settings/Settings';
 import AuthPage from './pages/AuthPage';
 import Unauthorized from './components/error/Unauthorized';
 
+//Chappter
+import ChapterManagement from './components/admin/ChapterManagement';
 // Subject Pages
 import SubjectsPage from './pages/SubjectsPage';  // Import chính xác SubjectsPage 
 import SubjectDetail from './components/subjects/SubjectDetail';
@@ -35,7 +48,8 @@ import CreateQuestion from './components/admin/CreateQuestion';
 import EditQuestion from './components/admin/EditQuestion';
 import UserManagement from './components/admin/UserManagement';
 import StudentExamList from './components/exams/StudentExamList';
-
+import ExamsBySubject from './components/exams/ExamsBySubject';
+import ExamQuestionsList from './components/exams/ExamQuestionsList';
 // Auth Components
 import LoginForm from './components/Auth/LoginForm';
 import RegisterForm from './components/Auth/RegisterForm';
@@ -63,6 +77,14 @@ import './assets/styles/toast.css';
 // Thêm import
 import useRoleSynchronizer from './hooks/useRoleSynchronizer';
 
+// Add these imports
+import ExamLeaderboard from './pages/leaderboard/ExamLeaderboard';
+import SubjectLeaderboard from './pages/leaderboard/SubjectLeaderboard';
+
+import { initializeTokens } from './utils/tokenSync';
+
+import ExamQuestions from './components/admin/ExamQuestions';
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#121212' : '#f7f7f7'};
@@ -83,6 +105,11 @@ function App() {
 
   // Sử dụng hook đồng bộ hóa
   useRoleSynchronizer();
+
+  useEffect(() => {
+    // Ensure token consistency across storage keys
+    initializeTokens();
+  }, []);
 
   useEffect(() => {
     // Auto-play animations in sequence
@@ -187,6 +214,8 @@ function App() {
                   <ExamInterface />
                 </ProtectedRoute>
               } />
+              <Route path="/Exam/:examId" element={<ExamInterface />} />
+              <Route path="/exams/:examId/questions" element={<ExamQuestionsList />} />
               <Route path="/exam-results/:resultId" element={
                 <ProtectedRoute>
                   <ExamResults />
@@ -202,6 +231,7 @@ function App() {
                   <ExamHistory />
                 </ProtectedRoute>
               } />
+              <Route path="/exams/by-subject/:subjectId" element={<ExamsBySubject />} />
               
               {/* User Routes */}
               <Route path="/profile" element={
@@ -271,6 +301,66 @@ function App() {
                   <UserManagement />
                 </AdminRoute>
               } />
+              
+              {/* Add this new route for Admin Statistics */}
+              <Route path="/admin/statistics" element={
+                <AdminRoute>
+                  <AdminStatistics />
+                </AdminRoute>
+              } />
+              
+              {/* Add this new route for Teacher Statistics */}
+              <Route path="/teacher/statistics" element={
+                <TeacherRoute>
+                  <TeacherStatistics />
+                </TeacherRoute>
+              } />
+              
+              {/* In your Routes section, add these teacher exam management routes */}
+              <Route path="/teacher/exams" element={
+                <TeacherRoute>
+                  <TeacherExamManagement />
+                </TeacherRoute>
+              } />
+              <Route path="/teacher/exams/create" element={
+                <TeacherRoute>
+                  <TeacherCreateExam />
+                </TeacherRoute>
+              } />
+              <Route path="/teacher/exams/:id/edit" element={
+                <TeacherRoute>
+                  <TeacherEditExam />
+                </TeacherRoute>
+              } />
+              <Route path="/teacher/exams/import" element={
+                <TeacherRoute>
+                  <TeacherImportExam />
+                </TeacherRoute>
+              } />
+
+              {/* Add these routes inside your Routes component */}
+              <Route path="/leaderboard/exams/:examId" element={
+                <ProtectedRoute>
+                  <ExamLeaderboard />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/leaderboard/subjects" element={
+                <ProtectedRoute>
+                  <SubjectLeaderboard />
+                </ProtectedRoute>
+              } />
+
+              {/* Add this new route for Chapter Management */}
+              <Route path="/admin/chapters" element={
+                <AdminRoute>
+                  <ChapterManagement />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/exams/:examId/questions" element={<ExamQuestions />} />
+              <Route path="/admin/exams/:examId/questions/create" element={<CreateQuestion />} />
+              <Route path="/admin/exams/:examId/questions/:questionId/edit" element={<EditQuestion />} />
             </Route>
           </Routes>
           

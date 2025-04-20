@@ -22,7 +22,8 @@ import {
   FaSearch,
   FaClock,
   FaQuestionCircle,
-  FaChartLine
+  FaChartLine,
+  FaTrophy
 } from 'react-icons/fa';
 
 // Styled components
@@ -894,6 +895,9 @@ const SubjectDetail = () => {
                     <FaChalkboardTeacher /> Chỉnh sửa môn học
                   </ActionButton>
                 )}
+                <ActionButton as={Link} to={`/leaderboard/subjects`} style={{ background: theme === 'dark' ? '#2d3748' : '#f5f7fa', color: theme === 'dark' ? '#e2e8f0' : '#4a5568' }}>
+                  <FaTrophy /> Bảng xếp hạng
+                </ActionButton>
               </div>
             </ButtonsRow>
           </>

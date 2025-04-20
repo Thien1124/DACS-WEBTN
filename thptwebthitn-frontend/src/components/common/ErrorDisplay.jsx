@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { FaExclamationTriangle } from 'react-icons/fa';
@@ -46,7 +47,7 @@ const RetryButton = styled.button`
   }
 `;
 
-const ErrorDisplay = ({ message, onRetry }) => {
+const ErrorDisplay = ({ message, retryAction }) => {
   const { theme } = useSelector(state => state.ui);
   
   return (
@@ -55,9 +56,14 @@ const ErrorDisplay = ({ message, onRetry }) => {
       <ErrorTitle theme={theme}>Đã xảy ra lỗi</ErrorTitle>
       <ErrorMessage theme={theme}>{message || 'Không thể tải dữ liệu. Vui lòng thử lại sau.'}</ErrorMessage>
       
-      {onRetry && <RetryButton onClick={onRetry}>Thử lại</RetryButton>}
+      {retryAction && <RetryButton onClick={retryAction}>Thử lại</RetryButton>}
     </ErrorContainer>
   );
+};
+
+ErrorDisplay.propTypes = {
+  message: PropTypes.string.isRequired,
+  retryAction: PropTypes.func,
 };
 
 export default ErrorDisplay;

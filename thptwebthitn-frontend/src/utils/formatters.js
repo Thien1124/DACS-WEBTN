@@ -33,6 +33,25 @@ export const formatTimeDuration = (seconds) => {
 };
 
 /**
+ * Format duration in seconds to HH:MM:SS format
+ * @param {number} seconds - Duration in seconds
+ * @returns {string} Formatted duration
+ */
+export const formatDuration = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  return [
+    hours > 0 ? hours : null,
+    minutes.toString().padStart(2, '0'),
+    secs.toString().padStart(2, '0')
+  ]
+    .filter(Boolean)
+    .join(':');
+};
+
+/**
  * Format grade level for display
  * @param {string} grade - Grade level (10, 11, 12)
  * @returns {string} - Formatted grade string

@@ -11,7 +11,7 @@ import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
 // Import thêm icons
-import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory } from 'react-icons/fa';
+import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece } from 'react-icons/fa';
 
 // Styled components hiện tại...
 const HeaderContainer = styled.header`
@@ -486,6 +486,14 @@ function Header() {
                             <FaQuestion />
                             Quản lý câu hỏi
                           </DropdownItem>
+                          <DropdownItem to="/admin/statistics" theme={theme}>
+                            <FaChartBar />
+                            Thống kê hệ thống
+                          </DropdownItem>
+                          <DropdownItem to="/admin/chapters" theme={theme}>
+                          <FaPuzzlePiece />
+                            Quản lý chương học
+                          </DropdownItem>
                         </>
                       )}
                       {isTeacher && !isAdmin && (
@@ -501,6 +509,10 @@ function Header() {
                           <DropdownItem to="/teacher/questions" theme={theme}>
                             <FaQuestion />
                             Quản lý câu hỏi
+                          </DropdownItem>
+                          <DropdownItem to="/teacher/statistics" theme={theme}>
+                            <FaChartBar />
+                            Thống kê bài thi
                           </DropdownItem>
                         </>
                       )}

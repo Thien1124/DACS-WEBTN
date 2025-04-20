@@ -40,9 +40,7 @@
     transition: background-color 0.2s;
   }
   
-  button:hover {
-    background-color: #0069d9;
-  }
+  
   
   /* Basic link styles */
   a {

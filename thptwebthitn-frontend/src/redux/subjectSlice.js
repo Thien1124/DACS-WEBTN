@@ -5,7 +5,7 @@ export const fetchAllSubjects = createAsyncThunk(
   'subjects/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await subjectService.getAllSubjects();
+      const response = await subjectService.getAllSubjectsNoPaging();
       console.log('Subject API response:', response);
       
       // Ensure we're returning an array
@@ -23,15 +23,9 @@ export const fetchAllSubjects = createAsyncThunk(
 // Async thunks
 export const fetchSubjects = createAsyncThunk(
   'subjects/fetchSubjects',
-  async (params, { rejectWithValue }) => {
-    try {
-      // Console log để kiểm tra params
-      console.log('Fetching subjects with params:', params);
-      const response = await subjectService.getAllSubjects(params);
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể tải danh sách môn học');
-    }
+  async () => {
+    const response = await subjectService.getAllSubjectsNoPaging();
+    return response;
   }
 );
 export const fetchAllSubjectsNoPaging = createAsyncThunk(

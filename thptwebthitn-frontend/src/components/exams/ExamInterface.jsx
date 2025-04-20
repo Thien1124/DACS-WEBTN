@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { 
   fetchExamWithQuestions, 
   startExamSession, 
@@ -216,26 +217,50 @@ const ExamInterface = () => {
   
   // Bắt đầu bài thi khi component được mount
   useEffect(() => {
-    // Giả lập việc tải đề thi từ API
-    setLoading(true);
-    setTimeout(() => {
+    const fetchExamData = async () => {
+      setLoading(true);
       try {
-        // Tìm đề thi theo ID từ mock data
-        // Trong thực tế, bạn sẽ gọi API ở đây
-        const foundExam = {
-          ...mockExam,
+        // Gọi API lấy đề thi và câu hỏi thực
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Exam/WithQuestions/${examId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Không thể tải đề thi. Mã lỗi: ${response.status}`);
+        }
+        
+        const examData = await response.json();
+        console.log("Dữ liệu đề thi từ API:", examData);
+        
+        // Kiểm tra cấu trúc dữ liệu
+        if (!examData) {
+          throw new Error("Không tìm thấy thông tin đề thi.");
+        }
+        
+        // Kiểm tra danh sách câu hỏi
+        if (!examData.questions || !Array.isArray(examData.questions) || examData.questions.length === 0) {
+          console.warn("Đề thi không có câu hỏi hoặc danh sách câu hỏi không hợp lệ.");
+        }
+        
+        // Thiết lập thời gian bắt đầu và kết thúc
+        const examWithTiming = {
+          ...examData,
           startTime: new Date().toISOString(),
-          endTime: new Date(Date.now() + mockExam.duration * 60 * 1000).toISOString()
+          endTime: new Date(Date.now() + (examData.duration || 60) * 60 * 1000).toISOString()
         };
         
-        setExam(foundExam);
-        setQuestions(foundExam.questions);
-        setLoading(false);
-      } catch (err) {
-        setError("Không thể tải đề thi. Vui lòng thử lại sau.");
+        setExam(examWithTiming);
+        setQuestions(examData.questions || []);
+        console.log("Đã tải đề thi:", examData.title);
+        console.log("Số câu hỏi:", examData.questions ? examData.questions.length : 0);
+        
+      } catch (error) {
+        console.error("Lỗi khi tải đề thi:", error);
+        setError(error.message || "Đã xảy ra lỗi khi tải đề thi.");
+      } finally {
         setLoading(false);
       }
-    }, 1000); // giả lập độ trễ mạng 1 giây
+    };
+    
+    fetchExamData();
   }, [examId]);
   
   // Thiết lập bộ đếm thời gian
@@ -305,48 +330,79 @@ const ExamInterface = () => {
     setIsSubmitModalOpen(false);
   };
   
-  const handleSubmitExam = useCallback(() => {
-    setIsSubmitting(true);
-    
-    // Giả lập việc nộp bài
-    setTimeout(() => {
-      // Tính toán kết quả
-      const correctCount = questions.reduce((count, question) => {
-        if (userAnswers[question.id] === question.correctOption) {
-          return count + 1;
-        }
-        return count;
-      }, 0);
-      
-      // Tính điểm
-      const score = Math.round((correctCount / questions.length) * 100);
-      
-      // Lưu kết quả vào localStorage để hiển thị trang kết quả
-      const result = {
-        id: Date.now(), // giả lập ID kết quả
-        examId: parseInt(examId),
-        score,
-        totalCorrect: correctCount,
-        totalQuestions: questions.length,
-        timeTaken: exam.duration - Math.floor(timeRemaining / 60), // phút
-        completedAt: new Date().toISOString(),
-        answers: Object.keys(userAnswers).map(questionId => {
-          const qId = parseInt(questionId);
-          const question = questions.find(q => q.id === qId);
-          
-          return {
-            questionId: qId,
-            selectedOption: userAnswers[qId],
-            isCorrect: question?.correctOption === userAnswers[qId]
-          };
-        })
-      };
-      
-      localStorage.setItem('lastExamResult', JSON.stringify(result));
+  // Trong ExamInterface.jsx (khoảng dòng 321)
+const handleSubmitExam = useCallback(() => {
+  setIsSubmitting(true);
+  
+  // Format user answers correctly for the API
+  const submissionData = {
+    examId: parseInt(examId),
+    timeSpent: exam ? (exam.duration - Math.floor(timeRemaining / 60)) : 0, // time spent in minutes
+    answers: Object.entries(userAnswers).map(([questionId, selectedOptionId]) => ({
+      questionId: parseInt(questionId),
+      selectedOptionId: selectedOptionId
+    }))
+  };
+  
+  console.log('Submitting exam data:', submissionData);
+  
+  // Get authentication token
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    showErrorToast('Không tìm thấy thông tin đăng nhập. Vui lòng đăng nhập lại.');
+    setIsSubmitting(false);
+    return;
+  }
+  
+  // Use the correct API endpoint from your documentation
+  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5006';
+  
+  axios.post(`${baseUrl}/api/Results`, submissionData, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  })
+    .then(response => {
+      console.log('Submission successful:', response.data);
       showSuccessToast('Đã nộp bài thành công!');
-      navigate(`/exam-results/${result.id}`);
-    }, 1500);
-  }, [examId, questions, userAnswers, exam, timeRemaining, navigate]);
+      navigate(`/exam-results/${response.data.id}`);
+    })
+    .catch(error => {
+      console.error('Error submitting exam:', error);
+      
+      // Improved error handling
+      if (error.response) {
+        // The request was made and the server responded with an error status code
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        
+        let errorMessage = 'Có lỗi xảy ra khi nộp bài';
+        
+        if (error.response.status === 404) {
+          errorMessage = 'Không tìm thấy API endpoint. Vui lòng liên hệ quản trị viên.';
+        } else if (error.response.status === 400) {
+          errorMessage = `Dữ liệu không hợp lệ: ${error.response.data?.title || 'Vui lòng kiểm tra lại'}`;
+        } else if (error.response.status === 401) {
+          errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        showErrorToast(errorMessage);
+      } else if (error.request) {
+        // The request was made but no response was received
+        showErrorToast('Không nhận được phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.');
+      } else {
+        // Something happened in setting up the request
+        showErrorToast(`Lỗi: ${error.message}`);
+      }
+    })
+    .finally(() => {
+      setIsSubmitting(false);
+    });
+}, [examId, exam, questions, userAnswers, navigate, timeRemaining]);
   const handleTimeUp = useCallback(() => {
     showErrorToast('Hết thời gian làm bài!');
     // Check if exam exists before submitting
@@ -384,118 +440,147 @@ const ExamInterface = () => {
     );
   }
   
-  const answeredCount = Object.keys(userAnswers).length;
-  const totalQuestions = questions.length;
-  const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
-  
-  const currentQuestionData = questions[currentQuestion - 1] || null;
+  // Thay thế đoạn code xử lý progressPercent với phiên bản an toàn hơn
+const answeredCount = Object.keys(userAnswers).length;
+const totalQuestions = questions?.length || 0;
+const progressPercent = totalQuestions > 0 ? Math.min(100, (answeredCount / totalQuestions) * 100) : 0;
+
+// Log giá trị để debug
+console.log("Thông tin tiến độ:", { 
+  answeredCount, 
+  totalQuestions, 
+  progressPercent,
+  userAnswers
+});
+
+// Đảm bảo currentQuestionData luôn có giá trị hợp lệ
+const currentQuestionData = questions && questions.length > 0 ? 
+  questions[currentQuestion - 1] || questions[0] : null;
   
   return (
-    <Container>
-      <Header>
-        <ExamTitle theme={theme}>{exam.title}</ExamTitle>
-        <TimerContainer theme={theme} isWarning={isTimeWarning}>
-          <TimerIcon />
-          <TimerText>{formatTime(timeRemaining || 0)}</TimerText>
-        </TimerContainer>
-      </Header>
-      
-      <ContentContainer>
-        <MainContent>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentQuestion}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {currentQuestionData && (
-                <QuestionDisplay 
-                  question={currentQuestionData}
-                  selectedOption={userAnswers[currentQuestionData.id] || null}
-                  onAnswerSelect={handleAnswerSelect}
-                  theme={theme}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-          
-          <ButtonContainer>
-            <NavButton 
-              theme={theme}
-              onClick={handlePrevQuestion}
-              disabled={currentQuestion === 1}
-            >
-              <FaArrowLeft />
-              Câu trước
-            </NavButton>
-            
-            <SubmitButton 
-              primary
-              onClick={openSubmitModal}
-              disabled={isSubmitting}
-            >
-              <FaPaperPlane />
-              Nộp bài
-            </SubmitButton>
-            
-            <NavButton 
-              theme={theme}
-              iconRight
-              onClick={handleNextQuestion}
-              disabled={currentQuestion === totalQuestions}
-            >
-              Câu sau
-              <FaArrowRight />
-            </NavButton>
-          </ButtonContainer>
-        </MainContent>
+    <>
+    {!questions || questions.length === 0 ? (
+      <Container>
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+          <h3 className="text-yellow-700 font-medium">Thông báo</h3>
+          <p className="text-yellow-600">Đề thi này chưa có câu hỏi. Vui lòng chọn đề thi khác.</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => navigate('/exams')}
+          >
+            Quay lại danh sách đề thi
+          </button>
+        </div>
+      </Container>
+    ) : (
+      // Nội dung hiện tại của component khi có câu hỏi
+      <Container>
+        <Header>
+          <ExamTitle theme={theme}>{exam.title}</ExamTitle>
+          <TimerContainer theme={theme} isWarning={isTimeWarning}>
+            <TimerIcon />
+            <TimerText>{formatTime(timeRemaining || 0)}</TimerText>
+          </TimerContainer>
+        </Header>
         
-        <Sidebar>
-          <NavigationCard theme={theme}>
-            <CardTitle theme={theme}>Tiến độ làm bài</CardTitle>
-            <ProgressBar theme={theme}>
-              <Progress value={progressPercent} />
-            </ProgressBar>
-            <ProgressText theme={theme}>
-              Đã làm: {answeredCount}/{totalQuestions} câu ({Math.round(progressPercent)}%)
-            </ProgressText>
+        <ContentContainer>
+          <MainContent>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentQuestion}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {currentQuestionData && (
+                  <QuestionDisplay 
+                    question={currentQuestionData}
+                    selectedOption={userAnswers[currentQuestionData.id] || null}
+                    onAnswerSelect={handleAnswerSelect}
+                    theme={theme}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
             
-            <CardTitle theme={theme}>Điều hướng câu hỏi</CardTitle>
-            <QuestionNavigation 
-              totalQuestions={totalQuestions}
-              currentQuestion={currentQuestion}
-              answeredQuestions={Object.keys(userAnswers).map(id => {
-                // Tìm vị trí của câu hỏi trong mảng questions
-                const index = questions.findIndex(q => q.id === parseInt(id)) + 1;
-                return index;
-              })}
-              onQuestionSelect={handleQuestionSelect}
-              theme={theme}
-            />
-          </NavigationCard>
-        </Sidebar>
-      </ContentContainer>
-      
-      <ConfirmModal 
-        show={isSubmitModalOpen}
-        title="Xác nhận nộp bài"
-        message={
-          <div>
-            <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px', display: 'inline' }} />
-            <span>Bạn có chắc chắn muốn nộp bài?</span>
-            <p style={{ marginTop: '10px' }}>
-              Đã làm: <strong>{answeredCount}/{totalQuestions}</strong> câu hỏi
-            </p>
-          </div>
-        }
-        confirmText="Nộp bài"
-        cancelText="Tiếp tục làm bài"
-        onConfirm={handleSubmitExam}
-        onCancel={closeSubmitModal}
-      />
-    </Container>
+            <ButtonContainer>
+              <NavButton 
+                theme={theme}
+                onClick={handlePrevQuestion}
+                disabled={currentQuestion === 1}
+              >
+                <FaArrowLeft />
+                Câu trước
+              </NavButton>
+              
+              <SubmitButton 
+                primary
+                onClick={openSubmitModal}
+                disabled={isSubmitting}
+              >
+                <FaPaperPlane />
+                Nộp bài
+              </SubmitButton>
+              
+              <NavButton 
+                theme={theme}
+                iconRight
+                onClick={handleNextQuestion}
+                disabled={currentQuestion === totalQuestions}
+              >
+                Câu sau
+                <FaArrowRight />
+              </NavButton>
+            </ButtonContainer>
+          </MainContent>
+          
+          <Sidebar>
+            <NavigationCard theme={theme}>
+              <CardTitle theme={theme}>Tiến độ làm bài</CardTitle>
+              <ProgressBar theme={theme}>
+                <Progress value={progressPercent} />
+              </ProgressBar>
+              <ProgressText theme={theme}>
+                Đã làm: {answeredCount}/{totalQuestions} câu ({Math.round(progressPercent)}%)
+              </ProgressText>
+              
+              <CardTitle theme={theme}>Điều hướng câu hỏi</CardTitle>
+              <QuestionNavigation 
+                totalQuestions={totalQuestions}
+                currentQuestion={currentQuestion}
+                answeredQuestions={Object.keys(userAnswers).map(id => {
+                  // Tìm vị trí của câu hỏi trong mảng questions
+                  const index = questions.findIndex(q => q.id === parseInt(id)) + 1;
+                  return index;
+                })}
+                onQuestionSelect={handleQuestionSelect}
+                theme={theme}
+              />
+            </NavigationCard>
+          </Sidebar>
+        </ContentContainer>
+        
+        <ConfirmModal 
+          show={isSubmitModalOpen}
+          title="Xác nhận nộp bài"
+          message={
+            <div>
+              <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px', display: 'inline' }} />
+              <span>Bạn có chắc chắn muốn nộp bài?</span>
+              <p style={{ marginTop: '10px' }}>
+                Đã làm: <strong>{answeredCount}/{totalQuestions}</strong> câu hỏi
+              </p>
+            </div>
+          }
+          confirmText="Nộp bài"
+          cancelText="Tiếp tục làm bài"
+          onConfirm={handleSubmitExam}
+          onCancel={closeSubmitModal}
+        />
+      </Container>
+    )}
+  </>
   );
 };
 

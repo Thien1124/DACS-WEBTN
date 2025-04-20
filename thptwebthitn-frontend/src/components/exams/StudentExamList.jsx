@@ -1,734 +1,1114 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Container, Card, Row, Col, Form, InputGroup, Button, Badge } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import { FaSearch, FaArrowRight, FaMedal, FaCheckCircle, FaHourglassStart, FaTrophy, FaSync } from 'react-icons/fa';
+import axios from 'axios';
+import { API_URL, USE_MOCK_DATA, API_ENDPOINTS } from '../../config/constants';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorAlert from '../../components/common/ErrorAlert';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { fetchExams, removeExam } from '../../redux/examSlice';
-import LoadingSpinner from '../common/LoadingSpinner';
-import { FaClock, FaChalkboardTeacher, FaClipboardList, FaPlay, FaFilter, FaSearch, FaSortAmountDown, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
-import Modal from '../common/Modal'; // Giả sử bạn có component Modal sẵn
-import Header from '../layout/Header';
+import { storeExamData } from '../../utils/examUtils';
 
-
-const PageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-`;
-
-const MainContent = styled.main`
-  flex-grow: 1;
-  padding-top: 60px; // Đủ khoảng cách để không bị che bởi header
-`;
-
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-`;
-
-const HeaderContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1rem;
-  }
-`;
-
-const TitleContainer = styled.div``;
-
-const Title = styled.h1`
-  font-size: 2rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  margin-bottom: 0.5rem;
-`;
-
-const Subtitle = styled.p`
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  font-size: 1.1rem;
-`;
-
-const CreateButton = styled.button`
+const ExamStatusBadge = styled(Badge)`
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #4285f4, #34a853);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 1; // Đảm bảo nút không bị các phần tử khác che khuất
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, #3b78e7, #2e9549);
-  }
-`;
-
-const FiltersContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  align-items: center;
-  
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-`;
-
-const SearchInput = styled.div`
-  display: flex;
-  align-items: center;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f7fafc'};
-  border-radius: 8px;
-  padding: 0 1rem;
-  flex: 1;
-  max-width: 400px;
-  height: 42px;
-  border: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  
-  svg {
-    color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-    margin-right: 0.5rem;
-  }
-  
-  input {
-    background: transparent;
-    border: none;
-    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-    font-size: 0.95rem;
-    width: 100%;
-    outline: none;
-  }
-  
-  @media (max-width: 768px) {
-    max-width: 100%;
-  }
-`;
-
-const FilterSelect = styled.select`
-  appearance: none;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f7fafc'};
-  border: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  border-radius: 8px;
-  padding: 0.5rem 2rem 0.5rem 1rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  cursor: pointer;
-  background-image: ${props => props.theme === 'dark' 
-    ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`
-    : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`
-  };
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-  min-width: 120px;
-  height: 42px;
-  margin-left: 0.5rem;
-  
-  &:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-  
-  @media (max-width: 768px) {
-    width: 100%;
-    margin-left: 0;
-  }
-`;
-
-const ExamsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-`;
-
-const ExamCard = styled(motion.div)`
-  background: ${props => props.theme === 'dark' ? '#2d3748' : '#ffffff'};
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-`;
-
-const ExamHeader = styled.div`
-  background: linear-gradient(135deg, #4285f4, #34a853);
-  color: white;
-  padding: 1rem;
-  position: relative;
-`;
-
-const ExamTitle = styled.h2`
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-`;
-
-const ExamAuthor = styled.p`
-  font-size: 0.9rem;
-  opacity: 0.8;
-`;
-
-const ExamContent = styled.div`
-  padding: 1.5rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-`;
-
-const ExamInfo = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  
-  svg {
-    margin-right: 0.5rem;
-    color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  }
-`;
-
-const ExamFooter = styled.div`
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-`;
-
-const ExamButton = styled.button`
-  background: linear-gradient(135deg, #4285f4, #34a853);
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
   font-weight: 500;
-  transition: all 0.2s ease;
-  
-  svg {
-    margin-right: 0.5rem;
-  }
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
 `;
 
-const AdminActionsContainer = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-`;
-
-const ActionButton = styled.button`
-  display: flex;
+const ScoreBadge = styled(Badge)`
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 5px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
+  gap: 4px;
+  font-size: 0.8rem;
+  padding: 5px 8px;
 `;
 
-const EditButton = styled(ActionButton)`
-  background-color: #4299e1;
-  
-  &:hover {
-    background-color: #3182ce;
-  }
-`;
+const ExamCard = styled(Card)`
+  height: 100%;
+  transition: transform 0.2s;
+  position: relative;
 
-const DeleteButton = styled(ActionButton)`
-  background-color: #e53e3e;
-  
-  &:hover {
-    background-color: #c53030;
-  }
-`;
-
-const DifficultyBadge = styled.span`
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background-color: ${props => {
-    switch(props.difficulty?.toLowerCase()) {
-      case 'easy': return '#c6f6d5';
-      case 'medium': return '#fefcbf';
-      case 'hard': return '#fed7d7';
-      default: return '#e2e8f0';
-    }
-  }};
-  color: ${props => {
-    switch(props.difficulty?.toLowerCase()) {
-      case 'easy': return '#22543d';
-      case 'medium': return '#744210';
-      case 'hard': return '#742a2a';
-      default: return '#2d3748';
-    }
-  }};
-`;
-
-const SubjectBadge = styled.span`
-  padding: 0.25rem 0.5rem;
-  border-radius: 5px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background-color: #ebf4ff;
-  color: #2c5282;
-  margin-left: auto;
-`;
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-`;
-
-const PageButton = styled.button`
-  width: 40px;
-  height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 0.25rem;
-  border: 1px solid ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  border-radius: 5px;
-  background-color: ${props => props.active ? '#4285f4' : 'transparent'};
-  color: ${props => props.active ? '#ffffff' : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover:not(:disabled) {
-    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#edf2f7'};
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const NoDataMessage = styled.div`
-  text-align: center;
-  padding: 3rem;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  font-size: 1.1rem;
-`;
-
-const ModalContent = styled.div`
-  padding: 1rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-`;
-
-const ModalText = styled.p`
-  margin-bottom: 1.5rem;
-`;
-
-const ModalButtonContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-`;
-
-const CancelButton = styled.button`
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  border: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  background-color: transparent;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#edf2f7'};
-  }
-`;
-
-const ConfirmButton = styled.button`
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  border: none;
-  background-color: #e53e3e;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background-color: #c53030;
-  }
-`;
-
-// Thêm nút "Bài thi" vào header
-const NavItemWithExams = styled.li`
-  margin: 0 1rem;
-  
-  @media (max-width: 768px) {
-    margin: 0.5rem 0;
-  }
-  
-  a {
-    color: ${props => props.theme === 'dark' ? '#ffffff' : '#333333'};
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-    
-    &:hover {
-      color: #4285f4;
-    }
-  }
-`;
-
-const AddExamButton = styled.div`
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 100;
-`;
-
-const FloatingButton = styled.button`
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4285f4, #34a853);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  border: none;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
-  
-  &:active {
-    transform: translateY(-2px);
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .exam-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    padding-right: 60px;
+  }
+
+  .exam-details {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 `;
 
 const StudentExamList = () => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { list: exams, loading, pagination } = useSelector(state => state.exams);
+  const [exams, setExams] = useState([]);
+  const [userAttempts, setUserAttempts] = useState({});
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [subjectFilter, setSubjectFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const { isAuthenticated, user } = useSelector(state => state.auth);
   const { theme } = useSelector(state => state.ui);
-  const { user } = useSelector(state => state.auth);
-  
-  // Debug user role
-  useEffect(() => {
-    console.log('Current user:', user);
-  }, [user]);
-  
-  // Kiểm tra xem người dùng có phải admin hoặc teacher không
-  const isAdminOrTeacher = (() => {
-    if (!user) return false;
-    // Kiểm tra cả chữ hoa và thường
-    const role = (user.role || '').toLowerCase();
-    console.log('User role lowercase:', role);
-    return role === 'admin' || role === 'teacher';
-  })();
-  
-  console.log('Is admin or teacher:', isAdminOrTeacher);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 2;
 
-  const [filters, setFilters] = useState({
-    page: 1,
-    limit: 9,
-    search: '',
-    difficulty: '',
-    subject: ''
-  });
-  
-  // State cho modal xóa bài thi
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [examToDelete, setExamToDelete] = useState(null);
-  
-  useEffect(() => {
-    dispatch(fetchExams(filters));
-  }, [dispatch, filters]);
-  
-  const handleSearchChange = (e) => {
-    setFilters({
-      ...filters,
-      search: e.target.value,
-      page: 1 // Reset về trang đầu tiên khi tìm kiếm
-    });
-  };
-  
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({
-      ...filters,
-      [name]: value,
-      page: 1 // Reset về trang đầu tiên khi thay đổi bộ lọc
-    });
-  };
-  
-  const handlePageChange = (newPage) => {
-    setFilters({
-      ...filters,
-      page: newPage
-    });
-  };
-  
-  const handleStartExam = (examId) => {
-    navigate(`/exams/${examId}`);
-  };
-  
-  const handleCreateExam = () => {
-    navigate('/admin/exams/create');
-  };
-  
-  const handleEditExam = (examId) => {
-    navigate(`/admin/exams/${examId}/edit`);
-  };
-  
-  const handleDeleteClick = (exam) => {
-    setExamToDelete(exam);
-    setShowDeleteModal(true);
-  };
-  
-  const handleDeleteConfirm = () => {
-    if (examToDelete) {
-      dispatch(removeExam(examToDelete.id))
-        .unwrap()
-        .then(() => {
-          showSuccessToast('Xóa bài thi thành công!');
-          setShowDeleteModal(false);
-          // Refresh danh sách bài thi
-          dispatch(fetchExams(filters));
-        })
-        .catch((error) => {
-          showErrorToast(`Lỗi khi xóa bài thi: ${error}`);
-        });
-    }
-  };
   const mockExams = [
     {
       id: 1,
-      title: "Đề thi Toán học THPT Quốc Gia",
-      createdBy: "Nguyễn Văn A",
-      duration: 90,
+      title: "Đề thi THPT Quốc Gia môn Toán 2024",
+      subjectId: 1,
+      subject: { id: 1, name: "Toán Học" },
       questionCount: 50,
-      difficulty: "hard",
-      subjectName: "Toán học",
-      isPublic: true
+      duration: 90,
+      isActive: true,
+      isApproved: true,
+      createdAt: "2024-04-10T08:30:00Z",
+      updatedAt: "2024-04-15T10:45:00Z",
+      grade: 12,
+      description: "Đề thi THPT Quốc Gia môn Toán năm 2024"
     },
     {
       id: 2,
-      title: "Đề thi Vật lý học kỳ 1",
-      createdBy: "Trần Văn B",
-      duration: 45,
-      questionCount: 30,
-      difficulty: "medium",
-      subjectName: "Vật lý",
-      isPublic: true
+      title: "Đề thi giữa kỳ Vật Lý lớp 11",
+      subjectId: 2,
+      subject: { id: 2, name: "Vật Lý" },
+      questionCount: 40,
+      duration: 60,
+      isActive: true,
+      isApproved: true,
+      createdAt: "2024-04-05T09:15:00Z",
+      updatedAt: "2024-04-12T11:30:00Z",
+      grade: 11,
+      description: "Đề thi giữa kỳ môn Vật Lý dành cho học sinh lớp 11"
     },
     {
       id: 3,
-      title: "Đề thi Hóa học cơ bản",
-      createdBy: "Lê Thị C",
+      title: "Đề thi thử Hóa Học THPT",
+      subjectId: 3,
+      subject: { id: 3, name: "Hóa Học" },
+      questionCount: 45,
+      duration: 75,
+      isActive: true,
+      isApproved: false,
+      createdAt: "2024-04-08T14:20:00Z",
+      updatedAt: "2024-04-14T16:10:00Z",
+      grade: 12,
+      description: "Đề thi thử THPT Quốc Gia môn Hóa học"
+    },
+    {
+      id: 4,
+      title: "Đề thi Tiếng Anh học kỳ 1",
+      subjectId: 4,
+      subject: { id: 4, name: "Tiếng Anh" },
+      questionCount: 50,
       duration: 60,
+      isActive: false,
+      isApproved: true,
+      createdAt: "2024-03-25T10:30:00Z",
+      updatedAt: "2024-04-05T15:45:00Z",
+      grade: 10,
+      description: "Đề thi học kỳ 1 môn Tiếng Anh"
+    },
+    {
+      id: 5,
+      title: "Đề cương ôn tập Ngữ Văn lớp 12",
+      subjectId: 5,
+      subject: { id: 5, name: "Ngữ Văn" },
+      questionCount: 35,
+      duration: 120,
+      isActive: true,
+      isApproved: false,
+      createdAt: "2024-04-01T11:00:00Z",
+      updatedAt: "2024-04-10T09:20:00Z",
+      grade: 12,
+      description: "Đề cương ôn tập học kỳ 2 môn Ngữ Văn lớp 12"
+    },
+    {
+      id: 6,
+      title: "Đề thi thử Sinh Học THPT Quốc Gia",
+      subjectId: 6,
+      subject: { id: 6, name: "Sinh Học" },
       questionCount: 40,
-      difficulty: "easy",
-      subjectName: "Hóa học",
-      isPublic: false
+      duration: 50,
+      isActive: true,
+      isApproved: true,
+      createdAt: "2024-03-28T08:45:00Z",
+      updatedAt: "2024-04-08T14:30:00Z",
+      grade: 12,
+      description: "Đề thi thử THPT Quốc Gia môn Sinh học năm 2024"
+    },
+    {
+      id: 7,
+      title: "Đề thi Địa Lý học kỳ 2",
+      subjectId: 7,
+      subject: { id: 7, name: "Địa Lý" },
+      questionCount: 30,
+      duration: 45,
+      isActive: false,
+      isApproved: true,
+      createdAt: "2024-03-15T09:30:00Z",
+      updatedAt: "2024-03-25T13:15:00Z",
+      grade: 11,
+      description: "Đề thi học kỳ 2 môn Địa Lý lớp 11"
+    },
+    {
+      id: 8,
+      title: "Đề thi Lịch Sử giữa kỳ",
+      subjectId: 8,
+      subject: { id: 8, name: "Lịch Sử" },
+      questionCount: 35,
+      duration: 45,
+      isActive: true,
+      isApproved: false,
+      createdAt: "2024-04-02T10:20:00Z",
+      updatedAt: "2024-04-12T11:05:00Z",
+      grade: 10,
+      description: "Đề thi giữa kỳ môn Lịch Sử lớp 10"
+    },
+    {
+      id: 9,
+      title: "Đề thi Tin Học lập trình C++",
+      subjectId: 9,
+      subject: { id: 9, name: "Tin Học" },
+      questionCount: 25,
+      duration: 60,
+      isActive: true,
+      isApproved: true,
+      createdAt: "2024-03-20T13:40:00Z",
+      updatedAt: "2024-04-03T15:25:00Z",
+      grade: 11,
+      description: "Đề thi thực hành lập trình C++ môn Tin học"
+    },
+    {
+      id: 10,
+      title: "Đề thi GDCD lớp 12",
+      subjectId: 10,
+      subject: { id: 10, name: "GDCD" },
+      questionCount: 40,
+      duration: 50,
+      isActive: true,
+      isApproved: false,
+      createdAt: "2024-04-05T11:15:00Z",
+      updatedAt: "2024-04-15T10:30:00Z",
+      grade: 12,
+      description: "Đề thi học kỳ 1 môn GDCD lớp 12"
     }
   ];
-  // Sử dụng mock data nếu không có dữ liệu thực
-  const displayedExams = exams?.length > 0 ? exams : mockExams;
   
-  
-  const handleCloseModal = () => {
-    setShowDeleteModal(false);
-    setExamToDelete(null);
+  // Danh sách các môn học để lọc
+   const mockSubjects = [
+    { id: 1, name: "Toán Học" },
+    { id: 2, name: "Vật Lý" },
+    { id: 3, name: "Hóa Học" },
+    { id: 4, name: "Tiếng Anh" },
+    { id: 5, name: "Ngữ Văn" },
+    { id: 6, name: "Sinh Học" },
+    { id: 7, name: "Địa Lý" },
+    { id: 8, name: "Lịch Sử" },
+    { id: 9, name: "Tin Học" },
+    { id: 10, name: "GDCD" }
+  ];
+    
+   const demoQuestions = {
+    "demo-exam-1": [
+      {
+        id: "q1-exam1",
+        content: "Cho hàm số $f(x) = x^3 - 3x^2 + mx + n$ có đồ thị là đường cong cắt trục hoành tại ba điểm phân biệt. Số điểm cực trị của hàm số đã cho là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Đạo hàm $f'(x) = 3x^2 - 6x + m$. Để có cực trị, cần $f'(x) = 0$, tức $3x^2 - 6x + m = 0$. Phương trình này có 2 nghiệm phân biệt.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "1", isCorrect: false },
+          { id: "q1-opt2", content: "2", isCorrect: true },
+          { id: "q1-opt3", content: "3", isCorrect: false },
+          { id: "q1-opt4", content: "4", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam1",
+        content: "Cho số phức $z = \\frac{1+i}{1-i}$. Môđun của số phức $z$ là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "$z = \\frac{1+i}{1-i} = \\frac{(1+i)(1+i)}{(1-i)(1+i)} = \\frac{1+2i+i^2}{1^2-i^2} = \\frac{1+2i-1}{2} = i$. Do đó $|z| = |i| = 1$",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "0", isCorrect: false },
+          { id: "q2-opt2", content: "1", isCorrect: true },
+          { id: "q2-opt3", content: "2", isCorrect: false },
+          { id: "q2-opt4", content: "$\\sqrt{2}$", isCorrect: false }
+        ]
+      },
+      {
+        id: "q3-exam1",
+        content: "Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác đều cạnh $a$, $SA$ vuông góc với mặt phẳng đáy, $SA = a$. Góc giữa hai mặt phẳng $(SAB)$ và $(SAC)$ là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Gọi $H$ là hình chiếu của $S$ lên mặt phẳng đáy. Khi đó $H$ trùng với $A$. Góc giữa hai mặt phẳng $(SAB)$ và $(SAC)$ chính là góc $BAC = 60^{\\circ}$.",
+        questionIndex: 3,
+        options: [
+          { id: "q3-opt1", content: "$30^{\\circ}$", isCorrect: false },
+          { id: "q3-opt2", content: "$45^{\\circ}$", isCorrect: false },
+          { id: "q3-opt3", content: "$60^{\\circ}$", isCorrect: true },
+          { id: "q3-opt4", content: "$90^{\\circ}$", isCorrect: false }
+        ]
+      },
+      {
+        id: "q4-exam1",
+        content: "Giá trị lớn nhất của hàm số $f(x) = \\sin x + \\cos x$ trên đoạn $[0; 2\\pi]$ là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Ta có $f(x) = \\sin x + \\cos x = \\sqrt{2}\\sin(x + \\frac{\\pi}{4})$. Giá trị lớn nhất của $\\sin(x + \\frac{\\pi}{4})$ là 1, nên giá trị lớn nhất của $f(x)$ là $\\sqrt{2}$.",
+        questionIndex: 4,
+        options: [
+          { id: "q4-opt1", content: "0", isCorrect: false },
+          { id: "q4-opt2", content: "1", isCorrect: false },
+          { id: "q4-opt3", content: "$\\sqrt{2}$", isCorrect: true },
+          { id: "q4-opt4", content: "2", isCorrect: false }
+        ]
+      },
+      {
+        id: "q5-exam1",
+        content: "Cho cấp số cộng $(u_n)$ có $u_1 = 3$ và $u_2 = 7$. Tổng 10 số hạng đầu tiên của cấp số cộng đã cho là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Công sai $d = u_2 - u_1 = 7 - 3 = 4$. Tổng 10 số hạng đầu tiên: $S_{10} = \\frac{10}{2}(2u_1 + 9d) = 5(6 + 36) = 5 \\cdot 42 = 210$",
+        questionIndex: 5,
+        options: [
+          { id: "q5-opt1", content: "185", isCorrect: false },
+          { id: "q5-opt2", content: "195", isCorrect: false },
+          { id: "q5-opt3", content: "200", isCorrect: false },
+          { id: "q5-opt4", content: "210", isCorrect: true }
+        ]
+      }
+    ],
+    "demo-exam-2": [
+      {
+        id: "q1-exam2",
+        content: "Một vật dao động điều hòa với chu kỳ $T = 2$ s và biên độ $A = 10$ cm. Tại thời điểm $t = 0$, vật đi qua vị trí cân bằng theo chiều dương. Phương trình dao động của vật là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Ta có $\\omega = \\frac{2\\pi}{T} = \\pi$ rad/s. Tại $t = 0$, $x = 0$ và $v > 0$ nên $\\varphi = 0$. Vậy $x = 10\\sin(\\pi t)$ cm.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "$x = 10\\sin(\\pi t)$ cm", isCorrect: true },
+          { id: "q1-opt2", content: "$x = 10\\cos(\\pi t)$ cm", isCorrect: false },
+          { id: "q1-opt3", content: "$x = 10\\sin(2\\pi t)$ cm", isCorrect: false },
+          { id: "q1-opt4", content: "$x = 10\\cos(2\\pi t)$ cm", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam2",
+        content: "Trong thí nghiệm Young về giao thoa ánh sáng, nguồn sáng phát ra ánh sáng đơn sắc có bước sóng $\\lambda = 0,6$ μm. Khoảng cách giữa hai khe là $a = 1$ mm, khoảng cách từ mặt phẳng chứa hai khe đến màn là $D = 2$ m. Khoảng vân quan sát được trên màn là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Khoảng vân: $i = \\frac{\\lambda D}{a} = \\frac{0,6 \\cdot 10^{-6} \\cdot 2}{10^{-3}} = 1,2 \\cdot 10^{-3}$ m = 1,2 mm",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "0,6 mm", isCorrect: false },
+          { id: "q2-opt2", content: "1,2 mm", isCorrect: true },
+          { id: "q2-opt3", content: "1,5 mm", isCorrect: false },
+          { id: "q2-opt4", content: "2,4 mm", isCorrect: false }
+        ]
+      },
+      {
+        id: "q3-exam2",
+        content: "Một vật có khối lượng $m = 100$ g được ném thẳng đứng lên cao với vận tốc ban đầu $v_0 = 10$ m/s. Lấy $g = 10$ m/s². Độ cao cực đại mà vật đạt được là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Độ cao cực đại: $h_{max} = \\frac{v_0^2}{2g} = \\frac{10^2}{2 \\cdot 10} = 5$ m",
+        questionIndex: 3,
+        options: [
+          { id: "q3-opt1", content: "2,5 m", isCorrect: false },
+          { id: "q3-opt2", content: "5 m", isCorrect: true },
+          { id: "q3-opt3", content: "10 m", isCorrect: false },
+          { id: "q3-opt4", content: "20 m", isCorrect: false }
+        ]
+      },
+      {
+        id: "q4-exam2",
+        content: "Một mạch dao động LC lí tưởng gồm cuộn cảm thuần có độ tự cảm $L = 0,4$ μH và tụ điện có điện dung $C = 10$ pF. Tần số dao động riêng của mạch là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Tần số dao động riêng: $f = \\frac{1}{2\\pi\\sqrt{LC}} = \\frac{1}{2\\pi\\sqrt{0,4 \\cdot 10^{-6} \\cdot 10^{-11}}} = 25,2 \\cdot 10^6$ Hz = 25,2 MHz",
+        questionIndex: 4,
+        options: [
+          { id: "q4-opt1", content: "2,52 MHz", isCorrect: false },
+          { id: "q4-opt2", content: "12,6 MHz", isCorrect: false },
+          { id: "q4-opt3", content: "25,2 MHz", isCorrect: true },
+          { id: "q4-opt4", content: "50,4 MHz", isCorrect: false }
+        ]
+      },
+      {
+        id: "q5-exam2",
+        content: "Hạt nhân $^{226}_{88}$Ra phát ra tia $\\alpha$ và biến đổi thành hạt nhân:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Phương trình phản ứng: $^{226}_{88}\\textrm{Ra} \\to ^{222}_{86}\\textrm{Rn} + ^4_2\\textrm{He}$",
+        questionIndex: 5,
+        options: [
+          { id: "q5-opt1", content: "$^{222}_{86}\\textrm{Rn}$", isCorrect: true },
+          { id: "q5-opt2", content: "$^{222}_{87}\\textrm{Fr}$", isCorrect: false },
+          { id: "q5-opt3", content: "$^{230}_{90}\\textrm{Th}$", isCorrect: false },
+          { id: "q5-opt4", content: "$^{226}_{89}\\textrm{Ac}$", isCorrect: false }
+        ]
+      }
+    ],
+    "demo-exam-3": [
+      {
+        id: "q1-exam3",
+        content: "Cho các chất: (1) CH₃NH₂; (2) CH₃COOH; (3) H₂NCH₂COOH; (4) CH₃COOCH₃. Số chất tham gia phản ứng thủy phân trong môi trường kiềm là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Các chất tham gia phản ứng thủy phân trong môi trường kiềm là este (4) và peptit/protein (không có). Vậy có 1 chất.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "1", isCorrect: true },
+          { id: "q1-opt2", content: "2", isCorrect: false },
+          { id: "q1-opt3", content: "3", isCorrect: false },
+          { id: "q1-opt4", content: "4", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam3",
+        content: "Kim loại nào sau đây điều chế được bằng phương pháp điện phân dung dịch?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Các kim loại hoạt động yếu hơn H₂ có thể điều chế bằng phương pháp điện phân dung dịch muối của chúng. Cu, Ag, Au đều đứng sau H trong dãy hoạt động hóa học.",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "Na", isCorrect: false },
+          { id: "q2-opt2", content: "Al", isCorrect: false },
+          { id: "q2-opt3", content: "Cu", isCorrect: true },
+          { id: "q2-opt4", content: "Ca", isCorrect: false }
+        ]
+      },
+      {
+        id: "q3-exam3",
+        content: "Chất nào sau đây là chất điện li mạnh?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Axit HCl là một axit mạnh, điện li hoàn toàn trong dung dịch nước.",
+        questionIndex: 3,
+        options: [
+          { id: "q3-opt1", content: "CH₃COOH", isCorrect: false },
+          { id: "q3-opt2", content: "HCl", isCorrect: true },
+          { id: "q3-opt3", content: "H₂CO₃", isCorrect: false },
+          { id: "q3-opt4", content: "NH₄OH", isCorrect: false }
+        ]
+      },
+      {
+        id: "q4-exam3",
+        content: "Tơ nào sau đây thuộc loại tơ nhân tạo?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Tơ visco là tơ nhân tạo, được điều chế từ xenlulozơ tự nhiên qua quá trình xử lý hóa học.",
+        questionIndex: 4,
+        options: [
+          { id: "q4-opt1", content: "Tơ tằm", isCorrect: false },
+          { id: "q4-opt2", content: "Tơ capron", isCorrect: false },
+          { id: "q4-opt3", content: "Tơ visco", isCorrect: true },
+          { id: "q4-opt4", content: "Tơ nilon-6,6", isCorrect: false }
+        ]
+      },
+      {
+        id: "q5-exam3",
+        content: "Phương trình hóa học nào sau đây sai?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Phương trình (4) sai vì CO₂ không tác dụng với dung dịch NaOH đặc nóng, nó chỉ tạo ra Na₂CO₃ khi tác dụng với NaOH.",
+        questionIndex: 5,
+        options: [
+          { id: "q5-opt1", content: "Fe + 2HCl → FeCl₂ + H₂", isCorrect: false },
+          { id: "q5-opt2", content: "2NaOH + CO₂ → Na₂CO₃ + H₂O", isCorrect: false },
+          { id: "q5-opt3", content: "CaO + H₂O → Ca(OH)₂", isCorrect: false },
+          { id: "q5-opt4", content: "2NaOH(đặc, nóng) + CO₂ → 2Na + CO₃² + H₂O", isCorrect: true }
+        ]
+      }
+    ]
   };
   
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  // Dữ liệu mẫu câu hỏi cho các đề thi
+   const mockQuestions = {
+    // ID 1: Đề thi THPT Quốc Gia môn Toán 2024
+    "1": [
+      {
+        id: "q1-exam1",
+        content: "Cho hàm số $f(x) = x^3 - 3x^2 + mx + n$ có đồ thị là đường cong cắt trục hoành tại ba điểm phân biệt. Số điểm cực trị của hàm số đã cho là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Đạo hàm $f'(x) = 3x^2 - 6x + m$. Để có cực trị, cần $f'(x) = 0$, tức $3x^2 - 6x + m = 0$. Phương trình này có 2 nghiệm phân biệt.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "1", isCorrect: false },
+          { id: "q1-opt2", content: "2", isCorrect: true },
+          { id: "q1-opt3", content: "3", isCorrect: false },
+          { id: "q1-opt4", content: "4", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam1",
+        content: "Cho số phức $z = \\frac{1+i}{1-i}$. Môđun của số phức $z$ là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "$z = \\frac{1+i}{1-i} = \\frac{(1+i)(1+i)}{(1-i)(1+i)} = \\frac{1+2i+i^2}{1^2-i^2} = \\frac{1+2i-1}{2} = i$. Do đó $|z| = |i| = 1$",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "0", isCorrect: false },
+          { id: "q2-opt2", content: "1", isCorrect: true },
+          { id: "q2-opt3", content: "2", isCorrect: false },
+          { id: "q2-opt4", content: "$\\sqrt{2}$", isCorrect: false }
+        ]
+      },
+      // Thêm 8 câu hỏi nữa để đủ 10 câu
+    ],
   
-  return (
-    <PageContainer>
-      <Header />
-      <MainContent>
-        <Container>
-          <HeaderContainer>
-            <TitleContainer>
-              <Title theme={theme}>Danh sách bài thi</Title>
-              <Subtitle theme={theme}>Chọn bài thi phù hợp để luyện tập và nâng cao kiến thức</Subtitle>
-            </TitleContainer>
+    // ID 2: Đề thi giữa kỳ Vật Lý lớp 11
+    "2": [
+      {
+        id: "q1-exam2",
+        content: "Một vật dao động điều hòa với chu kỳ $T = 2$ s và biên độ $A = 10$ cm. Phương trình dao động của vật là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Ta có $\\omega = \\frac{2\\pi}{T} = \\pi$ rad/s. Phương trình dao động: $x = 10\\sin(\\pi t)$ cm.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "$x = 10\\sin(\\pi t)$ cm", isCorrect: true },
+          { id: "q1-opt2", content: "$x = 10\\cos(\\pi t)$ cm", isCorrect: false },
+          { id: "q1-opt3", content: "$x = 10\\sin(2\\pi t)$ cm", isCorrect: false },
+          { id: "q1-opt4", content: "$x = 10\\cos(2\\pi t)$ cm", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam2",
+        content: "Trong thí nghiệm Young về giao thoa ánh sáng, khoảng vân quan sát được trên màn là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Khoảng vân: $i = \\frac{\\lambda D}{a} = \\frac{0,6 \\cdot 10^{-6} \\cdot 2}{10^{-3}} = 1,2 \\cdot 10^{-3}$ m = 1,2 mm",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "0,6 mm", isCorrect: false },
+          { id: "q2-opt2", content: "1,2 mm", isCorrect: true },
+          { id: "q2-opt3", content: "1,5 mm", isCorrect: false },
+          { id: "q2-opt4", content: "2,4 mm", isCorrect: false }
+        ]
+      },
+      // Thêm 8 câu hỏi nữa để đủ 10 câu
+    ],
+  
+    // ID 3: Đề thi thử Hóa Học THPT
+    "3": [
+      {
+        id: "q1-exam3",
+        content: "Cho các chất: (1) CH₃NH₂; (2) CH₃COOH; (3) H₂NCH₂COOH; (4) CH₃COOCH₃. Số chất tham gia phản ứng thủy phân trong môi trường kiềm là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Các chất tham gia phản ứng thủy phân trong môi trường kiềm là este (4) và peptit/protein (không có). Vậy có 1 chất.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "1", isCorrect: true },
+          { id: "q1-opt2", content: "2", isCorrect: false },
+          { id: "q1-opt3", content: "3", isCorrect: false },
+          { id: "q1-opt4", content: "4", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam3",
+        content: "Kim loại nào sau đây điều chế được bằng phương pháp điện phân dung dịch?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Các kim loại hoạt động yếu hơn H₂ có thể điều chế bằng điện phân dung dịch muối.",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "Na", isCorrect: false },
+          { id: "q2-opt2", content: "Al", isCorrect: false },
+          { id: "q2-opt3", content: "Cu", isCorrect: true },
+          { id: "q2-opt4", content: "Ca", isCorrect: false }
+        ]
+      },
+      // Thêm 8 câu hỏi nữa để đủ 10 câu
+    ],
+  
+    // ID 4: Đề thi Tiếng Anh học kỳ 1
+    "4": [
+      {
+        id: "q1-exam4",
+        content: "Choose the word whose underlined part is pronounced differently: th**ough**, en**ough**, t**ough**, r**ough**",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Though: /ðəʊ/, enough: /ɪˈnʌf/, tough: /tʌf/, rough: /rʌf/. The word 'though' has a different pronunciation.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "though", isCorrect: true },
+          { id: "q1-opt2", content: "enough", isCorrect: false },
+          { id: "q1-opt3", content: "tough", isCorrect: false },
+          { id: "q1-opt4", content: "rough", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam4",
+        content: "If I _____ the lottery, I would buy a new house.",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Type 2 conditional (imaginary situation in the present) requires the past simple tense in the if-clause.",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "win", isCorrect: false },
+          { id: "q2-opt2", content: "won", isCorrect: true },
+          { id: "q2-opt3", content: "will win", isCorrect: false },
+          { id: "q2-opt4", content: "have won", isCorrect: false }
+        ]
+      },
+      {
+        id: "q3-exam4",
+        content: "She asked me where I _____ the previous weekend.",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "In reported speech, the past simple 'went' changes to past perfect 'had gone'.",
+        questionIndex: 3,
+        options: [
+          { id: "q3-opt1", content: "went", isCorrect: false },
+          { id: "q3-opt2", content: "go", isCorrect: false },
+          { id: "q3-opt3", content: "had gone", isCorrect: true },
+          { id: "q3-opt4", content: "have gone", isCorrect: false }
+        ]
+      },
+      {
+        id: "q4-exam4",
+        content: "Choose the synonym of 'arbitrary':",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "'Arbitrary' means based on random choice or personal whim; 'random' is its closest synonym.",
+        questionIndex: 4,
+        options: [
+          { id: "q4-opt1", content: "necessary", isCorrect: false },
+          { id: "q4-opt2", content: "random", isCorrect: true },
+          { id: "q4-opt3", content: "determined", isCorrect: false },
+          { id: "q4-opt4", content: "planned", isCorrect: false }
+        ]
+      },
+      {
+        id: "q5-exam4",
+        content: "_____ having a headache, she went to school.",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "'Despite' is followed by a noun/gerund and expresses contrast.",
+        questionIndex: 5,
+        options: [
+          { id: "q5-opt1", content: "Despite", isCorrect: true },
+          { id: "q5-opt2", content: "Although", isCorrect: false },
+          { id: "q5-opt3", content: "Because of", isCorrect: false },
+          { id: "q5-opt4", content: "However", isCorrect: false }
+        ]
+      }
+    ],
+  
+    // ID 5: Đề cương ôn tập Ngữ Văn lớp 12
+    "5": [
+      {
+        id: "q1-exam5",
+        content: "Tác phẩm \"Tây Tiến\" của Quang Dũng được sáng tác vào năm nào?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "\"Tây Tiến\" được Quang Dũng sáng tác vào năm 1948, khi tác giả đã rời đơn vị Tây Tiến.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "1945", isCorrect: false },
+          { id: "q1-opt2", content: "1948", isCorrect: true },
+          { id: "q1-opt3", content: "1950", isCorrect: false },
+          { id: "q1-opt4", content: "1954", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam5",
+        content: "Tác phẩm nào sau đây không phải của nhà văn Nam Cao?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "\"Vợ nhặt\" là tác phẩm của nhà văn Kim Lân, không phải của Nam Cao.",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "Chí Phèo", isCorrect: false },
+          { id: "q2-opt2", content: "Lão Hạc", isCorrect: false },
+          { id: "q2-opt3", content: "Đời thừa", isCorrect: false },
+          { id: "q2-opt4", content: "Vợ nhặt", isCorrect: true }
+        ]
+      },
+      {
+        id: "q3-exam5",
+        content: "Tình huống truyện trong tác phẩm \"Số phận con người\" của Sô-lô-khốp là gì?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Tình huống chính trong \"Số phận con người\" là cuộc gặp gỡ giữa Andrei Sokolov và cậu bé Vanya.",
+        questionIndex: 3,
+        options: [
+          { id: "q3-opt1", content: "Cuộc gặp gỡ giữa Andrei Sokolov và cậu bé Vanya", isCorrect: true },
+          { id: "q3-opt2", content: "Andrei Sokolov bị bắt làm tù binh", isCorrect: false },
+          { id: "q3-opt3", content: "Andrei Sokolov trở về quê hương", isCorrect: false },
+          { id: "q3-opt4", content: "Andrei Sokolov tham gia chiến đấu", isCorrect: false }
+        ]
+      },
+      {
+        id: "q4-exam5",
+        content: "Những câu thơ \"Áo anh sứt chỉ đường tà/Vợ anh chưa có mẹ già chưa khâu\" trong bài thơ \"Việt Bắc\" thể hiện điều gì?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Những câu thơ này thể hiện nỗi nhớ thương, sự hy sinh thầm lặng của người cán bộ cách mạng.",
+        questionIndex: 4,
+        options: [
+          { id: "q4-opt1", content: "Cuộc sống khó khăn, thiếu thốn vật chất", isCorrect: false },
+          { id: "q4-opt2", content: "Nỗi nhớ thương, sự hy sinh thầm lặng", isCorrect: true },
+          { id: "q4-opt3", content: "Mối quan hệ giữa các thế hệ", isCorrect: false },
+          { id: "q4-opt4", content: "Truyền thống văn hóa dân tộc", isCorrect: false }
+        ]
+      },
+      {
+        id: "q5-exam5",
+        content: "Tác giả nào được mệnh danh là \"Người tình của biển cả\"?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Tố Hữu được mệnh danh là \"Lá cờ đầu của thơ ca cách mạng\", còn \"Người tình của biển cả\" là biệt danh của nhà thơ Xuân Quỳnh.",
+        questionIndex: 5,
+        options: [
+          { id: "q5-opt1", content: "Xuân Diệu", isCorrect: false },
+          { id: "q5-opt2", content: "Huy Cận", isCorrect: false },
+          { id: "q5-opt3", content: "Xuân Quỳnh", isCorrect: true },
+          { id: "q5-opt4", content: "Tố Hữu", isCorrect: false }
+        ]
+      }
+    ],
+  
+    // ID 10: Đề thi GDCD lớp 12
+    "10": [
+      {
+        id: "q1-exam10",
+        content: "Pháp luật là quy tắc xử sự chung, được áp dụng nhiều lần, trong nhiều trường hợp, ở nhiều nơi, đối với mọi người là đặc trưng nào của pháp luật?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Đặc trưng này thể hiện tính quy phạm phổ biến của pháp luật.",
+        questionIndex: 1,
+        options: [
+          { id: "q1-opt1", content: "Tính quy phạm phổ biến", isCorrect: true },
+          { id: "q1-opt2", content: "Tính quyền lực nhà nước", isCorrect: false },
+          { id: "q1-opt3", content: "Tính xác định chặt chẽ về nội dung", isCorrect: false },
+          { id: "q1-opt4", content: "Tính bắt buộc thực hiện", isCorrect: false }
+        ]
+      },
+      {
+        id: "q2-exam10",
+        content: "Công dân biểu hiện trách nhiệm của mình như thế nào trong việc thực hiện pháp luật?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Công dân biểu hiện trách nhiệm của mình bằng việc tự giác tuân thủ và tích cực tham gia đấu tranh phòng chống các vi phạm pháp luật.",
+        questionIndex: 2,
+        options: [
+          { id: "q2-opt1", content: "Thực hiện đầy đủ nghĩa vụ của mình", isCorrect: false },
+          { id: "q2-opt2", content: "Tự giác tuân thủ pháp luật", isCorrect: false },
+          { id: "q2-opt3", content: "Tích cực đấu tranh với các hành vi vi phạm pháp luật", isCorrect: false },
+          { id: "q2-opt4", content: "Cả A, B và C", isCorrect: true }
+        ]
+      },
+      {
+        id: "q3-exam10",
+        content: "Bình đẳng về trách nhiệm pháp lý có nghĩa là:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Bình đẳng về trách nhiệm pháp lý là bất kỳ công dân nào vi phạm pháp luật đều phải chịu trách nhiệm theo quy định, không có ngoại lệ.",
+        questionIndex: 3,
+        options: [
+          { id: "q3-opt1", content: "Bất kỳ công dân nào vi phạm pháp luật đều phải chịu trách nhiệm theo quy định", isCorrect: true },
+          { id: "q3-opt2", content: "Mọi người đều có quyền như nhau", isCorrect: false },
+          { id: "q3-opt3", content: "Mọi người đều có nghĩa vụ như nhau", isCorrect: false },
+          { id: "q3-opt4", content: "Không ai phải chịu trách nhiệm pháp lý", isCorrect: false }
+        ]
+      },
+      {
+        id: "q4-exam10",
+        content: "Nội dung cơ bản của bình đẳng trong hôn nhân và gia đình không bao gồm:",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Bình đẳng về sở hữu tài sản riêng trước hôn nhân là quyền của mỗi người, không phải nội dung của bình đẳng trong hôn nhân và gia đình.",
+        questionIndex: 4,
+        options: [
+          { id: "q4-opt1", content: "Bình đẳng về quan hệ nhân thân", isCorrect: false },
+          { id: "q4-opt2", content: "Bình đẳng về quan hệ tài sản", isCorrect: false },
+          { id: "q4-opt3", content: "Bình đẳng về sở hữu tài sản riêng trước hôn nhân", isCorrect: true },
+          { id: "q4-opt4", content: "Bình đẳng về nghĩa vụ và quyền của cha mẹ đối với con", isCorrect: false }
+        ]
+      },
+      {
+        id: "q5-exam10",
+        content: "Khoản 3 Điều 36 Hiến pháp 2013 quy định: \"Thanh niên được Nhà nước, gia đình và xã hội tạo điều kiện học tập, lao động, giải trí, phát triển thể lực, trí tuệ...\" là nội dung của quyền nào?",
+        questionType: "MULTIPLE_CHOICE",
+        explanation: "Quyền được phát triển là quyền cơ bản của công dân được ghi nhận trong Hiến pháp 2013.",
+        questionIndex: 5,
+        options: [
+          { id: "q5-opt1", content: "Quyền học tập", isCorrect: false },
+          { id: "q5-opt2", content: "Quyền được phát triển", isCorrect: true },
+          { id: "q5-opt3", content: "Quyền tham gia quản lý nhà nước", isCorrect: false },
+          { id: "q5-opt4", content: "Quyền tự do kinh doanh", isCorrect: false }
+        ]
+      }
+    ]
+  };
+
+  // Thêm state để theo dõi việc sử dụng dữ liệu mẫu
+  const [usingMockData, setUsingMockData] = useState(false);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Sử dụng dữ liệu mẫu nếu được cấu hình
+        if (USE_MOCK_DATA) {
+          console.log("Using mock data as configured");
+          setExams(mockExams);
+          setUsingMockData(true);
+          
+          const mockSubjects = [...new Map(
+            mockExams.map(exam => [exam.subject.id, exam.subject])
+          ).values()];
+          setSubjects(mockSubjects);
+          
+          setError(null);
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch exams with proper error handling
+        try {
+          console.log(`Requesting exams from: ${API_URL}${API_ENDPOINTS.PUBLIC_EXAMS}`);
+          const examsResponse = await axios.get(`${API_URL}${API_ENDPOINTS.PUBLIC_EXAMS}`, {
+            timeout: 8000 // 8 second timeout
+          });
+          
+          console.log("Exams API response:", examsResponse);
+          
+          let fetchedExams = examsResponse.data;
+          
+          // Nếu API trả về mảng rỗng, sử dụng dữ liệu mẫu
+          if (!fetchedExams || (Array.isArray(fetchedExams) && fetchedExams.length === 0)) {
+            console.log("API returned empty results, using mock data");
+            setExams(mockExams);
+            setUsingMockData(true);
+          } else {
+            console.log("Using real data from API");
+            setExams(fetchedExams);
+            setUsingMockData(false);
+          }
+        } catch (examsError) {
+          console.error('Error fetching exams:', examsError);
+          setExams(mockExams);
+          setUsingMockData(true);
+          
+          if (retryCount < maxRetries) {
+            console.log(`Retry attempt ${retryCount + 1} of ${maxRetries}`);
+            setRetryCount(prev => prev + 1);
+            // Will retry on next effect run
+          }
+        }
+        
+        // Fetch subjects with proper error handling
+        try {
+          console.log(`Requesting subjects from: ${API_URL}${API_ENDPOINTS.SUBJECTS}`);
+          const subjectsResponse = await axios.get(`${API_URL}${API_ENDPOINTS.SUBJECTS}`, {
+            timeout: 5000
+          });
+          
+          // Ensure we always set an array
+          const responseData = subjectsResponse.data;
+          setSubjects(
+            Array.isArray(responseData) ? responseData :
+            responseData?.items ? responseData.items :
+            responseData?.data ? responseData.data :
+            []
+          );
+        } catch (subjectErr) {
+          console.error('Error fetching subjects:', subjectErr);
+          // Tạo danh sách môn học mẫu từ các môn trong mockExams
+          const mockSubjects = [...new Map(
+            mockExams.map(exam => [exam.subject.id, exam.subject])
+          ).values()];
+          setSubjects(mockSubjects);
+        }
+        
+        // If user is authenticated, fetch their exam attempts
+        if (isAuthenticated && user) {
+          try {
+            const token = localStorage.getItem('token');
+            const attemptsResponse = await axios.get(`${API_URL}${API_ENDPOINTS.EXAM_RESULTS}`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+              timeout: 5000
+            });
             
-            {/* Chỉ hiển thị nút tạo bài thi mới cho admin hoặc teacher */}
-            {isAdminOrTeacher && (
-              <CreateButton onClick={handleCreateExam}>
-                <FaPlus />
-                Tạo bài thi mới
-              </CreateButton>
-            )}
-          </HeaderContainer>
-          
-          <FiltersContainer>
-            {/* Phần filter không đổi */}
-          </FiltersContainer>
-          
-          {displayedExams.length === 0 ? (
-            <NoDataMessage theme={theme}>
-              Không tìm thấy bài thi nào phù hợp với tiêu chí tìm kiếm.
-            </NoDataMessage>
-          ) : (
-            <>
-              <ExamsGrid>
-                {displayedExams.map(exam => (
-                  <ExamCard 
-                    key={exam.id} 
-                    theme={theme}
-                    whileHover={{ y: -5 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ExamHeader>
-                      <ExamTitle>{exam.title}</ExamTitle>
-                      <ExamAuthor>Tạo bởi: {exam.createdBy || 'Admin'}</ExamAuthor>
-                    </ExamHeader>
-                    <ExamContent theme={theme}>
-                      <ExamInfo theme={theme}>
-                        <FaClock />
-                        <span>Thời gian: {exam.duration} phút</span>
-                      </ExamInfo>
-                      <ExamInfo theme={theme}>
-                        <FaClipboardList />
-                        <span>Số câu hỏi: {exam.questionCount || exam.questions?.length || 'N/A'}</span>
-                      </ExamInfo>
-                      <ExamInfo theme={theme}>
-                        <FaChalkboardTeacher />
-                        <span>Độ khó: <DifficultyBadge difficulty={exam.difficulty}>{exam.difficulty || 'Trung bình'}</DifficultyBadge></span>
-                        {exam.subjectName && <SubjectBadge>{exam.subjectName}</SubjectBadge>}
-                      </ExamInfo>
-                      
-                      {/* Hiển thị nút Sửa và Xóa chỉ cho admin/teacher */}
-                      {isAdminOrTeacher && (
-                        <AdminActionsContainer>
-                          <EditButton onClick={() => handleEditExam(exam.id)}>
-                            <FaEdit />
-                          </EditButton>
-                          <DeleteButton onClick={() => handleDeleteClick(exam)}>
-                            <FaTrash />
-                          </DeleteButton>
-                        </AdminActionsContainer>
-                      )}
-                    </ExamContent>
-                    <ExamFooter theme={theme}>
-                      <div>
-                        {exam.isPublic ? 'Công khai' : 'Giới hạn'}
-                      </div>
-                      <ExamButton onClick={() => handleStartExam(exam.id)}>
-                        <FaPlay /> Bắt đầu
-                      </ExamButton>
-                    </ExamFooter>
-                  </ExamCard>
-                ))}
-              </ExamsGrid>
+            // Create a map of examId -> array of attempts
+            const attemptsMap = {};
+            attemptsResponse.data.forEach(attempt => {
+              if (!attemptsMap[attempt.examId]) {
+                attemptsMap[attempt.examId] = [];
+              }
+              attemptsMap[attempt.examId].push(attempt);
+            });
+            
+            setUserAttempts(attemptsMap);
+          } catch (attemptErr) {
+            console.error('Error fetching user attempts:', attemptErr);
+          }
+        }
+        
+        // Không hiển thị lỗi khi dùng dữ liệu mẫu thành công
+        setError(null);
+      } catch (err) {
+        console.error('General error in fetchData:', err);
+        
+        // Đảm bảo dữ liệu mẫu luôn được hiển thị khi có lỗi
+        setExams(mockExams);
+        setUsingMockData(true);
+        
+        const mockSubjects = [...new Map(
+          mockExams.map(exam => [exam.subject.id, exam.subject])
+        ).values()];
+        setSubjects(mockSubjects);
+        
+        // Cải thiện thông báo lỗi
+        if (navigator.onLine) {
+          setError('Không thể kết nối đến máy chủ. Đang hiển thị dữ liệu mẫu.');
+        } else {
+          setError('Không có kết nối mạng. Đang hiển thị dữ liệu mẫu.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [isAuthenticated, user, retryCount]); // Thêm retryCount để kích hoạt retry
+  
+  // Filter exams based on search, subject, and status
+  const filteredExams = exams.filter(exam => {
+    // Text search filter
+    const matchesSearch = 
+      searchTerm === '' || 
+      exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exam.subject?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Subject filter
+    const matchesSubject = 
+      subjectFilter === '' || 
+      exam.subject?.id === subjectFilter;
+    
+    // Status filter
+    let matchesStatus = true;
+    if (isAuthenticated && statusFilter !== 'all') {
+      const hasAttempts = userAttempts[exam.id] && userAttempts[exam.id].length > 0;
+      
+      if (statusFilter === 'completed' && !hasAttempts) {
+        matchesStatus = false;
+      } else if (statusFilter === 'not-completed' && hasAttempts) {
+        matchesStatus = false;
+      }
+    }
+    
+    return matchesSearch && matchesSubject && matchesStatus;
+  });
+
+  // Get the highest score for an exam
+  const getHighestScore = (examId) => {
+    if (!userAttempts[examId] || userAttempts[examId].length === 0) {
+      return null;
+    }
+    
+    return userAttempts[examId].reduce(
+      (max, attempt) => attempt.score > max ? attempt.score : max, 
+      userAttempts[examId][0].score
+    );
+  };
+
+  // Get status for an exam
+  const getExamStatus = (examId) => {
+    if (!isAuthenticated) {
+      return null;
+    }
+    
+    if (!userAttempts[examId] || userAttempts[examId].length === 0) {
+      return {
+        status: 'not-attempted',
+        text: 'Chưa thi',
+        color: 'primary',
+        icon: <FaHourglassStart />
+      };
+    }
+    
+    const highestScore = getHighestScore(examId);
+    const attempts = userAttempts[examId].length;
+    
+    return {
+      status: 'attempted',
+      text: `Đã thi${attempts > 1 ? ` (${attempts} lần)` : ''}`,
+      color: 'success',
+      icon: <FaCheckCircle />,
+      score: highestScore
+    };
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorAlert message={error} />;
+
+  return (
+    <Container className="py-4">
+      <h2 className="mb-4">Danh sách đề thi</h2>
+      
+      {/* Thông báo cải tiến khi sử dụng dữ liệu mẫu */}
+      {usingMockData && (
+        <Card bg="warning" text="dark" className="mb-4">
+          <Card.Body>
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Lưu ý:</strong> Đang hiển thị dữ liệu mẫu do không thể kết nối đến máy chủ.
+                {error && <div className="mt-1 small">{error}</div>}
+              </div>
               
-              {pagination && pagination.totalPages > 1 && (
-                <PaginationContainer>
-                  <PageButton 
-                    theme={theme} 
-                    disabled={pagination.currentPage === 1}
-                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                  >
-                    &lt;
-                  </PageButton>
-                  
-                  {[...Array(pagination.totalPages).keys()].map(num => (
-                    <PageButton 
-                      key={num + 1}
-                      theme={theme}
-                      active={pagination.currentPage === num + 1}
-                      onClick={() => handlePageChange(num + 1)}
-                    >
-                      {num + 1}
-                    </PageButton>
-                  ))}
-                  
-                  <PageButton 
-                    theme={theme}
-                    disabled={pagination.currentPage === pagination.totalPages}
-                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                  >
-                    &gt;
-                  </PageButton>
-                </PaginationContainer>
+              {/* Thêm nút retry */}
+              <Button 
+                variant="outline-dark" 
+                size="sm"
+                onClick={() => setRetryCount(prev => prev + 1)}
+                disabled={loading}
+              >
+                <FaSync className={loading ? "fa-spin" : ""} /> Thử lại
+              </Button>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+      
+      <Card className="mb-4 shadow-sm" bg={theme === 'dark' ? 'dark' : 'light'}>
+        <Card.Body>
+          <Row>
+            <Col md={6} lg={4} className="mb-3 mb-md-0">
+              <InputGroup>
+                <Form.Control
+                  placeholder="Tìm kiếm đề thi..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+                <Button variant="primary">
+                  <FaSearch />
+                </Button>
+              </InputGroup>
+            </Col>
+            <Col md={6} lg={4} className="mb-3 mb-lg-0">
+              <Form.Select
+                value={subjectFilter}
+                onChange={e => setSubjectFilter(e.target.value)}
+              >
+                <option value="">Tất cả môn học</option>
+                {subjects.map(subject => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col lg={4}>
+              {isAuthenticated && (
+                <Form.Select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="completed">Đã thi</option>
+                  <option value="not-completed">Chưa thi</option>
+                </Form.Select>
               )}
-            </>
-          )}
-          
-          {/* Nút tạo bài thi nổi (floating) - hiển thị khi là admin/teacher */}
-          {isAdminOrTeacher && (
-            <AddExamButton>
-              <FloatingButton onClick={handleCreateExam}>
-                <FaPlus />
-              </FloatingButton>
-            </AddExamButton>
-          )}
-          
-          {/* Modal xác nhận xóa bài thi */}
-          {showDeleteModal && (
-            <Modal isOpen={showDeleteModal} onClose={handleCloseModal} theme={theme}>
-              <ModalContent theme={theme}>
-                <ModalTitle>Xác nhận xóa</ModalTitle>
-                <ModalText>
-                  Bạn có chắc chắn muốn xóa bài thi "{examToDelete?.title}"? 
-                  Thao tác này không thể hoàn tác.
-                </ModalText>
-                <ModalButtonContainer>
-                  <CancelButton theme={theme} onClick={handleCloseModal}>
-                    Hủy bỏ
-                  </CancelButton>
-                  <ConfirmButton onClick={handleDeleteConfirm}>
-                    Xác nhận xóa
-                  </ConfirmButton>
-                </ModalButtonContainer>
-              </ModalContent>
-            </Modal>
-          )}
-        </Container>
-      </MainContent>
-    </PageContainer>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+      
+      {filteredExams.length === 0 ? (
+        <Card bg={theme === 'dark' ? 'dark' : 'light'} className="shadow-sm">
+          <Card.Body className="text-center py-5">
+            <h5 className="mb-3">Không tìm thấy đề thi nào phù hợp</h5>
+            <p className="text-muted">Vui lòng thử tìm kiếm với từ khóa khác hoặc thay đổi bộ lọc.</p>
+          </Card.Body>
+        </Card>
+      ) : (
+        <Row>
+          {filteredExams.map(exam => {
+            const examStatus = getExamStatus(exam.id);
+            const highestScore = examStatus?.score;
+            
+            return (
+              <Col md={6} lg={4} className="mb-4" key={exam.id}>
+                <ExamCard 
+                  bg={theme === 'dark' ? 'dark' : 'light'} 
+                  className={`shadow-sm ${exam.isMock ? 'border-warning' : ''}`}
+                >
+                  {/* Hiển thị badge đặc biệt cho dữ liệu mẫu */}
+                  {exam.isMock && (
+                    <ExamStatusBadge bg="warning" text="dark">
+                      Dữ liệu mẫu
+                    </ExamStatusBadge>
+                  )}
+                  
+                  {isAuthenticated && examStatus && !exam.isMock && (
+                    <ExamStatusBadge bg={examStatus.color}>
+                      {examStatus.icon} {examStatus.text}
+                    </ExamStatusBadge>
+                  )}
+                  
+                  <Card.Body>
+                    <h5 className="exam-title">{exam.title}</h5>
+                    <div className="text-muted mb-3">
+                      <div>Môn: {exam.subject?.name}</div>
+                      <div>Thời gian: {exam.duration} phút</div>
+                      <div>Số câu hỏi: {exam.questionCount}</div>
+                    </div>
+                    
+                    <div className="exam-details">
+                      <div>
+                        {isAuthenticated && highestScore !== null && highestScore !== undefined && !exam.isMock && (
+                          <ScoreBadge bg="warning" text="dark">
+                            <FaMedal /> Điểm cao nhất: {typeof highestScore === 'number' ? highestScore.toFixed(2) : "0.00"}
+                          </ScoreBadge>
+                        )}
+                      </div>
+                      <div>
+                        {!exam.isMock && (
+                          <Button as={Link} to={`/leaderboard/exams/${exam.id}`} variant="outline-warning" size="sm" className="me-2">
+                            <FaTrophy /> Bảng xếp hạng
+                          </Button>
+                        )}
+                        <Button
+                          as={Link}
+                          to={`/Exam/${exam.id}`} // Thống nhất đường dẫn cho cả đề thi mẫu và thật
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={e => {
+                            e.preventDefault(); // Ngăn chặn chuyển hướng mặc định
+                            
+                            // Xử lý và lưu dữ liệu trước khi chuyển hướng
+                            if (exam.isMock || usingMockData) {
+                              // Lưu đề thi mẫu
+                              const success = storeExamData(
+                                exam.id, 
+                                exam,
+                                exam.id <= 5 ? mockQuestions[exam.id] : demoQuestions[`demo-exam-${(exam.id % 3) + 1}`]
+                              );
+                              
+                              if (!success) {
+                                alert("Không thể chuẩn bị dữ liệu thi. Vui lòng thử lại.");
+                                return;
+                              }
+                              
+                              // Thêm flag để xác định là đề thi mẫu
+                              window.location.href = `/Exam/${exam.id}?mock=true`;
+                            } else {
+                              // Đối với đề thi thật, thêm đoạn mã để lưu ID vào localStorage
+                              localStorage.setItem('currentExamId', exam.id);
+                              window.location.href = `/Exam/${exam.id}`;
+                            }
+                          }}
+                        >
+                          Bắt đầu <FaArrowRight className="ms-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </ExamCard>
+              </Col>
+            );
+          })}
+        </Row>
+      )}
+    </Container>
   );
 };
 

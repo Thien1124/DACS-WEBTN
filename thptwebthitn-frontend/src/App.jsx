@@ -16,6 +16,9 @@ import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import SettingsPage from './pages/SettingsPage';
 import './App.css';
+import ExamStatistics from './components/admin/ExamStatistics';
+import AdminStatistics from './pages/admin/AdminStatistics';
+import TeacherStatistics from './pages/teacher/TeacherStatistics';
 
 // Add fontawesome to the project
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -61,6 +64,29 @@ function App() {
           <Route path="/exam-results/:examId" element={<ExamResults />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/admin/statistics" element={
+            <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+              <ExamStatistics />
+            </ProtectedRoute>
+          } />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/statistics" element={
+            <ProtectedRoute requiredRole="Admin">
+              <Layout>
+                <AdminStatistics />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Teacher Routes */}
+          <Route path="/teacher/statistics" element={
+            <ProtectedRoute requiredRole="Teacher">
+              <Layout>
+                <TeacherStatistics />
+              </Layout>
+            </ProtectedRoute>
+          } />
           
           {/* Add other routes as needed */}
         </Route>

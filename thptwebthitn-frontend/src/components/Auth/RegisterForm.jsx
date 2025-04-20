@@ -211,7 +211,6 @@ const SwitchFormButton = styled.button`
   cursor: pointer;
   margin-left: 5px;
   transition: all 0.2s;
-  position: relative;
   
   &:after {
     content: '';
@@ -220,8 +219,7 @@ const SwitchFormButton = styled.button`
     height: 1px;
     bottom: 0;
     left: 0;
-    background-color: ${props => props.theme === 'dark' ? '#4da3ff' : '#4285f4'};
-    transition: width 0.3s;
+   transition: width 0.3s;
   }
   
   &:hover:after {

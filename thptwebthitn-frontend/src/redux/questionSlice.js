@@ -1,88 +1,92 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as questionService from '../services/questionService';
-import { showErrorToast, showSuccessToast } from '../utils/toastUtils';
+import { getQuestions, getQuestionById, createQuestion, updateQuestion, deleteQuestion } from '../services/questionService';
 
 export const fetchQuestions = createAsyncThunk(
-  'questions/fetchAll',
+  'questions/fetchQuestions',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await questionService.getQuestions(params);
-      return response;
+      return await getQuestions(params);
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || 'Failed to fetch questions');
     }
   }
 );
 
 export const fetchQuestionById = createAsyncThunk(
-  'questions/fetchById',
+  'questions/fetchQuestionById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await questionService.getQuestionById(id);
-      return response;
+      return await getQuestionById(id);
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || 'Failed to fetch question');
     }
   }
 );
 
-export const createNewQuestion = createAsyncThunk(
-  'questions/create',
+export const addQuestion = createAsyncThunk(
+  'questions/addQuestion',
   async (questionData, { rejectWithValue }) => {
     try {
-      const response = await questionService.createQuestion(questionData);
-      return response;
+      return await createQuestion(questionData);
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || 'Failed to create question');
     }
   }
 );
 
-export const updateQuestion = createAsyncThunk(
-  'questions/update',
+export const editQuestion = createAsyncThunk(
+  'questions/editQuestion',
   async ({ id, questionData }, { rejectWithValue }) => {
     try {
-      const response = await questionService.updateQuestion(id, questionData);
-      return response;
+      return await updateQuestion(id, questionData);
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || 'Failed to update question');
     }
   }
 );
 
 export const removeQuestion = createAsyncThunk(
-  'questions/remove',
+  'questions/removeQuestion',
   async (id, { rejectWithValue }) => {
     try {
-      await questionService.deleteQuestion(id);
+      await deleteQuestion(id);
       return id;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || 'Failed to delete question');
     }
   }
 );
 
-const questionSlice = createSlice({
+const initialState = {
+  list: [],
+  loading: false,
+  error: null,
+  currentQuestion: null,
+  pagination: {
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0
+  }
+};
+
+const questionsSlice = createSlice({
   name: 'questions',
-  initialState: {
-    list: [],
-    currentQuestion: null,
-    loading: false,
-    error: null,
-    pagination: {
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: 0
-    }
-  },
+  initialState,
   reducers: {
-    clearCurrentQuestion: (state) => {
-      state.currentQuestion = null;
+    setPage(state, action) {
+      state.pagination.currentPage = action.payload;
+    },
+    setPageSize(state, action) {
+      state.pagination.pageSize = action.payload;
+    },
+    clearError(state) {
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
     builder
-      // Xử lý fetchQuestions
+      // Fetch questions
       .addCase(fetchQuestions.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -91,7 +95,12 @@ const questionSlice = createSlice({
         state.loading = false;
         state.list = action.payload.items || action.payload;
         if (action.payload.pagination) {
-          state.pagination = action.payload.pagination;
+          state.pagination = {
+            currentPage: action.payload.pagination.currentPage,
+            pageSize: action.payload.pagination.pageSize,
+            totalItems: action.payload.pagination.totalItems,
+            totalPages: action.payload.pagination.totalPages
+          };
         }
       })
       .addCase(fetchQuestions.rejected, (state, action) => {
@@ -99,7 +108,7 @@ const questionSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Xử lý fetchQuestionById
+      // Fetch question by id
       .addCase(fetchQuestionById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -113,38 +122,38 @@ const questionSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Xử lý createNewQuestion
-      .addCase(createNewQuestion.pending, (state) => {
+      // Add question
+      .addCase(addQuestion.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createNewQuestion.fulfilled, (state, action) => {
+      .addCase(addQuestion.fulfilled, (state, action) => {
         state.loading = false;
         state.list.push(action.payload);
       })
-      .addCase(createNewQuestion.rejected, (state, action) => {
+      .addCase(addQuestion.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
       
-      // Xử lý updateQuestion
-      .addCase(updateQuestion.pending, (state) => {
+      // Edit question
+      .addCase(editQuestion.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateQuestion.fulfilled, (state, action) => {
+      .addCase(editQuestion.fulfilled, (state, action) => {
         state.loading = false;
         const index = state.list.findIndex(question => question.id === action.payload.id);
         if (index !== -1) {
           state.list[index] = action.payload;
         }
       })
-      .addCase(updateQuestion.rejected, (state, action) => {
+      .addCase(editQuestion.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
       
-      // Xử lý removeQuestion
+      // Remove question
       .addCase(removeQuestion.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -160,5 +169,5 @@ const questionSlice = createSlice({
   }
 });
 
-export const { clearCurrentQuestion } = questionSlice.actions;
-export default questionSlice.reducer;
+export const { setPage, setPageSize, clearError } = questionsSlice.actions;
+export default questionsSlice.reducer;

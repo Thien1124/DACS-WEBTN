@@ -1,16 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { 
   FaEdit, FaEye, FaPlus, FaTrash, FaSearch, 
-  FaSort, FaList, FaFileImport, FaFileExport, FaFilter 
+  FaSort, FaList, FaFileImport, FaFileExport, FaFilter, 
+  FaClock, FaCheckCircle, FaTimesCircle, FaSync, FaUnlock 
 } from 'react-icons/fa';
-import { fetchExams, removeExam } from '../../redux/examSlice';
+import { 
+  fetchExams, 
+  removeExam, 
+  updateExamDuration,
+  approveExam 
+} from '../../redux/examSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ConfirmModal from '../common/ConfirmModal';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+import ImportExamsModal from '../modals/ImportExamsModal';
+import ExportResultsModal from '../modals/ExportResultsModal';
+import UpdateExamDurationModal from '../modals/UpdateExamDurationModal';
+import ApproveExamModal from '../modals/ApproveExamModal';
+import { getExams } from "../../services/examService";
+import store from '../../redux/store'; // Điều chỉnh đường dẫn nếu cần
 
 const Container = styled.div`
   max-width: 1200px;
@@ -220,6 +232,13 @@ const ActionButton = styled.button`
   }
 `;
 
+const TimeActionButton = styled(ActionButton)`
+  background-color: #805ad5;
+  &:hover {
+    background-color: #6b46c1;
+  }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 3rem;
@@ -256,36 +275,125 @@ const PageButton = styled.button`
   }
 `;
 
+// Add a new styled component for approval status
+const ApprovalBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: ${props => props.approved ? '#c6f6d5' : '#e9d8fd'};
+  color: ${props => props.approved ? '#22543d' : '#553c9a'};
+`;
+
+const ApproveButton = styled(ActionButton)`
+  background-color: #48bb78;
+  &:hover {
+    background-color: #38a169;
+  }
+`;
+
 const ExamManagement = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
-  const { list: exams, loading } = useSelector(state => state.exams);
+  const { list: exams, loading, error } = useSelector(state => state.exams); // Thêm error từ Redux state
   
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [subjectFilter, setSubjectFilter] = useState('');
+  const [approvalFilter, setApprovalFilter] = useState('all');
   const [sortField, setSortField] = useState('id');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [retryCount, setRetryCount] = useState(0); // Thêm state đếm số lần thử lại
+  const [localLoading, setLoading] = useState(false); // Thêm local loading state
+  const [localError, setLocalError] = useState(null); // Thêm local error state
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   
-  const loadExams = () => {
-    dispatch(fetchExams({ 
-      page, 
-      limit, 
-      search: searchTerm,
-      status: filterStatus !== 'all' ? filterStatus : undefined,
-      sortField,
-      sortOrder
-    }));
-  };
+  // New state for import/export modals
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  
+  // New state for duration modal
+  const [showDurationModal, setShowDurationModal] = useState(false);
+  const [selectedExam, setSelectedExam] = useState(null);
+  
+  // New state for the approval modal
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [examToApprove, setExamToApprove] = useState(null);
+  
+  
+  const loadExams = useCallback(() => {
+    setLoading(true);
+    setLocalError(null);
+    
+    // Đảm bảo page và limit luôn có giá trị
+    const params = {
+      page: page || 1, // Đảm bảo page luôn ít nhất là 1
+      pageSize: limit || 10, // Đảm bảo pageSize luôn ít nhất là 10
+      SearchTerm: searchTerm || "",
+      subjectId: subjectFilter || undefined,
+      activeOnly: statusFilter === 'active' ? "true" :
+                  (statusFilter === 'inactive' ? "false" : undefined),
+      isApproved: approvalFilter === 'approved' ? "true" :
+                  (approvalFilter === 'pending' ? "false" : undefined),
+    };
+  
+    console.log('Loading exams with params:', params);
+  
+    try {
+      dispatch(fetchExams(params))
+        .unwrap()
+        .then(response => {
+          console.log('Exams loaded successfully:', response);
+          // Kiểm tra nếu response có totalCount > 0 nhưng data rỗng
+          if (response.totalCount > 0 && (!response.data || response.data.length === 0)) {
+            console.warn('API returned totalCount > 0 but empty data array. Retrying with explicit pagination...');
+            // Thử lại với tham số phân trang rõ ràng
+            return dispatch(fetchExams({...params, page: 1, pageSize: 20})).unwrap();
+          }
+          setRetryCount(0);
+          setLoading(false);
+          return response;
+        })
+        .catch(error => {
+          console.error('Error during exam loading:', error);
+          
+          // Kiểm tra xem lỗi có phải là lỗi mạng không
+          const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+          const errorMessage = isNetworkError 
+            ? 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và đảm bảo API server đang hoạt động.'
+            : error.message || 'Lỗi không xác định khi tải đề thi.';
+          
+          setLocalError(errorMessage);
+          showErrorToast(errorMessage);
+          setLoading(false);
+        });
+    } catch (outerError) {
+      // Xử lý lỗi ngoài cùng (hiếm gặp)
+      console.error('Outer error in loadExams:', outerError);
+      setLocalError('Đã xảy ra lỗi không mong muốn khi tải dữ liệu.');
+      setLoading(false);
+    }
+  }, [dispatch, page, limit, searchTerm, statusFilter, subjectFilter, approvalFilter]);
   
   useEffect(() => {
+    console.log('ExamManagement effect triggered: Loading exams');
     loadExams();
-  }, [page, limit, filterStatus, sortField, sortOrder]);
+  }, [loadExams]); // Chỉ cần loadExams ở đây vì nó đã bao gồm các dependencies khác
+
+  // Giữ lại useEffect debug này
+  useEffect(() => {
+    console.log('Current exams state:', exams);
+    console.log('Is loading:', loading);
+    console.log('Error:', error);
+  }, [exams, loading, error]);
   
   const handleSearch = (e) => {
     e.preventDefault();
@@ -353,6 +461,116 @@ const ExamManagement = () => {
     return sortOrder === 'asc' ? '↑' : '↓';
   };
   
+  const handleImportExams = (file) => {
+    // Here you would normally call an API to process the CSV file
+    // For demonstration, we'll show a success message
+    showSuccessToast(`Đã nhập thành công file ${file.name}`);
+    // After successful import, refresh the exams list
+    loadExams();
+  };
+  
+  const handleExportResults = (exportConfig) => {
+    console.log("Export configuration:", exportConfig);
+    
+    // In a real app, this would make an API call to get the data
+    // and then create a CSV file for download
+    
+    // Create sample CSV content based on the selected columns
+    let csvContent = exportConfig.columns.join(',') + '\n';
+    
+    // Add some sample data rows
+    csvContent += '001,Nguyễn Văn A,Đề thi Toán học THPT Quốc Gia,8.5,50,42,60,2023-04-10T10:30:00\n';
+    csvContent += '002,Trần Thị B,Đề thi Vật lý học kỳ 1,7.5,40,30,45,2023-04-11T09:15:00\n';
+    csvContent += '003,Lê Văn C,Đề thi Hóa học cơ bản,9.0,30,27,40,2023-04-12T14:20:00\n';
+    
+    // Create a blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'exam_results.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    showSuccessToast('Đã xuất dữ liệu thành công!');
+  };
+  
+  const handleEditDuration = (exam) => {
+    setSelectedExam(exam);
+    setShowDurationModal(true);
+  };
+  
+  const handleUpdateDuration = async (examId, duration) => {
+    try {
+      await dispatch(updateExamDuration({ examId, duration })).unwrap();
+      showSuccessToast('Cập nhật thời gian làm bài thành công!');
+      return Promise.resolve();
+    } catch (error) {
+      showErrorToast(`Lỗi khi cập nhật thời gian: ${error}`);
+      return Promise.reject(error);
+    }
+  };
+  
+  const handleApproveClick = (exam) => {
+    setExamToApprove(exam);
+    setShowApproveModal(true);
+  };
+  
+  const handleApproveExam = async (examId, comment) => {
+    try {
+      await dispatch(approveExam({ examId, comment })).unwrap();
+      showSuccessToast('Đề thi đã được duyệt thành công!');
+      loadExams();
+      return Promise.resolve();
+    } catch (error) {
+      showErrorToast(`Không thể duyệt đề thi: ${error}`);
+      return Promise.reject(error);
+    }
+  };
+  
+  // Sửa hàm getFilteredExams
+
+const getFilteredExams = () => {
+  console.log('Filtering exams, raw state received:', exams);
+  
+  // Xử lý nhiều trường hợp cấu trúc dữ liệu có thể có
+  let examArray = [];
+  
+  if (Array.isArray(exams)) {
+    examArray = exams;
+  } else if (Array.isArray(exams?.list)) {
+    examArray = exams.list;
+  } else if (exams?.items && Array.isArray(exams.items)) {
+    examArray = exams.items;
+  }
+  
+  // Lọc theo trạng thái duyệt - ĐÂY LÀ NƠI CẦN SỬA
+  return examArray.filter(exam => {
+    // Check approval filter - Sửa đổi logic lọc đúng trường isApproved
+    if (approvalFilter === 'approved' && !exam.isApproved) return false;
+    if (approvalFilter === 'pending' && exam.isApproved) return false;
+    
+    // Các điều kiện lọc khác
+    if (statusFilter === 'active' && !exam.isActive) return false;
+    if (statusFilter === 'inactive' && exam.isActive) return false;
+    
+    // Lọc theo subject nếu có
+    if (subjectFilter && exam.subject?.id !== parseInt(subjectFilter)) return false;
+    
+    // Lọc theo search term nếu có
+    if (searchTerm && !exam.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    
+    return true;
+  });
+};
+  
+  // Define filteredExams with the function
+  const filteredExams = useMemo(() => getFilteredExams(), [exams, searchTerm, statusFilter, subjectFilter, approvalFilter]);
+  
+  
+  
   return (
     <Container>
       <Header>
@@ -361,10 +579,10 @@ const ExamManagement = () => {
           <Button theme={theme} primary onClick={handleCreateExam}>
             <FaPlus /> Thêm đề thi
           </Button>
-          <Button theme={theme}>
+          <Button theme={theme} onClick={() => setShowImportModal(true)}>
             <FaFileImport /> Nhập Excel
           </Button>
-          <Button theme={theme}>
+          <Button theme={theme} onClick={() => setShowExportModal(true)}>
             <FaFileExport /> Xuất Excel
           </Button>
         </ButtonsContainer>
@@ -389,33 +607,95 @@ const ExamManagement = () => {
         <div>
           <FilterButton 
             theme={theme} 
-            active={filterStatus === 'all'} 
-            onClick={() => setFilterStatus('all')}
+            active={statusFilter === 'all'} 
+            onClick={() => setStatusFilter('all')}
           >
             <FaFilter /> Tất cả
           </FilterButton>
           <FilterButton 
             theme={theme} 
-            active={filterStatus === 'active'} 
-            onClick={() => setFilterStatus('active')}
+            active={statusFilter === 'active'} 
+            onClick={() => setStatusFilter('active')}
           >
             Kích hoạt
           </FilterButton>
           <FilterButton 
             theme={theme} 
-            active={filterStatus === 'inactive'} 
-            onClick={() => setFilterStatus('inactive')}
+            active={statusFilter === 'inactive'} 
+            onClick={() => setStatusFilter('inactive')}
           >
             Ẩn
           </FilterButton>
         </div>
+        
+        {/* New approval filter buttons */}
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <FilterButton 
+            theme={theme}
+            active={approvalFilter === 'all'} 
+            onClick={() => setApprovalFilter('all')}
+          >
+            Tất cả đề
+          </FilterButton>
+          <FilterButton 
+            theme={theme}
+            active={approvalFilter === 'approved'} 
+            onClick={() => setApprovalFilter('approved')}
+          >
+            <FaCheckCircle /> Đã duyệt
+          </FilterButton>
+          <FilterButton 
+            theme={theme}
+            active={approvalFilter === 'pending'} 
+            onClick={() => setApprovalFilter('pending')}
+          >
+            <FaTimesCircle /> Chờ duyệt
+          </FilterButton>
+        </div>
       </FiltersRow>
       
-      {loading ? (
-        <LoadingSpinner />
-      ) : exams.length === 0 ? (
+      {loading || localLoading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <LoadingSpinner size="lg" />
+          <p style={{ marginTop: '10px' }}>Đang tải dữ liệu đề thi...</p>
+          {retryCount > 0 && (
+            <p>Lần thử lại thứ {retryCount}...</p>
+          )}
+        </div>
+      ) : filteredExams.length === 0 ? (
         <EmptyState theme={theme}>
-          <p>Không tìm thấy đề thi nào.</p>
+          <FaSearch size={48} color={theme === 'dark' ? '#4a5568' : '#cbd5e0'} />
+          <h3>Không tìm thấy đề thi</h3>
+          <p>
+            {localError || error ? (
+              <>
+                <strong>Lỗi:</strong> {localError || error}
+              </>
+            ) : (searchTerm || statusFilter !== 'all' || subjectFilter || approvalFilter !== 'all') ? (
+              'Không có đề thi nào phù hợp với bộ lọc hiện tại. Hãy thử điều chỉnh bộ lọc.'
+            ) : (
+              'Chưa có đề thi nào trong hệ thống hoặc chưa tải được dữ liệu. Hãy thử tải lại.'
+            )}
+          </p>
+          <Button 
+            theme={theme} 
+            primary 
+            onClick={() => {
+              setSearchTerm('');
+              setStatusFilter('all');
+              setSubjectFilter('');
+              setApprovalFilter('all');
+              // Thêm force reload với setTimeout
+              setLoading(true);
+              setTimeout(() => {
+                loadExams();
+                setLoading(false);
+              }, 300);
+            }}
+            style={{ marginTop: '20px' }}
+          >
+            <FaSync /> {localError ? 'Thử lại kết nối' : 'Đặt lại bộ lọc & tải lại dữ liệu'}
+          </Button>
         </EmptyState>
       ) : (
         <>
@@ -436,21 +716,41 @@ const ExamManagement = () => {
                   Thời gian (phút) {getSortIcon('duration')}
                 </TableHeader>
                 <TableHeader theme={theme}>Trạng thái</TableHeader>
+                <TableHeader theme={theme}>Phê duyệt</TableHeader>
                 <TableHeader theme={theme}>Thao tác</TableHeader>
               </TableRow>
             </TableHead>
             <tbody>
-              {exams.map(exam => (
+              {filteredExams.map(exam => (
                 <TableRow key={exam.id} theme={theme}>
                   <TableCell theme={theme}>{exam.id}</TableCell>
                   <TableCell theme={theme}>{exam.title}</TableCell>
                   <TableCell theme={theme}>{exam.subject?.name || 'N/A'}</TableCell>
                   <TableCell theme={theme}>{exam.questionCount || exam.questions?.length || '0'}</TableCell>
-                  <TableCell theme={theme}>{exam.duration}</TableCell>
+                  <TableCell theme={theme}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {exam.duration}
+                      <TimeActionButton 
+                        onClick={() => handleEditDuration(exam)} 
+                        title="Cập nhật thời gian làm bài"
+                        style={{ marginLeft: '8px' }}
+                      >
+                        <FaClock size={14} />
+                      </TimeActionButton>
+                    </div>
+                  </TableCell>
                   <TableCell theme={theme}>
                     <StatusBadge active={exam.isActive}>
                       {exam.isActive ? 'Kích hoạt' : 'Ẩn'}
                     </StatusBadge>
+                  </TableCell>
+                  <TableCell theme={theme}>
+                    <ApprovalBadge approved={exam.isApproved}>
+                      {exam.isApproved ? 
+                        <><FaCheckCircle /> Đã duyệt</> : 
+                        <><FaTimesCircle /> Chờ duyệt</>
+                      }
+                    </ApprovalBadge>
                   </TableCell>
                   <TableCell theme={theme}>
                     <ActionButton onClick={() => handleViewExam(exam.id)} title="Xem đề thi">
@@ -459,6 +759,14 @@ const ExamManagement = () => {
                     <ActionButton onClick={() => handleManageQuestions(exam.id)} title="Quản lý câu hỏi" color="#805ad5">
                       <FaList />
                     </ActionButton>
+                    {!exam.isApproved && (
+                      <ApproveButton
+                        onClick={() => handleApproveClick(exam)}
+                        title="Duyệt đề thi"
+                      >
+                        <FaCheckCircle size={14} />
+                      </ApproveButton>
+                    )}
                     <ActionButton onClick={() => handleEditExam(exam.id)} title="Chỉnh sửa" color="#4299e1">
                       <FaEdit />
                     </ActionButton>
@@ -470,6 +778,14 @@ const ExamManagement = () => {
               ))}
             </tbody>
           </Table>
+          
+          {filteredExams.length === 0 && (
+            <EmptyState theme={theme}>
+              <FaSearch size={48} color={theme === 'dark' ? '#4a5568' : '#cbd5e0'} />
+              <h3>Không tìm thấy đề thi</h3>
+              <p>Không có đề thi nào phù hợp với bộ lọc hiện tại.</p>
+            </EmptyState>
+          )}
           
           <PaginationContainer>
             <PageButton 
@@ -505,6 +821,23 @@ const ExamManagement = () => {
         </>
       )}
       
+      {/* Import Modal */}
+      <ImportExamsModal
+        show={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        theme={theme}
+        onImport={handleImportExams}
+      />
+      
+      {/* Export Modal */}
+      <ExportResultsModal
+        show={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        theme={theme}
+        onExport={handleExportResults}
+      />
+      
+      {/* Existing confirm modal */}
       <ConfirmModal
         show={showDeleteModal}
         title="Xác nhận xóa"
@@ -514,10 +847,26 @@ const ExamManagement = () => {
         onConfirm={handleDeleteExam}
         onCancel={() => setShowDeleteModal(false)}
       />
+      
+      {/* Duration Update Modal */}
+      <UpdateExamDurationModal
+        show={showDurationModal}
+        onClose={() => setShowDurationModal(false)}
+        theme={theme}
+        exam={selectedExam}
+        onUpdateDuration={handleUpdateDuration}
+      />
+      
+      {/* Approval Modal */}
+      <ApproveExamModal
+        show={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        theme={theme}
+        exam={examToApprove}
+        onApprove={handleApproveExam}
+      />
     </Container>
   );
 };
-
-// Styled Components (giữ nguyên từ file hiện tại)
 
 export default ExamManagement;

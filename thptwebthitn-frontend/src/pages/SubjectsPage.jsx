@@ -3,14 +3,17 @@ import { useSelector } from "react-redux"; // Loại bỏ useDispatch không dù
 import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { Button } from "react-bootstrap"; // Add this import
 import {
   FaPlus,
   FaSearch,
   FaHome,
   FaFilter,
   FaRedo,
-  FaFileAlt,
+  FaFileAlt, // Thêm biểu tượng này
   FaUserShield,
+  FaArrowLeft,
+  FaTrophy, // Thêm biểu tượng này
   // Loại bỏ các icon không sử dụng
 } from "react-icons/fa";
 import Header from "../components/layout/Header";
@@ -27,6 +30,8 @@ import EnglishImg from "../assets/images/english.png";
 import HistoryImg from "../assets/images/history.png";
 import GeographyImg from "../assets/images/geography.png";
 import CivicEdu from "../assets/images/civic.png";
+import ExamReminderBanner from '../components/reminders/ExamReminderBanner';
+import useExamReminders from '../hooks/useExamReminders';
 
 const PageContainer = styled.div`
   display: flex;
@@ -346,6 +351,17 @@ const ButtonAction = styled.button`
   }
 
   &.status {
+    background-color: ${(props) =>
+      props.theme === "dark" ? "#38b2ac" : "#38b2ac"};
+    color: white;
+
+    &:hover {
+      background-color: ${(props) =>
+        props.theme === "dark" ? "#2c7a7b" : "#2c7a7b"};
+    }
+  }
+
+  &.exam {
     background-color: ${(props) =>
       props.theme === "dark" ? "#38b2ac" : "#38b2ac"};
     color: white;
@@ -822,11 +838,30 @@ const SubjectsPage = () => {
     z-index: 2;
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
   `;
+  const { upcomingExams, dismissExam } = useExamReminders(7); // Hiển thị nhắc nhở trước 7 ngày
   return (
     <PageContainer theme={theme}>
       <Header />
 
       <ContentContainer>
+        {/* Hiển thị banner nhắc nhở nếu có kỳ thi sắp diễn ra */}
+        {upcomingExams.length > 0 && (
+          <ExamReminderBanner 
+            exam={upcomingExams[0]} 
+            theme={theme}
+            onClose={dismissExam}
+          />
+        )}
+        
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2>Danh sách môn học</h2>
+          <div>
+            <Button as={Link} to="/leaderboard/subjects" variant="outline-warning" className="me-2">
+              <FaTrophy className="me-1" /> Bảng xếp hạng học sinh
+            </Button>
+            {/* Other existing buttons */}
+          </div>
+        </div>
         <PageTitle theme={theme}>Danh sách môn học</PageTitle>
         <UserInfo theme={theme}>
         <span>{formatRole(user?.role)}</span>
@@ -939,7 +974,6 @@ const SubjectsPage = () => {
                   </SubjectDescription>
                   
                   <SubjectFooter>
-                    
                     <ButtonGroup>
                       <ButtonAction
                         className="view"
@@ -948,14 +982,28 @@ const SubjectsPage = () => {
                       >
                         Xem
                       </ButtonAction>
-                      {hasEditAccess() && (
+                      
+                      {/* Thêm nút Đề thi ở đây */}
                       <ButtonAction
-                        className="edit"
-                        onClick={() => navigate(`/subject/edit/${subject.id}`)}
+                        className="exam"
+                        onClick={() => navigate(`/exams/by-subject/${subject.id}`)}
                         theme={theme}
+                        style={{ 
+                          backgroundColor: "#38b2ac", 
+                          color: "white" 
+                        }}
                       >
-                        Sửa
+                        <FaFileAlt style={{ marginRight: "5px" }} /> Đề thi
                       </ButtonAction>
+                      
+                      {hasEditAccess() && (
+                        <ButtonAction
+                          className="edit"
+                          onClick={() => navigate(`/subject/edit/${subject.id}`)}
+                          theme={theme}
+                        >
+                          Sửa
+                        </ButtonAction>
                       )}
                     </ButtonGroup>
                   </SubjectFooter>

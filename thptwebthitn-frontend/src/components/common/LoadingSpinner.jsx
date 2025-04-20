@@ -1,40 +1,34 @@
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
-
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`;
+import styled from 'styled-components';
+import { Spinner } from 'react-bootstrap';
 
 const SpinnerContainer = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding: ${props => props.size === 'small' ? '0.5rem' : '1rem'};
+  justify-content: center;
+  padding: ${props => props.fullSize ? '100px 0' : '20px 0'};
 `;
 
-const Spinner = styled.div`
-  width: ${props => props.size === 'small' ? '1.5rem' : '2.5rem'};
-  height: ${props => props.size === 'small' ? '1.5rem' : '2.5rem'};
-  border: ${props => props.size === 'small' ? '3px' : '5px'} solid rgba(0, 123, 255, 0.2);
-  border-top: ${props => props.size === 'small' ? '3px' : '5px'} solid #007bff;
-  border-radius: 50%;
-  animation: ${spin} 1s linear infinite;
+const SpinnerText = styled.p`
+  margin-top: 15px;
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#4a5568'};
 `;
 
-const LoadingText = styled.p`
-  margin-top: 0.5rem;
-  color: #007bff;
-  font-size: ${props => props.size === 'small' ? '0.9rem' : '1.1rem'};
-`;
-
-const LoadingSpinner = ({ size = 'normal', text }) => {
+const LoadingSpinner = ({ 
+  message = 'Đang tải dữ liệu...', 
+  size = 'md',  // sm, md, lg
+  fullSize = false,
+  theme = 'light'
+}) => {
   return (
-    <SpinnerContainer size={size}>
-      <div style={{ textAlign: 'center' }}>
-        <Spinner size={size} />
-        {text && <LoadingText size={size}>{text}</LoadingText>}
-      </div>
+    <SpinnerContainer fullSize={fullSize}>
+      <Spinner 
+        animation="border" 
+        variant={theme === 'dark' ? 'light' : 'primary'}
+        size={size} 
+      />
+      {message && <SpinnerText theme={theme}>{message}</SpinnerText>}
     </SpinnerContainer>
   );
 };

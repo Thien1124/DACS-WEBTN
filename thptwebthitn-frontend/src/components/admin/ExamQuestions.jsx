@@ -8,7 +8,8 @@ import {
   FaSort, FaCheck, FaSortAmountUp, FaSortAmountDown 
 } from 'react-icons/fa';
 import { fetchExamWithQuestions } from '../../redux/examSlice';
-import { deleteQuestion } from '../../redux/questionSlice';
+import { removeQuestion } from '../../redux/questionSlice';
+import { createQuestion, updateQuestion } from '../../services/questionService'; // Thêm import này
 import LoadingSpinner from '../common/LoadingSpinner';
 import ConfirmModal from '../common/ConfirmModal';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
@@ -29,13 +30,21 @@ const ExamQuestions = () => {
   
   useEffect(() => {
     if (examId) {
+      console.log('Fetching exam with ID:', examId);
       dispatch(fetchExamWithQuestions(examId));
     }
   }, [dispatch, examId]);
   
   useEffect(() => {
+    console.log('Current exam data:', currentExam);
+    console.log('Exam questions data:', examQuestions);
+    
+    // Kiểm tra cấu trúc của câu hỏi đầu tiên nếu có
     if (examQuestions && examQuestions.length > 0) {
+      console.log('First question structure:', examQuestions[0]);
       sortQuestions(examQuestions, sortField, sortDirection);
+    } else {
+      setQuestions([]);
     }
   }, [examQuestions, sortField, sortDirection]);
   
@@ -70,7 +79,7 @@ const ExamQuestions = () => {
   
   const handleDeleteQuestion = () => {
     if (questionToDelete) {
-      dispatch(deleteQuestion(questionToDelete.id))
+      dispatch(removeQuestion(questionToDelete.id))
         .unwrap()
         .then(() => {
           showSuccessToast('Xóa câu hỏi thành công!');
@@ -158,21 +167,23 @@ const ExamQuestions = () => {
               </QuestionHeader>
               
               <QuestionContent theme={theme}>
-                <QuestionText dangerouslySetInnerHTML={{ __html: question.text }} />
+                {/* Kiểm tra các trường có thể chứa nội dung câu hỏi */}
+                {question.text ? (
+                  <QuestionText dangerouslySetInnerHTML={{ __html: question.text }} />
+                ) : question.content ? (
+                  <QuestionText dangerouslySetInnerHTML={{ __html: question.content }} />
+                ) : (
+                  <QuestionText>Không có nội dung câu hỏi</QuestionText>
+                )}
               </QuestionContent>
               
               <OptionsContainer>
                 {question.options && question.options.map((option, optIndex) => (
-                  <OptionItem 
-                    key={option.id || optIndex}
-                    theme={theme}
-                    isCorrect={option.id === question.correctOptionId}
-                  >
-                    <OptionLabel theme={theme} isCorrect={option.id === question.correctOptionId}>
-                      {String.fromCharCode(65 + optIndex)}
-                    </OptionLabel>
-                    <OptionText dangerouslySetInnerHTML={{ __html: option.text }} />
-                    {option.id === question.correctOptionId && (
+                  <OptionItem key={option.id}>
+                    <OptionText theme={theme}>
+                      {option.content}
+                    </OptionText>
+                    {option.isCorrect && (
                       <CorrectBadge theme={theme}>
                         <FaCheck /> Đáp án đúng
                       </CorrectBadge>
