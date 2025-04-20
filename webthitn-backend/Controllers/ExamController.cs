@@ -17,7 +17,7 @@ namespace webthitn_backend.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    public class ExamController : ControllerBase
+    public partial class ExamController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ExamController> _logger;
@@ -124,7 +124,8 @@ namespace webthitn_backend.Controllers
                     .Take(filter.PageSize)
                     .ToListAsync();
 
-                var examDTOs = exams.Select(e => {
+                var examDTOs = exams.Select(e =>
+                {
                     // Đếm số lượng câu hỏi cho mỗi loại
                     var questionTypeStats = GetQuestionTypeStatistics(e.Id);
 
@@ -1348,4 +1349,638 @@ namespace webthitn_backend.Controllers
             return stats;
         }
     }
+    public partial class ExamController : ControllerBase
+    {
+        /// <summary>
+        /// Nhân bản một đề thi đã có
+        /// </summary>
+        /// <remarks>
+        /// API này cho phép giáo viên hoặc admin tạo một bản sao của đề thi đã tồn tại.
+        /// Bản sao sẽ chứa tất cả các câu hỏi và cài đặt của đề thi gốc, nhưng với tiêu đề mới
+        /// và được đánh dấu là bản sao.
+        /// 
+        /// Sample request:
+        /// 
+        ///     POST /api/Exam/clone/5
+        ///     
+        /// </remarks>
+        /// <param name="id">ID của đề thi cần nhân bản</param>
+        /// <returns>Thông tin về đề thi mới được tạo ra</returns>
+        /// <response code="201">Trả về thông tin đề thi đã nhân bản</response>
+        /// <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+        /// <response code="403">Không có quyền nhân bản đề thi này</response>
+        /// <response code="404">Không tìm thấy đề thi</response>
+        /// <response code="500">Lỗi máy chủ</response>
+        [Authorize(Roles = "Admin,Teacher")]
+        [HttpPost("clone/{id}")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> CloneExam(int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Yêu cầu nhân bản đề thi ID: {id}");
+
+                // Kiểm tra đề thi tồn tại
+                var sourceExam = await _context.Exams
+                    .Include(e => e.Subject)
+                    .Include(e => e.ExamType)
+                    .Include(e => e.Creator)
+                    .Include(e => e.ExamQuestions)
+                        .ThenInclude(eq => eq.Question)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (sourceExam == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy đề thi ID: {id}");
+                    return NotFound(new { message = "Không tìm thấy đề thi cần nhân bản" });
+                }
+
+                // Lấy ID của người dùng hiện tại (từ token JWT)
+                int currentUserId;
+                var userIdClaim = User.FindFirst("userId");
+                if (userIdClaim == null)
+                {
+                    // Thử tìm với các biến thể khác nếu không tìm thấy
+                    userIdClaim = User.FindFirst("UserId") ?? User.FindFirst("userid");
+                }
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out currentUserId) || currentUserId <= 0)
+                {
+                    _logger.LogWarning("Không xác định được người dùng hiện tại từ token");
+                    return StatusCode(500, new { message = "Không xác định được người dùng hiện tại" });
+                }
+
+                // Kiểm tra quyền - Admin hoặc giáo viên
+                bool isAdmin = User.IsInRole("Admin");
+                bool isTeacher = User.IsInRole("Teacher");
+
+                if (!isAdmin && !isTeacher)
+                {
+                    _logger.LogWarning($"Người dùng {currentUserId} không có quyền nhân bản đề thi");
+                    return StatusCode(403, new { message = "Bạn không có quyền nhân bản đề thi" });
+                }
+
+                // Bắt đầu transaction để đảm bảo tất cả dữ liệu được lưu nhất quán
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                try
+                {
+                    // Tạo đề thi mới là bản sao của đề thi cũ
+                    var newExam = new Models.Exam
+                    {
+                        Title = $"{sourceExam.Title} (Bản sao)",
+                        Description = sourceExam.Description,
+                        SubjectId = sourceExam.SubjectId,
+                        ExamTypeId = sourceExam.ExamTypeId,
+                        Duration = sourceExam.Duration,
+                        TotalScore = sourceExam.TotalScore,
+                        PassScore = sourceExam.PassScore,
+                        MaxAttempts = sourceExam.MaxAttempts,
+                        StartTime = null, // Đặt thời gian bắt đầu mới là null
+                        EndTime = null,   // Đặt thời gian kết thúc mới là null
+                        IsActive = false, // Đặt mặc định là không kích hoạt
+                        ShowResult = sourceExam.ShowResult,
+                        ShowAnswers = sourceExam.ShowAnswers,
+                        ShuffleQuestions = sourceExam.ShuffleQuestions,
+                        ShuffleOptions = sourceExam.ShuffleOptions,
+                        AutoGradeShortAnswer = sourceExam.AutoGradeShortAnswer,
+                        AllowPartialGrading = sourceExam.AllowPartialGrading,
+                        AccessCode = sourceExam.AccessCode,
+                        CreatorId = currentUserId, // Người nhân bản sẽ là người tạo đề thi mới
+                        CreatedAt = DateTime.UtcNow,
+                        ScoringConfig = sourceExam.ScoringConfig
+                    };
+
+                    // Lưu đề thi mới
+                    _context.Exams.Add(newExam);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Đã tạo đề thi mới, ID: {newExam.Id}");
+
+                    // Sao chép các câu hỏi từ đề thi cũ
+                    foreach (var sourceQuestion in sourceExam.ExamQuestions)
+                    {
+                        var newExamQuestion = new Models.ExamQuestion
+                        {
+                            ExamId = newExam.Id,
+                            QuestionId = sourceQuestion.QuestionId,
+                            OrderIndex = sourceQuestion.OrderIndex,
+                            Score = sourceQuestion.Score
+                        };
+
+                        _context.ExamQuestions.Add(newExamQuestion);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Đã sao chép {sourceExam.ExamQuestions.Count} câu hỏi từ đề thi ID: {id} sang đề thi mới ID: {newExam.Id}");
+
+                    await transaction.CommitAsync();
+                    _logger.LogInformation($"Hoàn thành nhân bản đề thi, ID mới: {newExam.Id}");
+
+                    // Tải lại đề thi mới để lấy thông tin chi tiết
+                    var freshExam = await _context.Exams
+                        .Include(e => e.Subject)
+                        .Include(e => e.ExamType)
+                        .Include(e => e.Creator)
+                        .FirstOrDefaultAsync(e => e.Id == newExam.Id);
+
+                    // Lấy thống kê câu hỏi theo loại
+                    var questionTypeStats = GetQuestionTypeStatistics(newExam.Id);
+
+                    // Tạo đối tượng DTO để trả về
+                    var examDTO = new DTOs.ExamListDTO
+                    {
+                        Id = freshExam.Id,
+                        Title = freshExam.Title,
+                        Type = freshExam.ExamType.Name,
+                        Description = freshExam.Description,
+                        Duration = freshExam.Duration,
+                        QuestionCount = sourceExam.ExamQuestions.Count,
+                        TotalScore = freshExam.TotalScore,
+                        PassScore = freshExam.PassScore,
+                        MaxAttempts = freshExam.MaxAttempts,
+                        StartTime = freshExam.StartTime,
+                        EndTime = freshExam.EndTime,
+                        Status = GetExamStatus(freshExam),
+                        IsActive = freshExam.IsActive,
+                        ShowResult = freshExam.ShowResult,
+                        ShowAnswers = freshExam.ShowAnswers,
+                        ShuffleQuestions = freshExam.ShuffleQuestions,
+                        ShuffleOptions = freshExam.ShuffleOptions,
+                        AutoGradeShortAnswer = freshExam.AutoGradeShortAnswer,
+                        AllowPartialGrading = freshExam.AllowPartialGrading,
+                        CreatedAt = freshExam.CreatedAt,
+                        Subject = new DTOs.SubjectBasicDTO
+                        {
+                            Id = freshExam.Subject.Id,
+                            Name = freshExam.Subject.Name,
+                            Code = freshExam.Subject.Code
+                        },
+                        Creator = freshExam.Creator != null ? new DTOs.UserBasicDTO
+                        {
+                            Id = freshExam.Creator.Id,
+                            Username = freshExam.Creator.Username,
+                            FullName = freshExam.Creator.FullName
+                        } : null,
+                        QuestionTypeCounts = questionTypeStats
+                    };
+
+                    // Trả về kết quả với status code 201 Created
+                    return CreatedAtAction(nameof(GetExam), new { id = newExam.Id },
+                        new
+                        {
+                            message = "Đề thi đã được nhân bản thành công",
+                            exam = examDTO
+                        });
+                }
+                catch (Exception ex)
+                {
+                    // Nếu có lỗi, rollback transaction
+                    await transaction.RollbackAsync();
+                    _logger.LogError($"Lỗi khi nhân bản đề thi: {ex.Message}, Stack trace: {ex.StackTrace}");
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi nhân bản đề thi ID: {id}, Lỗi: {ex.Message}, Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi nhân bản đề thi", error = ex.Message });
+            }
+        }
+        /// <summary>
+         /// Cập nhật trạng thái đề thi (nháp hoặc công khai)
+         /// </summary>
+         /// <remarks>
+         /// API này cho phép giáo viên hoặc admin cập nhật trạng thái của một đề thi đã tồn tại.
+         /// Trạng thái có thể là nháp (không công khai, chỉ người tạo mới nhìn thấy) hoặc công khai (học sinh có thể làm bài).
+         /// 
+         /// Sample request:
+         ///
+         ///     PATCH /api/Exam/5/status
+         ///     {
+         ///         "isActive": true
+         ///     }
+         ///
+         /// </remarks>
+         /// <param name="id">ID của đề thi cần cập nhật trạng thái</param>
+         /// <param name="model">Thông tin trạng thái mới</param>
+         /// <returns>Thông tin đề thi sau khi cập nhật</returns>
+         /// <response code="200">Trả về thông tin đề thi đã cập nhật trạng thái thành công</response>
+         /// <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+         /// <response code="403">Không có quyền cập nhật đề thi này</response>
+         /// <response code="404">Không tìm thấy đề thi</response>
+         /// <response code="500">Lỗi máy chủ</response>
+        [Authorize(Roles = "Admin,Teacher")]
+        [HttpPatch("{id}/status")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateExamStatus(int id, [FromBody] UpdateExamStatusDTO model)
+        {
+            try
+            {
+                _logger.LogInformation($"Cập nhật trạng thái đề thi ID: {id}, Trạng thái mới: {(model.IsActive ? "Công khai" : "Nháp")}");
+
+                // Kiểm tra đề thi tồn tại
+                var existingExam = await _context.Exams
+                    .Include(e => e.Creator)
+                    .Include(e => e.Subject)
+                    .Include(e => e.ExamType)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (existingExam == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy đề thi ID: {id}");
+                    return NotFound(new { message = "Không tìm thấy đề thi" });
+                }
+
+                // Kiểm tra quyền - chỉ Admin hoặc người tạo ra đề thi mới có thể cập nhật trạng thái
+                int currentUserId;
+                var userIdClaim = User.FindFirst("userId");
+                if (userIdClaim == null)
+                {
+                    userIdClaim = User.FindFirst("UserId") ?? User.FindFirst("userid");
+                }
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out currentUserId) || currentUserId <= 0)
+                {
+                    _logger.LogWarning("Không xác định được người dùng hiện tại từ token");
+                    return StatusCode(500, new { message = "Không xác định được người dùng hiện tại" });
+                }
+
+                // Kiểm tra quyền cập nhật - Admin hoặc người tạo
+                bool isAdmin = User.IsInRole("Admin");
+                bool isCreator = existingExam.CreatorId == currentUserId;
+
+                if (!isAdmin && !isCreator)
+                {
+                    _logger.LogWarning($"Người dùng {currentUserId} không có quyền cập nhật trạng thái đề thi ID: {id}");
+                    return StatusCode(403, new { message = "Bạn không có quyền cập nhật trạng thái đề thi này" });
+                }
+
+                // Cập nhật trạng thái đề thi
+                existingExam.IsActive = model.IsActive;
+                existingExam.UpdatedAt = DateTime.UtcNow;
+
+                // Lưu thay đổi vào database
+                _context.Exams.Update(existingExam);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Đã cập nhật trạng thái đề thi ID: {id} thành {(model.IsActive ? "Công khai" : "Nháp")}");
+
+                // Tạo đối tượng DTO để trả về
+                var examDTO = new ExamListDTO
+                {
+                    Id = existingExam.Id,
+                    Title = existingExam.Title,
+                    Type = existingExam.ExamType.Name,
+                    Description = existingExam.Description,
+                    Duration = existingExam.Duration,
+                    QuestionCount = await _context.ExamQuestions.CountAsync(eq => eq.ExamId == existingExam.Id),
+                    TotalScore = existingExam.TotalScore,
+                    PassScore = existingExam.PassScore,
+                    MaxAttempts = existingExam.MaxAttempts,
+                    StartTime = existingExam.StartTime,
+                    EndTime = existingExam.EndTime,
+                    Status = GetExamStatus(existingExam),
+                    IsActive = existingExam.IsActive,
+                    ShowResult = existingExam.ShowResult,
+                    ShowAnswers = existingExam.ShowAnswers,
+                    ShuffleQuestions = existingExam.ShuffleQuestions,
+                    ShuffleOptions = existingExam.ShuffleOptions,
+                    AutoGradeShortAnswer = existingExam.AutoGradeShortAnswer,
+                    AllowPartialGrading = existingExam.AllowPartialGrading,
+                    CreatedAt = existingExam.CreatedAt,
+                    Subject = new SubjectBasicDTO
+                    {
+                        Id = existingExam.Subject.Id,
+                        Name = existingExam.Subject.Name,
+                        Code = existingExam.Subject.Code
+                    },
+                    Creator = existingExam.Creator != null ? new UserBasicDTO
+                    {
+                        Id = existingExam.Creator.Id,
+                        Username = existingExam.Creator.Username,
+                        FullName = existingExam.Creator.FullName
+                    } : null,
+                    QuestionTypeCounts = GetQuestionTypeStatistics(id)
+                };
+
+                return Ok(new
+                {
+                    message = $"Đã cập nhật trạng thái đề thi thành {(model.IsActive ? "công khai" : "nháp")}",
+                    exam = examDTO
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi cập nhật trạng thái đề thi ID: {id}, Lỗi: {ex.Message}, Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật trạng thái đề thi", error = ex.Message });
+            }
+        }
+        /// <summary>
+        /// Duyệt đề thi (dành cho admin hoặc giáo viên quản lý)
+        /// </summary>
+        /// <remarks>
+        /// API này cho phép admin hoặc giáo viên quản lý duyệt một đề thi, 
+        /// xác nhận rằng đề thi đã được kiểm tra và có thể được công khai cho học sinh.
+        /// 
+        /// Sample request:
+        ///
+        ///     POST /api/Exam/5/approve
+        ///     {
+        ///         "approved": true,
+        ///         "comment": "Đề thi phù hợp, đã kiểm tra các câu hỏi"
+        ///     }
+        ///
+        /// </remarks>
+        /// <param name="id">ID của đề thi cần duyệt</param>
+        /// <param name="model">Thông tin phê duyệt</param>
+        /// <returns>Thông tin đề thi sau khi duyệt</returns>
+        /// <response code="200">Trả về thông tin đề thi đã được duyệt thành công</response>
+        /// <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+        /// <response code="403">Không có quyền duyệt đề thi</response>
+        /// <response code="404">Không tìm thấy đề thi</response>
+        /// <response code="500">Lỗi máy chủ</response>
+        [Authorize(Roles = "Admin,Teacher")]
+        [HttpPost("{id}/approve")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ApproveExam(int id, [FromBody] ApproveExamDTO model)
+        {
+            try
+            {
+                _logger.LogInformation($"Yêu cầu duyệt đề thi ID: {id}");
+
+                // Kiểm tra đề thi tồn tại
+                var existingExam = await _context.Exams
+                    .Include(e => e.Creator)
+                    .Include(e => e.Subject)
+                    .Include(e => e.ExamType)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (existingExam == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy đề thi ID: {id}");
+                    return NotFound(new { message = "Không tìm thấy đề thi" });
+                }
+
+                // Kiểm tra quyền - chỉ Admin hoặc giáo viên quản lý mới có thể duyệt đề thi
+                int currentUserId;
+                var userIdClaim = User.FindFirst("userId");
+                if (userIdClaim == null)
+                {
+                    userIdClaim = User.FindFirst("UserId") ?? User.FindFirst("userid");
+                }
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out currentUserId) || currentUserId <= 0)
+                {
+                    _logger.LogWarning("Không xác định được người dùng hiện tại từ token");
+                    return StatusCode(500, new { message = "Không xác định được người dùng hiện tại" });
+                }
+
+                // Kiểm tra quyền duyệt - Admin hoặc giáo viên quản lý (hoặc có vai trò thích hợp)
+                bool isAdmin = User.IsInRole("Admin");
+
+                // Người tạo không thể tự duyệt đề thi của mình
+                if (existingExam.CreatorId == currentUserId && !isAdmin)
+                {
+                    _logger.LogWarning($"Người tạo {currentUserId} không thể tự duyệt đề thi ID: {id} của mình");
+                    return StatusCode(403, new { message = "Bạn không thể tự duyệt đề thi của mình, cần có người khác duyệt" });
+                }
+
+                if (!isAdmin && !User.IsInRole("Teacher"))
+                {
+                    _logger.LogWarning($"Người dùng {currentUserId} không có quyền duyệt đề thi ID: {id}");
+                    return StatusCode(403, new { message = "Bạn không có quyền duyệt đề thi" });
+                }
+
+                // Cập nhật trạng thái phê duyệt của đề thi
+                existingExam.IsActive = model.Approved;
+                existingExam.UpdatedAt = DateTime.UtcNow;
+
+                // Nếu có field khác trong schema để lưu thông tin phê duyệt, hãy cập nhật
+                // Ví dụ: existingExam.ApproverComment = model.Comment;
+                //        existingExam.ApproverId = currentUserId;
+                //        existingExam.ApprovedAt = DateTime.UtcNow;
+
+                // Để triển khai đầy đủ, có thể thêm các trường này vào bảng Exam hoặc tạo bảng riêng
+
+                // Lưu thay đổi vào database
+                _context.Exams.Update(existingExam);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Đã {(model.Approved ? "duyệt" : "từ chối")} đề thi ID: {id}");
+
+                // Tạo đối tượng DTO để trả về
+                var examDTO = new ExamListDTO
+                {
+                    Id = existingExam.Id,
+                    Title = existingExam.Title,
+                    Type = existingExam.ExamType.Name,
+                    Description = existingExam.Description,
+                    Duration = existingExam.Duration,
+                    QuestionCount = await _context.ExamQuestions.CountAsync(eq => eq.ExamId == existingExam.Id),
+                    TotalScore = existingExam.TotalScore,
+                    PassScore = existingExam.PassScore,
+                    MaxAttempts = existingExam.MaxAttempts,
+                    StartTime = existingExam.StartTime,
+                    EndTime = existingExam.EndTime,
+                    Status = GetExamStatus(existingExam),
+                    IsActive = existingExam.IsActive,
+                    ShowResult = existingExam.ShowResult,
+                    ShowAnswers = existingExam.ShowAnswers,
+                    ShuffleQuestions = existingExam.ShuffleQuestions,
+                    ShuffleOptions = existingExam.ShuffleOptions,
+                    AutoGradeShortAnswer = existingExam.AutoGradeShortAnswer,
+                    AllowPartialGrading = existingExam.AllowPartialGrading,
+                    CreatedAt = existingExam.CreatedAt,
+                    Subject = new SubjectBasicDTO
+                    {
+                        Id = existingExam.Subject.Id,
+                        Name = existingExam.Subject.Name,
+                        Code = existingExam.Subject.Code
+                    },
+                    Creator = existingExam.Creator != null ? new UserBasicDTO
+                    {
+                        Id = existingExam.Creator.Id,
+                        Username = existingExam.Creator.Username,
+                        FullName = existingExam.Creator.FullName
+                    } : null,
+                    QuestionTypeCounts = GetQuestionTypeStatistics(id)
+                };
+
+                return Ok(new
+                {
+                    message = $"Đề thi đã được {(model.Approved ? "duyệt" : "từ chối")}",
+                    exam = examDTO,
+                    approvedBy = new UserBasicDTO
+                    {
+                        Id = currentUserId,
+                        Username = User.Identity.Name ?? "unknown",
+                        FullName = User.FindFirst("FullName")?.Value ?? User.Identity.Name ?? "Unknown User"
+                    },
+                    comment = model.Comment
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi duyệt đề thi ID: {id}, Lỗi: {ex.Message}, Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi duyệt đề thi", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thông tin tiến độ/kết quả thi của người dùng
+        /// </summary>
+        /// <remarks>
+        /// API này cho phép xem trạng thái các đề thi của người dùng, 
+        /// bao gồm thông tin đã thi hay chưa, điểm cao nhất, và số lần đã thử.
+        /// 
+        /// Sample request:
+        ///
+        ///     GET /api/Exam/user-progress/5?subjectId=1
+        ///
+        /// </remarks>
+        /// <param name="userId">ID của người dùng</param>
+        /// <param name="subjectId">ID của môn học (không bắt buộc)</param>
+        /// <returns>Danh sách đề thi và tiến độ của người dùng</returns>
+        /// <response code="200">Trả về danh sách đề thi và tiến độ</response>
+        /// <response code="403">Không có quyền xem thông tin này</response>
+        /// <response code="404">Không tìm thấy người dùng</response>
+        /// <response code="500">Lỗi máy chủ</response>
+        [Authorize]
+        [HttpGet("user-progress/{userId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUserExamProgress(int userId, [FromQuery] int? subjectId = null)
+        {
+            try
+            {
+                _logger.LogInformation($"Lấy thông tin tiến độ/kết quả thi của người dùng ID: {userId}");
+
+                // Kiểm tra người dùng tồn tại
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy người dùng ID: {userId}");
+                    return NotFound(new { message = "Không tìm thấy người dùng" });
+                }
+
+                // Kiểm tra quyền - người dùng chỉ có thể xem tiến độ của mình hoặc admin/giáo viên có thể xem của người khác
+                int currentUserId;
+                var userIdClaim = User.FindFirst("userId");
+                if (userIdClaim == null)
+                {
+                    userIdClaim = User.FindFirst("UserId") ?? User.FindFirst("userid");
+                }
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out currentUserId) || currentUserId <= 0)
+                {
+                    _logger.LogWarning("Không xác định được người dùng hiện tại từ token");
+                    return StatusCode(500, new { message = "Không xác định được người dùng hiện tại" });
+                }
+
+                bool isOwner = userId == currentUserId;
+                bool isAdminOrTeacher = User.IsInRole("Admin") || User.IsInRole("Teacher");
+
+                if (!isOwner && !isAdminOrTeacher)
+                {
+                    _logger.LogWarning($"Người dùng {currentUserId} không có quyền xem tiến độ của người dùng {userId}");
+                    return StatusCode(403, new { message = "Bạn không có quyền xem tiến độ thi của người dùng khác" });
+                }
+
+                // Xây dựng truy vấn lấy danh sách đề thi
+                var examsQuery = _context.Exams
+                    .Include(e => e.Subject)
+                    .Include(e => e.ExamType)
+                    .Where(e => e.IsActive); // Chỉ lấy các đề thi đã công khai
+
+                // Lọc theo môn học nếu có
+                if (subjectId.HasValue && subjectId.Value > 0)
+                {
+                    examsQuery = examsQuery.Where(e => e.SubjectId == subjectId.Value);
+                }
+
+                // Lấy danh sách đề thi
+                var exams = await examsQuery.ToListAsync();
+
+                // Lấy kết quả thi của người dùng
+                var userResults = await _context.ExamResults
+                    .Where(er => er.StudentId == userId)
+                    .ToListAsync();
+
+                // Tạo danh sách tiến độ thi
+                var progressList = new List<object>();
+                foreach (var exam in exams)
+                {
+                    // Tìm tất cả kết quả của đề thi này
+                    var examResults = userResults
+                        .Where(er => er.ExamId == exam.Id)
+                        .OrderByDescending(er => er.Score) // Sắp xếp theo điểm cao nhất trước
+                        .ToList();
+
+                    // Lấy điểm cao nhất
+                    var highestResult = examResults.FirstOrDefault();
+
+                    // Tạo đối tượng tiến độ cho đề thi
+                    var examProgress = new
+                    {
+                        examId = exam.Id,
+                        examTitle = exam.Title,
+                        subject = new SubjectBasicDTO
+                        {
+                            Id = exam.Subject.Id,
+                            Name = exam.Subject.Name,
+                            Code = exam.Subject.Code
+                        },
+                        type = exam.ExamType.Name,
+                        duration = exam.Duration,
+                        totalScore = exam.TotalScore,
+                        passScore = exam.PassScore,
+                        status = GetExamStatus(exam),
+                        attemptCount = examResults.Count,
+                        maxAttempts = exam.MaxAttempts,
+                        hasAttempted = examResults.Count > 0,
+                        bestScore = highestResult?.Score,
+                        bestPercentageScore = highestResult?.PercentageScore,
+                        isPassed = highestResult?.IsPassed ?? false,
+                        lastAttemptDate = examResults.Any() ? examResults.Max(er => er.CompletedAt) : null,
+                        remainingAttempts = exam.MaxAttempts.HasValue
+                        ? (int?)Math.Max(0, exam.MaxAttempts.Value - examResults.Count)
+                         : null // null nghĩa là không giới hạn
+                    };
+
+                    progressList.Add(examProgress);
+                }
+
+                return Ok(new
+                {
+                    userId,
+                    userName = user.Username,
+                    fullName = user.FullName,
+                    subjectId = subjectId,
+                    totalExams = progressList.Count,
+                    attemptedExams = progressList.Count(p => ((dynamic)p).hasAttempted),
+                    passedExams = progressList.Count(p => ((dynamic)p).isPassed),
+                    examProgress = progressList
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi lấy tiến độ thi của người dùng ID: {userId}, Lỗi: {ex.Message}, Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy tiến độ thi", error = ex.Message });
+            }
+        }
+    }
 }
+
+

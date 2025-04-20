@@ -15,9 +15,9 @@ namespace webthitn_backend.Models
 
         [Required]
         [StringLength(100)]
-        public string Name { get; set; } // Tên chương
+        public string Name { get; set; } 
 
-        public int OrderIndex { get; set; } // Thứ tự chương
+        public int OrderIndex { get; set; }
 
         [StringLength(500)]
         public string Description { get; set; }

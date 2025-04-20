@@ -49,7 +49,12 @@ namespace webthitn_backend.Models
         /// <summary>
         /// Phần giải thích cho đáp án này (cập nhật sau)
         /// </summary>
-        public string Explanation { get; set; } 
+        public string Explanation { get; set; }
+
+        /// <summary>
+        /// Giá trị ghép đôi (cho câu hỏi ghép đôi)
+        /// </summary>
+        public string MatchingValue { get; set; } = "";
 
         /// <summary>
         /// Mức độ điểm số cho đáp án này (0-100%)

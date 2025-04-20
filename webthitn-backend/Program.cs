@@ -9,6 +9,9 @@ using System;
 using System.Reflection;
 using System.IO;
 using webthitn_backend.Models;
+using Swashbuckle.AspNetCore.Filters;
+using webthitn_backend.Swagger;
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
@@ -115,7 +118,7 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
     });
-
+    c.OperationFilter<QuestionExamplesOperationFilter>();
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -131,6 +134,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 
 // Thêm các dịch vụ API Controllers
 builder.Services.AddControllers();

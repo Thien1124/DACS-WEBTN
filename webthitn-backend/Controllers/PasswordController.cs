@@ -26,13 +26,15 @@ namespace webthitn_backend.Controllers
             ApplicationDbContext context,
             EmailService emailService,
             ILogger<PasswordController> logger)
+
         {
             _configuration = configuration;
             _context = context;
             _emailService = emailService;
             _logger = logger;
+            _otpExpiryTimeInMinutes = _configuration.GetValue<int>("OtpSettings:ExpiryTimeInMinutes", 15);
         }
-
+        private readonly int _otpExpiryTimeInMinutes;
         // 1. Endpoint quên mật khẩu - gửi email với mã reset
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
@@ -50,9 +52,9 @@ namespace webthitn_backend.Controllers
 
             // Tạo mã reset password ngẫu nhiên
             var resetCode = GenerateResetCode();
-            var expiryTime = DateTime.UtcNow.AddHours(24);
+            var expiryTime = DateTime.UtcNow.AddMinutes(_otpExpiryTimeInMinutes);
 
-            _logger.LogInformation($"Mã reset được tạo cho user {user.Username}: {resetCode}, hết hạn: {expiryTime}");
+            _logger.LogInformation($"Mã reset được tạo cho user {user.Username}: {resetCode}, hết hạn sau {_otpExpiryTimeInMinutes} phút, vào lúc: {expiryTime}");
 
             // Lưu mã và thời gian hết hạn vào database
             user.ResetPasswordCode = resetCode;

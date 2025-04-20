@@ -84,6 +84,179 @@
         }
       }
     },
+    "/api/Chapter": {
+      "get": {
+        "tags": [
+          "Chapter"
+        ],
+        "summary": "Lấy danh sách chương có phân trang và lọc theo môn học",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "searchTerm",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Chapter"
+        ],
+        "summary": "Tạo chương mới",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChapterDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChapterDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChapterDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Chapter/{id}": {
+      "get": {
+        "tags": [
+          "Chapter"
+        ],
+        "summary": "Lấy thông tin chi tiết của một chương theo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Chapter"
+        ],
+        "summary": "Cập nhật thông tin chương",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChapterDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChapterDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChapterDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Chapter"
+        ],
+        "summary": "Xóa chương",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Exam": {
       "get": {
         "tags": [
@@ -165,7 +338,6 @@
             "name": "SearchTerm",
             "in": "query",
             "description": "Từ khóa tìm kiếm (tên, mô tả)",
-            "required": true,
             "schema": {
               "type": "string",
               "example": "kiểm tra"
@@ -756,6 +928,529 @@
         }
       }
     },
+    "/api/Exam/clone/{id}": {
+      "post": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Nhân bản một đề thi đã có",
+        "description": "API này cho phép giáo viên hoặc admin tạo một bản sao của đề thi đã tồn tại.\r\nBản sao sẽ chứa tất cả các câu hỏi và cài đặt của đề thi gốc, nhưng với tiêu đề mới\r\nvà được đánh dấu là bản sao.\r\n\r\nSample request:\r\n\r\n    POST /api/Exam/clone/5",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần nhân bản",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Trả về thông tin đề thi đã nhân bản"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền nhân bản đề thi này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/{id}/status": {
+      "patch": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Cập nhật trạng thái đề thi (nháp hoặc công khai)",
+        "description": "API này cho phép giáo viên hoặc admin cập nhật trạng thái của một đề thi đã tồn tại.\r\nTrạng thái có thể là nháp (không công khai, chỉ người tạo mới nhìn thấy) hoặc công khai (học sinh có thể làm bài).\r\n\r\nSample request:\r\n            \r\n    PATCH /api/Exam/5/status\r\n    {\r\n        \"isActive\": true\r\n    }",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần cập nhật trạng thái",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin trạng thái mới",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExamStatusDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExamStatusDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExamStatusDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin đề thi đã cập nhật trạng thái thành công"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền cập nhật đề thi này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/{id}/approve": {
+      "post": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Duyệt đề thi (dành cho admin hoặc giáo viên quản lý)",
+        "description": "API này cho phép admin hoặc giáo viên quản lý duyệt một đề thi, \r\nxác nhận rằng đề thi đã được kiểm tra và có thể được công khai cho học sinh.\r\n\r\nSample request:\r\n            \r\n    POST /api/Exam/5/approve\r\n    {\r\n        \"approved\": true,\r\n        \"comment\": \"Đề thi phù hợp, đã kiểm tra các câu hỏi\"\r\n    }",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần duyệt",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin phê duyệt",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin đề thi đã được duyệt thành công"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền duyệt đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/user-progress/{userId}": {
+      "get": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Lấy thông tin tiến độ/kết quả thi của người dùng",
+        "description": "API này cho phép xem trạng thái các đề thi của người dùng, \r\nbao gồm thông tin đã thi hay chưa, điểm cao nhất, và số lần đã thử.\r\n\r\nSample request:\r\n            \r\n    GET /api/Exam/user-progress/5?subjectId=1",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID của người dùng",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "ID của môn học (không bắt buộc)",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách đề thi và tiến độ"
+          },
+          "403": {
+            "description": "Không có quyền xem thông tin này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/ExamsImport/import": {
+      "post": {
+        "tags": [
+          "ExamsImport"
+        ],
+        "summary": "Import đề thi từ file CSV",
+        "description": "API này cho phép import đề thi từ file CSV với định dạng sau:\r\n\r\n- Dòng đầu tiên là tiêu đề cột: Title,Description,SubjectId,ExamTypeId,Duration,TotalScore,PassScore,MaxAttempts,StartTime,EndTime,...\r\n- Các dòng tiếp theo là thông tin của đề thi\r\n\r\nYêu cầu tối thiểu: Title (tiêu đề), SubjectId (ID môn học), ExamTypeId (ID loại đề thi), Duration (thời gian làm bài)\r\n\r\nĐịnh dạng thời gian: yyyy-MM-dd HH:mm:ss\r\n\r\nSample request:\r\n\r\n    POST /api/exams/import\r\n    Form-Data:\r\n        csvFile: [file CSV]\r\n        skipHeader: true",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "csvFile": {
+                    "type": "string",
+                    "description": "File CSV chứa thông tin đề thi",
+                    "format": "binary"
+                  },
+                  "skipHeader": {
+                    "type": "boolean",
+                    "description": "Bỏ qua dòng tiêu đề (mặc định: true)",
+                    "default": true
+                  },
+                  "delimiter": {
+                    "type": "string",
+                    "description": "Ký tự phân cách (mặc định: dấu phẩy)",
+                    "default": ","
+                  }
+                }
+              },
+              "encoding": {
+                "csvFile": {
+                  "style": "form"
+                },
+                "skipHeader": {
+                  "style": "form"
+                },
+                "delimiter": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import thành công"
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Không có quyền truy cập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/ExamsImport/import/template": {
+      "get": {
+        "tags": [
+          "ExamsImport"
+        ],
+        "summary": "Tải mẫu file CSV để import đề thi",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Leaderboard/{examId}": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Lấy top 10 người dùng có điểm cao nhất cho một đề thi cụ thể",
+        "parameters": [
+          {
+            "name": "examId",
+            "in": "path",
+            "description": "ID của đề thi cần lấy bảng xếp hạng",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin bảng xếp hạng thành công"
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi với ID đã cho"
+          },
+          "401": {
+            "description": "Không có quyền truy cập"
+          }
+        }
+      }
+    },
     "/api/Password/forgot-password": {
       "post": {
         "tags": [
@@ -855,13 +1550,207 @@
           "Question"
         ],
         "summary": "Thêm một câu hỏi mới vào hệ thống",
-        "description": "API này cho phép giáo viên hoặc admin tạo một câu hỏi mới theo một trong ba dạng:\r\n1. Trắc nghiệm một đáp án (QuestionType=1)\r\n2. Đúng-sai nhiều ý (QuestionType=2)\r\n3. Trả lời ngắn (QuestionType=3)",
+        "description": "API này cho phép giáo viên hoặc admin tạo một câu hỏi mới theo một trong ba dạng:\r\n1. Trắc nghiệm một đáp án (a,b,c,d) (QuestionType=1)\r\n2. Đúng-sai nhiều ý (QuestionType=2)\r\n3. Trả lời ngắn (QuestionType=3)",
         "requestBody": {
           "description": "Thông tin câu hỏi cần tạo",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateQuestionDTO"
+              },
+              "examples": {
+                "Trắc nghiệm một đáp án (QuestionType=1)": {
+                  "summary": "Câu hỏi trắc nghiệm một đáp án",
+                  "description": "Câu hỏi dạng chọn một đáp án đúng trong nhiều đáp án (a, b, c, d)",
+                  "value": {
+                    "content": "Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0",
+                    "explanation": "Áp dụng định lý L'Hospital ta có giới hạn bằng 1",
+                    "subjectId": 1,
+                    "chapterId": 2,
+                    "questionLevelId": 3,
+                    "questionType": 1,
+                    "tags": "giới hạn,đạo hàm",
+                    "suggestedTime": 60,
+                    "defaultScore": 1,
+                    "isActive": true,
+                    "scoringConfig": "",
+                    "shortAnswerConfig": "",
+                    "options": [
+                      {
+                        "content": "1",
+                        "isCorrect": true,
+                        "orderIndex": 1,
+                        "label": "A",
+                        "explanation": "Đúng. Đạo hàm f'(x) = cos(x)/1 khi x=0 nên f'(0) = 1",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 100
+                      },
+                      {
+                        "content": "0",
+                        "isCorrect": false,
+                        "orderIndex": 2,
+                        "label": "B",
+                        "explanation": "Sai. Đáp án không phải là 0",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 0
+                      },
+                      {
+                        "content": "∞",
+                        "isCorrect": false,
+                        "orderIndex": 3,
+                        "label": "C",
+                        "explanation": "Sai. Giới hạn có giá trị hữu hạn",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 0
+                      },
+                      {
+                        "content": "Không tồn tại",
+                        "isCorrect": false,
+                        "orderIndex": 4,
+                        "label": "D",
+                        "explanation": "Sai. Giới hạn này tồn tại và bằng 1",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 0
+                      }
+                    ]
+                  }
+                },
+                "Đúng-sai nhiều ý (QuestionType=2)": {
+                  "summary": "Câu hỏi đúng-sai nhiều ý",
+                  "description": "Câu hỏi dạng chọn nhiều đáp án đúng trong số các phát biểu (true/false)",
+                  "value": {
+                    "content": "Chọn các phát biểu đúng về hàm số y = x^2",
+                    "explanation": "Phân tích hàm số bậc hai y = x^2",
+                    "subjectId": 1,
+                    "chapterId": 2,
+                    "questionLevelId": 2,
+                    "questionType": 2,
+                    "tags": "hàm số bậc hai,đạo hàm,tích phân",
+                    "suggestedTime": 120,
+                    "defaultScore": 2,
+                    "isActive": true,
+                    "scoringConfig": "{\"1_correct\": 0.25, \"2_correct\": 0.50, \"3_correct\": 0.75, \"4_correct\": 1.00}",
+                    "shortAnswerConfig": "",
+                    "options": [
+                      {
+                        "content": "Hàm số là chẵn",
+                        "isCorrect": true,
+                        "orderIndex": 1,
+                        "label": "A",
+                        "explanation": "Đúng. Vì f(-x) = (-x)^2 = x^2 = f(x)",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": true,
+                        "groupId": 1,
+                        "scorePercentage": 25
+                      },
+                      {
+                        "content": "Hàm số có đạo hàm bằng 2x",
+                        "isCorrect": true,
+                        "orderIndex": 2,
+                        "label": "B",
+                        "explanation": "Đúng. Đạo hàm của x^2 là f'(x) = 2x",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": true,
+                        "groupId": 2,
+                        "scorePercentage": 25
+                      },
+                      {
+                        "content": "Hàm số có đồ thị là đường thẳng",
+                        "isCorrect": false,
+                        "orderIndex": 3,
+                        "label": "C",
+                        "explanation": "Sai. Đồ thị của hàm số y = x^2 là parabol",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": true,
+                        "groupId": 3,
+                        "scorePercentage": 0
+                      },
+                      {
+                        "content": "Tích phân của hàm số từ 0 đến 1 bằng 1/2",
+                        "isCorrect": false,
+                        "orderIndex": 4,
+                        "label": "D",
+                        "explanation": "Sai. Tích phân từ 0 đến 1 của x^2 là 1/3",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": true,
+                        "groupId": 4,
+                        "scorePercentage": 0
+                      }
+                    ]
+                  }
+                },
+                "Trả lời ngắn (QuestionType=3)": {
+                  "summary": "Câu hỏi trả lời ngắn",
+                  "description": "Câu hỏi dạng nhập câu trả lời ngắn với nhiều phương án đáp án chấp nhận được",
+                  "value": {
+                    "content": "Cho biết thủ đô của Việt Nam",
+                    "explanation": "Thủ đô của Việt Nam là Hà Nội",
+                    "subjectId": 2,
+                    "chapterId": 3,
+                    "questionLevelId": 1,
+                    "questionType": 3,
+                    "tags": "địa lý,thủ đô,việt nam",
+                    "suggestedTime": 30,
+                    "defaultScore": 1,
+                    "isActive": true,
+                    "scoringConfig": "",
+                    "shortAnswerConfig": "{\"case_sensitive\": false, \"exact_match\": false, \"partial_credit\": true, \"partial_credit_percent\": 50, \"allow_similar\": true, \"similarity_threshold\": 80}",
+                    "options": [
+                      {
+                        "content": "Hà Nội",
+                        "isCorrect": true,
+                        "orderIndex": 1,
+                        "label": "",
+                        "explanation": "Đây là đáp án chính xác",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 100
+                      },
+                      {
+                        "content": "Ha Noi",
+                        "isCorrect": true,
+                        "orderIndex": 2,
+                        "label": "",
+                        "explanation": "Đáp án đúng nhưng không có dấu",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 80
+                      },
+                      {
+                        "content": "Hanoi",
+                        "isCorrect": true,
+                        "orderIndex": 3,
+                        "label": "",
+                        "explanation": "Đáp án đúng nhưng viết liền, không dấu",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 70
+                      },
+                      {
+                        "content": "Thủ đô Hà Nội",
+                        "isCorrect": true,
+                        "orderIndex": 4,
+                        "label": "",
+                        "explanation": "Đáp án đúng nhưng thêm từ 'Thủ đô'",
+                        "matchingValue": "",
+                        "isPartOfTrueFalseGroup": false,
+                        "groupId": 0,
+                        "scorePercentage": 90
+                      }
+                    ]
+                  }
+                }
               }
             },
             "text/json": {
@@ -1495,6 +2384,153 @@
         }
       }
     },
+    "/api/ResultsExport/export": {
+      "get": {
+        "tags": [
+          "ResultsExport"
+        ],
+        "parameters": [
+          {
+            "name": "examId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeAnswers",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "completedOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Statistics/overview": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Lấy tổng quan số lượng người dùng, đề thi, bài thi",
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin tổng quan thành công"
+          },
+          "401": {
+            "description": "Không có quyền truy cập"
+          }
+        }
+      }
+    },
+    "/api/Statistics/by-subject": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Lấy thống kê số đề thi, lượt thi, điểm trung bình theo từng môn học",
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin thống kê theo môn học thành công"
+          },
+          "401": {
+            "description": "Không có quyền truy cập"
+          }
+        }
+      }
+    },
     "/api/Subject": {
       "get": {
         "tags": [
@@ -1964,6 +3000,21 @@
         "additionalProperties": false,
         "description": "DTO cho một câu trả lời khi nộp bài"
       },
+      "ApproveExamDTO": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "description": "Trạng thái phê duyệt (true: duyệt, false: từ chối)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Nhận xét của người duyệt",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ChangePasswordRequest": {
         "required": [
           "currentPassword",
@@ -1985,6 +3036,37 @@
           }
         },
         "additionalProperties": false
+      },
+      "CreateChapterDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tên chương",
+            "nullable": true,
+            "example": "Đạo hàm"
+          },
+          "description": {
+            "type": "string",
+            "description": "Mô tả chương",
+            "nullable": true,
+            "example": "Kiến thức cơ bản về đạo hàm và ứng dụng"
+          },
+          "subjectId": {
+            "type": "integer",
+            "description": "ID của môn học",
+            "format": "int32",
+            "example": 1
+          },
+          "orderIndex": {
+            "type": "integer",
+            "description": "Thứ tự hiển thị",
+            "format": "int32",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để tạo chương mới"
       },
       "CreateExamDTO": {
         "type": "object",
@@ -2112,12 +3194,19 @@
         "description": "DTO tạo mới bài thi"
       },
       "CreateQuestionDTO": {
+        "required": [
+          "content",
+          "options",
+          "questionLevelId",
+          "questionType",
+          "subjectId"
+        ],
         "type": "object",
         "properties": {
           "content": {
+            "minLength": 1,
             "type": "string",
             "description": "Nội dung câu hỏi",
-            "nullable": true,
             "example": "Tính giới hạn của hàm số f(x) = sin(x)/x khi x tiến đến 0"
           },
           "explanation": {
@@ -2146,6 +3235,8 @@
             "example": 3
           },
           "questionType": {
+            "maximum": 5,
+            "minimum": 1,
             "type": "integer",
             "description": "Loại câu hỏi\r\n1: Một đáp án (trắc nghiệm a,b,c,d)\r\n3: Trả lời ngắn với nhiều đáp án có thể chấp nhận được\r\n5: Đúng-sai nhiều ý (dùng cho trắc nghiệm đúng-sai 4 ý)",
             "format": "int32",
@@ -2165,14 +3256,18 @@
             "example": 60
           },
           "defaultScore": {
+            "maximum": 10,
+            "minimum": 0.1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",
+            "default": 1,
             "example": 1
           },
           "isActive": {
             "type": "boolean",
             "description": "Trạng thái kích hoạt",
+            "default": true,
             "example": true
           },
           "scoringConfig": {
@@ -2190,20 +3285,22 @@
             "items": {
               "$ref": "#/components/schemas/CreateQuestionOptionDTO"
             },
-            "description": "Danh sách các đáp án",
-            "nullable": true
+            "description": "Danh sách các đáp án"
           }
         },
         "additionalProperties": false,
         "description": "DTO để tạo mới câu hỏi"
       },
       "CreateQuestionOptionDTO": {
+        "required": [
+          "content"
+        ],
         "type": "object",
         "properties": {
           "content": {
+            "minLength": 1,
             "type": "string",
             "description": "Nội dung đáp án",
-            "nullable": true,
             "example": "1"
           },
           "isCorrect": {
@@ -2215,6 +3312,7 @@
             "type": "integer",
             "description": "Thứ tự hiển thị",
             "format": "int32",
+            "default": 0,
             "example": 1
           },
           "label": {
@@ -2232,23 +3330,29 @@
           "matchingValue": {
             "type": "string",
             "description": "Giá trị ghép đôi (cho câu hỏi ghép đôi)",
+            "default": "",
             "nullable": true,
             "example": "Paris"
           },
           "isPartOfTrueFalseGroup": {
             "type": "boolean",
-            "description": "Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý"
+            "description": "Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý",
+            "default": false
           },
           "groupId": {
             "type": "integer",
             "description": "Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)",
             "format": "int32",
+            "default": 0,
             "nullable": true
           },
           "scorePercentage": {
+            "maximum": 100,
+            "minimum": 0,
             "type": "integer",
             "description": "Mức điểm cho đáp án này (0-100%)",
             "format": "int32",
+            "default": 100,
             "example": 100
           }
         },
@@ -2501,6 +3605,54 @@
         "additionalProperties": false,
         "description": "DTO cập nhật điểm cho một câu trả lời"
       },
+      "UpdateChapterDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tên chương",
+            "nullable": true,
+            "example": "Đạo hàm"
+          },
+          "description": {
+            "type": "string",
+            "description": "Mô tả chương",
+            "nullable": true,
+            "example": "Kiến thức cơ bản về đạo hàm và ứng dụng"
+          },
+          "subjectId": {
+            "type": "integer",
+            "description": "ID của môn học",
+            "format": "int32",
+            "nullable": true,
+            "example": 1
+          },
+          "orderIndex": {
+            "type": "integer",
+            "description": "Thứ tự hiển thị",
+            "format": "int32",
+            "example": 1
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Trạng thái kích hoạt",
+            "nullable": true,
+            "example": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để cập nhật chương"
+      },
+      "UpdateExamStatusDTO": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "Trạng thái kích hoạt của đề thi (true: công khai, false: nháp)"
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateQuestionDTO": {
         "type": "object",
         "properties": {
@@ -2509,15 +3661,9 @@
             "description": "Nội dung câu hỏi",
             "nullable": true
           },
-          "questionType": {
-            "type": "integer",
-            "description": "Loại câu hỏi (1: Một đáp án, 2: Đúng-sai nhiều ý, 3: Trả lời ngắn)",
-            "format": "int32",
-            "nullable": true
-          },
           "explanation": {
             "type": "string",
-            "description": "Giải thích đáp án",
+            "description": "Giải thích cho câu hỏi",
             "nullable": true
           },
           "subjectId": {
@@ -2528,13 +3674,7 @@
           },
           "chapterId": {
             "type": "integer",
-            "description": "ID chương học",
-            "format": "int32",
-            "nullable": true
-          },
-          "lessonId": {
-            "type": "integer",
-            "description": "ID bài học",
+            "description": "ID chương",
             "format": "int32",
             "nullable": true
           },
@@ -2546,34 +3686,36 @@
           },
           "tags": {
             "type": "string",
-            "description": "Từ khóa/tag của câu hỏi",
+            "description": "Tags của câu hỏi, phân cách bởi dấu phẩy",
             "nullable": true
           },
           "suggestedTime": {
             "type": "integer",
-            "description": "Thời gian gợi ý làm câu hỏi (giây)",
+            "description": "Thời gian làm câu hỏi gợi ý (giây)",
             "format": "int32",
             "nullable": true
           },
           "defaultScore": {
+            "maximum": 10,
+            "minimum": 0.1,
             "type": "number",
-            "description": "Điểm mặc định của câu hỏi",
+            "description": "Điểm mặc định",
             "format": "double",
             "nullable": true
           },
           "isActive": {
             "type": "boolean",
-            "description": "Trạng thái hoạt động",
+            "description": "Trạng thái kích hoạt",
             "nullable": true
           },
           "scoringConfig": {
             "type": "string",
-            "description": "Cấu hình chấm điểm (JSON)",
+            "description": "Cấu hình tính điểm cho câu hỏi đúng-sai nhiều ý (JSON)",
             "nullable": true
           },
           "shortAnswerConfig": {
             "type": "string",
-            "description": "Cấu hình cho câu trả lời ngắn (JSON)",
+            "description": "Cấu hình cho câu hỏi trả lời ngắn (JSON)",
             "nullable": true
           },
           "options": {
@@ -2581,19 +3723,19 @@
             "items": {
               "$ref": "#/components/schemas/UpdateQuestionOptionDTO"
             },
-            "description": "Danh sách các đáp án của câu hỏi",
+            "description": "Danh sách các đáp án (để cập nhật)",
             "nullable": true
           }
         },
         "additionalProperties": false,
-        "description": "DTO dùng để cập nhật thông tin câu hỏi"
+        "description": "DTO để cập nhật câu hỏi"
       },
       "UpdateQuestionOptionDTO": {
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
-            "description": "ID đáp án (null nếu đáp án mới)",
+            "description": "ID của đáp án (nếu cập nhật đáp án hiện có, không có ID sẽ tạo mới)",
             "format": "int32"
           },
           "content": {
@@ -2612,32 +3754,39 @@
           },
           "label": {
             "type": "string",
-            "description": "Nhãn hiển thị (A, B, C, D...)",
+            "description": "Ký hiệu tùy chỉnh (a, b, c, d hoặc khác) cho đáp án",
             "nullable": true
           },
           "explanation": {
             "type": "string",
-            "description": "Giải thích đáp án",
+            "description": "Giải thích cho đáp án",
+            "nullable": true
+          },
+          "matchingValue": {
+            "type": "string",
+            "description": "Giá trị ghép đôi (cho câu hỏi ghép đôi)",
             "nullable": true
           },
           "isPartOfTrueFalseGroup": {
             "type": "boolean",
-            "description": "Đáp án thuộc nhóm câu hỏi đúng-sai"
+            "description": "Đánh dấu nếu đây là một mục Đúng-Sai trong câu hỏi đúng-sai nhiều ý"
           },
           "groupId": {
             "type": "integer",
-            "description": "ID nhóm cho câu hỏi đúng-sai nhiều ý",
+            "description": "Nhóm đáp án (dùng cho câu hỏi đúng-sai nhiều ý)",
             "format": "int32",
             "nullable": true
           },
           "scorePercentage": {
+            "maximum": 100,
+            "minimum": 0,
             "type": "integer",
-            "description": "Phần trăm điểm cho đáp án này (dành cho câu trả lời ngắn)",
+            "description": "Mức điểm cho đáp án này (0-100%)",
             "format": "int32"
           }
         },
         "additionalProperties": false,
-        "description": "DTO đáp án khi cập nhật câu hỏi"
+        "description": "DTO để cập nhật đáp án"
       },
       "UpdateResultDTO": {
         "type": "object",
