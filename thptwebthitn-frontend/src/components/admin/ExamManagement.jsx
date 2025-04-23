@@ -730,13 +730,7 @@ const getFilteredExams = () => {
                   <TableCell theme={theme}>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                       {exam.duration}
-                      <TimeActionButton 
-                        onClick={() => handleEditDuration(exam)} 
-                        title="Cập nhật thời gian làm bài"
-                        style={{ marginLeft: '8px' }}
-                      >
-                        <FaClock size={14} />
-                      </TimeActionButton>
+                      
                     </div>
                   </TableCell>
                   <TableCell theme={theme}>
@@ -752,26 +746,19 @@ const getFilteredExams = () => {
                       }
                     </ApprovalBadge>
                   </TableCell>
-                  <TableCell theme={theme}>
-                    <ActionButton onClick={() => handleViewExam(exam.id)} title="Xem đề thi">
-                      <FaEye />
-                    </ActionButton>
-                    <ActionButton onClick={() => handleManageQuestions(exam.id)} title="Quản lý câu hỏi" color="#805ad5">
-                      <FaList />
-                    </ActionButton>
-                    {!exam.isApproved && (
-                      <ApproveButton
-                        onClick={() => handleApproveClick(exam)}
-                        title="Duyệt đề thi"
-                      >
-                        <FaCheckCircle size={14} />
-                      </ApproveButton>
-                    )}
-                    <ActionButton onClick={() => handleEditExam(exam.id)} title="Chỉnh sửa" color="#4299e1">
-                      <FaEdit />
-                    </ActionButton>
-                    <ActionButton onClick={() => openDeleteModal(exam.id)} title="Xóa" color="#f56565">
-                      <FaTrash />
+                  <TableCell theme={theme} style={{textAlign: 'center'}}>
+                    <ActionButton 
+                      onClick={() => navigate(`/admin/exams/${exam.id}/details`)}
+                      title="Xem chi tiết" 
+                      style={{
+                        backgroundColor: '#3182ce',
+                        width: 'auto',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
+                        fontWeight: '500',
+                      }}
+                    >
+                      <FaEye style={{marginRight: '8px'}} /> Xem chi tiết
                     </ActionButton>
                   </TableCell>
                 </TableRow>

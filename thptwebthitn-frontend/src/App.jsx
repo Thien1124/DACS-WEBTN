@@ -19,6 +19,8 @@ import './App.css';
 import ExamStatistics from './components/admin/ExamStatistics';
 import AdminStatistics from './pages/admin/AdminStatistics';
 import TeacherStatistics from './pages/teacher/TeacherStatistics';
+import SubjectTopStudentsPage from './pages/leaderboard/SubjectTopStudentsPage';
+import ExamDetails from './components/admin/ExamDetails';
 
 // Add fontawesome to the project
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -50,6 +52,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="/subjects" element={<SubjectList />} />
           <Route path="/subjects/:subjectId" element={<SubjectDetail />} />
+          <Route path="/subjects/:subjectId/top-students" element={<SubjectTopStudentsPage />} />
           
           {/* Auth routes */}
           <Route path="/login" element={<LoginForm />} />
@@ -67,6 +70,11 @@ function App() {
           <Route path="/admin/statistics" element={
             <ProtectedRoute allowedRoles={['admin', 'teacher']}>
               <ExamStatistics />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/exams/:examId/details" element={
+            <ProtectedRoute requiredRoles={['Admin', 'Teacher']}>
+              <ExamDetails />
             </ProtectedRoute>
           } />
           

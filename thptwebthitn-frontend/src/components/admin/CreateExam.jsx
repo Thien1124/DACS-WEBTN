@@ -8,6 +8,7 @@ import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import { getSubjects } from '../../services/subjectService';
 import { fetchAllSubjects } from '../../redux/subjectSlice';
 import { getAllSubjectsNoPaging } from '../../services/subjectService';
+import { getQuestionsBySubject } from '../../services/questionService';
 
 const Container = styled.div`
   max-width: 900px;
@@ -196,8 +197,9 @@ const CreateExam = () => {
     examTypeId: 2, // Default exam type
     duration: 60,
     totalScore: 10,
-    passScore: 5,
+    passScore: 5, // Đổi tên từ passingScore thành passScore để khớp với API
     maxAttempts: 1,
+    difficulty: 'medium', // Added difficulty field
     startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Tomorrow
     endTime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Two weeks from now
     isActive: true,
@@ -222,6 +224,17 @@ const CreateExam = () => {
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
   const [error, setError] = useState(null);
   
+  // State cho phần quản lý câu hỏi
+  const [availableQuestions, setAvailableQuestions] = useState([]);
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [questionSearchTerm, setQuestionSearchTerm] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("");
+  
+  // Thêm state tạo nháp
+  const [isDraft, setIsDraft] = useState(false);
+  
   useEffect(() => {
     // Method 1: Redux
     dispatch(fetchAllSubjects());
@@ -238,7 +251,11 @@ const CreateExam = () => {
         if (data && Array.isArray(data)) {
           setLocalSubjects(data);
         } else if (data && data.items && Array.isArray(data.items)) {
-          setLocalSubjects(data.items);
+          setLocalSubjects(data.items); 
+        } else if (data && data.data && Array.isArray(data.data)) {
+          // Add this case to handle your actual API response structure
+          setLocalSubjects(data.data);
+          console.log('Loaded subjects from data array:', data.data);
         } else {
           console.warn('Unexpected response format from API:', data);
           setError('Định dạng dữ liệu không hợp lệ');
@@ -297,9 +314,11 @@ const CreateExam = () => {
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const processedValue = name === 'subjectId' ? Number(value) : value;
+  
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : processedValue
     }));
     
     // Clear error when field is changed
@@ -323,8 +342,8 @@ const CreateExam = () => {
       newErrors.duration = 'Thời gian làm bài phải lớn hơn 0';
     }
     
-    if (!formData.passScore || formData.passScore < 0 || formData.passScore > formData.totalScore) {
-      newErrors.passScore = `Điểm đạt phải từ 0 đến ${formData.totalScore}`;
+    if (!formData.passingScore || formData.passingScore < 0 || formData.passingScore > formData.totalScore) {
+      newErrors.passingScore = `Điểm đạt phải từ 0 đến ${formData.totalScore}`;
     }
     
     if (!formData.totalScore || formData.totalScore <= 0) {
@@ -347,13 +366,42 @@ const CreateExam = () => {
     e.preventDefault();
     
     if (validateForm()) {
+      // Nếu không phải nháp, yêu cầu phải có câu hỏi
+      if (!isDraft && selectedQuestions.length === 0) {
+        showErrorToast("Đề thi phải có ít nhất một câu hỏi");
+        setErrors(prev => ({...prev, questions: "Vui lòng thêm ít nhất một câu hỏi"}));
+        return;
+      }
+      
       setIsSubmitting(true);
       
-      dispatch(createNewExam(formData))
+      // Tạo câu hỏi giả nếu là nháp và không có câu hỏi nào
+      const questionsToSubmit = selectedQuestions.length > 0 
+        ? selectedQuestions.map((q, index) => ({
+            questionId: q.id,
+            order: index + 1,
+            score: q.score || 1
+          }))
+        : [{ questionId: 1, order: 1, score: 1 }]; // Câu hỏi giả cho nháp
+      
+      const examData = {
+        ...formData,
+        subjectId: Number(formData.subjectId),
+        passScore: formData.passScore || 5, // Chắc chắn có passScore
+        questions: questionsToSubmit,
+        isDraft: isDraft // Thêm trường này nếu backend hỗ trợ
+      };
+      
+      dispatch(createNewExam(examData))
         .then((result) => {
           if (result.meta.requestStatus === 'fulfilled') {
-            showSuccessToast('Tạo đề thi thành công!');
-            navigate('/admin/exams');
+            if (isDraft) {
+              showSuccessToast('Đã tạo đề thi nháp thành công!');
+              navigate(`/admin/exams/${result.payload.id}/edit`);
+            } else {
+              showSuccessToast('Tạo đề thi thành công!');
+              navigate('/admin/exams');
+            }
           } else if (result.meta.requestStatus === 'rejected') {
             showErrorToast(result.payload || 'Có lỗi xảy ra khi tạo đề thi');
           }
@@ -370,6 +418,27 @@ const CreateExam = () => {
   const handleCancel = () => {
     navigate('/admin/exams');
   };
+  
+  useEffect(() => {
+    if (formData.subjectId) {
+      setIsLoadingQuestions(true);
+      
+      getQuestionsBySubject(formData.subjectId)
+        .then(response => {
+          console.log("Loaded questions:", response);
+          setAvailableQuestions(response.data || []);
+        })
+        .catch(err => {
+          console.error("Failed to load questions:", err);
+          showErrorToast("Không thể tải danh sách câu hỏi");
+        })
+        .finally(() => {
+          setIsLoadingQuestions(false);
+        });
+    } else {
+      setAvailableQuestions([]);
+    }
+  }, [formData.subjectId]);
   
   return (
     <Container>
@@ -414,7 +483,7 @@ const CreateExam = () => {
                     <option value="">-- Chọn môn học --</option>
                     {subjects && subjects.length > 0 ? (
                       subjects.map(subject => (
-                        <option key={subject.id} value={subject.id}>
+                        <option key={subject.id} value={String(subject.id)}>
                           {subject.name}
                         </option>
                       ))
@@ -425,7 +494,15 @@ const CreateExam = () => {
                   {subjects.length === 0 && (
                     <div className="alert alert-warning mt-2">
                       <strong>Cảnh báo:</strong> Không tìm thấy môn học nào trong hệ thống. 
-                      Vui lòng thêm môn học trước khi tạo đề thi.
+                      <div>Redux subjects: {JSON.stringify(reduxSubjects?.length)}</div>
+                      <div>Local subjects: {JSON.stringify(localSubjects?.length)}</div>
+                      <div>Error: {error}</div>
+                      <button
+                        className="btn btn-sm btn-primary mt-2"
+                        onClick={handleRetryLoadSubjects}
+                      >
+                        Thử lại
+                      </button>
                     </div>
                   )}
                 </>
@@ -513,6 +590,355 @@ const CreateExam = () => {
               />
               <CheckboxLabel theme={theme}>
                 Công khai đề thi (học sinh có thể làm bài)
+              </CheckboxLabel>
+            </CheckboxContainer>
+          </FormGroup>
+          
+          {/* Phần quản lý câu hỏi */}
+          <FormGroup>
+            <Label theme={theme}>Câu hỏi cho đề thi *</Label>
+            
+            {formData.subjectId ? (
+              <>
+                {/* Phần tìm kiếm và lọc câu hỏi */}
+                <div className="card mb-3" style={{
+                  backgroundColor: theme === 'dark' ? '#2d3748' : '#ffffff',
+                  border: `1px solid ${theme === 'dark' ? '#4a5568' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  padding: '1rem'
+                }}>
+                  <h5 style={{color: theme === 'dark' ? '#e2e8f0' : '#2d3748'}}>Danh sách câu hỏi có sẵn</h5>
+                  
+                  <div className="d-flex mb-3 gap-2">
+                    <Input 
+                      type="text"
+                      placeholder="Tìm kiếm câu hỏi..."
+                      value={questionSearchTerm}
+                      onChange={(e) => setQuestionSearchTerm(e.target.value)}
+                      theme={theme}
+                      style={{flex: 2}}
+                    />
+                    
+                    <Select
+                      value={selectedTopic}
+                      onChange={(e) => setSelectedTopic(e.target.value)}
+                      theme={theme}
+                      style={{flex: 1}}
+                    >
+                      <option value="">Tất cả chủ đề</option>
+                      {/* Map các chủ đề từ API, giả sử có data */}
+                      <option value="topic1">Chương 1</option>
+                      <option value="topic2">Chương 2</option>
+                    </Select>
+                    
+                    <Select
+                      value={selectedDifficulty}
+                      onChange={(e) => setSelectedDifficulty(e.target.value)}
+                      theme={theme}
+                      style={{flex: 1}}
+                    >
+                      <option value="">Tất cả độ khó</option>
+                      <option value="easy">Dễ</option>
+                      <option value="medium">Trung bình</option>
+                      <option value="hard">Khó</option>
+                    </Select>
+                  </div>
+                  
+                  {isLoadingQuestions ? (
+                    <div className="text-center py-3">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Đang tải...</span>
+                      </div>
+                      <p className="mt-2" style={{color: theme === 'dark' ? '#e2e8f0' : '#2d3748'}}>
+                        Đang tải danh sách câu hỏi...
+                      </p>
+                    </div>
+                  ) : availableQuestions.length > 0 ? (
+                    <div style={{
+                      maxHeight: '300px',
+                      overflowY: 'auto',
+                      border: `1px solid ${theme === 'dark' ? '#4a5568' : '#e2e8f0'}`,
+                      borderRadius: '4px'
+                    }}>
+                      <table className="table" style={{
+                        color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                        backgroundColor: theme === 'dark' ? '#1a202c' : '#ffffff',
+                      }}>
+                        <thead style={{
+                          position: 'sticky',
+                          top: 0,
+                          backgroundColor: theme === 'dark' ? '#2d3748' : '#f7fafc',
+                          zIndex: 10
+                        }}>
+                          <tr>
+                            <th style={{width: '50px'}}>ID</th>
+                            <th>Nội dung</th>
+                            <th style={{width: '100px'}}>Độ khó</th>
+                            <th style={{width: '80px'}}>Điểm</th>
+                            <th style={{width: '80px'}}>Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {availableQuestions
+                            .filter(q => {
+                              // Lọc theo từ khóa tìm kiếm
+                              const matchesSearch = !questionSearchTerm || 
+                                q.content?.toLowerCase().includes(questionSearchTerm.toLowerCase());
+                              
+                              // Lọc theo chủ đề
+                              const matchesTopic = !selectedTopic || q.topicId === selectedTopic;
+                              
+                              // Lọc theo độ khó
+                              const matchesDifficulty = !selectedDifficulty || q.difficulty === selectedDifficulty;
+                              
+                              return matchesSearch && matchesTopic && matchesDifficulty;
+                            })
+                            .map(question => {
+                              // Kiểm tra câu hỏi đã được chọn chưa
+                              const isSelected = selectedQuestions.some(q => q.id === question.id);
+                              
+                              return (
+                                <tr key={question.id} style={{
+                                  backgroundColor: isSelected ? 
+                                    (theme === 'dark' ? '#2a4365' : '#ebf8ff') : 'inherit'
+                                }}>
+                                  <td>{question.id}</td>
+                                  <td>
+                                    <div style={{
+                                      maxHeight: '80px',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {question.content}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    {question.difficulty === 'easy' ? 'Dễ' : 
+                                     question.difficulty === 'medium' ? 'Trung bình' : 
+                                     question.difficulty === 'hard' ? 'Khó' : question.difficulty}
+                                  </td>
+                                  <td>
+                                    <Input
+                                      type="number"
+                                      min="0.1"
+                                      step="0.1"
+                                      defaultValue="1"
+                                      style={{width: '60px', padding: '2px 5px'}}
+                                      disabled={!isSelected}
+                                      onChange={(e) => {
+                                        const newScore = parseFloat(e.target.value);
+                                        if (isSelected && !isNaN(newScore)) {
+                                          setSelectedQuestions(prev => 
+                                            prev.map(q => 
+                                              q.id === question.id ? {...q, score: newScore} : q
+                                            )
+                                          );
+                                        }
+                                      }}
+                                    />
+                                  </td>
+                                  <td>
+                                    {isSelected ? (
+                                      <button
+                                        className="btn btn-sm btn-outline-danger"
+                                        onClick={() => {
+                                          setSelectedQuestions(prev => 
+                                            prev.filter(q => q.id !== question.id)
+                                          );
+                                        }}
+                                      >
+                                        Xóa
+                                      </button>
+                                    ) : (
+                                      <button
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => {
+                                          setSelectedQuestions(prev => [
+                                            ...prev, 
+                                            {...question, score: 1}
+                                          ]);
+                                        }}
+                                      >
+                                        Thêm
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="alert alert-info">
+                      Không có câu hỏi nào cho môn học này. Vui lòng tạo câu hỏi trước khi tạo đề thi.
+                    </div>
+                  )}
+                </div>
+                
+                {/* Phần hiển thị câu hỏi đã chọn */}
+                <div className="card" style={{
+                  backgroundColor: theme === 'dark' ? '#2d3748' : '#ffffff',
+                  border: `1px solid ${theme === 'dark' ? '#4a5568' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  padding: '1rem'
+                }}>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h5 style={{color: theme === 'dark' ? '#e2e8f0' : '#2d3748'}}>
+                      Câu hỏi đã chọn ({selectedQuestions.length})
+                    </h5>
+                    {selectedQuestions.length > 0 && (
+                      <button 
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => setSelectedQuestions([])}
+                      >
+                        Xóa tất cả
+                      </button>
+                    )}
+                  </div>
+                  
+                  {selectedQuestions.length > 0 ? (
+                    <div style={{
+                      maxHeight: '300px',
+                      overflowY: 'auto',
+                      border: `1px solid ${theme === 'dark' ? '#4a5568' : '#e2e8f0'}`,
+                      borderRadius: '4px'
+                    }}>
+                      <table className="table" style={{
+                        color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                        backgroundColor: theme === 'dark' ? '#1a202c' : '#ffffff',
+                      }}>
+                        <thead style={{
+                          position: 'sticky',
+                          top: 0,
+                          backgroundColor: theme === 'dark' ? '#2d3748' : '#f7fafc',
+                          zIndex: 10
+                        }}>
+                          <tr>
+                            <th style={{width: '50px'}}>#</th>
+                            <th style={{width: '50px'}}>ID</th>
+                            <th>Nội dung</th>
+                            <th style={{width: '100px'}}>Độ khó</th>
+                            <th style={{width: '80px'}}>Điểm</th>
+                            <th style={{width: '120px'}}>Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedQuestions.map((question, index) => (
+                            <tr key={question.id}>
+                              <td>{index + 1}</td>
+                              <td>{question.id}</td>
+                              <td>
+                                <div style={{
+                                  maxHeight: '80px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {question.content}
+                                </div>
+                              </td>
+                              <td>
+                                {question.difficulty === 'easy' ? 'Dễ' : 
+                                 question.difficulty === 'medium' ? 'Trung bình' : 
+                                 question.difficulty === 'hard' ? 'Khó' : question.difficulty}
+                              </td>
+                              <td>
+                                <Input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  value={question.score || 1}
+                                  style={{width: '60px', padding: '2px 5px'}}
+                                  onChange={(e) => {
+                                    const newScore = parseFloat(e.target.value);
+                                    if (!isNaN(newScore)) {
+                                      setSelectedQuestions(prev => 
+                                        prev.map((q, i) => 
+                                          i === index ? {...q, score: newScore} : q
+                                        )
+                                      );
+                                    }
+                                  }}
+                                />
+                              </td>
+                              <td>
+                                <div className="d-flex gap-1">
+                                  {index > 0 && (
+                                    <button
+                                      className="btn btn-sm btn-outline-secondary"
+                                      onClick={() => {
+                                        setSelectedQuestions(prev => {
+                                          const newQuestions = [...prev];
+                                          const temp = newQuestions[index];
+                                          newQuestions[index] = newQuestions[index - 1];
+                                          newQuestions[index - 1] = temp;
+                                          return newQuestions;
+                                        });
+                                      }}
+                                    >
+                                      <i className="fa fa-arrow-up"></i>
+                                    </button>
+                                  )}
+                                  {index < selectedQuestions.length - 1 && (
+                                    <button
+                                      className="btn btn-sm btn-outline-secondary"
+                                      onClick={() => {
+                                        setSelectedQuestions(prev => {
+                                          const newQuestions = [...prev];
+                                          const temp = newQuestions[index];
+                                          newQuestions[index] = newQuestions[index + 1];
+                                          newQuestions[index + 1] = temp;
+                                          return newQuestions;
+                                        });
+                                      }}
+                                    >
+                                      <i className="fa fa-arrow-down"></i>
+                                    </button>
+                                  )}
+                                  <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => {
+                                      setSelectedQuestions(prev => 
+                                        prev.filter((_, i) => i !== index)
+                                      );
+                                    }}
+                                  >
+                                    <i className="fa fa-trash"></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="alert alert-warning">
+                      Chưa có câu hỏi nào được chọn. Vui lòng thêm ít nhất một câu hỏi.
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="alert alert-info">
+                Vui lòng chọn môn học để xem danh sách câu hỏi.
+              </div>
+            )}
+            
+            {errors.questions && <ErrorMessage>{errors.questions}</ErrorMessage>}
+          </FormGroup>
+          
+          <FormGroup>
+            <CheckboxContainer>
+              <Checkbox
+                type="checkbox"
+                checked={isDraft}
+                onChange={() => setIsDraft(!isDraft)}
+              />
+              <CheckboxLabel theme={theme}>
+                Tạo đề thi nháp (có thể thêm câu hỏi sau)
               </CheckboxLabel>
             </CheckboxContainer>
           </FormGroup>

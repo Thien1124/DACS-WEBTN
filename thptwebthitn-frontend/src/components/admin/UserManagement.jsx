@@ -123,6 +123,7 @@ const TableBody = styled.tbody`
   }
 `;
 
+// Update the Badge component to handle null/undefined roles
 const Badge = styled.span`
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
@@ -130,7 +131,8 @@ const Badge = styled.span`
   font-weight: 600;
   
   ${props => {
-    switch(props.role?.toLowerCase()) {
+    const role = (props.role || 'student').toLowerCase();
+    switch(role) {
       case 'admin':
         return `
           background-color: #fed7d7;
@@ -142,14 +144,10 @@ const Badge = styled.span`
           color: #22543d;
         `;
       case 'student':
+      default:
         return `
           background-color: #e9d8fd;
           color: #553c9a;
-        `;
-      default:
-        return `
-          background-color: #e2e8f0;
-          color: #2d3748;
         `;
     }
   }}
@@ -447,143 +445,172 @@ const UserManagement = () => {
     fetchUsers();
   }, [currentPage, pageSize, roleFilter]);
   
-  // Hàm fetch API danh sách người dùng
-  const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      console.log("Fetching users...");
-      
-      // Log token để debug
-      const authToken = localStorage.getItem('auth_token');
-      console.log('Auth token exists:', !!authToken);
-      if (authToken) {
-        console.log('Token last 5 chars:', authToken.slice(-5));
-      }
-      
-      // Xây dựng params
-      const params = {
-        page: currentPage,
-        pageSize: pageSize
-      };
-      
-      // Thêm role vào params nếu có
-      if (roleFilter) {
-        params.role = roleFilter;
-      }
-      
-      // Debug trực tiếp endpoint để xem response
-      try {
-        const directResponse = await fetch(`http://localhost:5006/api/User/list?page=${currentPage}&pageSize=${pageSize}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('Direct API call status:', directResponse.status);
-        if (directResponse.ok) {
-          const directData = await directResponse.json();
-          console.log('Direct API response:', directData);
-        }
-      } catch (directErr) {
-        console.error('Direct API call error:', directErr);
-      }
-      
-      // Gọi API qua service
-      console.log('Calling getUsers service...');
-      const result = await getUsers(params);
-      console.log('getUsers result:', result);
-      
-      // Xử lý kết quả
-      if (result) {
-        // Kiểm tra có property items và đó là mảng
-        if (result.items && Array.isArray(result.items)) {
-          setUsers(result.items);
-          setTotalPages(result.totalPages || 1);
-          setTotalUsers(result.totalItems || result.items.length);
-          calculateUserStats(result.items);
-          console.log(`Loaded ${result.items.length} users`);
-        } 
-        // Nếu result là mảng
-        else if (Array.isArray(result)) {
-          setUsers(result);
-          setTotalPages(1);
-          setTotalUsers(result.length);
-          calculateUserStats(result);
-          console.log(`Loaded ${result.length} users (array format)`);
-        }
-        // Trường hợp result là object khác
-        else {
-          console.warn('Unexpected result format:', result);
-          
-          // Thử tạo mảng từ object nếu có thể
-          const userArray = Object.values(result).filter(item => 
-            item && typeof item === 'object' && item.username
-          );
-          
-          if (userArray.length > 0) {
-            setUsers(userArray);
-            setTotalPages(1);
-            setTotalUsers(userArray.length);
-            calculateUserStats(userArray);
-            console.log(`Created user array from object with ${userArray.length} items`);
-          } else {
-            setError("Không nhận được dữ liệu người dùng từ API");
-            setUsers([]);
-          }
-        }
-      } else {
-        setError("API không trả về dữ liệu");
-        setUsers([]);
-      }
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      
-      // Phân tích chi tiết lỗi
-      if (err.response) {
-        // Server trả về response với status code nằm ngoài phạm vi 2xx
-        console.error('Error response data:', err.response.data);
-        console.error('Error response status:', err.response.status);
-        console.error('Error response headers:', err.response.headers);
-        
-        if (err.response.status === 401) {
-          setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
-        } else if (err.response.status === 403) {
-          setError("Bạn không có quyền truy cập vào tài nguyên này");
-        } else if (err.response.status === 404) {
-          setError("API endpoint không tồn tại");
-        } else {
-          setError(`Lỗi máy chủ: ${err.response.status} - ${err.response.data?.message || err.message}`);
-        }
-      } else if (err.request) {
-        // Request đã được gửi nhưng không nhận được response
-        console.error('Error request:', err.request);
-        setError("Không nhận được phản hồi từ máy chủ");
-      } else {
-        // Có lỗi khi thiết lập request
-        console.error('Error message:', err.message);
-        setError(`Lỗi: ${err.message}`);
-      }
-      
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Add this helper function above fetchUsers
+const addDefaultRoles = (users) => {
+  return users.map(user => ({
+    ...user,
+    role: user.role || inferRoleFromUsername(user.username)
+  }));
+};
+
+// Add a function to infer roles from usernames if missing
+const inferRoleFromUsername = (username) => {
+  if (!username) return 'Student';
   
-  // Tính toán thống kê người dùng
-  const calculateUserStats = useCallback((userList) => {
-    // Nếu không có dữ liệu thống kê phía server, tính toán thủ công
-    const stats = {
-      totalUsers: userList.length,
-      adminCount: userList.filter(user => user.role === 'Admin').length,
-      teacherCount: userList.filter(user => user.role === 'Teacher').length,
-      studentCount: userList.filter(user => user.role === 'Student').length
+  const lowerUsername = username.toLowerCase();
+  if (lowerUsername.includes('admin')) return 'Admin';
+  if (lowerUsername.includes('teacher')) return 'Teacher';
+  return 'Student';
+};
+
+  // Hàm fetch API danh sách người dùng
+const fetchUsers = async () => {
+  setLoading(true);
+  setError(null);
+  
+  try {
+    console.log("Fetching users...");
+    
+    // Log token để debug
+    const authToken = localStorage.getItem('auth_token');
+    console.log('Auth token exists:', !!authToken);
+    if (authToken) {
+      console.log('Token last 5 chars:', authToken.slice(-5));
+    }
+    
+    // Xây dựng params
+    const params = {
+      page: currentPage,
+      pageSize: pageSize
     };
-    setUserStats(stats);
-  }, []);
+    
+    // Thêm role vào params nếu có
+    if (roleFilter) {
+      params.role = roleFilter;
+    }
+    
+    // Debug trực tiếp endpoint để xem response
+    try {
+      const directResponse = await fetch(`http://localhost:5006/api/User/list?page=${currentPage}&pageSize=${pageSize}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Direct API call status:', directResponse.status);
+      if (directResponse.ok) {
+        const directData = await directResponse.json();
+        console.log('Direct API response:', directData);
+      }
+    } catch (directErr) {
+      console.error('Direct API call error:', directErr);
+    }
+    
+    // Gọi API qua service
+    console.log('Calling getUsers service...');
+    const result = await getUsers(params);
+    console.log('getUsers result:', result);
+    
+    // Process the result with role handling
+    if (result) {
+      let processedUsers = [];
+      
+      // Handle various response formats
+      if (result.items && Array.isArray(result.items)) {
+        processedUsers = addDefaultRoles(result.items);
+        setUsers(processedUsers);
+        setTotalPages(result.totalPages || 1);
+        setTotalUsers(result.totalItems || result.items.length);
+      } 
+      else if (Array.isArray(result)) {
+        processedUsers = addDefaultRoles(result);
+        setUsers(processedUsers);
+        setTotalPages(1);
+        setTotalUsers(result.length);
+      }
+      else if (result.data && Array.isArray(result.data)) {
+        processedUsers = addDefaultRoles(result.data);
+        setUsers(processedUsers);
+        setTotalPages(result.totalPages || 1);
+        setTotalUsers(result.totalCount || result.data.length);
+      }
+      else {
+        // Try to extract users from other formats
+        const userArray = Object.values(result).filter(item => 
+          item && typeof item === 'object' && item.username
+        );
+        
+        if (userArray.length > 0) {
+          processedUsers = addDefaultRoles(userArray);
+          setUsers(processedUsers);
+          setTotalPages(1);
+          setTotalUsers(userArray.length);
+        } else {
+          setError("Không nhận được dữ liệu người dùng từ API");
+          setUsers([]);
+        }
+      }
+      
+      calculateUserStats(processedUsers);
+    } else {
+      setError("API không trả về dữ liệu");
+      setUsers([]);
+    }
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    
+    // Phân tích chi tiết lỗi
+    if (err.response) {
+      // Server trả về response với status code nằm ngoài phạm vi 2xx
+      console.error('Error response data:', err.response.data);
+      console.error('Error response status:', err.response.status);
+      console.error('Error response headers:', err.response.headers);
+      
+      if (err.response.status === 401) {
+        setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+      } else if (err.response.status === 403) {
+        setError("Bạn không có quyền truy cập vào tài nguyên này");
+      } else if (err.response.status === 404) {
+        setError("API endpoint không tồn tại");
+      } else {
+        setError(`Lỗi máy chủ: ${err.response.status} - ${err.response.data?.message || err.message}`);
+      }
+    } else if (err.request) {
+      // Request đã được gửi nhưng không nhận được response
+      console.error('Error request:', err.request);
+      setError("Không nhận được phản hồi từ máy chủ");
+    } else {
+      // Có lỗi khi thiết lập request
+      console.error('Error message:', err.message);
+      setError(`Lỗi: ${err.message}`);
+    }
+    
+    setUsers([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Tính toán thống kê người dùng
+const calculateUserStats = useCallback((userList) => {
+  const stats = {
+    totalUsers: userList.length,
+    adminCount: userList.filter(user => {
+      const role = (user.role || '').toLowerCase();
+      return role === 'admin';
+    }).length,
+    teacherCount: userList.filter(user => {
+      const role = (user.role || '').toLowerCase();
+      return role === 'teacher';
+    }).length,
+    studentCount: userList.filter(user => {
+      const role = (user.role || '').toLowerCase();
+      return role === 'student' || !role;
+    }).length
+  };
+  setUserStats(stats);
+}, []);
   
   // Hàm xử lý tìm kiếm
   const handleSearch = (e) => {
@@ -604,11 +631,12 @@ const UserManagement = () => {
   };
   
   // Hàm mở modal phân quyền
-  const handleOpenRoleModal = (user) => {
-    setSelectedUser(user);
-    setSelectedRole(user.role);
-    setShowRoleModal(true);
-  };
+const handleOpenRoleModal = (user) => {
+  setSelectedUser(user);
+  // Use the role if available or infer it
+  setSelectedRole(user.role || inferRoleFromUsername(user.username));
+  setShowRoleModal(true);
+};
   
   // Hàm đóng modal phân quyền
   const handleCloseRoleModal = () => {
@@ -775,7 +803,9 @@ const UserManagement = () => {
                       <td>{user.fullName}</td>
                       <td>{user.email}</td>
                       <td>
-                        <Badge role={user.role}>{user.role}</Badge>
+                        <Badge role={user.role || inferRoleFromUsername(user.username)}>
+                          {user.role || inferRoleFromUsername(user.username)}
+                        </Badge>
                       </td>
                       <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                       <td>

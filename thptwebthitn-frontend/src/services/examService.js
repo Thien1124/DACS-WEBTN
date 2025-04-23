@@ -133,102 +133,83 @@ export const createExam = async (examData) => {
  * @param {number} pageSize - Items per page (default: 10)
  * @returns {Promise} - Promise resolving to exams data
  */
-export const getExamsBySubject = async (subjectId, page = 1, pageSize = 10) => {
+export const getExamsBySubject = async (params) => {
   try {
-    // Đảm bảo tham số phân trang luôn hợp lệ
-    const validPage = Math.max(1, page);
-    const validPageSize = Math.max(10, pageSize);
+    const { 
+      subjectId, 
+      examTypeId = null,
+      page = 1, 
+      pageSize = 10, 
+      activeOnly = true,
+      isOpen = true,
+      searchTerm = null
+    } = params;
+
+    // Build query string with all available parameters
+    let queryParams = new URLSearchParams();
+    if (examTypeId !== null) queryParams.append('examTypeId', examTypeId);
+    queryParams.append('page', page);
+    queryParams.append('pageSize', pageSize);
+    queryParams.append('activeOnly', activeOnly);
+    if (isOpen !== null) queryParams.append('isOpen', isOpen);
+    if (searchTerm) queryParams.append('searchTerm', searchTerm);
+
+    const url = `/api/Exam/BySubject/${subjectId}?${queryParams.toString()}`;
+    console.log('Calling API:', url);
     
-    // SỬA: Sửa URL để phù hợp với API endpoint
-    const url = `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Exam/BySubject/${subjectId}?page=${validPage}&pageSize=${validPageSize}&isPublic=true&isActive=true`;
-    
-    console.log('Gọi API với URL:', url);
-    
-    // Thử không gửi token xác thực trước
-    try {
-      const response = await apiClient.getPublic(url);
-      console.log('API response:', response.data);
-      return response.data;
-    } catch (publicError) {
-      // Nếu gọi không xác thực thất bại, thử gọi với xác thực
-      console.warn('Gọi API công khai thất bại, thử gọi với xác thực:', publicError);
-      const response = await apiClient.get(url);
-      return response.data;
-    }
+    const response = await apiClient.get(url);
+    return response.data;
   } catch (error) {
     console.error('Error fetching exams by subject:', error);
     
-    // Thử với URL thay thế
-    try {
-      console.warn('Thử với URL API thay thế');
-      const alternativeUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Exam?subjectId=${subjectId}&page=${page}&pageSize=${pageSize}&isPublic=true&isActive=true`;
-      const response = await apiClient.getPublic(alternativeUrl);
-      return response.data;
-    } catch (altError) {
-      console.error('Alternative URL also failed:', altError);
+    if (error.response?.status === 404) {
+      throw new Error('Không tìm thấy môn học với mã số này');
     }
     
-    // Sử dụng mock data nếu tất cả các cách đều thất bại
-    return {
-      data: mockExamsBySubject(subjectId),
-      totalCount: mockExamsBySubject(subjectId).length,
-      page: page,
-      pageSize: pageSize,
-      totalPages: 1,
-      _isMockData: true
-    };
+    const errorMessage = 
+      error.response?.data?.detail || 
+      error.response?.data?.title ||
+      error.response?.data ||
+      error.message || 
+      'Không thể tải danh sách đề thi';
+      
+    throw new Error(errorMessage);
   }
 };
 
-// Hàm tạo mock data
-const mockExamsBySubject = (subjectId) => {
-  const subjectNames = {
-    '1': 'Toán học',
-    '2': 'Vật lý',
-    '3': 'Hóa học',
-    '4': 'Sinh học',
-    '5': 'Ngữ văn',
-    '6': 'Lịch sử',
-    '7': 'Địa lý',
-    '8': 'Tiếng Anh'
-  };
-  
-  const subject = subjectNames[subjectId] || 'Không xác định';
-  
-  return [
-    {
-      id: parseInt(subjectId) * 100 + 1,
-      title: `Kiểm tra 15 phút ${subject}`,
-      description: `Bài kiểm tra nhanh về ${subject}.`,
-      duration: 15,
-      subjectId: parseInt(subjectId),
-      subjectName: subject,
-      isActive: true,
-      isPublic: true
-    },
-    {
-      id: parseInt(subjectId) * 100 + 2,
-      title: `Kiểm tra 1 tiết ${subject}`,
-      description: `Bài kiểm tra 1 tiết về ${subject}.`,
-      duration: 45,
-      subjectId: parseInt(subjectId),
-      subjectName: subject,
-      isActive: true,
-      isPublic: true
-    },
-    {
-      id: parseInt(subjectId) * 100 + 3,
-      title: `Thi cuối kỳ ${subject}`,
-      description: `Bài thi cuối học kỳ môn ${subject}.`,
-      duration: 90,
-      subjectId: parseInt(subjectId),
-      subjectName: subject,
-      isActive: true,
-      isPublic: true
-    }
-  ];
+export const getExamWithQuestions = async (examId) => {
+  try {
+    console.log(`Fetching exam ${examId} with questions`);
+    const response = await apiClient.get(`/api/Exam/WithQuestions/${examId}`);
+    console.log('API response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch exam with questions: ${error}`);
+    throw error;
+  }
 };
 
+
+export const getExamDetails = async (examId) => {
+  try {
+    console.log(`Fetching exam ${examId} details from API`);
+    // Try both endpoints because you might have different API paths
+    let response;
+    
+    try {
+      response = await apiClient.get(`/api/Exam/${examId}`);
+    } catch (e) {
+      console.log('First endpoint failed, trying alternative');
+      response = await apiClient.get(`/api/Exams/${examId}`);
+    }
+    
+    console.log('API response for exam details:', response);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to get exam ${examId} details:`, error);
+    throw error;
+  }
+};
 /**
  * Get exams for students by subject ID
  * @param {string} subjectId - Subject ID
@@ -323,15 +304,7 @@ export const deleteExam = async (id) => {
  * @param {string} id - Exam ID
  * @returns {Promise} - Promise resolving to exam with questions
  */
-export const getExamWithQuestions = async (id) => {
-  try {
-    const response = await apiClient.get(`/api/Exam/${id}/WithQuestions`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching exam ${id} with questions:`, error);
-    throw error;
-  }
-};
+
 
 /**
  * Clone an existing exam

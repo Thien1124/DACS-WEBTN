@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toggleTheme, toggleMenu } from "../../redux/uiSlice";
 import { logout } from "../../redux/authSlice";
 import styled from "styled-components";
@@ -78,6 +78,7 @@ const NavItems = styled.ul`
 
 const NavItem = styled.li`
   margin: 0 1rem;
+  position: relative;
 
   @media (max-width: 768px) {
     margin: 0.5rem 0;
@@ -88,6 +89,24 @@ const NavItem = styled.li`
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
+    
+    /* Add active state styling */
+    &.active {
+      color: #4285f4;
+      font-weight: 600;
+      
+      /* Add underline indicator */
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #4285f4;
+        border-radius: 2px;
+      }
+    }
 
     &:hover {
       color: #4285f4;
@@ -294,6 +313,8 @@ const HeaderSpacer = styled.div`
 function Header() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
   const { theme, isMenuVisible } = useSelector((state) => state.ui);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -394,6 +415,16 @@ function Header() {
     navigate("/dashboard");
   };
 
+  // Add this inside your Header function
+  const isActive = (path) => {
+    if (path === '/' && currentPath === '/') {
+      return true;
+    }
+    // For other pages, check if the currentPath starts with the path
+    // (allows for active states on nested routes)
+    return path !== '/' && currentPath.startsWith(path);
+  };
+
   return (
     <>
       <HeaderContainer theme={theme}>
@@ -412,21 +443,20 @@ function Header() {
           <Nav $isMenuVisible={isMenuVisible} theme={theme}>
             <NavItems>
               <NavItem theme={theme}>
-                <Link to="/">Trang chủ</Link>
+                <Link to="/" className={isActive('/') ? 'active' : ''}>Trang chủ</Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to="/subjects">Môn học</Link>
+                <Link to="/subjects" className={isActive('/subjects') ? 'active' : ''}>Môn học</Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to={examsPath}>Bài thi</Link>
+                <Link to={examsPath} className={isActive('/exams') || isActive('/admin/exams') || isActive('/teacher/exams') ? 'active' : ''}>Bài thi</Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to="/about">Giới thiệu</Link>
+                <Link to="/about" className={isActive('/about') ? 'active' : ''}>Giới thiệu</Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to="/contact">Liên hệ</Link>
+                <Link to="/contact" className={isActive('/contact') ? 'active' : ''}>Liên hệ</Link>
               </NavItem>
-              
             </NavItems>
           </Nav>
 

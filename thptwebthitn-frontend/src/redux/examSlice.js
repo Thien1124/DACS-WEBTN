@@ -26,17 +26,12 @@ export const fetchExams = createAsyncThunk(
 // Thêm thunk action cho việc lấy đề thi theo môn học với tên endpoint chính xác
 
 export const fetchExamsBySubject = createAsyncThunk(
-  'exams/fetchExamsBySubject',
-  async ({ subjectId, page = 1, pageSize = 10 }, { rejectWithValue }) => {
+  'exams/fetchBySubject',
+  async (params, { rejectWithValue }) => {
     try {
-      // Lưu ý: Sử dụng chữ "B" viết hoa cho "BySubject" theo API endpoint
-      const response = await examService.getExamsBySubject(subjectId, page, pageSize);
-      return response;
+      return await examService.getExamsBySubject(params);
     } catch (error) {
-      console.error('Error fetching exams by subject:', error);
-      return rejectWithValue(
-        error.message || 'Không thể tải danh sách đề thi. Vui lòng thử lại sau.'
-      );
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -54,19 +49,18 @@ export const fetchExamsForStudents = createAsyncThunk(
 );
 
 
-// Kiểm tra hàm fetchExamDetails có lấy đúng endpoint không
+// Add this to your fetchExamDetails action in examSlice.js
 export const fetchExamDetails = createAsyncThunk(
-  'exams/fetchExamDetails',
+  'exams/fetchById',
   async (examId, { rejectWithValue }) => {
     try {
-      console.log(`Đang gọi API lấy chi tiết đề thi ID: ${examId}`);
-      // Đảm bảo endpoint lấy thông tin đề thi bao gồm cả câu hỏi
-      const response = await examService.getExamWithQuestions(examId);
-      console.log('API response:', response);
-      return response;
+      console.log(`Fetching exam details for ID: ${examId}`);
+      const response = await apiClient.get(`/api/Exam/${examId}`);
+      console.log('Raw API response:', response);
+      return response.data;
     } catch (error) {
       console.error('Error fetching exam details:', error);
-      return rejectWithValue(error.message || 'Không thể tải thông tin đề thi');
+      return rejectWithValue(error.response?.data?.message || 'Could not fetch exam details');
     }
   }
 );
@@ -216,6 +210,21 @@ export const approveExam = createAsyncThunk(
   }
 );
 
+// Thêm action updateExam
+
+export const updateExam = createAsyncThunk(
+  'exams/updateExam',
+  async (examData, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.put(`/api/Exam/${examData.id}`, examData);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Không thể cập nhật đề thi';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // Thêm vào phần createSlice để xử lý trạng thái tốt hơn
 const initialState = {
   list: [], // Đảm bảo list luôn là một mảng
@@ -302,13 +311,25 @@ const examSlice = createSlice({
         
         console.log('API response for exams by subject:', action.payload);
         
-        if (action.payload?.data) {
+        // Handle different response structures
+        if (action.payload?.items) {
+          // If API returns paginated data
+          state.list = action.payload.items;
+          state.totalItems = action.payload.totalCount || 0;
+          state.currentPage = action.payload.currentPage || 1;
+          state.totalPages = action.payload.totalPages || 1;
+        } else if (action.payload?.data) {
+          // Structure with data property
           state.list = action.payload.data;
+          state.totalItems = action.payload.totalCount || action.payload.data.length;
         } else if (Array.isArray(action.payload)) {
+          // If API returns direct array
           state.list = action.payload;
+          state.totalItems = action.payload.length;
         } else {
           console.warn('Unknown API response structure', action.payload);
           state.list = [];
+          state.totalItems = 0;
         }
       })
       .addCase(fetchExamsBySubject.rejected, (state, action) => {
@@ -336,7 +357,9 @@ const examSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchExamDetails.fulfilled, (state, action) => {
+        console.log('Setting currentExam with data:', action.payload);
         state.loading = false;
+        state.error = null;
         state.currentExam = action.payload;
       })
       .addCase(fetchExamDetails.rejected, (state, action) => {
@@ -466,6 +489,28 @@ const examSlice = createSlice({
         if (index !== -1) {
           state.list[index] = updatedExam;
         }
+      })
+      
+      // Trong reducers, thêm case xử lý updateExam
+      .addCase(updateExam.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateExam.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật đề thi trong danh sách
+        const index = state.list.findIndex(exam => exam.id === action.payload.id);
+        if (index !== -1) {
+          state.list[index] = action.payload;
+        }
+        // Cập nhật currentExam nếu đang xem
+        if (state.currentExam && state.currentExam.id === action.payload.id) {
+          state.currentExam = action.payload;
+        }
+      })
+      .addCase(updateExam.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   }
 });

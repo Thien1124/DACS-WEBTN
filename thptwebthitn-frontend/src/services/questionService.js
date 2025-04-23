@@ -8,7 +8,15 @@ axios.interceptors.request.use(config => {
   }
   return config;
 }, error => Promise.reject(error));
-
+export const getExamQuestions = async (examId) => {
+  try {
+    const response = await apiClient.get(`/api/Exam/WithQuestions/${examId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching questions for exam ${examId}:`, error);
+    throw error;
+  }
+};
 /**
  * Get questions with pagination and filters
  * @param {Object} params - Query parameters
@@ -69,6 +77,29 @@ export const updateQuestion = async (id, questionData) => {
     throw error;
   }
 };
+
+export const getQuestionsBySubject = async (subjectId, options = {}) => {
+  try {
+    const { page = 1, pageSize = 100, searchTerm, difficulty, topicId } = options;
+    
+    let params = {
+      page,
+      pageSize,
+      subjectId
+    };
+    
+    if (searchTerm) params.searchTerm = searchTerm;
+    if (difficulty) params.difficulty = difficulty;
+    if (topicId) params.topicId = topicId;
+    
+    const response = await apiClient.get('/api/Question', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching questions by subject:', error);
+    throw error;
+  }
+};
+
 
 /**
  * Delete a question

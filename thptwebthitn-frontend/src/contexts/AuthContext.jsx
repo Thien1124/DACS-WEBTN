@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { setAuthToken, getAuthToken } from '../utils/auth';
+import { setAuthToken, getToken } from '../utils/auth';
 
 const AuthContext = createContext(null);
 
@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getAuthToken();
+    const token = getToken();
     if (token) {
       // Verify token and get user info
       checkAuth();

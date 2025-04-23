@@ -1,22 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import apiClient from '../../services/apiClient';
 import EditQuestion from '../../components/admin/EditQuestion';
-import { toast } from 'react-toastify'; // Thay thế import message từ antd
-
+import { toast } from 'react-toastify';
+import { getAllSubjectsNoPaging } from '../../services/subjectService';
 
 const CreateQuestion = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
   
+  // Thêm state để quản lý subjects
+  const [subjects, setSubjects] = useState([]);
+  const [isLoadingSubjects, setIsLoadingSubjects] = useState(true);
+  const [subjectsError, setSubjectsError] = useState(null);
+  
+  // Tải danh sách môn học khi component mount
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        setIsLoadingSubjects(true);
+        setSubjectsError(null);
+        console.log('Đang tải danh sách môn học...');
+        
+        // Thêm timeout để tránh các vấn đề race condition
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const data = await getAllSubjectsNoPaging();
+        console.log('Đã tải môn học:', data);
+        
+        if (Array.isArray(data) && data.length > 0) {
+          setSubjects(data);
+          console.log('Đã cập nhật state subjects:', data.length);
+        } else {
+          console.error('Định dạng dữ liệu môn học không hợp lệ:', data);
+          setSubjectsError('Dữ liệu môn học không đúng định dạng hoặc trống');
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách môn học:', error);
+        setSubjectsError(error.message || 'Không thể tải danh sách môn học');
+      } finally {
+        setIsLoadingSubjects(false);
+      }
+    };
+    
+    fetchSubjects();
+  }, []);
+  
+  // Thêm hàm này để thử lại khi cần
+  const retryLoadSubjects = () => {
+    setIsLoadingSubjects(true);
+    setSubjectsError(null);
+    
+    getAllSubjectsNoPaging()
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSubjects(data);
+          console.log('Tải lại môn học thành công:', data.length);
+        } else {
+          setSubjectsError('Dữ liệu môn học trống hoặc không đúng định dạng');
+        }
+      })
+      .catch(error => {
+        console.error('Lỗi khi tải lại môn học:', error);
+        setSubjectsError(error.message || 'Không thể tải danh sách môn học');
+      })
+      .finally(() => {
+        setIsLoadingSubjects(false);
+      });
+  };
+
   // Khởi tạo câu hỏi mới với cấu trúc phù hợp với API
   const initialQuestionData = {
     content: '',
     explanation: '',
     subjectId: '',
     chapterId: '',
-    questionLevelId: '',
+    questionLevelId: 2, // Mặc định mức độ trung bình
     questionType: 1, // Mặc định là câu hỏi một đáp án
     tags: '',
     suggestedTime: 60,
@@ -28,7 +88,7 @@ const CreateQuestion = () => {
       { 
         content: '', 
         isCorrect: true, 
-        orderIndex: 0,
+        orderIndex: 1,
         label: 'A',
         explanation: '',
         matchingValue: '',
@@ -39,7 +99,7 @@ const CreateQuestion = () => {
       { 
         content: '', 
         isCorrect: false, 
-        orderIndex: 1,
+        orderIndex: 2,
         label: 'B',
         explanation: '',
         matchingValue: '',
@@ -50,7 +110,7 @@ const CreateQuestion = () => {
       { 
         content: '', 
         isCorrect: false, 
-        orderIndex: 2,
+        orderIndex: 3,
         label: 'C',
         explanation: '',
         matchingValue: '',
@@ -61,7 +121,7 @@ const CreateQuestion = () => {
       { 
         content: '', 
         isCorrect: false, 
-        orderIndex: 3,
+        orderIndex: 4,
         label: 'D',
         explanation: '',
         matchingValue: '',
@@ -78,8 +138,10 @@ const CreateQuestion = () => {
       // Chuẩn bị dữ liệu để gửi lên API
       const questionData = {
         ...formData,
+        subjectId: Number(formData.subjectId), // Đảm bảo subjectId là số
+        questionLevelId: Number(formData.questionLevelId || 2), // Đảm bảo questionLevelId là số
         // Thêm examId nếu đang thêm câu hỏi vào một đề thi cụ thể
-        ...(examId && { examId })
+        ...(examId && { examId: Number(examId) })
       };
       
       // Xử lý options
@@ -90,8 +152,11 @@ const CreateQuestion = () => {
         orderIndex: index + 1 // Đảm bảo orderIndex từ 1
       }));
       
+      console.log('Dữ liệu câu hỏi gửi đi:', questionData);
+      
       // Gọi API tạo câu hỏi mới
-      await apiClient.createQuestion(questionData);
+      const response = await apiClient.post('/api/Question', questionData);
+      console.log('Phản hồi từ API:', response);
       
       toast.success('Tạo câu hỏi thành công!');
       
@@ -103,7 +168,8 @@ const CreateQuestion = () => {
       }
     } catch (error) {
       console.error('Lỗi khi tạo câu hỏi:', error);
-      toast.error('Không thể tạo câu hỏi. Vui lòng thử lại sau.');
+      const errorMessage = error.response?.data?.detail || 'Không thể tạo câu hỏi. Vui lòng thử lại sau.';
+      toast.error(errorMessage);
     }
   };
 
@@ -123,11 +189,41 @@ const CreateQuestion = () => {
         {examId && <p>Thêm vào đề thi ID: {examId}</p>}
       </PageHeader>
 
-      <EditQuestion
-        questionData={initialQuestionData}
-        onSave={handleSaveQuestion}
-        onCancel={handleCancel}
-      />
+      {isLoadingSubjects ? (
+        <LoadingContainer>
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Đang tải...</span>
+          </div>
+          <p>Đang tải danh sách môn học...</p>
+        </LoadingContainer>
+      ) : subjectsError ? (
+        <ErrorContainer>
+          <div className="alert alert-danger">
+            <strong>Lỗi:</strong> {subjectsError}
+            <div className="mt-2">
+              <button 
+                className="btn btn-sm btn-primary" 
+                onClick={retryLoadSubjects}
+              >
+                Thử tải lại dữ liệu
+              </button>
+              <button 
+                className="btn btn-sm btn-outline-secondary ms-2" 
+                onClick={() => window.location.reload()}
+              >
+                Tải lại trang
+              </button>
+            </div>
+          </div>
+        </ErrorContainer>
+      ) : (
+        <EditQuestion
+          questionData={initialQuestionData}
+          onSave={handleSaveQuestion}
+          onCancel={handleCancel}
+          subjects={subjects} // Truyền danh sách môn học vào EditQuestion
+        />
+      )}
     </PageContainer>
   );
 };
@@ -150,6 +246,24 @@ const PageHeader = styled.div`
   p {
     color: #718096;
   }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  
+  p {
+    margin-top: 1rem;
+    color: #4a5568;
+  }
+`;
+
+const ErrorContainer = styled.div`
+  max-width: 600px;
+  margin: 2rem auto;
 `;
 
 export default CreateQuestion;

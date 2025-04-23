@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
+import SubjectTopStudentsPage from './pages/leaderboard/SubjectTopStudentsPage';
 
 
 //Teacher
@@ -49,6 +50,8 @@ import EditQuestion from './components/admin/EditQuestion';
 import UserManagement from './components/admin/UserManagement';
 import StudentExamList from './components/exams/StudentExamList';
 import ExamsBySubject from './components/exams/ExamsBySubject';
+import ExamDetails from './components/admin/ExamDetails';
+
 import ExamQuestionsList from './components/exams/ExamQuestionsList';
 // Auth Components
 import LoginForm from './components/Auth/LoginForm';
@@ -357,7 +360,12 @@ function App() {
                   <ChapterManagement />
                 </AdminRoute>
               } />
-
+              <Route path="/subjects/:subjectId/top-students" element={<SubjectTopStudentsPage />} />
+              <Route path="/admin/exams/:examId/details" element={
+                          <ProtectedRoute requiredRoles={['Admin', 'Teacher']}>
+                            <ExamDetails />
+                          </ProtectedRoute>
+                        } />
               <Route path="/admin/exams/:examId/questions" element={<ExamQuestions />} />
               <Route path="/admin/exams/:examId/questions/create" element={<CreateQuestion />} />
               <Route path="/admin/exams/:examId/questions/:questionId/edit" element={<EditQuestion />} />

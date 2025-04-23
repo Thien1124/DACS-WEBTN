@@ -34,8 +34,8 @@ const processQueue = (error, token = null) => {
 };
  
 const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 10000, // 10 giây timeout để tránh yêu cầu bị treo
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5006',
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
   }

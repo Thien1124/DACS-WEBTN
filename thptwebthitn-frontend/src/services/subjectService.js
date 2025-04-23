@@ -75,31 +75,13 @@ export const queryMultipleEndpoints = async () => {
 // Lấy tất cả môn học không phân trang
 export const getAllSubjectsNoPaging = async () => {
   try {
-    console.log(`[${new Date().toISOString()}] Fetching all subjects without paging`);
-    
-    // Try fetching with 'nopaging' parameter first
-    try {
-      const response = await apiClient.get('/api/Subject');
-      console.log('Subjects response with noPaging:', response.data);
-      return response.data;
-    } catch (innerError) {
-      console.log('Failed with noPaging parameter, trying alternate endpoint');
-      
-      // Fallback to regular endpoint with a large page size
-      const fallbackResponse = await apiClient.get('/api/Subject');
-      console.log('Subjects fallback response:', fallbackResponse.data);
-      
-      // If the response contains items, return those
-      if (fallbackResponse.data && Array.isArray(fallbackResponse.data.items)) {
-        return fallbackResponse.data.items;
-      }
-      
-      // Otherwise return the whole response
-      return fallbackResponse.data;
-    }
+    console.log('Calling getAllSubjectsNoPaging');
+    // Use apiClient instead of axios directly to ensure correct base URL and headers
+    const response = await apiClient.get('/api/Subject/all');
+    console.log('getAllSubjectsNoPaging response:', response);
+    return response.data;
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Error fetching all subjects:`, error);
-    throw error;
+    console.error('Error fetching all subjects:', error);
   }
 };
 
