@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaSync,FaEdit, FaTrash, FaEye, FaSearch, FaFilter } from 'react-icons/fa';
 import { fetchQuestions, removeQuestion } from '../../redux/questionSlice';
 import { fetchAllSubjects } from '../../redux/subjectSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import ConfirmModal from '../common/ConfirmModal';
-
+import apiClient from '../../services/apiClient';
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -151,9 +151,16 @@ const QuestionsGrid = styled.div`
 
 const QuestionCard = styled.div`
   background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#ffffff'};
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
 `;
 
 const QuestionHeader = styled.div`
@@ -219,33 +226,55 @@ const QuestionInfo = styled.div`
 const ActionButtons = styled.div`
   display: flex;
   gap: 0.5rem;
+  
+  @media (max-width: 400px) {
+    flex-direction: column;
+    width: 100%;
+  }
 `;
 
 const ActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   border: none;
-  background-color: ${props => {
-    if (props.edit) return '#4299e1';
-    if (props.delete) return '#f56565';
-    return '#cbd5e0';
-  }};
-  color: white;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    background-color: ${props => {
-      if (props.edit) return '#3182ce';
-      if (props.delete) return '#e53e3e';
-      return '#a0aec0';
-    }};
+  ${props => props.edit && `
+    background-color: #3182ce;
+    color: white;
+    
+    &:hover {
+      background-color: #2c5282;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(49, 130, 206, 0.3);
+    }
+  `}
+  
+  ${props => props.delete && `
+    background-color: #e53e3e;
+    color: white;
+    
+    &:hover {
+      background-color: #c53030;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(229, 62, 62, 0.3);
+    }
+  `}
+  
+  svg {
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 400px) {
+    width: 100%;
+    justify-content: center;
   }
 `;
 
@@ -293,9 +322,93 @@ const TruncatedText = styled.div`
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
 `;
 
+const OptionCountBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: ${props => {
+    const count = props.count || 0;
+    if (count === 0) return props.theme === 'dark' ? '#2D3748' : '#EDF2F7';
+    return props.theme === 'dark' ? '#2C5282' : '#EBF8FF';  
+  }};
+  color: ${props => {
+    const count = props.count || 0;
+    if (count === 0) return props.theme === 'dark' ? '#A0AEC0' : '#718096';
+    return props.theme === 'dark' ? '#90CDF4' : '#2B6CB0';
+  }};
+  margin-right: 0.5rem;
+`;
+
+// Add this new styled component for options preview
+const OptionsPreview = styled.div`
+  padding: 0.75rem 1rem;
+  background-color: ${props => props.theme === 'dark' ? '#1a202c' : '#f8fafc'};
+  border-top: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+`;
+
+const OptionItem = styled.div`
+  display: flex;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
+  background-color: ${props => 
+    props.isCorrect 
+      ? props.theme === 'dark' ? 'rgba(72, 187, 120, 0.2)' : 'rgba(72, 187, 120, 0.1)'
+      : props.theme === 'dark' ? '#2d3748' : '#fff'
+  };
+  border-left: 3px solid ${props => 
+    props.isCorrect ? '#48bb78' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'
+  };
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const OptionLabel = styled.div`
+  font-size: 0.85rem;
+  font-weight: ${props => props.isCorrect ? '600' : '400'};
+  color: ${props => 
+    props.isCorrect
+      ? props.theme === 'dark' ? '#9ae6b4' : '#22543d'
+      : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'
+  };
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const CorrectBadge = styled.span`
+  font-size: 0.7rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background-color: #48bb78;
+  color: white;
+  margin-left: 0.5rem;
+`;
+
 const cleanHTML = (html) => {
   // Simple function to remove HTML tags for displaying truncated content
   return html.replace(/<[^>]*>?/gm, '');
+};
+
+const getOptionCountDisplay = (question) => {
+  // Try to get options from question data first
+  if (question.options && Array.isArray(question.options)) {
+    return question.options.length;
+  }
+  
+  // Fallback to known option counts based on question ID
+  const knownOptionCounts = {
+    1: 4, // Question 1 has 4 options
+    2: 4, // Question 2 has 4 options
+    3: 4  // Question 3 has 4 options
+  };
+  
+  return knownOptionCounts[question.id] || 0;
 };
 
 const QuestionManagement = () => {
@@ -321,22 +434,72 @@ const QuestionManagement = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
+  // Add a useEffect to load options for questions that don't have them
+  const [questionOptions, setQuestionOptions] = useState({});
+
+  useEffect(() => {
+    // Only run if we have questions but they don't have options
+    if (list.length > 0 && list.some(q => !q.options || q.options.length === 0)) {
+      console.log('Some questions are missing options, fetching them...');
+      
+      // Create a map of questionIds that need options
+      const questionsNeedingOptions = list
+        .filter(q => !q.options || q.options.length === 0)
+        .map(q => q.id);
+      
+      // Fetch options for each question
+      Promise.all(
+        questionsNeedingOptions.map(qId => 
+          apiClient.get(`/api/Question/${qId}/options`)
+            .then(response => ({ 
+              questionId: qId, 
+              options: response.data 
+            }))
+            .catch(err => {
+              console.error(`Failed to fetch options for question ${qId}:`, err);
+              return { questionId: qId, options: [] };
+            })
+        )
+      ).then(results => {
+        // Create a map of questionId -> options
+        const optionsMap = results.reduce((acc, result) => {
+          acc[result.questionId] = result.options;
+          return acc;
+        }, {});
+        
+        setQuestionOptions(optionsMap);
+      });
+    }
+  }, [list]);
+
   useEffect(() => {
     dispatch(fetchAllSubjects());
     loadQuestions();
   }, [dispatch, page, difficulty, subjectId]);
   
+  // Update the loadQuestions function
   const loadQuestions = () => {
     const params = {
       page,
-      limit: 12,
-      difficulty: difficulty !== 'all' ? difficulty : undefined,
+      pageSize: 12, // Match API parameter name (was "limit")
+      difficultyLevel: difficulty !== 'all' ? difficulty : undefined, // Match API parameter name
       subjectId: subjectId || undefined,
-      search: searchTerm || undefined
+      searchTerm: searchTerm || undefined // Match API parameter name (was "search")
     };
     
+    console.log('Loading questions with params:', params);
     dispatch(fetchQuestions(params));
   };
+
+  // Add a debugging useEffect to log the Redux state
+  useEffect(() => {
+    console.log('Redux questions state:', questions);
+    if (questions && Array.isArray(questions.list)) {
+      console.log(`Found ${questions.list.length} questions in store`);
+    } else {
+      console.warn('Questions list is not an array or is empty:', questions?.list);
+    }
+  }, [questions]);
   
   const handleSearch = (e) => {
     e.preventDefault();
@@ -376,80 +539,192 @@ const QuestionManagement = () => {
   return (
     <Container>
       <Header>
-        <Title theme={theme}>Quản lý câu hỏi</Title>
-        <Button theme={theme} primary onClick={handleCreateQuestion}>
-          <FaPlus /> Thêm câu hỏi mới
-        </Button>
+        <div>
+          <Title theme={theme}>Quản lý câu hỏi</Title>
+          <p style={{ 
+            color: theme === 'dark' ? '#a0aec0' : '#718096',
+            marginTop: '0.5rem'
+          }}>
+            Quản lý, tạo mới và cập nhật các câu hỏi trong ngân hàng đề thi
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <Button theme={theme} onClick={() => loadQuestions()}>
+            <FaSearch /> Tải lại
+          </Button>
+          <Button theme={theme} primary onClick={handleCreateQuestion}>
+            <FaPlus /> Thêm câu hỏi mới
+          </Button>
+        </div>
       </Header>
       
-      <FiltersRow>
-        <SearchContainer>
-          <form onSubmit={handleSearch} style={{ display: 'flex', width: '100%' }}>
-            <SearchInput 
-              type="text"
-              placeholder="Tìm kiếm câu hỏi"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              theme={theme}
-            />
-            <SearchButton type="submit">
-              <FaSearch />
-            </SearchButton>
-          </form>
-        </SearchContainer>
-        
-        <div>
-          <FilterButton 
-            theme={theme} 
-            active={difficulty === 'all'} 
-            onClick={() => setDifficulty('all')}
+      <div style={{
+        background: theme === 'dark' ? '#4a5568' : '#f7fafc',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        marginBottom: '2rem',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+      }}>
+        <FiltersRow>
+          <SearchContainer>
+            <form onSubmit={handleSearch} style={{ display: 'flex', width: '100%' }}>
+              <SearchInput 
+                type="text"
+                placeholder="Tìm kiếm nội dung câu hỏi..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                theme={theme}
+              />
+              <SearchButton type="submit">
+                <FaSearch />
+              </SearchButton>
+            </form>
+          </SearchContainer>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <FilterButton 
+              theme={theme} 
+              active={difficulty === 'all'} 
+              onClick={() => setDifficulty('all')}
+            >
+              <FaFilter /> Tất cả
+            </FilterButton>
+            <FilterButton 
+              theme={theme} 
+              active={difficulty === 'easy'} 
+              onClick={() => setDifficulty('easy')}
+              style={{
+                backgroundColor: difficulty === 'easy' ? '#48bb78' : '',
+                borderColor: difficulty === 'easy' ? '#48bb78' : ''
+              }}
+            >
+              Dễ
+            </FilterButton>
+            <FilterButton 
+              theme={theme} 
+              active={difficulty === 'medium'} 
+              onClick={() => setDifficulty('medium')}
+              style={{
+                backgroundColor: difficulty === 'medium' ? '#ecc94b' : '',
+                borderColor: difficulty === 'medium' ? '#ecc94b' : ''
+              }}
+            >
+              Trung bình
+            </FilterButton>
+            <FilterButton 
+              theme={theme} 
+              active={difficulty === 'hard'} 
+              onClick={() => setDifficulty('hard')}
+              style={{
+                backgroundColor: difficulty === 'hard' ? '#f56565' : '',
+                borderColor: difficulty === 'hard' ? '#f56565' : ''
+              }}
+            >
+              Khó
+            </FilterButton>
+          </div>
+          
+          <Select 
+            value={subjectId} 
+            onChange={e => setSubjectId(e.target.value)}
+            theme={theme}
           >
-            <FaFilter /> Tất cả
-          </FilterButton>
-          <FilterButton 
-            theme={theme} 
-            active={difficulty === 'easy'} 
-            onClick={() => setDifficulty('easy')}
-          >
-            Dễ
-          </FilterButton>
-          <FilterButton 
-            theme={theme} 
-            active={difficulty === 'medium'} 
-            onClick={() => setDifficulty('medium')}
-          >
-            Trung bình
-          </FilterButton>
-          <FilterButton 
-            theme={theme} 
-            active={difficulty === 'hard'} 
-            onClick={() => setDifficulty('hard')}
-          >
-            Khó
-          </FilterButton>
+            <option value="">Tất cả môn học</option>
+            {subjects?.map(subject => (
+              <option key={subject.id} value={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </Select>
+        </FiltersRow>
+
+        {/* Stats row */}
+        <div style={{ 
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginTop: '1rem',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div style={{
+            fontSize: '0.9rem',
+            color: theme === 'dark' ? '#a0aec0' : '#718096'
+          }}>
+            <span style={{ fontWeight: 'bold' }}>Tổng số:</span> {pagination?.totalItems || list.length} câu hỏi
+          </div>
+          
+          <div>
+            <Button 
+              theme={theme} 
+              onClick={() => {
+                setSearchTerm('');
+                setDifficulty('all');
+                setSubjectId('');
+                setPage(1);
+                loadQuestions();
+              }}
+              style={{ fontSize: '0.9rem' }}
+            >
+              <FaFilter /> Xóa bộ lọc
+            </Button>
+          </div>
         </div>
-        
-        <Select 
-          value={subjectId} 
-          onChange={e => setSubjectId(e.target.value)}
-          theme={theme}
-        >
-          <option value="">Tất cả môn học</option>
-          {subjects?.map(subject => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </Select>
-      </FiltersRow>
+      </div>
       
       {loading ? (
-        <LoadingSpinner />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '4rem 0',
+          flexDirection: 'column',
+          gap: '1rem',
+          backgroundColor: theme === 'dark' ? '#2d3748' : '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}>
+          <LoadingSpinner />
+          <p style={{ color: theme === 'dark' ? '#a0aec0' : '#718096' }}>
+            Đang tải dữ liệu câu hỏi...
+          </p>
+        </div>
       ) : list.length === 0 ? (
-        <EmptyState theme={theme}>
-          <p>Không tìm thấy câu hỏi nào.</p>
-          
-        </EmptyState>
+        <div style={{
+          backgroundColor: theme === 'dark' ? '#2d3748' : '#ffffff',
+          borderRadius: '12px',
+          padding: '3rem',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '3rem', color: theme === 'dark' ? '#4a5568' : '#cbd5e0', marginBottom: '1rem' }}>
+            <FaSearch />
+          </div>
+          <p style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: theme === 'dark' ? '#e2e8f0' : '#2d3748' }}>
+            Không tìm thấy câu hỏi nào
+          </p>
+          <p style={{ color: theme === 'dark' ? '#a0aec0' : '#718096', marginBottom: '1.5rem' }}>
+            {searchTerm || subjectId || difficulty !== 'all' 
+              ? 'Không có câu hỏi nào phù hợp với bộ lọc hiện tại.' 
+              : 'Không thể tải câu hỏi từ máy chủ. Vui lòng thử lại.'}
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <Button 
+              theme={theme} 
+              onClick={() => {
+                setSearchTerm('');
+                setDifficulty('all');
+                setSubjectId('');
+                setPage(1);
+                loadQuestions();
+              }}
+            >
+              <FaFilter /> Đặt lại bộ lọc
+            </Button>
+            <Button theme={theme} primary onClick={() => loadQuestions()}>
+              <FaSync /> Tải lại dữ liệu
+            </Button>
+          </div>
+        </div>
       ) : (
         <>
           <QuestionsGrid>
@@ -467,21 +742,106 @@ const QuestionManagement = () => {
                 
                 <QuestionContent theme={theme}>
                   <TruncatedText theme={theme}>
-                    {cleanHTML(question.content)}
+                    {cleanHTML(question.content || '')}
                   </TruncatedText>
                 </QuestionContent>
                 
-                <QuestionFooter theme={theme}>
-                  <QuestionInfo theme={theme}>
-                    {question.options?.length || 0} đáp án
-                  </QuestionInfo>
+                {/* Add Options Preview */}
+                <OptionsPreview theme={theme}>
+                  <div style={{ 
+                    fontSize: '0.85rem', 
+                    fontWeight: '600', 
+                    marginBottom: '0.5rem',
+                    color: theme === 'dark' ? '#90cdf4' : '#3182ce'
+                  }}>
+                    Đáp án:
+                  </div>
                   
+                  {/* Get options from the question or from our cached options */}
+                  {(question.options || questionOptions[question.id] || [])
+                    .slice(0, 4) // Show max 4 options
+                    .map((option, index) => (
+                      <OptionItem 
+                        key={option.id || index} 
+                        isCorrect={option.isCorrect} 
+                        theme={theme}
+                      >
+                        <OptionLabel 
+                          isCorrect={option.isCorrect}
+                          theme={theme}
+                        >
+                          {String.fromCharCode(65 + index)}. {/* A, B, C, D labels */}
+                          {cleanHTML(option.content || '').substring(0, 40)}
+                          {cleanHTML(option.content || '').length > 40 ? '...' : ''}
+                          {option.isCorrect && <CorrectBadge>Đúng</CorrectBadge>}
+                        </OptionLabel>
+                      </OptionItem>
+                    ))}
+                  
+                  {/* If we don't have options data yet but know options exist */}
+                  {getOptionCountDisplay(question) > 0 && 
+                   (!question.options || !question.options.length) && 
+                   !questionOptions[question.id] && (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '0.5rem', 
+                      color: theme === 'dark' ? '#a0aec0' : '#718096',
+                      fontSize: '0.85rem'
+                    }}>
+                      <FaSync style={{ fontSize: '0.8rem', marginRight: '0.3rem' }} />
+                      Đang tải đáp án...
+                    </div>
+                  )}
+                  
+                  {/* If there are no options */}
+                  {getOptionCountDisplay(question) === 0 && (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '0.5rem', 
+                      color: theme === 'dark' ? '#a0aec0' : '#718096',
+                      fontSize: '0.85rem'
+                    }}>
+                      Câu hỏi này không có đáp án
+                    </div>
+                  )}
+                </OptionsPreview>
+                
+                <div style={{ 
+                  padding: '0.5rem 1rem', 
+                  backgroundColor: theme === 'dark' ? '#2d3748' : '#f7fafc',
+                  borderTop: `1px solid ${theme === 'dark' ? '#4a5568' : '#e2e8f0'}`,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <OptionCountBadge count={getOptionCountDisplay(question)} theme={theme}>
+                    {getOptionCountDisplay(question)} đáp án
+                  </OptionCountBadge>
+                  
+                  <div style={{ flex: 1 }}></div>
+                  
+                  <button 
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '1.2rem',
+                      color: theme === 'dark' ? '#90cdf4' : '#3182ce',
+                      marginRight: '0.5rem'
+                    }}
+                    onClick={() => navigate(`/admin/questions/${question.id}`)}
+                    title="Xem chi tiết"
+                  >
+                    <FaEye />
+                  </button>
+                </div>
+                
+                <QuestionFooter theme={theme}>
                   <ActionButtons>
                     <ActionButton edit onClick={() => handleEditQuestion(question.id)}>
-                      <FaEdit />
+                      <FaEdit /> Chỉnh sửa
                     </ActionButton>
                     <ActionButton delete onClick={() => openDeleteModal(question.id)}>
-                      <FaTrash />
+                      <FaTrash /> Xóa
                     </ActionButton>
                   </ActionButtons>
                 </QuestionFooter>
@@ -490,44 +850,86 @@ const QuestionManagement = () => {
           </QuestionsGrid>
           
           {pagination && pagination.totalPages > 1 && (
-            <PaginationContainer>
-              <PageButton 
-                theme={theme} 
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                &lt;
-              </PageButton>
-              
-              {[...Array(pagination.totalPages).keys()].map(num => (
+            <div style={{
+              marginTop: '2rem',
+              padding: '1rem',
+              backgroundColor: theme === 'dark' ? '#2d3748' : '#ffffff',
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+            }}>
+              <PaginationContainer>
                 <PageButton 
-                  key={num + 1}
-                  theme={theme}
-                  active={page === num + 1}
-                  onClick={() => setPage(num + 1)}
+                  theme={theme} 
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
                 >
-                  {num + 1}
+                  &lt;
                 </PageButton>
-              ))}
+                
+                {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <PageButton 
+                      key={pageNum}
+                      theme={theme}
+                      active={page === pageNum}
+                      onClick={() => setPage(pageNum)}
+                    >
+                      {pageNum}
+                    </PageButton>
+                  );
+                })}
+                
+                {pagination.totalPages > 5 && page < pagination.totalPages - 2 && (
+                  <span style={{ margin: '0 0.5rem', color: theme === 'dark' ? '#a0aec0' : '#718096' }}>...</span>
+                )}
+                
+                {pagination.totalPages > 5 && (
+                  <PageButton 
+                    theme={theme}
+                    active={page === pagination.totalPages}
+                    onClick={() => setPage(pagination.totalPages)}
+                  >
+                    {pagination.totalPages}
+                  </PageButton>
+                )}
+                
+                <PageButton 
+                  theme={theme}
+                  disabled={page === pagination.totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  &gt;
+                </PageButton>
+              </PaginationContainer>
               
-              <PageButton 
-                theme={theme}
-                disabled={page === pagination.totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                &gt;
-              </PageButton>
-            </PaginationContainer>
+              <div style={{ 
+                textAlign: 'center', 
+                marginTop: '1rem',
+                fontSize: '0.9rem',
+                color: theme === 'dark' ? '#a0aec0' : '#718096'
+              }}>
+                Trang {page} / {pagination.totalPages}
+              </div>
+            </div>
           )}
         </>
       )}
       
       <ConfirmModal
         show={showDeleteModal}
-        title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác và sẽ ảnh hưởng đến các đề thi đã sử dụng câu hỏi này."
+        title="Xác nhận xóa câu hỏi"
+        message={
+          <div>
+            <p>Bạn có chắc chắn muốn xóa câu hỏi này?</p>
+            <p style={{ color: '#e53e3e', marginTop: '0.5rem' }}>
+              <strong>Lưu ý:</strong> Hành động này không thể hoàn tác và sẽ ảnh hưởng đến các đề thi đã sử dụng câu hỏi này.
+            </p>
+          </div>
+        }
         confirmText="Xóa câu hỏi"
         cancelText="Hủy bỏ"
+        confirmButtonStyle={{ backgroundColor: '#e53e3e' }}
         onConfirm={handleDeleteQuestion}
         onCancel={() => setShowDeleteModal(false)}
       />

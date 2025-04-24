@@ -5,20 +5,29 @@ import { normalizeApiResponse } from '../utils/apiUtils';
 import apiClient from '../services/apiClient';
 // Async thunks
 export const fetchExams = createAsyncThunk(
-  'exams/fetchExams',
-  async (params = {}, { rejectWithValue }) => {
+  'exams/fetchAll',
+  async (params, { rejectWithValue }) => {
     try {
-      // Đảm bảo params có các giá trị mặc định
-      const queryParams = {
-        page: params.page || 1,
-        limit: params.limit || 10,
-        ...params
+      console.log('Fetching exams with params:', params);
+      const response = await apiClient.get('/api/Exam', { params });
+      console.log('Raw API response:', response);
+      
+      // Normalize exam objects to ensure consistent properties
+      const normalizedData = {
+        ...response.data,
+        data: Array.isArray(response.data.data) 
+          ? response.data.data.map(exam => ({
+              ...exam,
+              // Ensure these fields always exist with proper boolean values
+              isActive: exam.isActive === true,
+              isApproved: exam.isApproved === true
+            }))
+          : []
       };
       
-      const response = await examService.getExams(queryParams);
-      return response;
+      return normalizedData;
     } catch (error) {
-      return rejectWithValue(error.message || 'Không thể tải danh sách đề thi');
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -198,14 +207,25 @@ const response = await examService.updateExam(examId, updatedExam);
 
 // Add this action to your existing examSlice
 
+// Sửa action approveExam
 export const approveExam = createAsyncThunk(
-  'exams/approve',
+  'exams/approveExam',
   async ({ examId, comment }, { rejectWithValue }) => {
     try {
-      const response = await examService.approveExam(examId, { comment });
-      return response.data;
+      const response = await apiClient.post(`/api/Exam/${examId}/approve`, { 
+        comment 
+      });
+      
+      console.log('Redux approve response:', response);
+      
+      // Return normalized data
+      return {
+        examId,
+        approved: true,
+        comment
+      };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể duyệt đề thi');
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
@@ -221,6 +241,36 @@ export const updateExam = createAsyncThunk(
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Không thể cập nhật đề thi';
       return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Sửa action updateExamVisibility
+export const updateExamVisibility = createAsyncThunk(
+  'exams/updateVisibility',
+  async ({ examId, isPublic }, { rejectWithValue }) => {
+    try {
+      console.log('updateVisibility with params:', { examId, isPublic });
+      const status = isPublic ? 'published' : 'draft';
+      
+      const response = await apiClient.patch(`/api/Exam/${examId}/status`, {
+        status: status
+      });
+      
+      console.log('Raw visibility update response:', response);
+      
+      // Đảm bảo response luôn có trường status
+      const enhancedResponse = {
+        ...response.data,
+        status: status,
+        id: examId
+      };
+      
+      return enhancedResponse;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || `Không thể cập nhật trạng thái hiển thị của đề thi`
+      );
     }
   }
 );
@@ -484,11 +534,14 @@ const examSlice = createSlice({
       
       // Add the case in the extraReducers of your examSlice
       .addCase(approveExam.fulfilled, (state, action) => {
-        const updatedExam = action.payload.exam;
-        const index = state.list.findIndex(exam => exam.id === updatedExam.id);
-        if (index !== -1) {
-          state.list[index] = updatedExam;
+        // Find and update the exam in the list
+        const exam = state.list.find(exam => exam.id === action.payload.examId);
+        if (exam) {
+          exam.isApproved = true;
+          console.log('Redux state updated for exam approval:', exam);
         }
+        
+        state.loading = false;
       })
       
       // Trong reducers, thêm case xử lý updateExam
@@ -511,6 +564,28 @@ const examSlice = createSlice({
       .addCase(updateExam.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Trong file src/redux/examSlice.js
+      .addCase(updateExamVisibility.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        
+        if (state.list && Array.isArray(state.list)) {
+          const index = state.list.findIndex(exam => exam.id === action.payload.id);
+          if (index !== -1) {
+            state.list[index] = {
+              ...state.list[index],
+              ...action.payload
+            };
+          }
+        }
+        
+        if (state.currentExam && state.currentExam.id === action.payload.id) {
+          state.currentExam = {
+            ...state.currentExam,
+            ...action.payload
+          };
+        }
       });
   }
 });

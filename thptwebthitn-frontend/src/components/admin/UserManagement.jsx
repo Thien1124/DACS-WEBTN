@@ -155,48 +155,68 @@ const Badge = styled.span`
 
 const ActionButtons = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 `;
 
 const ActionButton = styled.button`
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
   border: none;
+  font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  
+  svg {
+    margin-right: ${props => props.iconOnly ? '0' : '0.35rem'};
+    font-size: 0.9rem;
+  }
   
   &:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
   
   &.edit {
-    background-color: #4299e1;
+    background-color: #3b82f6;
     color: white;
     
     &:hover {
-      background-color: #3182ce;
+      background-color: #2563eb;
     }
   }
   
   &.delete {
-    background-color: #e53e3e;
+    background-color: #ef4444;
     color: white;
     
     &:hover {
-      background-color: #c53030;
+      background-color: #dc2626;
     }
   }
   
   &.role {
-    background-color: #805ad5;
+    background-color: #8b5cf6;
     color: white;
     
     &:hover {
-      background-color: #6b46c1;
+      background-color: #7c3aed;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    padding: ${props => props.iconOnly ? '0.5rem' : '0.5rem 0.7rem'};
+    svg {
+      margin-right: ${props => props.iconOnly ? '0' : '0.2rem'};
     }
   }
 `;
@@ -454,12 +474,28 @@ const addDefaultRoles = (users) => {
 };
 
 // Add a function to infer roles from usernames if missing
+// Update the inferRoleFromUsername function for better role detection
 const inferRoleFromUsername = (username) => {
   if (!username) return 'Student';
   
   const lowerUsername = username.toLowerCase();
   if (lowerUsername.includes('admin')) return 'Admin';
   if (lowerUsername.includes('teacher')) return 'Teacher';
+  return 'Student';
+};
+
+// Add a helper function to extract roles from user data or database info
+const getUserRole = (user) => {
+  // Try to get role from response
+  if (user.role) return user.role;
+  
+  // Check if username hints at a role
+  if (user.username) {
+    if (user.username.toLowerCase().includes('admin')) return 'Admin';
+    if (user.username.toLowerCase().includes('teacher')) return 'Teacher';
+  }
+  
+  // Default
   return 'Student';
 };
 
@@ -471,90 +507,47 @@ const fetchUsers = async () => {
   try {
     console.log("Fetching users...");
     
-    // Log token để debug
-    const authToken = localStorage.getItem('auth_token');
-    console.log('Auth token exists:', !!authToken);
-    if (authToken) {
-      console.log('Token last 5 chars:', authToken.slice(-5));
-    }
-    
-    // Xây dựng params
+    // Build params
     const params = {
       page: currentPage,
       pageSize: pageSize
     };
     
-    // Thêm role vào params nếu có
     if (roleFilter) {
       params.role = roleFilter;
     }
     
-    // Debug trực tiếp endpoint để xem response
-    try {
-      const directResponse = await fetch(`http://localhost:5006/api/User/list?page=${currentPage}&pageSize=${pageSize}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('Direct API call status:', directResponse.status);
-      if (directResponse.ok) {
-        const directData = await directResponse.json();
-        console.log('Direct API response:', directData);
-      }
-    } catch (directErr) {
-      console.error('Direct API call error:', directErr);
-    }
-    
-    // Gọi API qua service
-    console.log('Calling getUsers service...');
+    // Call API through service
+    console.log('Calling getUsers service with params:', params);
     const result = await getUsers(params);
-    console.log('getUsers result:', result);
+    console.log('API response structure:', {
+      hasData: !!result,
+      isArray: Array.isArray(result),
+      hasDataProperty: result?.data !== undefined,
+      hasItemsProperty: result?.items !== undefined,
+      responseKeys: result ? Object.keys(result) : [],
+    });
     
-    // Process the result with role handling
-    if (result) {
-      let processedUsers = [];
-      
-      // Handle various response formats
-      if (result.items && Array.isArray(result.items)) {
-        processedUsers = addDefaultRoles(result.items);
-        setUsers(processedUsers);
-        setTotalPages(result.totalPages || 1);
-        setTotalUsers(result.totalItems || result.items.length);
-      } 
-      else if (Array.isArray(result)) {
-        processedUsers = addDefaultRoles(result);
-        setUsers(processedUsers);
-        setTotalPages(1);
-        setTotalUsers(result.length);
-      }
-      else if (result.data && Array.isArray(result.data)) {
-        processedUsers = addDefaultRoles(result.data);
-        setUsers(processedUsers);
-        setTotalPages(result.totalPages || 1);
-        setTotalUsers(result.totalCount || result.data.length);
-      }
-      else {
-        // Try to extract users from other formats
-        const userArray = Object.values(result).filter(item => 
-          item && typeof item === 'object' && item.username
-        );
-        
-        if (userArray.length > 0) {
-          processedUsers = addDefaultRoles(userArray);
-          setUsers(processedUsers);
-          setTotalPages(1);
-          setTotalUsers(userArray.length);
-        } else {
-          setError("Không nhận được dữ liệu người dùng từ API");
-          setUsers([]);
-        }
-      }
-      
+    // Process if there's data
+    if (result && result.data && Array.isArray(result.data)) {
+      console.log(`Found ${result.data.length} users in result.data`);
+      const processedUsers = addDefaultRoles(result.data);
+      setUsers(processedUsers);
+      setTotalPages(result.totalPages || 1);
+      setTotalUsers(result.totalCount || result.data.length);
       calculateUserStats(processedUsers);
+      console.log('Users processed successfully:', processedUsers.length);
+    } else if (Array.isArray(result)) {
+      // Fallback for direct array response
+      const processedUsers = addDefaultRoles(result);
+      setUsers(processedUsers);
+      setTotalPages(1);
+      setTotalUsers(result.length);
+      calculateUserStats(processedUsers);
+      console.log('Users processed from array:', processedUsers.length);
     } else {
-      setError("API không trả về dữ liệu");
+      console.error('Invalid API response structure:', result);
+      setError("Không nhận được dữ liệu người dùng từ API");
       setUsers([]);
     }
   } catch (err) {
@@ -697,6 +690,60 @@ const handleOpenRoleModal = (user) => {
     return filteredUsers;
   }, [filteredUsers, currentUser]);
 
+  // 1. Add these state variables at the top with your other state variables
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [userToDelete, setUserToDelete] = useState(null);
+const [deleting, setDeleting] = useState(false);
+
+// 2. Add the function to open the delete modal
+const handleOpenDeleteModal = (user) => {
+  setUserToDelete(user);
+  setShowDeleteModal(true);
+};
+
+// 3. Add the function to handle user deletion
+const handleDeleteUser = async () => {
+  if (!userToDelete) return;
+  
+  try {
+    setDeleting(true);
+    
+    // Call the API to delete the user
+    await apiClient.delete(`/api/User/${userToDelete.id}`);
+    
+    // Update local state by removing the user
+    const updatedUsers = users.filter(user => user.id !== userToDelete.id);
+    setUsers(updatedUsers);
+    
+    // Update stats
+    calculateUserStats(updatedUsers);
+    
+    showSuccessToast(`Người dùng ${userToDelete.fullName || userToDelete.username} đã được xóa thành công`);
+    
+    // Close modal and reset state
+    setShowDeleteModal(false);
+    setUserToDelete(null);
+    
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    let errorMsg = "Không thể xóa người dùng";
+    
+    if (err.response) {
+      if (err.response.status === 403) {
+        errorMsg = "Bạn không có quyền xóa người dùng này";
+      } else if (err.response.status === 404) {
+        errorMsg = "Không tìm thấy người dùng để xóa";
+      } else if (err.response.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+    }
+    
+    showErrorToast(errorMsg);
+  } finally {
+    setDeleting(false);
+  }
+};
+
   return (
     <PageContainer>
       <MainContent>
@@ -803,8 +850,8 @@ const handleOpenRoleModal = (user) => {
                       <td>{user.fullName}</td>
                       <td>{user.email}</td>
                       <td>
-                        <Badge role={user.role || inferRoleFromUsername(user.username)}>
-                          {user.role || inferRoleFromUsername(user.username)}
+                        <Badge role={getUserRole(user)}>
+                          {getUserRole(user)}
                         </Badge>
                       </td>
                       <td>{new Date(user.createdAt).toLocaleDateString()}</td>
@@ -815,16 +862,22 @@ const handleOpenRoleModal = (user) => {
                             onClick={() => handleOpenRoleModal(user)}
                             title="Phân quyền"
                           >
-                            <FaUserShield />
+                            <FaUserShield /> Quyền
                           </ActionButton>
                           <ActionButton
                             className="edit"
                             onClick={() => {/* Thêm chức năng sửa thông tin người dùng */}}
                             title="Chỉnh sửa"
                           >
-                            <FaEdit />
+                            <FaEdit /> Sửa
                           </ActionButton>
-                          
+                          <ActionButton
+                            className="delete"
+                            onClick={() => handleOpenDeleteModal(user)}
+                            title="Xóa người dùng"
+                          >
+                            <FaTrash /> Xóa
+                          </ActionButton>
                         </ActionButtons>
                       </td>
                     </tr>
@@ -914,6 +967,28 @@ const handleOpenRoleModal = (user) => {
                   </Button>
                   <Button className="confirm" onClick={handleChangeRole}>
                     Lưu thay đổi
+                  </Button>
+                </ButtonGroup>
+              </ModalContent>
+            </Modal>
+          )}
+          
+          {/* Modal xóa người dùng */}
+          {showDeleteModal && (
+            <Modal>
+              <ModalContent theme={theme}>
+                <ModalHeader>
+                  <ModalTitle theme={theme}>Xác nhận xóa người dùng</ModalTitle>
+                </ModalHeader>
+                <ModalBody>
+                  <p>Bạn có chắc chắn muốn xóa người dùng {userToDelete?.fullName || userToDelete?.username} không?</p>
+                </ModalBody>
+                <ButtonGroup>
+                  <Button className="cancel" theme={theme} onClick={() => setShowDeleteModal(false)}>
+                    Hủy bỏ
+                  </Button>
+                  <Button className="confirm" onClick={handleDeleteUser} disabled={deleting}>
+                    {deleting ? 'Đang xóa...' : 'Xóa'}
                   </Button>
                 </ButtonGroup>
               </ModalContent>

@@ -4,14 +4,16 @@ import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { FaArrowLeft, FaCalendarAlt, FaClock, FaExclamationTriangle, 
          FaList, FaQuestionCircle, FaRegCheckCircle, FaRegTimesCircle, 
-         FaUserAlt, FaEdit, FaPrint, FaCheckCircle, FaTrash, FaCog } from 'react-icons/fa';
+         FaUserAlt, FaEdit, FaPrint, FaCheckCircle, FaTrash, FaCog,
+         FaEye, FaEyeSlash } from 'react-icons/fa';
 import { getExamWithQuestions } from '../../services/examService';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
-import { removeExam, updateExamDuration, approveExam } from '../../redux/examSlice';
+import { removeExam, updateExamDuration, approveExam, updateExamVisibility } from '../../redux/examSlice';
 import ConfirmModal from '../common/ConfirmModal';
 import UpdateExamDurationModal from '../modals/UpdateExamDurationModal';
 import ApproveExamModal from '../modals/ApproveExamModal';
-
+import VisibilityModal from '../modals/VisibilityModal';
+import apiClient from '../../services/apiClient';
 const ExamDetails = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
@@ -25,26 +27,81 @@ const ExamDetails = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDurationModal, setShowDurationModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showVisibilityModal, setShowVisibilityModal] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  // Tải dữ liệu đề thi
+  // Add this near the top of your component body
+  const [stateDebug, setStateDebug] = useState({
+    lastAction: null,
+    updateCount: 0
+  });
+
+  // Sửa lại phần useEffect để tải dữ liệu ban đầu
   useEffect(() => {
     const loadExamWithQuestions = async () => {
       try {
         setIsLoading(true);
+        
+        // Always load the data to ensure we have the latest
+        console.log(`Loading exam data for ID: ${examId}`);
         const data = await getExamWithQuestions(examId);
-        console.log('Loaded exam with questions:', data);
-        setExamData(data);
+        
+        // Log entire response to debug issues
+        console.log('Raw API response:', data);
+        
+        if (data) {
+          // Transform data with more comprehensive checks
+          const transformedData = {
+            ...data,
+            // Handle different API response formats for approval status
+            isApproved: data.isApproved === true || data.approved === true || data.status === 'approved',
+            // Handle different API response formats for active status
+            isActive: data.isActive === true || data.status === 'published' || data.status === 'active',
+          };
+          
+          console.log('Transformed exam data:', transformedData);
+          setExamData(transformedData);
+        } else {
+          throw new Error('API returned empty response');
+        }
       } catch (err) {
         console.error('Error loading exam details:', err);
         setError(err.message || 'Không thể tải thông tin đề thi');
         showErrorToast('Không thể tải thông tin đề thi');
       } finally {
         setIsLoading(false);
+        // Clear update flags after loading
+        localStorage.removeItem('examUpdated');
+        sessionStorage.removeItem('examDetailUpdated');
       }
     };
 
     loadExamWithQuestions();
   }, [examId]);
+
+  // Trong component ExamDetails, thêm console.log để kiểm tra
+  useEffect(() => {
+    if (examData) {
+      console.log('Current exam approval status:', examData.isApproved);
+    }
+  }, [examData]);
+
+  // Add this useEffect for monitoring state changes
+  useEffect(() => {
+    if (examData) {
+      setStateDebug(prev => ({
+        ...prev,
+        updateCount: prev.updateCount + 1,
+        lastUpdate: new Date().toISOString()
+      }));
+      console.log('Exam data updated:', {
+        examId,
+        isApproved: examData.isApproved,
+        isActive: examData.isActive,
+        updateCount: stateDebug.updateCount + 1
+      });
+    }
+  }, [examData]);
 
   // Xử lý quay lại trang danh sách
   const handleGoBack = () => {
@@ -110,20 +167,144 @@ const ExamDetails = () => {
     }
   };
 
-  const handleApproveSubmit = async (examId, comment) => {
-    try {
-      await dispatch(approveExam({ examId, comment })).unwrap();
+  // Replace the handleApproveSubmit function with this improved version
+
+const handleApproveSubmit = async (examId, comment) => {
+  try {
+    console.log(`Approving exam ${examId} with comment: ${comment}`);
+    
+    // Make sure comment is never empty
+    const finalComment = comment || "Đề thi đã được duyệt";
+    
+    // Direct API call with proper structure
+    const response = await apiClient.post(`/api/Exam/${examId}/approve`, {
+      comment: finalComment
+    });
+    
+    console.log('Approval response:', response);
+    
+    if (response && response.status === 200) {
+      // Update local state immediately to reflect change in UI
+      setExamData(prevData => ({
+        ...prevData,
+        isApproved: true
+      }));
+      
+      // Signal to ExamManagement that data has changed
+      localStorage.setItem('examStatusChanged', 'true');
+      sessionStorage.setItem('examListNeedsRefresh', 'true');
+      
+      // Dispatch Redux action to update global state
+      dispatch(approveExam({ 
+        examId,
+        approved: true,
+        comment: finalComment,
+      }));
+      
       showSuccessToast('Đề thi đã được duyệt thành công!');
       setShowApproveModal(false);
-      // Tải lại dữ liệu đề thi
-      const updatedExam = await getExamWithQuestions(examId);
-      setExamData(updatedExam);
-      return Promise.resolve();
-    } catch (error) {
-      showErrorToast(`Không thể duyệt đề thi: ${error}`);
-      return Promise.reject(error);
+      
+      // Don't reload data immediately to avoid race conditions
+      return true;
+    }
+    
+    throw new Error('API call failed or returned unexpected response');
+  } catch (error) {
+    console.error('Error approving exam:', error);
+    showErrorToast(`Không thể duyệt đề thi: ${error.message || 'Lỗi không xác định'}`);
+    return Promise.reject(error);
+  }
+};
+
+  // Thêm hàm này vào file ExamDetails.jsx
+  const getExamDateStatus = (exam) => {
+    if (!exam) return 'unknown';
+    
+    const now = new Date();
+    const startTime = exam.startTime ? new Date(exam.startTime) : null;
+    const endTime = exam.endTime ? new Date(exam.endTime) : null;
+    
+    if (endTime && now > endTime) {
+      return 'expired'; // Đã hết hạn
+    } else if (startTime && now < startTime) {
+      return 'upcoming'; // Chưa đến thời gian mở
+    } else {
+      return 'active'; // Đang trong thời gian hiệu lực
     }
   };
+  
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'expired':
+        return 'Đã hết hạn';
+      case 'upcoming':
+        return 'Chưa đến thời gian mở';
+      case 'active':
+        return 'Đang trong thời gian hiệu lực';
+      default:
+        return 'Không xác định';
+    }
+  };
+
+  // Cập nhật lại hàm xử lý chuyển trạng thái công khai/nháp
+const handleVisibilityToggle = () => {
+  // Log trạng thái hiện tại
+  console.log('Current exam visibility before toggle:', examData?.isActive);
+  
+  // Use isActive instead of status
+  const currentlyPublished = examData?.isActive === true;
+  setIsPublishing(!currentlyPublished);
+  setShowVisibilityModal(true);
+};
+
+
+
+// Replace the handleVisibilitySubmit function
+const handleVisibilitySubmit = async (examId, makePublic) => {
+  try {
+    console.log(`Setting exam ${examId} visibility to ${makePublic ? 'public' : 'draft'}`);
+    
+    // Direct API call with correct structure
+    const response = await apiClient.patch(`/api/Exam/${examId}/status`, { 
+      isActive: makePublic 
+    });
+    
+    console.log('Visibility update response:', response);
+    
+    if (response && response.status === 200) {
+      // Update local state immediately
+      setExamData(prevData => ({
+        ...prevData,
+        isActive: makePublic
+      }));
+      
+      // Signal to ExamManagement that data has changed
+      localStorage.setItem('examStatusChanged', 'true');
+      sessionStorage.setItem('examListNeedsRefresh', 'true');
+      
+      // Update Redux state
+      dispatch(updateExamVisibility({ 
+        examId, 
+        isPublic: makePublic 
+      }));
+      
+      showSuccessToast(makePublic 
+        ? 'Đề thi đã được công khai thành công!' 
+        : 'Đề thi đã chuyển về trạng thái nháp!');
+      
+      setShowVisibilityModal(false);
+      
+      // Don't reload data immediately to avoid race conditions
+      return true;
+    }
+    
+    throw new Error('API call failed or returned unexpected response');
+  } catch (error) {
+    console.error('Error updating visibility:', error);
+    showErrorToast(`Lỗi: ${error.message || 'Không thể cập nhật trạng thái'}`);
+    return Promise.reject(error);
+  }
+};
 
   // Hiển thị loading
   if (isLoading) {
@@ -222,6 +403,7 @@ const ExamDetails = () => {
           </ActionButtonNew>
           
           {/* Hiển thị nút Duyệt đề thi nếu chưa được duyệt */}
+          {console.log('Rendering approval button, isApproved=', examData?.isApproved)}
           {examData && !examData.isApproved && (
             <ActionButtonNew 
               onClick={() => handleApproveExam(examData)}
@@ -232,6 +414,19 @@ const ExamDetails = () => {
               <FaCheckCircle /> Duyệt đề thi
             </ActionButtonNew>
           )}
+          
+          {/* Nút chuyển đổi trạng thái hiển thị (nháp/công khai) */}
+          <ActionButtonNew 
+            onClick={handleVisibilityToggle}
+            color={examData.isActive ? "#6b7280" : "#3b82f6"}
+            hoverColor={examData.isActive ? "#4b5563" : "#2563eb"}
+            textColor="#ffffff"
+          >
+            {examData.isActive 
+              ? <><FaEyeSlash /> Không công khai</>
+              : <><FaEye /> Công khai</>
+            }
+          </ActionButtonNew>
           
           {/* Nút Chỉnh sửa thời gian */}
           <ActionButtonNew 
@@ -259,15 +454,48 @@ const ExamDetails = () => {
         <CardHeader>
           <div className="d-flex justify-content-between align-items-center">
             <h2 className="m-0">{examData.title}</h2>
-            <StatusBadge isActive={examData.isActive}>
-              {examData.isActive ? 'Đang hoạt động' : 'Không hoạt động'}
-            </StatusBadge>
-          </div>
-          <div className="mt-2">
-            <SubTitle>
-              <span className="text-muted">Môn học:</span> {examData.subject?.name || 'Chưa xác định'}
-              {examData.type && <> - {examData.type}</>}
-            </SubTitle>
+            <div className="d-flex flex-column align-items-end">
+  {/* Trạng thái duyệt */}
+  <div className="mb-1">
+    <span 
+      className={`badge px-3 py-2 d-flex align-items-center gap-1 ${
+        examData.isApproved ? 'bg-success' : 'bg-warning'
+      }`}
+      style={{ fontSize: '0.85rem' }}
+    >
+      {examData.isApproved ? (
+        <>
+          <FaCheckCircle /> Đã duyệt
+        </>
+      ) : (
+        <>
+          <FaClock /> Chờ duyệt
+        </>
+      )}
+    </span>
+  </div>
+  
+  {/* Trạng thái công khai */}
+  <div>
+    <span 
+      className={`badge px-3 py-2 d-flex align-items-center gap-1 ${
+        examData.isActive ? 'bg-primary' : 'bg-secondary'
+      }`}
+      style={{ fontSize: '0.85rem' }}
+    >
+      {examData.isActive ? (
+        <>
+          <FaEye /> Công khai
+        </>
+      ) : (
+        <>
+          <FaEyeSlash /> Nháp
+        </>
+      )}
+    </span>
+  </div>
+</div>
+
           </div>
         </CardHeader>
 
@@ -529,6 +757,22 @@ const ExamDetails = () => {
         examId={examId}
         theme={theme}
       />
+
+      {/* Modal Chuyển đổi trạng thái hiển thị */}
+      <VisibilityModal
+        show={showVisibilityModal}
+        onHide={() => setShowVisibilityModal(false)}
+        onSubmit={handleVisibilitySubmit}
+        examId={examId}
+        isPublishing={isPublishing}
+        theme={theme}
+      />
+
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{margin: '20px 0', padding: '10px', border: '1px dashed #ccc'}}>
+          <small>Debug: Updates: {stateDebug.updateCount} | Last: {stateDebug.lastAction}</small>
+        </div>
+      )}
     </Container>
   );
 };

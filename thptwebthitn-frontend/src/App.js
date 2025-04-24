@@ -88,6 +88,10 @@ import { initializeTokens } from './utils/tokenSync';
 
 import ExamQuestions from './components/admin/ExamQuestions';
 
+// Thêm imports cần thiết
+import useExamReminders from './hooks/useExamReminders';
+import ExamReminderBanner from './components/reminders/ExamReminderBanner';
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#121212' : '#f7f7f7'};
@@ -102,7 +106,7 @@ const formatDateTime = (date = new Date()) => {
 
 function App() {
   const { theme, currentAnimation } = useSelector(state => state.ui);
-  const { user } = useSelector(state => state.auth);
+  const { user, isAuthenticated } = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const currentUser = 'vinhsonvlog'; // hoặc lấy từ state/localStorage
 
@@ -166,11 +170,19 @@ function App() {
     }
   }, [user]);
   
+  // Thêm hook lấy thông tin về các bài thi sắp tới
+  const examReminders = useExamReminders();
+  const { upcomingExams, dismissExam } = examReminders || { upcomingExams: [], dismissExam: () => {} };
+  
+  // Kiểm tra nếu người dùng là học sinh
+  const isStudent = isAuthenticated && user?.role === 'Student';
+
   return (
     <Router>
       <AuthProvider>
         <AppContainer theme={theme}>
           <ToastProvider />
+          
           
           <Routes>
             {/* Auth Routes - Ngoài Layout */}

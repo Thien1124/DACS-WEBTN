@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, Form, Button } from 'react-bootstrap';
+import { Modal, Button, Form } from 'react-bootstrap';
+import { FaCheckCircle } from 'react-icons/fa';
 
 const ApproveExamModal = ({ show, onHide, onSubmit, examId, theme }) => {
   const [comment, setComment] = useState('');
@@ -8,29 +9,35 @@ const ApproveExamModal = ({ show, onHide, onSubmit, examId, theme }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
       await onSubmit(examId, comment);
-      onHide();
+      setComment('');
     } catch (error) {
-      console.error('Error approving exam:', error);
+      console.error('Error in approve submit:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      backdrop="static"
-      keyboard={false}
+    <Modal 
+      show={show} 
+      onHide={onHide} 
       centered
+      className={theme === 'dark' ? 'dark-modal' : ''}
     >
-      <Modal.Header closeButton className={theme === 'dark' ? 'bg-dark text-light' : ''}>
-        <Modal.Title>Duyệt đề thi</Modal.Title>
+      <Modal.Header className={theme === 'dark' ? 'bg-dark text-light border-secondary' : ''}>
+        <Modal.Title className="d-flex align-items-center">
+          <FaCheckCircle className="text-success me-2" />
+          Duyệt đề thi
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body className={theme === 'dark' ? 'bg-dark text-light' : ''}>
+        <div className="alert alert-info">
+          <strong>Lưu ý:</strong> Khi duyệt đề thi, đề thi sẽ được phép hiển thị trong hệ thống 
+          nếu được cấu hình là công khai.
+        </div>
+        
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
             <Form.Label>Ghi chú (không bắt buộc)</Form.Label>

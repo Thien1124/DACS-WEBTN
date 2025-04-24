@@ -327,12 +327,33 @@ export const cloneExam = async (id) => {
  * @param {string} status - New status
  * @returns {Promise} - Promise resolving to updated exam
  */
-export const updateExamStatus = async (id, status) => {
+export const updateExamStatus = async (id, isPublic) => {
   try {
-    const response = await apiClient.patch(`/api/Exam/${id}/status`, { status });
-    return response.data;
+    // Xác định status chính xác
+    const status = isPublic ? 'published' : 'draft';
+    console.log(`Updating exam ${id} status to: ${status}`);
+    
+    // Gọi API với tham số đúng
+    const response = await apiClient.patch(`/api/Exam/${id}/status`, { 
+      status: status 
+    });
+    
+    console.log('Status update raw response:', response);
+    
+    // Đảm bảo kết quả trả về có đủ thông tin
+    const result = {
+      ...response.data,
+      id: id,
+      status: status
+    };
+    
+    return result;
   } catch (error) {
     console.error(`Error updating exam ${id} status:`, error);
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error data:', error.response.data);
+    }
     throw error;
   }
 };
@@ -340,23 +361,28 @@ export const updateExamStatus = async (id, status) => {
 /**
  * Approve an exam
  * @param {string} id - Exam ID
+ * @param {string} comment - Optional approval comment
  * @returns {Promise} - Promise resolving to approved exam
  */
-export const approveExam = async (id) => {
+export const approveExam = async (id, comment = '') => {
   try {
-    if (USE_MOCK_DATA) {
-      return await mockApproveExam(id);
-    }
+    console.log(`Approving exam ${id} with comment: ${comment}`);
     
-    const response = await apiClient.patch(`/api/Exam/${id}/approve`, { isApproved: true });
-    return response.data;
+    const response = await apiClient.post(`/api/Exam/${id}/approve`, { 
+      comment: comment 
+    });
+    
+    console.log('Approve exam raw response:', response);
+    
+    const result = {
+      ...response.data,
+      id: id,
+      isApproved: true
+    };
+    
+    return result;
   } catch (error) {
     console.error(`Error approving exam ${id}:`, error);
-    
-    if (USE_MOCK_DATA) {
-      return await mockApproveExam(id);
-    }
-    
     throw error;
   }
 };

@@ -1,13 +1,44 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getQuestions, getQuestionById, createQuestion, updateQuestion, deleteQuestion } from '../services/questionService';
 
+// In your fetchQuestions action creator
 export const fetchQuestions = createAsyncThunk(
   'questions/fetchQuestions',
   async (params, { rejectWithValue }) => {
     try {
-      return await getQuestions(params);
+      // Add includeOptions parameter
+      const apiParams = {
+        ...params,
+        includeOptions: true
+      };
+      
+      const response = await getQuestions(apiParams);
+      
+      // Process the response to ensure options are included
+      let processedQuestions = [];
+      
+      if (response && response.data && Array.isArray(response.data)) {
+        processedQuestions = response.data;
+      } else if (Array.isArray(response)) {
+        processedQuestions = response;
+      }
+      
+      // Ensure each question has an options array
+      processedQuestions = processedQuestions.map(q => ({
+        ...q,
+        options: q.options || []
+      }));
+      
+      return {
+        list: processedQuestions,
+        pagination: {
+          totalItems: response.totalCount || processedQuestions.length,
+          totalPages: response.totalPages || Math.ceil(processedQuestions.length / (params.pageSize || 12)),
+          currentPage: params.page || 1
+        }
+      };
     } catch (error) {
-      return rejectWithValue(error.message || 'Failed to fetch questions');
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -93,19 +124,13 @@ const questionsSlice = createSlice({
       })
       .addCase(fetchQuestions.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload.items || action.payload;
-        if (action.payload.pagination) {
-          state.pagination = {
-            currentPage: action.payload.pagination.currentPage,
-            pageSize: action.payload.pagination.pageSize,
-            totalItems: action.payload.pagination.totalItems,
-            totalPages: action.payload.pagination.totalPages
-          };
-        }
+        state.list = action.payload.list;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchQuestions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        console.error('Failed to fetch questions:', action.payload);
       })
       
       // Fetch question by id

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 import { 
   FaEdit, FaEye, FaPlus, FaTrash, FaSearch, 
@@ -155,19 +155,24 @@ const FilterButton = styled.button`
 
 const Table = styled.table`
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#ffffff'};
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  margin-bottom: 2rem;
 `;
 
 const TableHead = styled.thead`
-  background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#f7fafc'};
+  background: ${props => props.theme === 'dark' 
+    ? 'linear-gradient(to right, #2d3748, #3f4b5b)' 
+    : 'linear-gradient(to right, #f7fafc, #edf2f7)'};
 `;
 
 const TableRow = styled.tr`
   border-bottom: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  transition: background-color 0.2s ease;
   
   &:last-child {
     border-bottom: none;
@@ -180,63 +185,138 @@ const TableRow = styled.tr`
 
 const TableHeader = styled.th`
   text-align: left;
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   font-weight: 600;
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
   cursor: ${props => props.sortable ? 'pointer' : 'default'};
+  position: relative;
+  transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${props => props.sortable ? (props.theme === 'dark' ? '#4a556880' : '#e2e8f080') : 'transparent'};
+    ${props => props.sortable && css`
+      background-color: ${props.theme === 'dark' ? '#4a556880' : '#e2e8f080'};
+    `}
   }
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: transparent;
+    transition: all 0.2s ease;
+  }
+  
+  ${props => props.active && css`
+    &:after {
+      background-color: ${props.theme === 'dark' ? '#4299e1' : '#3182ce'};
+    }
+  `}
 `;
 
 const TableCell = styled.td`
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  vertical-align: middle;
+  
+  ${props => props.clickable && css`
+    cursor: pointer;
+    &:hover {
+      text-decoration: underline;
+      color: ${props.theme === 'dark' ? '#4299e1' : '#3182ce'};
+    }
+  `}
 `;
 
 const StatusBadge = styled.span`
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
   border-radius: 9999px;
   font-weight: 600;
-  background-color: ${props => props.active ? '#c6f6d5' : '#fed7d7'};
-  color: ${props => props.active ? '#22543d' : '#742a2a'};
+  font-size: 0.85rem;
+  background-color: ${props => props.active 
+    ? props.theme === 'dark' ? 'rgba(72, 187, 120, 0.2)' : '#c6f6d5' 
+    : props.theme === 'dark' ? 'rgba(245, 101, 101, 0.2)' : '#fed7d7'};
+  color: ${props => props.active 
+    ? props.theme === 'dark' ? '#68d391' : '#22543d' 
+    : props.theme === 'dark' ? '#fc8181' : '#742a2a'};
+  
+  svg {
+    margin-right: 0.4rem;
+  }
+`;
+
+const ApprovalBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: ${props => props.approved 
+    ? props.theme === 'dark' ? 'rgba(72, 187, 120, 0.2)' : '#c6f6d5' 
+    : props.theme === 'dark' ? 'rgba(125, 102, 224, 0.2)' : '#e9d8fd'};
+  color: ${props => props.approved 
+    ? props.theme === 'dark' ? '#68d391' : '#22543d' 
+    : props.theme === 'dark' ? '#b794f4' : '#553c9a'};
+  
+  svg {
+    margin-right: 0.4rem;
+  }
 `;
 
 const ActionButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
   border: none;
-  background-color: ${props => {
-    if (props.edit) return '#4299e1';
-    if (props.delete) return '#f56565';
-    return '#cbd5e0';
-  }};
-  color: white;
-  margin: 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  gap: 0.5rem;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    background-color: ${props => {
-      if (props.edit) return '#3182ce';
-      if (props.delete) return '#e53e3e';
-      return '#a0aec0';
-    }};
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
   }
-`;
-
-const TimeActionButton = styled(ActionButton)`
-  background-color: #805ad5;
-  &:hover {
-    background-color: #6b46c1;
-  }
+  
+  ${props => props.variant === 'primary' && css`
+    background-color: #3b82f6;
+    color: white;
+    &:hover {
+      background-color: #2563eb;
+    }
+  `}
+  
+  ${props => props.variant === 'success' && css`
+    background-color: #10b981;
+    color: white;
+    &:hover {
+      background-color: #059669;
+    }
+  `}
+  
+  ${props => props.variant === 'danger' && css`
+    background-color: #ef4444;
+    color: white;
+    &:hover {
+      background-color: #dc2626;
+    }
+  `}
+  
+  ${props => props.variant === 'secondary' && css`
+    background-color: ${props.theme === 'dark' ? '#4b5563' : '#e5e7eb'};
+    color: ${props.theme === 'dark' ? '#f3f4f6' : '#4b5563'};
+    &:hover {
+      background-color: ${props.theme === 'dark' ? '#6b7280' : '#d1d5db'};
+    }
+  `}
 `;
 
 const EmptyState = styled.div`
@@ -273,19 +353,6 @@ const PageButton = styled.button`
     opacity: 0.5;
     cursor: not-allowed;
   }
-`;
-
-// Add a new styled component for approval status
-const ApprovalBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background-color: ${props => props.approved ? '#c6f6d5' : '#e9d8fd'};
-  color: ${props => props.approved ? '#22543d' : '#553c9a'};
 `;
 
 const ApproveButton = styled(ActionButton)`
@@ -388,12 +455,46 @@ const ExamManagement = () => {
     loadExams();
   }, [loadExams]); // Chỉ cần loadExams ở đây vì nó đã bao gồm các dependencies khác
 
+  // Thêm useEffect này vào phần đầu của ExamManagement.jsx
+  useEffect(() => {
+    // Kiểm tra xem đã có thay đổi từ trang chi tiết không
+    const statusChanged = localStorage.getItem('examStatusChanged');
+    if (statusChanged) {
+      console.log('Detected changes from details page, reloading exams');
+      loadExams();
+      localStorage.removeItem('examStatusChanged');
+    }
+  }, []);
+
   // Giữ lại useEffect debug này
   useEffect(() => {
     console.log('Current exams state:', exams);
     console.log('Is loading:', loading);
     console.log('Error:', error);
   }, [exams, loading, error]);
+
+  // Add this at the top of your component function
+  useEffect(() => {
+    const checkForChanges = () => {
+      const statusChanged = localStorage.getItem('examStatusChanged');
+      const needsRefresh = sessionStorage.getItem('examListNeedsRefresh');
+      
+      if (statusChanged || needsRefresh) {
+        console.log('Detected changes from details page, reloading exams');
+        loadExams();
+        localStorage.removeItem('examStatusChanged');
+        sessionStorage.removeItem('examListNeedsRefresh');
+      }
+    };
+    
+    // Check immediately upon mount
+    checkForChanges();
+    
+    // Also set up an interval to check periodically
+    const interval = setInterval(checkForChanges, 2000);
+    
+    return () => clearInterval(interval);
+  }, [loadExams]);
   
   const handleSearch = (e) => {
     e.preventDefault();
@@ -412,7 +513,7 @@ const ExamManagement = () => {
   };
   
   const navigateToExam = (examId) => {
-    navigate(`/exams/${examId}`);
+    navigate(`/admin/exams/${examId}/details`);
   };
   
   const handleManageQuestions = (examId) => {
@@ -530,36 +631,44 @@ const ExamManagement = () => {
     }
   };
   
-  // Sửa hàm getFilteredExams
-
+  // Update the getFilteredExams function with more robust filtering
 const getFilteredExams = () => {
   console.log('Filtering exams, raw state received:', exams);
   
-  // Xử lý nhiều trường hợp cấu trúc dữ liệu có thể có
+  // Ensure we're working with an array
   let examArray = [];
   
   if (Array.isArray(exams)) {
     examArray = exams;
+  } else if (exams?.data && Array.isArray(exams.data)) {
+    examArray = exams.data;
   } else if (Array.isArray(exams?.list)) {
     examArray = exams.list;
   } else if (exams?.items && Array.isArray(exams.items)) {
     examArray = exams.items;
+  } else {
+    console.warn('Unexpected exams data structure:', exams);
+    return [];
   }
   
-  // Lọc theo trạng thái duyệt - ĐÂY LÀ NƠI CẦN SỬA
+  console.log('Normalized exam array for filtering:', examArray);
+  
   return examArray.filter(exam => {
-    // Check approval filter - Sửa đổi logic lọc đúng trường isApproved
-    if (approvalFilter === 'approved' && !exam.isApproved) return false;
-    if (approvalFilter === 'pending' && exam.isApproved) return false;
+    // Additional debug logging
+    if (approvalFilter !== 'all') {
+      console.log(`Exam ${exam.id} isApproved:`, exam.isApproved);
+    }
     
-    // Các điều kiện lọc khác
-    if (statusFilter === 'active' && !exam.isActive) return false;
-    if (statusFilter === 'inactive' && exam.isActive) return false;
+    // Check approval filter with more flexible handling
+    if (approvalFilter === 'approved' && exam.isApproved !== true) return false;
+    if (approvalFilter === 'pending' && exam.isApproved === true) return false;
     
-    // Lọc theo subject nếu có
+    // Handle status filter with more flexible handling
+    if (statusFilter === 'active' && exam.isActive !== true) return false;
+    if (statusFilter === 'inactive' && exam.isActive === true) return false;
+    
+    // Rest of filtering logic
     if (subjectFilter && exam.subject?.id !== parseInt(subjectFilter)) return false;
-    
-    // Lọc theo search term nếu có
     if (searchTerm && !exam.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     
     return true;
@@ -721,44 +830,29 @@ const getFilteredExams = () => {
               </TableRow>
             </TableHead>
             <tbody>
-              {filteredExams.map(exam => (
+              {filteredExams.map((exam) => (
                 <TableRow key={exam.id} theme={theme}>
                   <TableCell theme={theme}>{exam.id}</TableCell>
                   <TableCell theme={theme}>{exam.title}</TableCell>
-                  <TableCell theme={theme}>{exam.subject?.name || 'N/A'}</TableCell>
-                  <TableCell theme={theme}>{exam.questionCount || exam.questions?.length || '0'}</TableCell>
-                  <TableCell theme={theme}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {exam.duration}
-                      
-                    </div>
-                  </TableCell>
+                  <TableCell theme={theme}>{exam.subject?.name}</TableCell>
+                  <TableCell theme={theme}>{exam.questionCount}</TableCell>
+                  <TableCell theme={theme}>{exam.duration}</TableCell>
                   <TableCell theme={theme}>
                     <StatusBadge active={exam.isActive}>
-                      {exam.isActive ? 'Kích hoạt' : 'Ẩn'}
+                      {exam.isActive ? 'Công khai' : 'Nháp'}
                     </StatusBadge>
                   </TableCell>
                   <TableCell theme={theme}>
                     <ApprovalBadge approved={exam.isApproved}>
-                      {exam.isApproved ? 
-                        <><FaCheckCircle /> Đã duyệt</> : 
-                        <><FaTimesCircle /> Chờ duyệt</>
-                      }
+                      {exam.isApproved ? 'Đã duyệt' : 'Chờ duyệt'}
                     </ApprovalBadge>
                   </TableCell>
-                  <TableCell theme={theme} style={{textAlign: 'center'}}>
+                  <TableCell theme={theme}>
                     <ActionButton 
+                      variant="primary"
                       onClick={() => navigate(`/admin/exams/${exam.id}/details`)}
-                      title="Xem chi tiết" 
-                      style={{
-                        backgroundColor: '#3182ce',
-                        width: 'auto',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        fontWeight: '500',
-                      }}
                     >
-                      <FaEye style={{marginRight: '8px'}} /> Xem chi tiết
+                      <FaEye /> Xem chi tiết
                     </ActionButton>
                   </TableCell>
                 </TableRow>
@@ -766,40 +860,20 @@ const getFilteredExams = () => {
             </tbody>
           </Table>
           
-          {filteredExams.length === 0 && (
-            <EmptyState theme={theme}>
-              <FaSearch size={48} color={theme === 'dark' ? '#4a5568' : '#cbd5e0'} />
-              <h3>Không tìm thấy đề thi</h3>
-              <p>Không có đề thi nào phù hợp với bộ lọc hiện tại.</p>
-            </EmptyState>
-          )}
-          
           <PaginationContainer>
             <PageButton 
               theme={theme} 
-              disabled={page === 1}
+              disabled={page === 1} 
               onClick={() => setPage(page - 1)}
             >
               &lt;
             </PageButton>
-            
-            {[...Array(5)].map((_, index) => {
-              const pageNum = page - 2 + index;
-              if (pageNum < 1) return null;
-              return (
-                <PageButton 
-                  key={index}
-                  theme={theme}
-                  active={pageNum === page}
-                  onClick={() => setPage(pageNum)}
-                >
-                  {pageNum}
-                </PageButton>
-              );
-            })}
-            
+            <PageButton theme={theme} active>
+              {page}
+            </PageButton>
             <PageButton 
               theme={theme} 
+              disabled={filteredExams.length < limit} 
               onClick={() => setPage(page + 1)}
             >
               &gt;
@@ -808,47 +882,36 @@ const getFilteredExams = () => {
         </>
       )}
       
-      {/* Import Modal */}
+      <ConfirmModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteExam}
+        title="Xác nhận xóa"
+        body="Bạn có chắc chắn muốn xóa đề thi này không? Hành động này không thể hoàn tác."
+      />
+      
       <ImportExamsModal
         show={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        theme={theme}
+        onHide={() => setShowImportModal(false)}
         onImport={handleImportExams}
       />
       
-      {/* Export Modal */}
       <ExportResultsModal
         show={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        theme={theme}
+        onHide={() => setShowExportModal(false)}
         onExport={handleExportResults}
       />
       
-      {/* Existing confirm modal */}
-      <ConfirmModal
-        show={showDeleteModal}
-        title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa đề thi này? Hành động này không thể hoàn tác."
-        confirmText="Xóa đề thi"
-        cancelText="Hủy bỏ"
-        onConfirm={handleDeleteExam}
-        onCancel={() => setShowDeleteModal(false)}
-      />
-      
-      {/* Duration Update Modal */}
       <UpdateExamDurationModal
         show={showDurationModal}
-        onClose={() => setShowDurationModal(false)}
-        theme={theme}
+        onHide={() => setShowDurationModal(false)}
         exam={selectedExam}
-        onUpdateDuration={handleUpdateDuration}
+        onUpdate={handleUpdateDuration}
       />
       
-      {/* Approval Modal */}
       <ApproveExamModal
         show={showApproveModal}
-        onClose={() => setShowApproveModal(false)}
-        theme={theme}
+        onHide={() => setShowApproveModal(false)}
         exam={examToApprove}
         onApprove={handleApproveExam}
       />
