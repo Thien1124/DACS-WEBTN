@@ -92,6 +92,10 @@ import ExamQuestions from './components/admin/ExamQuestions';
 import useExamReminders from './hooks/useExamReminders';
 import ExamReminderBanner from './components/reminders/ExamReminderBanner';
 
+// Thêm import components (nếu chưa có)
+import CreateChapter from './components/admin/CreateChapter';
+import EditChapter from './components/admin/EditChapter';
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#121212' : '#f7f7f7'};
@@ -183,6 +187,13 @@ function App() {
         <AppContainer theme={theme}>
           <ToastProvider />
           
+          {isStudent && upcomingExams.length > 0 && (
+            <ExamReminderBanner 
+              upcomingExams={upcomingExams}
+              onDismiss={dismissExam}
+              theme={theme}
+            />
+          )}
           
           <Routes>
             {/* Auth Routes - Ngoài Layout */}
@@ -381,6 +392,52 @@ function App() {
               <Route path="/admin/exams/:examId/questions" element={<ExamQuestions />} />
               <Route path="/admin/exams/:examId/questions/create" element={<CreateQuestion />} />
               <Route path="/admin/exams/:examId/questions/:questionId/edit" element={<EditQuestion />} />
+
+              {/* Routes quản lý chương */}
+              <Route path="/admin/chapters/create" element={
+                <AdminRoute>
+                  <CreateChapter />
+                </AdminRoute>
+              } />
+              <Route path="/admin/chapters/:chapterId/edit" element={
+                <AdminRoute>
+                  <EditChapter />
+                </AdminRoute>
+              } />
+              
+
+              <Route path="/admin/chapters" element={
+                <AdminRoute>
+                  <ChapterManagement />
+                </AdminRoute>
+              } />
+              <Route path="/admin/chapters/create" element={
+                <AdminRoute>
+                  <CreateChapter />
+                </AdminRoute>
+              } />
+              <Route path="/admin/chapters/edit" element={
+                <AdminRoute>
+                  <EditChapter />
+                </AdminRoute>
+              } />
+
+              {/* Thêm route phần teacher routes nếu bạn muốn giáo viên cũng quản lý được chương */}
+              <Route path="/teacher/chapters" element={
+                <TeacherRoute>
+                  <ChapterManagement />
+                </TeacherRoute>
+              } />
+              <Route path="/teacher/chapters/create" element={
+                <TeacherRoute>
+                  <CreateChapter />
+                </TeacherRoute>
+              } />
+              <Route path="/teacher/chapters/:chapterId/edit" element={
+                <TeacherRoute>
+                  <EditChapter />
+                </TeacherRoute>
+              } />
             </Route>
           </Routes>
           

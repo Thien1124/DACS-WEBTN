@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
-import { FaCalendarAlt, FaClock, FaBook, FaTimes, FaArrowRight, FaBell } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaBook, FaTimes, FaArrowRight, FaBell, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); }
@@ -212,38 +212,90 @@ const DismissButton = styled.button`
   }
 `;
 
-const ExamReminderBanner = ({ exam, theme = 'light', onClose }) => {
+const ExamReminderBanner = ({ upcomingExams, theme = 'light', onDismiss }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
-  // Xác định ngày và giờ thi 
-  const examDate = new Date(exam.examDate || exam.startTime);
+  // Sử dụng useMemo để tránh tạo mới exam mỗi lần render
+  const exam = useMemo(() => {
+    return upcomingExams && upcomingExams.length > 0 ? upcomingExams[currentIndex % upcomingExams.length] : null;
+  }, [upcomingExams, currentIndex]);
   
-  // Định dạng ngày tháng
-  const formatDate = (date) => {
-    return new Intl.DateTimeFormat('vi-VN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
-  };
+  // Sử dụng useMemo để tránh tạo mới examDate mỗi lần render
+  const examDateString = useMemo(() => {
+    if (!exam) return '';
+    return exam.examDate || exam.startTime || '';
+  }, [exam]);
   
-  // Định dạng giờ
-  const formatTime = (date) => {
-    return new Intl.DateTimeFormat('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
+  // Các hàm điều hướng dùng useCallback để tránh tạo mới function
+  const nextExam = useCallback(() => {
+    if (!upcomingExams || upcomingExams.length <= 1) return;
+    setCurrentIndex((prev) => (prev + 1) % upcomingExams.length);
+  }, [upcomingExams]);
   
-  // Cập nhật đếm ngược
+  const prevExam = useCallback(() => {
+    if (!upcomingExams || upcomingExams.length <= 1) return;
+    setCurrentIndex((prev) => (prev - 1 + upcomingExams.length) % upcomingExams.length);
+  }, [upcomingExams]);
+  
+  // Hàm định dạng ngày tháng
+  const formatDate = useCallback((dateStr) => {
+    if (!dateStr) return 'Không xác định';
+    
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'Không xác định';
+      
+      return new Intl.DateTimeFormat('vi-VN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(date);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Không xác định';
+    }
+  }, []);
+  
+  // Hàm định dạng thời gian
+  const formatTime = useCallback((dateStr) => {
+    if (!dateStr) return 'Không xác định';
+    
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'Không xác định';
+      
+      return new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Không xác định';
+    }
+  }, []);
+  
+  // Hàm xử lý bỏ qua thông báo
+  const handleDismiss = useCallback(() => {
+    if (exam && onDismiss) {
+      onDismiss(exam.id);
+    }
+  }, [exam, onDismiss]);
+  
+  // useEffect được cải tiến để tránh vòng lặp vô hạn
   useEffect(() => {
+    // Thoát ngay nếu không có exam hoặc không có ngày hợp lệ
+    if (!examDateString) return;
+    
+    const targetDate = new Date(examDateString);
+    if (isNaN(targetDate.getTime())) return;
+    
     const updateCountdown = () => {
       const now = new Date();
-      const difference = examDate - now;
+      const difference = targetDate - now;
       
       if (difference <= 0) {
-        // Kỳ thi đã bắt đầu
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
@@ -253,23 +305,29 @@ const ExamReminderBanner = ({ exam, theme = 'light', onClose }) => {
       const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((difference % (1000 * 60)) / 1000);
       
-      setCountdown({ days, hours, minutes, seconds });
+      // Chỉ cập nhật nếu có thay đổi thực sự để tránh re-render không cần thiết
+      setCountdown(prev => {
+        if (prev.days !== days || prev.hours !== hours || 
+            prev.minutes !== minutes || prev.seconds !== seconds) {
+          return { days, hours, minutes, seconds };
+        }
+        return prev;
+      });
     };
     
-    // Cập nhật ngay lập tức
+    // Cập nhật ban đầu
     updateCountdown();
     
-    // Cập nhật mỗi giây
+    // Tạo interval
     const interval = setInterval(updateCountdown, 1000);
     
     return () => clearInterval(interval);
-  }, [examDate]);
+  }, [examDateString]); // Chỉ phụ thuộc vào chuỗi ngày, không phụ thuộc vào đối tượng Date
   
-  const handleDismiss = () => {
-    if (onClose) {
-      onClose(exam.id);
-    }
-  };
+  // Kiểm tra trường hợp không có dữ liệu
+  if (!upcomingExams || upcomingExams.length === 0 || !exam) {
+    return null;
+  }
   
   return (
     <BannerContainer theme={theme}>
@@ -281,23 +339,30 @@ const ExamReminderBanner = ({ exam, theme = 'light', onClose }) => {
         <IconContainer>
           <FaBell size={20} />
         </IconContainer>
-        <BannerTitle theme={theme}>Sắp tới kỳ thi: {exam.title}</BannerTitle>
+        <BannerTitle theme={theme}>
+          Sắp tới kỳ thi: {exam.title || 'Không có tiêu đề'}
+          {upcomingExams.length > 1 && (
+            <span style={{ fontSize: '0.8rem', marginLeft: '10px', fontWeight: 'normal' }}>
+              ({currentIndex + 1}/{upcomingExams.length})
+            </span>
+          )}
+        </BannerTitle>
       </BannerHeader>
       
       <BannerContent>
         <InfoItem theme={theme}>
           <FaCalendarAlt size={16} />
-          <span>{formatDate(examDate)}</span>
+          <span>{formatDate(examDateString)}</span>
         </InfoItem>
         
         <InfoItem theme={theme}>
           <FaClock size={16} />
-          <span>{formatTime(examDate)} ({exam.duration} phút)</span>
+          <span>{formatTime(examDateString)} ({exam.duration || 'N/A'} phút)</span>
         </InfoItem>
         
         <InfoItem theme={theme}>
           <FaBook size={16} />
-          <span>{exam.subject?.name || 'Chưa xác định'}</span>
+          <span>{exam.subject?.name || exam.subjectName || 'Toán học'}</span>
         </InfoItem>
       </BannerContent>
       
@@ -324,6 +389,33 @@ const ExamReminderBanner = ({ exam, theme = 'light', onClose }) => {
       </CountdownContainer>
       
       <BannerActions>
+        {upcomingExams.length > 1 && (
+          <>
+            <button 
+              onClick={prevExam}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: theme === 'dark' ? '#90CDF4' : '#3182CE'
+              }}
+            >
+              <FaChevronLeft />
+            </button>
+            <button 
+              onClick={nextExam}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                marginRight: 'auto',
+                color: theme === 'dark' ? '#90CDF4' : '#3182CE'
+              }}
+            >
+              <FaChevronRight />
+            </button>
+          </>
+        )}
         <ViewDetailsButton to={`/exams/${exam.id}`} theme={theme}>
           Xem chi tiết <FaArrowRight size={14} />
         </ViewDetailsButton>

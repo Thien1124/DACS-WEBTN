@@ -126,7 +126,7 @@ function Footer() {
           transition={{ duration: 0.8, delay: 0.5 }}
           viewport={{ once: true }}
         >
-          © {new Date().getFullYear()} LearnDG. Tất cả quyền được bảo lưu.
+          © {new Date().getFullYear()} ExamDG. Tất cả quyền được bảo lưu.
         </motion.p>
       </Copyright>
     </FooterContainer>

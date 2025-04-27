@@ -8,7 +8,6 @@ import chapterReducer from './chapterSlice';
 import authMiddleware from './middleware/authMiddleware';
 import questionsReducer from '../redux/questionSlice'; // Make sure this import exists
 
-
 export const store = configureStore({
   reducer: {
     auth: authReducer,

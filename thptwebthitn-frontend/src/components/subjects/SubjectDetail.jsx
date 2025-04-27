@@ -3,11 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { fetchSubjectById } from '../../redux/subjectSlice';
-import LoadingSpinner from '../common/LoadingSpinner';
-import ErrorDisplay from '../common/ErrorDisplay';
 import Header from '../layout/Header';
 import Footer from '../layout/Footer';
+import LoadingSpinner from '../common/LoadingSpinner';
+import ErrorDisplay from '../common/ErrorDisplay';
+import { fetchSubjectById } from '../../redux/subjectSlice';
 import { 
   FaArrowLeft, 
   FaRegFileAlt, 
@@ -15,15 +15,10 @@ import {
   FaChalkboardTeacher, 
   FaGraduationCap, 
   FaBookOpen,
-  FaCalendarAlt,
-  FaCode,
   FaInfoCircle,
   FaHistory,
-  FaSearch,
-  FaClock,
-  FaQuestionCircle,
-  FaChartLine,
-  FaTrophy
+  FaLayerGroup,
+  FaBook
 } from 'react-icons/fa';
 
 // Styled components
@@ -59,6 +54,53 @@ const BreadcrumbNav = styled.div`
   span {
     margin: 0 0.75rem;
     color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  }
+`;
+
+const NavigationRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+`;
+
+const BackButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+  
+  svg {
+    margin-right: 0.5rem;
+  }
+`;
+
+const HistoryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 8px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  }
+  
+  svg {
+    margin-right: 0.5rem;
   }
 `;
 
@@ -218,7 +260,21 @@ const DetailSection = styled.div`
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 `;
 
-
+const DetailItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#3a3a3a' : '#edf2f7'};
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
 
 const DetailLabel = styled.div`
   color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
@@ -247,6 +303,103 @@ const GradeTag = styled.span`
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 500;
+`;
+
+const ContentBox = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
+  border-radius: 15px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  line-height: 1.8;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  
+  h3 {
+    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+  }
+  
+  p {
+    margin-bottom: 1rem;
+  }
+  
+  ul, ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+`;
+
+const NoContentMessage = styled.div`
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+`;
+
+const ChaptersSection = styled.div`
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+`;
+
+const ChaptersList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+`;
+
+const ChapterCard = styled.div`
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#fff'};
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid ${props => props.theme === 'dark' ? '#4299e1' : '#3182ce'};
+`;
+
+const ChapterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+`;
+
+const ChapterTitle = styled.h3`
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ChapterDescription = styled.p`
+  margin: 0.75rem 0;
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#4a5568'};
+`;
+
+const ChapterOrder = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.theme === 'dark' ? '#4a5568' : '#edf2f7'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
+  border-radius: 9999px;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+`;
+
+const EmptyState = styled.div`
+  padding: 2rem;
+  text-align: center;
+  border: 1px dashed ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  border-radius: 0.5rem;
+  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
 `;
 
 const ButtonsRow = styled.div`
@@ -287,58 +440,6 @@ const ActionButton = styled.button`
   }
 `;
 
-const BackButton = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  border-radius: 8px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  }
-  
-  svg {
-    margin-right: 0.5rem;
-  }
-`;
-
-const ContentBox = styled.div`
-  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
-  border-radius: 15px;
-  padding: 2rem;
-  margin-top: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  line-height: 1.8;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-  
-  h3 {
-    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-  }
-  
-  p {
-    margin-bottom: 1rem;
-  }
-  
-  ul, ol {
-    margin-left: 1.5rem;
-    margin-bottom: 1rem;
-  }
-`;
-
-const NoContentMessage = styled.div`
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  font-style: italic;
-  text-align: center;
-  padding: 2rem;
-`;
-
 const LoadingContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -353,225 +454,30 @@ const LoadingContainer = styled.div`
   }
 `;
 
-const BackNavigationRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-`;
-
-const HistoryButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  border-radius: 8px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-  
-  &:hover {
-    background-color: ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  }
-  
-  svg {
-    margin-right: 0.5rem;
-  }
-`;
-
-const FiltersRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-`;
-
-const SearchContainer = styled.div`
-  display: flex;
-  align-items: center;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
-  border-radius: 8px;
-  padding: 0.5rem;
-`;
-
-const SearchInput = styled.input`
-  border: none;
-  background: none;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  padding: 0.5rem;
-  font-size: 1rem;
-  outline: none;
-  width: 200px;
-`;
-
-const SearchButton = styled.button`
-  background: none;
-  border: none;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  cursor: pointer;
-  padding: 0.5rem;
-`;
-
-const FilterButtons = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const FilterButton = styled.button`
-  background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
-  color: ${props => props.active ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 500;
-  
-  &:hover {
-    background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  }
-`;
-
-const ExamsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-`;
-
-const ExamCard = styled.div`
-  background-color: ${props => props.theme === 'dark' ? '#2a2a2a' : 'white'};
-  border-radius: 15px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-`;
-
-const ExamTitle = styled.h3`
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
-`;
-
-const ExamDetails = styled.div`
-  margin-bottom: 1rem;
-`;
-
-const DetailItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-`;
-
-const ExamActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const StartButton = styled.button`
-  background-color: #4285f4;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 500;
-  
-  &:hover {
-    background-color: #357ae8;
-  }
-`;
-
-const EmptyMessage = styled.div`
-  text-align: center;
-  color: ${props => props.theme === 'dark' ? '#a0aec0' : '#718096'};
-  font-style: italic;
-  padding: 2rem;
-`;
-
-const Pagination = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-`;
-
-const PageButton = styled.button`
-  background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#2d3748' : '#f5f7fa'};
-  color: ${props => props.active ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#4a5568'};
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 500;
-  margin: 0 0.25rem;
-  
-  &:hover {
-    background-color: ${props => props.active ? '#4285f4' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
-  }
-`;
-
 const SubjectDetail = () => {
-  const { id } = useParams();
-  const dispatch = useDispatch();
+  const { subjectId } = useParams(); // Make sure parameter name matches route definition
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { theme } = useSelector(state => state.ui);
   const { selectedSubject, loading, error } = useSelector(state => state.subjects);
   const user = useSelector(state => state.auth.user);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [difficulty, setDifficulty] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const exams = selectedSubject?.exams || [];
-  const filteredExams = exams.filter(exam => 
-    exam.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (difficulty === 'all' || exam.difficulty === difficulty)
-  );
-  const totalPages = Math.ceil(filteredExams.length / 10);
   
-  // Sử dụng thời gian và người dùng hiện tại
-  const currentTime = "2025-04-13 16:57:17";
-  const currentUser = "vinhsonvlog";
-  
-  // Handle search button click
-  const handleSearch = () => {
-    setCurrentPage(1); // Reset to first page when searching
-    // The filtering is already handled by the filteredExams variable
-  };
-  
-  // Convert difficulty code to readable text
-  const getDifficultyText = (difficulty) => {
-    const difficultyMap = {
-      'easy': 'Dễ',
-      'medium': 'Trung bình',
-      'hard': 'Khó'
-    };
-    return difficultyMap[difficulty] || 'Không xác định';
-  };
-  
-  // Handle exam start button click
-  const handleStartExam = (examId) => {
-    navigate(`/exams/${examId}`);
-  };
+  // Debug logging
+  console.log("Subject ID from params:", subjectId);
   
   useEffect(() => {
-    // Gọi API để lấy thông tin chi tiết môn học
-    dispatch(fetchSubjectById(id));
-  }, [dispatch, id]);
+    console.log("Fetching subject with ID:", subjectId);
+    dispatch(fetchSubjectById(subjectId));
+  }, [dispatch, subjectId]);
   
-  // Helper function to get subject image
+  console.log("Redux state - subject:", selectedSubject);
+  console.log("Redux state - loading:", loading);
+  console.log("Redux state - error:", error);
+  
+  // Helper function for subject image
   const getSubjectImage = () => {
     if (!selectedSubject) return 'https://via.placeholder.com/320x220?text=Môn+học';
     
-    // Thử lấy từ các thuộc tính có thể chứa hình ảnh
-    const possibleImageProps = ['image', 'imageUrl', 'img', 'thumbnail'];
-    for (const prop of possibleImageProps) {
-      if (selectedSubject[prop]) {
-        return selectedSubject[prop];
-      }
-    }
-    
-    // Nếu không có, dùng ảnh mặc định theo tên môn học
     const defaultImages = {
       'Toán': '/images/math.png',
       'Vật Lý': '/images/physics.png',
@@ -583,46 +489,18 @@ const SubjectDetail = () => {
       'Địa Lý': '/images/geography.png',
     };
     
-    return defaultImages[selectedSubject.name] || 'https://via.placeholder.com/320x220?text=Môn+học';
+    return selectedSubject.imageUrl || defaultImages[selectedSubject.name] || 'https://via.placeholder.com/320x220?text=Môn+học';
   };
   
-  // Hàm để lấy mô tả về nội dung môn học dựa trên khối lớp
-  const getSubjectContentDescription = (grade) => {
-    if (!grade) return null;
-    
-    const gradeContent = {
-      '10': {
-        'Toán': 'Chương trình Toán lớp 10 bao gồm Đại số và Hình học, giúp học sinh nắm vững kiến thức cơ bản về tập hợp, hàm số, phương trình, hệ phương trình và hình học phẳng Oxy.',
-        'Vật Lý': 'Chương trình Vật lý lớp 10 bao gồm các chủ đề về động học, động lực học, công và năng lượng, giúp học sinh hiểu rõ các quy luật vận động cơ bản.',
-        'Hóa Học': 'Chương trình Hóa học lớp 10 tập trung vào cấu tạo nguyên tử, bảng tuần hoàn, liên kết hóa học và các định luật cơ bản của hóa học.',
-        'Sinh Học': 'Chương trình Sinh học lớp 10 giới thiệu về tế bào học, sinh học phân tử và di truyền học cơ bản.',
-        'Địa Lý': 'Chương trình Địa lý lớp 10 nghiên cứu về địa lý tự nhiên của Việt Nam và thế giới, bao gồm các đặc điểm về địa hình, khí hậu và tài nguyên.',
-      },
-      '11': {
-        'Toán': 'Chương trình Toán lớp 11 nâng cao kiến thức với các chủ đề về giới hạn, đạo hàm, tích phân và hình học không gian.',
-        'Vật Lý': 'Chương trình Vật lý lớp 11 nghiên cứu về điện từ học, dao động và sóng, giúp học sinh hiểu rõ các hiện tượng vật lý phức tạp hơn.',
-        'Hóa Học': 'Chương trình Hóa học lớp 11 bao gồm các chủ đề về phản ứng oxi hóa khử, dung dịch, điện hóa và các nguyên tố phi kim.',
-        'Sinh Học': 'Chương trình Sinh học lớp 11 tập trung vào sinh lý học thực vật và động vật, sinh thái học và tiến hóa.',
-        'Địa Lý': 'Chương trình Địa lý lớp 11 nghiên cứu về địa lý kinh tế - xã hội của Việt Nam và thế giới.',
-      },
-      '12': {
-        'Toán': 'Chương trình Toán lớp 12 hoàn thiện kiến thức với các chủ đề về số phức, tổ hợp, xác suất, thống kê và nâng cao hình học không gian.',
-        'Vật Lý': 'Chương trình Vật lý lớp 12 nghiên cứu về vật lý lượng tử, vật lý hạt nhân và quang học sóng, giúp hoàn thiện kiến thức vật lý THPT.',
-        'Hóa Học': 'Chương trình Hóa học lớp 12 tập trung vào hóa học hữu cơ và các ứng dụng của hóa học trong đời sống và công nghiệp.',
-        'Sinh Học': 'Chương trình Sinh học lớp 12 nghiên cứu về di truyền nâng cao, công nghệ sinh học và ứng dụng của sinh học trong đời sống.',
-        'Địa Lý': 'Chương trình Địa lý lớp 12 hoàn thiện kiến thức về địa lý kinh tế - xã hội của các vùng miền Việt Nam và các khu vực trên thế giới.',
-      },
-    };
-    
-    // Lấy thông tin theo khối lớp và tên môn học
-    if (gradeContent[grade] && selectedSubject && gradeContent[grade][selectedSubject.name]) {
-      return gradeContent[grade][selectedSubject.name];
-    }
-    
-    // Mô tả chung nếu không có thông tin cụ thể
-    return `Chương trình học lớp ${grade} theo chuẩn của Bộ Giáo dục và Đào tạo, giúp học sinh xây dựng nền tảng kiến thức vững chắc cho kỳ thi THPT Quốc gia.`;
+  // Simple content description
+  const getSubjectContentDescription = () => {
+    if (!selectedSubject) return null;
+    return `Chương trình ${selectedSubject.name} theo chuẩn của Bộ Giáo dục và Đào tạo, giúp học sinh xây dựng nền tảng kiến thức vững chắc cho kỳ thi THPT Quốc gia.`;
   };
-
+  
+  const currentTime = new Date().toLocaleString('vi-VN');
+  const currentUser = user?.username || "Khách";
+  
   if (loading) {
     return (
       <PageWrapper theme={theme}>
@@ -633,6 +511,7 @@ const SubjectDetail = () => {
             <p>Đang tải thông tin môn học...</p>
           </LoadingContainer>
         </Container>
+        <Footer />
       </PageWrapper>
     );
   }
@@ -647,12 +526,13 @@ const SubjectDetail = () => {
             <FaArrowLeft /> Quay lại danh sách môn học
           </BackButton>
         </Container>
+        <Footer />
       </PageWrapper>
     );
   }
-
-  const subjectContent = selectedSubject?.content || getSubjectContentDescription(selectedSubject?.grade);
-
+  
+  const subjectContent = selectedSubject?.content || getSubjectContentDescription();
+  
   return (
     <PageWrapper theme={theme}>
       <Header />
@@ -667,16 +547,18 @@ const SubjectDetail = () => {
           <span>{selectedSubject?.name || 'Chi tiết môn học'}</span>
         </BreadcrumbNav>
         
-        {selectedSubject && (
+        {selectedSubject ? (
           <>
-            <BackNavigationRow>
-              <BackButton onClick={() => navigate('/subjects')}>
+            <NavigationRow>
+              <BackButton to="/subjects" theme={theme}>
                 <FaArrowLeft /> Quay lại danh sách môn học
               </BackButton>
-              {user && <HistoryButton onClick={() => navigate('/exam-history')}>
-                <FaHistory /> Xem lịch sử bài thi
-              </HistoryButton>}
-            </BackNavigationRow>
+              {user && 
+                <HistoryButton onClick={() => navigate('/exam-history')} theme={theme}>
+                  <FaHistory /> Xem lịch sử bài thi
+                </HistoryButton>
+              }
+            </NavigationRow>
 
             <SubjectHeader
               initial={{ opacity: 0, y: 20 }}
@@ -718,14 +600,7 @@ const SubjectDetail = () => {
                     <StatIcon theme={theme}>
                       <FaRegFileAlt />
                     </StatIcon>
-                    <StatText theme={theme}>{selectedSubject.examCount || 0} đề thi</StatText>
-                  </StatItem>
-                  
-                  <StatItem>
-                    <StatIcon theme={theme}>
-                      <FaUserAlt />
-                    </StatIcon>
-                    <StatText theme={theme}>{selectedSubject.teacherCount || 0} giáo viên</StatText>
+                    <StatText theme={theme}>{selectedSubject.examsCount || 0} đề thi</StatText>
                   </StatItem>
                 </SubjectStats>
               </SubjectInfo>
@@ -737,7 +612,7 @@ const SubjectDetail = () => {
             </SectionTitle>
             
             <DetailSection theme={theme}>
-              <DetailItem>
+              <DetailItem theme={theme}>
                 <DetailLabel theme={theme}>Khối lớp</DetailLabel>
                 <DetailValue theme={theme}>
                   {selectedSubject.grade ? (
@@ -748,24 +623,12 @@ const SubjectDetail = () => {
                 </DetailValue>
               </DetailItem>
               
-              <DetailItem>
+              <DetailItem theme={theme}>
                 <DetailLabel theme={theme}>Mã môn học</DetailLabel>
                 <DetailValue theme={theme}>{selectedSubject.code || 'Không có mã'}</DetailValue>
               </DetailItem>
               
-              <DetailItem>
-                <DetailLabel theme={theme}>Số tiết/tuần</DetailLabel>
-                <DetailValue theme={theme}>{selectedSubject.numberOfLessons || '3-5'} tiết</DetailValue>
-              </DetailItem>
-              
-              <DetailItem>
-                <DetailLabel theme={theme}>Loại môn học</DetailLabel>
-                <DetailValue theme={theme}>
-                  {selectedSubject.type || (selectedSubject.isOptional ? 'Môn tự chọn' : 'Môn bắt buộc')}
-                </DetailValue>
-              </DetailItem>
-              
-              <DetailItem>
+              <DetailItem theme={theme}>
                 <DetailLabel theme={theme}>Trạng thái</DetailLabel>
                 <DetailValue theme={theme}>
                   <span style={{ 
@@ -777,17 +640,13 @@ const SubjectDetail = () => {
                 </DetailValue>
               </DetailItem>
               
-              <DetailItem>
-                <DetailLabel theme={theme}>Năm học</DetailLabel>
-                <DetailValue theme={theme}>
-                  {selectedSubject.schoolYear || '2025-2026'}
-                </DetailValue>
-              </DetailItem>
-              
-              <DetailItem>
+              <DetailItem theme={theme}>
                 <DetailLabel theme={theme}>Ngày cập nhật</DetailLabel>
                 <DetailValue theme={theme}>
-                  {selectedSubject.updatedAt ? new Date(selectedSubject.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                  {selectedSubject.updatedAt ? 
+                    new Date(selectedSubject.updatedAt).toLocaleDateString('vi-VN') : 
+                    'Chưa cập nhật'
+                  }
                 </DetailValue>
               </DetailItem>
             </DetailSection>
@@ -807,103 +666,74 @@ const SubjectDetail = () => {
               )}
             </ContentBox>
 
-            <SectionTitle>Đề Thi Có Sẵn</SectionTitle>
+            <SectionTitle theme={theme}>
+              <FaLayerGroup /> Chương Học
+            </SectionTitle>
             
-            {/* Khu vực lọc đề thi */}
-            <FiltersRow>
-              <SearchContainer>
-                <SearchInput 
-                  type="text" 
-                  placeholder="Tìm kiếm đề thi..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <SearchButton onClick={handleSearch}>
-                  <FaSearch />
-                </SearchButton>
-              </SearchContainer>
-              
-              <FilterButtons>
-                <FilterButton active={difficulty === 'all'} onClick={() => setDifficulty('all')}>
-                  Tất cả
-                </FilterButton>
-                <FilterButton active={difficulty === 'easy'} onClick={() => setDifficulty('easy')}>
-                  Dễ
-                </FilterButton>
-                <FilterButton active={difficulty === 'medium'} onClick={() => setDifficulty('medium')}>
-                  Trung bình
-                </FilterButton>
-                <FilterButton active={difficulty === 'hard'} onClick={() => setDifficulty('hard')}>
-                  Khó
-                </FilterButton>
-              </FilterButtons>
-            </FiltersRow>
+            <ChaptersList>
+              {selectedSubject.chapters && selectedSubject.chapters.length > 0 ? (
+                selectedSubject.chapters
+                  .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                  .map(chapter => (
+                    <ChapterCard key={chapter.id} theme={theme}>
+                      <ChapterHeader>
+                        <ChapterTitle theme={theme}>
+                          <FaBook />
+                          {chapter.name}
+                          <ChapterOrder theme={theme}>
+                            {chapter.orderIndex || '?'}
+                          </ChapterOrder>
+                        </ChapterTitle>
+                      </ChapterHeader>
+                      
+                      <ChapterDescription theme={theme}>
+                        {chapter.description || 'Không có mô tả.'}
+                      </ChapterDescription>
+                      
+                      {chapter.lessonsCount > 0 && (
+                        <div style={{ 
+                          marginTop: '0.75rem', 
+                          fontSize: '0.9rem', 
+                          color: theme === 'dark' ? '#a0aec0' : '#718096' 
+                        }}>
+                          <FaRegFileAlt style={{ marginRight: '0.5rem', display: 'inline' }} />
+                          {chapter.lessonsCount} bài học
+                        </div>
+                      )}
+                    </ChapterCard>
+                  ))
+              ) : (
+                <EmptyState theme={theme}>
+                  Môn học này chưa có chương nào.
+                </EmptyState>
+              )}
+            </ChaptersList>
 
-            {/* Hiển thị danh sách đề thi */}
-            {loading ? (
-              <LoadingSpinner />
-            ) : exams.length > 0 ? (
-              <ExamsGrid>
-                {filteredExams.map(exam => (
-                  <ExamCard key={exam.id}>
-                    <ExamTitle>{exam.title}</ExamTitle>
-                    <ExamDetails>
-                      <DetailItem><FaClock /> {exam.duration} phút</DetailItem>
-                      <DetailItem><FaQuestionCircle /> {exam.questionCount} câu hỏi</DetailItem>
-                      <DetailItem><FaChartLine /> Độ khó: {getDifficultyText(exam.difficulty)}</DetailItem>
-                    </ExamDetails>
-                    <ExamActions>
-                      <StartButton onClick={() => handleStartExam(exam.id)}>Bắt đầu làm bài</StartButton>
-                    </ExamActions>
-                  </ExamCard>
-                ))}
-              </ExamsGrid>
-            ) : (
-              <EmptyMessage>Không có đề thi nào cho môn học này</EmptyMessage>
-            )}
-
-            {/* Phân trang */}
-            {totalPages > 1 && (
-              <Pagination>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <PageButton 
-                    key={i} 
-                    active={currentPage === i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                  >
-                    {i + 1}
-                  </PageButton>
-                ))}
-              </Pagination>
-            )}
-            
             <ButtonsRow>
               <BackButton to="/subjects" theme={theme}>
                 <FaArrowLeft /> Quay lại danh sách môn học
               </BackButton>
               
               <div>
-                <ActionButton onClick={() => navigate(`/subjects/${id}/exams`)} style={{ marginRight: '1rem' }}>
+                <ActionButton onClick={() => navigate(`/subjects/${subjectId}/exams`)}>
                   <FaRegFileAlt /> Xem danh sách đề thi
                 </ActionButton>
                 
-                {selectedSubject.canEdit && (
+                {user && (user.role === 'Admin' || user.role === 'Teacher') && (
                   <ActionButton 
-                    onClick={() => navigate(`/subject/edit/${id}`)}
-                    style={{ background: theme === 'dark' ? '#2d3748' : '#f5f7fa', color: theme === 'dark' ? '#e2e8f0' : '#4a5568' }}
+                    onClick={() => navigate(`/subject/edit/${subjectId}`)}
+                    style={{ marginLeft: '1rem' }}
                   >
                     <FaChalkboardTeacher /> Chỉnh sửa môn học
                   </ActionButton>
                 )}
-                <ActionButton as={Link} to={`/leaderboard/subjects`} style={{ background: theme === 'dark' ? '#2d3748' : '#f5f7fa', color: theme === 'dark' ? '#e2e8f0' : '#4a5568' }}>
-                  <FaTrophy /> Bảng xếp hạng
-                </ActionButton>
               </div>
             </ButtonsRow>
           </>
+        ) : (
+          <div>Không tìm thấy thông tin của môn học này.</div>
         )}
         
-        {/* Thông tin truy cập */}
         <div style={{ 
           marginTop: '3rem',
           fontSize: '0.8rem',
