@@ -71,7 +71,7 @@ namespace webthitn_backend.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ImportExams(
-            [FromForm] IFormFile csvFile,
+            IFormFile csvFile,
             [FromForm] bool skipHeader = true,
             [FromForm] string delimiter = ",")
         {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webthitn_backend.Models;
 
@@ -11,9 +12,11 @@ using webthitn_backend.Models;
 namespace webthitn_backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250426142113_AddPracticeExamModels")]
+    partial class AddPracticeExamModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,59 +158,6 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Exams");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.ExamFeedback", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ExamId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ResolvedById")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ResponseContent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamId");
-
-                    b.HasIndex("QuestionId");
-
-                    b.HasIndex("ResolvedById");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ExamFeedbacks");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.ExamQuestion", b =>
@@ -1280,7 +1230,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$/Cxexxvk6vVPMGG5OqqLU.5j0.3LsSjDMFxfVnE8gQ6UOMF1KmEwC",
+                            Password = "$2a$11$l/weN6AwHBSoufDcK8VQ0OJkG3soST88AfltpyndArya5VPdIfM7S",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1295,7 +1245,7 @@ namespace webthitn_backend.Migrations
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$nMG54liEKgkyKaVYXlNcGuCDcHGE4vQeDxo2LZwak/6B0HpvFRjRi",
+                            Password = "$2a$11$izOxzhA5ZtpAFbRlS5CWXO7XAQCJtEXj9yFQilRU.XjSMqhz6b/bW",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1309,7 +1259,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$izzyhgiR1Svoiom6F.6ZmOZ1Jopp/QwmBIC8UjaTWwojzDYaFeLk2",
+                            Password = "$2a$11$DIzLdYjuLKqt1ZB4mCOc6u5JKJr8sEVVjQSEohTyr.8AQcNL8uo9q",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",
@@ -1357,37 +1307,6 @@ namespace webthitn_backend.Migrations
                     b.Navigation("ExamType");
 
                     b.Navigation("Subject");
-                });
-
-            modelBuilder.Entity("webthitn_backend.Models.ExamFeedback", b =>
-                {
-                    b.HasOne("webthitn_backend.Models.Exam", "Exam")
-                        .WithMany()
-                        .HasForeignKey("ExamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("webthitn_backend.Models.Question", "Question")
-                        .WithMany()
-                        .HasForeignKey("QuestionId");
-
-                    b.HasOne("webthitn_backend.Models.Users.User", "ResolvedBy")
-                        .WithMany()
-                        .HasForeignKey("ResolvedById");
-
-                    b.HasOne("webthitn_backend.Models.Users.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Exam");
-
-                    b.Navigation("Question");
-
-                    b.Navigation("ResolvedBy");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.ExamQuestion", b =>

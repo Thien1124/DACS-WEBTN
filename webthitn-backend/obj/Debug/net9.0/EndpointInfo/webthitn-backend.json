@@ -664,7 +664,7 @@
           "Exam"
         ],
         "summary": "Cập nhật thông tin đề thi",
-        "description": "API này cho phép giáo viên hoặc admin cập nhật thông tin của một đề thi đã tồn tại.\r\n\r\nSample request:\r\n            \r\n    PUT /api/Exam/5\r\n    {\r\n        \"title\": \"Kiểm tra cuối kỳ Toán 12 (Đã cập nhật)\",\r\n        \"description\": \"Bài kiểm tra kiến thức cuối kỳ Toán 12 - Phiên bản mới\",\r\n        \"subjectId\": 1,\r\n        \"examTypeId\": 2,\r\n        \"duration\": 90,\r\n        \"totalScore\": 10,\r\n        \"passScore\": 6,\r\n        \"maxAttempts\": 2,\r\n        \"startTime\": \"2025-04-20T08:00:00Z\",\r\n        \"endTime\": \"2025-04-30T23:59:59Z\",\r\n        \"isActive\": true,\r\n        \"showResult\": true,\r\n        \"showAnswers\": false,\r\n        \"shuffleQuestions\": true,\r\n        \"shuffleOptions\": true,\r\n        \"autoGradeShortAnswer\": true,\r\n        \"allowPartialGrading\": true,\r\n        \"accessCode\": \"math12final\",\r\n        \"scoringConfig\": \"{\\\"gradingMethod\\\":\\\"sum\\\",\\\"partialCreditMethod\\\":\\\"proportional\\\",\\\"penaltyForWrongAnswer\\\":0}\",\r\n        \"questions\": [\r\n            {\r\n                \"questionId\": 42,\r\n                \"order\": 1,\r\n                \"score\": 1.5\r\n            },\r\n            {\r\n                \"questionId\": 56,\r\n                \"order\": 2,\r\n                \"score\": 2.5\r\n            }\r\n        ]\r\n    }",
+        "description": "API này cho phép giáo viên hoặc admin cập nhật thông tin của một đề thi đã tồn tại.\r\n\r\nSample request:\r\n            \r\n    PUT /api/Exam/5\r\n    {\r\n        \"title\": \"Kiểm tra cuối kỳ Toán 12 (Đã cập nhật)\",\r\n        \"description\": \"Bài kiểm tra kiến thức cuối kỳ Toán 12 - Phiên bản mới\",\r\n        \"subjectId\": 1,\r\n        \"examTypeId\": 2,\r\n        \"duration\": 90,\r\n        \"totalScore\": 10,\r\n        \"passScore\": 6,\r\n        \"maxAttempts\": 2,\r\n        \"startTime\": \"2025-04-25T08:00:00Z\",\r\n        \"endTime\": \"2025-04-25T23:59:59Z\",\r\n        \"isActive\": true,\r\n        \"showResult\": true,\r\n        \"showAnswers\": false,\r\n        \"shuffleQuestions\": true,\r\n        \"shuffleOptions\": true,\r\n        \"autoGradeShortAnswer\": true,\r\n        \"allowPartialGrading\": true,\r\n        \"accessCode\": \"math12final\",\r\n        \"scoringConfig\": \"{\\\"gradingMethod\\\":\\\"sum\\\",\\\"partialCreditMethod\\\":\\\"proportional\\\",\\\"penaltyForWrongAnswer\\\":0}\",\r\n        \"questions\": [\r\n            {\r\n                \"questionId\": 42,\r\n                \"order\": 1,\r\n                \"score\": 1.5\r\n            },\r\n            {\r\n                \"questionId\": 56,\r\n                \"order\": 2,\r\n                \"score\": 2.5\r\n            }\r\n        ]\r\n    }",
         "parameters": [
           {
             "name": "id",
@@ -925,6 +925,906 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Exam/clone/{id}": {
+      "post": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Nhân bản một đề thi đã có",
+        "description": "API này cho phép giáo viên hoặc admin tạo một bản sao của đề thi đã tồn tại.\r\nBản sao sẽ chứa tất cả các câu hỏi và cài đặt của đề thi gốc, nhưng với tiêu đề mới\r\nvà được đánh dấu là bản sao.\r\n\r\nSample request:\r\n\r\n    POST /api/Exam/clone/5",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần nhân bản",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Trả về thông tin đề thi đã nhân bản"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền nhân bản đề thi này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/{id}/status": {
+      "patch": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Cập nhật trạng thái đề thi (nháp hoặc công khai)",
+        "description": "API này cho phép giáo viên hoặc admin cập nhật trạng thái của một đề thi đã tồn tại.\r\nTrạng thái có thể là nháp (không công khai, chỉ người tạo mới nhìn thấy) hoặc công khai (học sinh có thể làm bài).\r\n\r\nSample request:\r\n            \r\n    PATCH /api/Exam/5/status\r\n    {\r\n        \"isActive\": true\r\n    }",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần cập nhật trạng thái",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin trạng thái mới",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExamStatusDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExamStatusDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExamStatusDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin đề thi đã cập nhật trạng thái thành công"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền cập nhật đề thi này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/{id}/approve": {
+      "post": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Duyệt đề thi (dành cho admin hoặc giáo viên quản lý)",
+        "description": "API này cho phép admin hoặc giáo viên quản lý duyệt một đề thi, \r\nxác nhận rằng đề thi đã được kiểm tra và có thể được công khai cho học sinh.\r\n\r\nSample request:\r\n            \r\n    POST /api/Exam/5/approve\r\n    {\r\n        \"approved\": true,\r\n        \"comment\": \"Đề thi phù hợp, đã kiểm tra các câu hỏi\"\r\n    }",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi cần duyệt",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin phê duyệt",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin đề thi đã được duyệt thành công"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền duyệt đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Exam/user-progress/{userId}": {
+      "get": {
+        "tags": [
+          "Exam"
+        ],
+        "summary": "Lấy thông tin tiến độ/kết quả thi của người dùng",
+        "description": "API này cho phép xem trạng thái các đề thi của người dùng, \r\nbao gồm thông tin đã thi hay chưa, điểm cao nhất, và số lần đã thử.\r\n\r\nSample request:\r\n            \r\n    GET /api/Exam/user-progress/5?subjectId=1",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID của người dùng",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "ID của môn học (không bắt buộc)",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách đề thi và tiến độ"
+          },
+          "403": {
+            "description": "Không có quyền xem thông tin này",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/ExamsImport/import": {
+      "post": {
+        "tags": [
+          "ExamsImport"
+        ],
+        "summary": "Import đề thi từ file CSV",
+        "description": "API này cho phép import đề thi từ file CSV với định dạng sau:\r\n\r\n- Dòng đầu tiên là tiêu đề cột: Title,Description,SubjectId,ExamTypeId,Duration,TotalScore,PassScore,MaxAttempts,StartTime,EndTime,...\r\n- Các dòng tiếp theo là thông tin của đề thi\r\n\r\nYêu cầu tối thiểu: Title (tiêu đề), SubjectId (ID môn học), ExamTypeId (ID loại đề thi), Duration (thời gian làm bài)\r\n\r\nĐịnh dạng thời gian: yyyy-MM-dd HH:mm:ss\r\n\r\nSample request:\r\n\r\n    POST /api/exams/import\r\n    Form-Data:\r\n        csvFile: [file CSV]\r\n        skipHeader: true",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "csvFile": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "skipHeader": {
+                    "type": "boolean",
+                    "description": "Bỏ qua dòng tiêu đề (mặc định: true)",
+                    "default": true
+                  },
+                  "delimiter": {
+                    "type": "string",
+                    "description": "Ký tự phân cách (mặc định: dấu phẩy)",
+                    "default": ","
+                  }
+                }
+              },
+              "encoding": {
+                "csvFile": {
+                  "style": "form"
+                },
+                "skipHeader": {
+                  "style": "form"
+                },
+                "delimiter": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import thành công"
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Không có quyền truy cập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/ExamsImport/import/template": {
+      "get": {
+        "tags": [
+          "ExamsImport"
+        ],
+        "summary": "Tải mẫu file CSV để import đề thi",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tests/{id}/feedback": {
+      "post": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Gửi phản hồi về bài thi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Nội dung phản hồi",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/feedback/{id}": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Lấy thông tin một phản hồi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của phản hồi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/{id}/resolve-feedback/{feedbackId}": {
+      "post": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Xử lý phản hồi bài thi (chỉ admin)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "feedbackId",
+            "in": "path",
+            "description": "ID của phản hồi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin xử lý",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveFeedbackDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveFeedbackDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveFeedbackDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/{id}/feedbacks": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Lấy danh sách phản hồi của bài thi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của bài thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số phản hồi mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Lọc theo trạng thái",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/my-feedbacks": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Lấy danh sách phản hồi của người dùng",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số phản hồi mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tests/all-feedbacks": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Lấy danh sách tất cả phản hồi (cho admin)",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số phản hồi mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Lọc theo trạng thái",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Leaderboard/{examId}": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Lấy top 10 người dùng có điểm cao nhất cho một đề thi cụ thể",
+        "parameters": [
+          {
+            "name": "examId",
+            "in": "path",
+            "description": "ID của đề thi cần lấy bảng xếp hạng",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin bảng xếp hạng thành công"
+          },
+          "404": {
+            "description": "Không tìm thấy đề thi với ID đã cho"
+          },
+          "401": {
+            "description": "Không có quyền truy cập"
           }
         }
       }
@@ -1505,6 +2405,261 @@
         }
       }
     },
+    "/api/Question/export": {
+      "post": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Xuất câu hỏi ra file Excel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportQuestionsDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportQuestionsDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportQuestionsDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Question/import-template": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Tải xuống mẫu file Excel để nhập câu hỏi",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Question/random": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Lấy câu hỏi ngẫu nhiên theo các tiêu chí",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "ID của môn học",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "chapterId",
+            "in": "query",
+            "description": "ID của chương",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "levelId",
+            "in": "query",
+            "description": "ID của mức độ câu hỏi",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "questionType",
+            "in": "query",
+            "description": "Loại câu hỏi (1: Một đáp án, 2: Đúng-sai nhiều ý, 3: Trả lời ngắn)",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "description": "Tìm kiếm theo chủ đề/tag",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Số lượng câu hỏi cần lấy",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "excludeIds",
+            "in": "query",
+            "description": "Danh sách ID câu hỏi cần loại trừ, phân cách bởi dấu phẩy",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Question/mix": {
+      "post": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Trộn câu hỏi ngẫu nhiên cho đề thi từ nhiều nguồn khác nhau",
+        "requestBody": {
+          "description": "Thông tin yêu cầu trộn câu hỏi",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionMixRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionMixRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionMixRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Results": {
       "post": {
         "tags": [
@@ -1862,6 +3017,121 @@
         }
       }
     },
+    "/api/ResultsExport/export": {
+      "get": {
+        "tags": [
+          "ResultsExport"
+        ],
+        "parameters": [
+          {
+            "name": "examId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeAnswers",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "completedOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/Statistics/overview": {
       "get": {
         "tags": [
@@ -2116,6 +3386,277 @@
         }
       }
     },
+    "/api/tests/structured": {
+      "post": {
+        "tags": [
+          "Test"
+        ],
+        "summary": "Tạo đề thi theo cấu trúc độ khó",
+        "description": "API này cho phép tạo đề thi dựa trên cấu trúc độ khó, phân bổ câu hỏi theo tỷ lệ người dùng cung cấp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStructuredTestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStructuredTestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStructuredTestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/topic/{topic}": {
+      "get": {
+        "tags": [
+          "Test"
+        ],
+        "summary": "Lấy đề thi theo chủ đề",
+        "description": "API này cho phép lấy các đề thi theo chủ đề cụ thể",
+        "parameters": [
+          {
+            "name": "topic",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/practice": {
+      "post": {
+        "tags": [
+          "Test"
+        ],
+        "summary": "Tạo đề ôn tập tùy chọn",
+        "description": "API này cho phép tạo đề ôn tập theo các tùy chọn của người dùng",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePracticeTestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePracticeTestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePracticeTestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests/history/{userId}": {
+      "get": {
+        "tags": [
+          "Test"
+        ],
+        "summary": "Lấy lịch sử luyện đề ôn tập của người dùng",
+        "description": "API này cho phép lấy lịch sử luyện đề ôn tập của một người dùng cụ thể",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/me": {
       "get": {
         "tags": [
@@ -2363,6 +3904,21 @@
         "additionalProperties": false,
         "description": "DTO cho một câu trả lời khi nộp bài"
       },
+      "ApproveExamDTO": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "description": "Trạng thái phê duyệt (true: duyệt, false: từ chối)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Nhận xét của người duyệt",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ChangePasswordRequest": {
         "required": [
           "currentPassword",
@@ -2541,6 +4097,74 @@
         "additionalProperties": false,
         "description": "DTO tạo mới bài thi"
       },
+      "CreateFeedbackDTO": {
+        "required": [
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "feedbackType": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho việc gửi phản hồi bài thi"
+      },
+      "CreatePracticeTestDTO": {
+        "required": [
+          "questionCount",
+          "subjectId"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionCount": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "levelId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionTypes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "chapterIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho việc tạo đề ôn tập tùy chọn"
+      },
       "CreateQuestionDTO": {
         "required": [
           "content",
@@ -2707,6 +4331,78 @@
         "additionalProperties": false,
         "description": "DTO để tạo mới đáp án"
       },
+      "CreateStructuredTestDTO": {
+        "required": [
+          "criteria",
+          "duration",
+          "examTypeId",
+          "subjectId",
+          "title",
+          "totalScore"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "examTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duration": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalScore": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "passScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "shuffleQuestions": {
+            "type": "boolean"
+          },
+          "showResult": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "showAnswers": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "autoGradeShortAnswer": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestCriterionDTO"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho việc tạo đề thi theo cấu trúc độ khó"
+      },
       "CreateSubjectDTO": {
         "required": [
           "gradeLevel"
@@ -2760,6 +4456,69 @@
         "additionalProperties": false,
         "description": "DTO thêm câu hỏi vào bài thi"
       },
+      "ExportQuestionsDTO": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "chapterId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "levelId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "questionType": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "nullable": true
+          },
+          "search": {
+            "type": "string",
+            "nullable": true
+          },
+          "questionIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "includeOptions": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "includeExplanation": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "includeMetadata": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "format": {
+            "type": "string",
+            "nullable": true
+          },
+          "limitRows": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ForgotPasswordRequest": {
         "type": "object",
         "properties": {
@@ -2787,6 +4546,25 @@
         },
         "additionalProperties": false
       },
+      "MixSettingsDTO": {
+        "type": "object",
+        "properties": {
+          "shuffle": {
+            "type": "boolean",
+            "description": "Có xáo trộn câu hỏi sau khi kết hợp không"
+          },
+          "includeAnswers": {
+            "type": "boolean",
+            "description": "Có bao gồm đáp án hay không"
+          },
+          "includeExplanations": {
+            "type": "boolean",
+            "description": "Có bao gồm giải thích hay không"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Cài đặt cho kết quả trộn câu hỏi"
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -2813,6 +4591,92 @@
           }
         },
         "additionalProperties": { }
+      },
+      "QuestionMixRequestDTO": {
+        "required": [
+          "sources"
+        ],
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionSourceDTO"
+            },
+            "description": "Danh sách nguồn câu hỏi"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/MixSettingsDTO"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho việc trộn câu hỏi từ nhiều nguồn"
+      },
+      "QuestionSourceDTO": {
+        "required": [
+          "count",
+          "subjectId"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "integer",
+            "description": "ID môn học (bắt buộc)",
+            "format": "int32"
+          },
+          "count": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "description": "Số lượng câu hỏi cần lấy từ nguồn này",
+            "format": "int32"
+          },
+          "chapterId": {
+            "type": "integer",
+            "description": "ID chương học (tùy chọn)",
+            "format": "int32",
+            "nullable": true
+          },
+          "levelId": {
+            "type": "integer",
+            "description": "ID mức độ câu hỏi (tùy chọn)",
+            "format": "int32",
+            "nullable": true
+          },
+          "questionType": {
+            "type": "integer",
+            "description": "Loại câu hỏi (1: Trắc nghiệm, 2: Đúng sai, 3: Trả lời ngắn)",
+            "format": "int32",
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "description": "Chủ đề/tag cần tìm kiếm",
+            "nullable": true
+          },
+          "scorePerQuestion": {
+            "type": "number",
+            "description": "Điểm mỗi câu hỏi (nếu không cung cấp, sẽ dùng điểm mặc định của câu hỏi)",
+            "format": "double",
+            "nullable": true
+          },
+          "selectionMethod": {
+            "type": "string",
+            "description": "Phương thức chọn (random: ngẫu nhiên, newest: mới nhất, oldest: cũ nhất)",
+            "nullable": true
+          },
+          "excludeIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Danh sách ID câu hỏi cần loại trừ",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO định nghĩa một nguồn câu hỏi"
       },
       "RegisterRequest": {
         "type": "object",
@@ -2865,6 +4729,25 @@
           }
         },
         "additionalProperties": false
+      },
+      "ResolveFeedbackDTO": {
+        "required": [
+          "responseContent",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "responseContent": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho việc xử lý phản hồi bài thi"
       },
       "SubmitExamDTO": {
         "type": "object",
@@ -2921,6 +4804,45 @@
         },
         "additionalProperties": false,
         "description": "DTO để nộp bài thi"
+      },
+      "TestCriterionDTO": {
+        "required": [
+          "count",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "levelId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionType": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chapterId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "topic": {
+            "type": "string",
+            "nullable": true
+          },
+          "count": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "maximum": 100,
+            "minimum": 0,1,
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho tiêu chí phân bổ câu hỏi"
       },
       "UpdateAnswerScoreDTO": {
         "type": "object",
@@ -2990,6 +4912,16 @@
         },
         "additionalProperties": false,
         "description": "DTO để cập nhật chương"
+      },
+      "UpdateExamStatusDTO": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "Trạng thái kích hoạt của đề thi (true: công khai, false: nháp)"
+          }
+        },
+        "additionalProperties": false
       },
       "UpdateQuestionDTO": {
         "type": "object",

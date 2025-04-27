@@ -275,8 +275,8 @@
                      "totalScore": 10,
                      "passScore": 6,
                      "maxAttempts": 2,
-                     "startTime": "2025-04-20T08:00:00Z",
-                     "endTime": "2025-04-30T23:59:59Z",
+                     "startTime": "2025-04-25T08:00:00Z",
+                     "endTime": "2025-04-25T23:59:59Z",
                      "isActive": true,
                      "showResult": true,
                      "showAnswers": false,
@@ -329,6 +329,210 @@
              <response code="403">Không có quyền xóa đề thi này</response>
              <response code="404">Không tìm thấy đề thi</response>
              <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.CloneExam(System.Int32)">
+            <summary>
+            Nhân bản một đề thi đã có
+            </summary>
+            <remarks>
+            API này cho phép giáo viên hoặc admin tạo một bản sao của đề thi đã tồn tại.
+            Bản sao sẽ chứa tất cả các câu hỏi và cài đặt của đề thi gốc, nhưng với tiêu đề mới
+            và được đánh dấu là bản sao.
+            
+            Sample request:
+            
+                POST /api/Exam/clone/5
+                
+            </remarks>
+            <param name="id">ID của đề thi cần nhân bản</param>
+            <returns>Thông tin về đề thi mới được tạo ra</returns>
+            <response code="201">Trả về thông tin đề thi đã nhân bản</response>
+            <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+            <response code="403">Không có quyền nhân bản đề thi này</response>
+            <response code="404">Không tìm thấy đề thi</response>
+            <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.UpdateExamStatus(System.Int32,UpdateExamStatusDTO)">
+             <summary>
+             Cập nhật trạng thái đề thi (nháp hoặc công khai)
+             </summary>
+             <remarks>
+             API này cho phép giáo viên hoặc admin cập nhật trạng thái của một đề thi đã tồn tại.
+             Trạng thái có thể là nháp (không công khai, chỉ người tạo mới nhìn thấy) hoặc công khai (học sinh có thể làm bài).
+             
+             Sample request:
+            
+                 PATCH /api/Exam/5/status
+                 {
+                     "isActive": true
+                 }
+            
+             </remarks>
+             <param name="id">ID của đề thi cần cập nhật trạng thái</param>
+             <param name="model">Thông tin trạng thái mới</param>
+             <returns>Thông tin đề thi sau khi cập nhật</returns>
+             <response code="200">Trả về thông tin đề thi đã cập nhật trạng thái thành công</response>
+             <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+             <response code="403">Không có quyền cập nhật đề thi này</response>
+             <response code="404">Không tìm thấy đề thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.ApproveExam(System.Int32,ApproveExamDTO)">
+             <summary>
+             Duyệt đề thi (dành cho admin hoặc giáo viên quản lý)
+             </summary>
+             <remarks>
+             API này cho phép admin hoặc giáo viên quản lý duyệt một đề thi, 
+             xác nhận rằng đề thi đã được kiểm tra và có thể được công khai cho học sinh.
+             
+             Sample request:
+            
+                 POST /api/Exam/5/approve
+                 {
+                     "approved": true,
+                     "comment": "Đề thi phù hợp, đã kiểm tra các câu hỏi"
+                 }
+            
+             </remarks>
+             <param name="id">ID của đề thi cần duyệt</param>
+             <param name="model">Thông tin phê duyệt</param>
+             <returns>Thông tin đề thi sau khi duyệt</returns>
+             <response code="200">Trả về thông tin đề thi đã được duyệt thành công</response>
+             <response code="400">Dữ liệu đầu vào không hợp lệ</response>
+             <response code="403">Không có quyền duyệt đề thi</response>
+             <response code="404">Không tìm thấy đề thi</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamController.GetUserExamProgress(System.Int32,System.Nullable{System.Int32})">
+             <summary>
+             Lấy thông tin tiến độ/kết quả thi của người dùng
+             </summary>
+             <remarks>
+             API này cho phép xem trạng thái các đề thi của người dùng, 
+             bao gồm thông tin đã thi hay chưa, điểm cao nhất, và số lần đã thử.
+             
+             Sample request:
+            
+                 GET /api/Exam/user-progress/5?subjectId=1
+            
+             </remarks>
+             <param name="userId">ID của người dùng</param>
+             <param name="subjectId">ID của môn học (không bắt buộc)</param>
+             <returns>Danh sách đề thi và tiến độ của người dùng</returns>
+             <response code="200">Trả về danh sách đề thi và tiến độ</response>
+             <response code="403">Không có quyền xem thông tin này</response>
+             <response code="404">Không tìm thấy người dùng</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.Extensions.Logging.ILogger{webthitn_backend.Controllers.ExamsImportController})">
+            <summary>
+            Khởi tạo controller với các dependency
+            </summary>
+            <param name="context">Database context</param>
+            <param name="logger">Logger service</param>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ImportExams(Microsoft.AspNetCore.Http.IFormFile,System.Boolean,System.String)">
+             <summary>
+             Import đề thi từ file CSV
+             </summary>
+             <remarks>
+             API này cho phép import đề thi từ file CSV với định dạng sau:
+             
+             - Dòng đầu tiên là tiêu đề cột: Title,Description,SubjectId,ExamTypeId,Duration,TotalScore,PassScore,MaxAttempts,StartTime,EndTime,...
+             - Các dòng tiếp theo là thông tin của đề thi
+             
+             Yêu cầu tối thiểu: Title (tiêu đề), SubjectId (ID môn học), ExamTypeId (ID loại đề thi), Duration (thời gian làm bài)
+             
+             Định dạng thời gian: yyyy-MM-dd HH:mm:ss
+             
+             Sample request:
+             
+                 POST /api/exams/import
+                 Form-Data:
+                     csvFile: [file CSV]
+                     skipHeader: true
+            
+             </remarks>
+             <param name="csvFile">File CSV chứa thông tin đề thi</param>
+             <param name="skipHeader">Bỏ qua dòng tiêu đề (mặc định: true)</param>
+             <param name="delimiter">Ký tự phân cách (mặc định: dấu phẩy)</param>
+             <returns>Thông tin về các đề thi đã import thành công</returns>
+             <response code="200">Import thành công</response>
+             <response code="400">Dữ liệu không hợp lệ</response>
+             <response code="401">Không có quyền truy cập</response>
+             <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.TryGetValue(System.Object,System.String,System.String@)">
+            <summary>
+            Phương thức hỗ trợ để lấy giá trị từ dynamic object
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.GetImportTemplate">
+            <summary>
+            Tải mẫu file CSV để import đề thi
+            </summary>
+            <returns>File CSV mẫu</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.FeedbackController.CreateFeedback(System.Int32,webthitn_backend.DTOs.CreateFeedbackDTO)">
+            <summary>
+            Gửi phản hồi về bài thi
+            </summary>
+            <param name="id">ID của bài thi</param>
+            <param name="model">Nội dung phản hồi</param>
+            <returns>Thông tin phản hồi đã gửi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.FeedbackController.GetFeedback(System.Int32)">
+            <summary>
+            Lấy thông tin một phản hồi
+            </summary>
+            <param name="id">ID của phản hồi</param>
+            <returns>Thông tin chi tiết phản hồi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.FeedbackController.ResolveFeedback(System.Int32,System.Int32,webthitn_backend.DTOs.ResolveFeedbackDTO)">
+            <summary>
+            Xử lý phản hồi bài thi (chỉ admin)
+            </summary>
+            <param name="id">ID của bài thi</param>
+            <param name="feedbackId">ID của phản hồi</param>
+            <param name="model">Thông tin xử lý</param>
+            <returns>Kết quả xử lý phản hồi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.FeedbackController.GetExamFeedbacks(System.Int32,System.Int32,System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Lấy danh sách phản hồi của bài thi
+            </summary>
+            <param name="id">ID của bài thi</param>
+            <param name="page">Số trang</param>
+            <param name="pageSize">Số phản hồi mỗi trang</param>
+            <param name="status">Lọc theo trạng thái</param>
+            <returns>Danh sách phản hồi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.FeedbackController.GetMyFeedbacks(System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách phản hồi của người dùng
+            </summary>
+            <param name="page">Số trang</param>
+            <param name="pageSize">Số phản hồi mỗi trang</param>
+            <returns>Danh sách phản hồi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.FeedbackController.GetAllFeedbacks(System.Int32,System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Lấy danh sách tất cả phản hồi (cho admin)
+            </summary>
+            <param name="page">Số trang</param>
+            <param name="pageSize">Số phản hồi mỗi trang</param>
+            <param name="status">Lọc theo trạng thái</param>
+            <returns>Danh sách phản hồi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.LeaderboardController.GetExamLeaderboard(System.Int32)">
+            <summary>
+            Lấy top 10 người dùng có điểm cao nhất cho một đề thi cụ thể
+            </summary>
+            <param name="examId">ID của đề thi cần lấy bảng xếp hạng</param>
+            <returns>Danh sách top 10 người dùng có điểm cao nhất</returns>
+            <response code="200">Trả về thông tin bảng xếp hạng thành công</response>
+            <response code="404">Không tìm thấy đề thi với ID đã cho</response>
+            <response code="401">Không có quyền truy cập</response>
         </member>
         <member name="M:webthitn_backend.Controllers.QuestionController.CreateQuestion(webthitn_backend.DTOs.CreateQuestionDTO)">
             <summary>
@@ -387,6 +591,56 @@
             <param name="id">ID của câu hỏi cần xóa</param>
             <returns>Thông báo kết quả xóa</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.ImportQuestions(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Boolean)">
+            <summary>
+            Nhập câu hỏi từ file Excel
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.ExportQuestions(webthitn_backend.DTOs.ExportQuestionsDTO)">
+            <summary>
+            Xuất câu hỏi ra file Excel
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.DownloadImportTemplate">
+            <summary>
+            Tải xuống mẫu file Excel để nhập câu hỏi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.FindColumnByHeader(OfficeOpenXml.ExcelWorksheet,System.String)">
+            <summary>
+            Tìm vị trí cột dựa vào tiêu đề
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.GenerateOptionLabel(System.Int32)">
+            <summary>
+            Tạo nhãn tùy chọn theo thứ tự (A, B, C, ...)
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.GetRandomQuestions(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.Int32,System.String)">
+            <summary>
+            Lấy câu hỏi ngẫu nhiên theo các tiêu chí
+            </summary>
+            <param name="subjectId">ID của môn học</param>
+            <param name="chapterId">ID của chương</param>
+            <param name="levelId">ID của mức độ câu hỏi</param>
+            <param name="questionType">Loại câu hỏi (1: Một đáp án, 2: Đúng-sai nhiều ý, 3: Trả lời ngắn)</param>
+            <param name="topic">Tìm kiếm theo chủ đề/tag</param>
+            <param name="count">Số lượng câu hỏi cần lấy</param>
+            <param name="excludeIds">Danh sách ID câu hỏi cần loại trừ, phân cách bởi dấu phẩy</param>
+            <returns>Danh sách câu hỏi ngẫu nhiên theo tiêu chí</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.GetQuestionTypeName(System.Int32)">
+            <summary>
+            Lấy tên loại câu hỏi từ mã số
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.QuestionController.MixQuestions(webthitn_backend.DTOs.QuestionMixRequestDTO)">
+            <summary>
+            Trộn câu hỏi ngẫu nhiên cho đề thi từ nhiều nguồn khác nhau
+            </summary>
+            <param name="request">Thông tin yêu cầu trộn câu hỏi</param>
+            <returns>Danh sách câu hỏi đã trộn</returns>
+        </member>
         <member name="T:webthitn_backend.Controllers.ResultsController">
             <summary>
             API quản lý kết quả bài thi
@@ -439,6 +693,39 @@
         <member name="M:webthitn_backend.Controllers.ResultsController.FormatDuration(System.Int32)">
             <summary>
             Định dạng thời gian từ giây sang định dạng phút:giây
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Controllers.ResultsExportController">
+            <summary>
+            API xuất kết quả bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ResultsExportController.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.Extensions.Logging.ILogger{webthitn_backend.Controllers.ResultsExportController})">
+            <summary>
+            Khởi tạo controller với các dependency
+            </summary>
+            <param name="context">Database context</param>
+            <param name="logger">Logger service</param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:webthitn_backend.Controllers.ResultsExportController.ExportResults(System.Int32,System.Boolean,System.String,System.String,System.Boolean)" -->
+        <member name="M:webthitn_backend.Controllers.ResultsExportController.WriteBasicResultsCsv(CsvHelper.CsvWriter,System.Collections.Generic.List{webthitn_backend.Models.ExamResult},webthitn_backend.Models.Exam)">
+            <summary>
+            Xuất kết quả cơ bản không bao gồm câu trả lời chi tiết
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ResultsExportController.WriteDetailedResultsCsv(CsvHelper.CsvWriter,System.Collections.Generic.List{webthitn_backend.Models.ExamResult},webthitn_backend.Models.Exam)">
+            <summary>
+            Xuất kết quả chi tiết bao gồm câu trả lời
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ResultsExportController.FormatAnswerText(webthitn_backend.Models.StudentAnswer)">
+            <summary>
+            Định dạng câu trả lời dựa theo loại câu hỏi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ResultsExportController.GetCurrentUserId">
+            <summary>
+            Lấy ID người dùng hiện tại từ token
             </summary>
         </member>
         <member name="M:webthitn_backend.Controllers.StatisticsController.GetOverview">
@@ -508,6 +795,43 @@
             </summary>
             <param name="activeOnly">Chỉ lấy môn học đang hoạt động</param>
             <returns>Danh sách môn học đơn giản</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.CreateStructuredTest(webthitn_backend.DTOs.CreateStructuredTestDTO)">
+            <summary>
+            Tạo đề thi theo cấu trúc độ khó
+            </summary>
+            <remarks>
+            API này cho phép tạo đề thi dựa trên cấu trúc độ khó, phân bổ câu hỏi theo tỷ lệ người dùng cung cấp
+            </remarks>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GetTestsByTopic(System.String,System.Int32,System.Int32)">
+            <summary>
+            Lấy đề thi theo chủ đề
+            </summary>
+            <remarks>
+            API này cho phép lấy các đề thi theo chủ đề cụ thể
+            </remarks>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.CreatePracticeTest(webthitn_backend.DTOs.CreatePracticeTestDTO)">
+            <summary>
+            Tạo đề ôn tập tùy chọn
+            </summary>
+            <remarks>
+            API này cho phép tạo đề ôn tập theo các tùy chọn của người dùng
+            </remarks>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GetPracticeHistory(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Lấy lịch sử luyện đề ôn tập của người dùng
+            </summary>
+            <remarks>
+            API này cho phép lấy lịch sử luyện đề ôn tập của một người dùng cụ thể
+            </remarks>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GetQuestionTypeName(System.Int32)">
+            <summary>
+            Lấy tên loại câu hỏi từ mã số
+            </summary>
         </member>
         <member name="T:webthitn_backend.Data.IRepository`1">
             <summary>
@@ -1885,6 +2209,21 @@
             Môn học
             </summary>
         </member>
+        <member name="T:webthitn_backend.DTOs.CreateFeedbackDTO">
+            <summary>
+            DTO cho việc gửi phản hồi bài thi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ResolveFeedbackDTO">
+            <summary>
+            DTO cho việc xử lý phản hồi bài thi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.FeedbackDTO">
+            <summary>
+            DTO để hiển thị thông tin phản hồi
+            </summary>
+        </member>
         <member name="T:webthitn_backend.DTOs.LessonDTO">
             <summary>
             DTO hiển thị thông tin bài học trong danh sách
@@ -2601,6 +2940,136 @@
             Điểm cho 4 câu đúng
             </summary>
         </member>
+        <member name="T:webthitn_backend.DTOs.QuestionMixRequestDTO">
+            <summary>
+            DTO cho việc trộn câu hỏi từ nhiều nguồn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixRequestDTO.Sources">
+            <summary>
+            Danh sách nguồn câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixRequestDTO.Settings">
+            <summary>
+            Cài đặt cho kết quả
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionSourceDTO">
+            <summary>
+            DTO định nghĩa một nguồn câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.SubjectId">
+            <summary>
+            ID môn học (bắt buộc)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.Count">
+            <summary>
+            Số lượng câu hỏi cần lấy từ nguồn này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.ChapterId">
+            <summary>
+            ID chương học (tùy chọn)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.LevelId">
+            <summary>
+            ID mức độ câu hỏi (tùy chọn)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.QuestionType">
+            <summary>
+            Loại câu hỏi (1: Trắc nghiệm, 2: Đúng sai, 3: Trả lời ngắn)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.Topic">
+            <summary>
+            Chủ đề/tag cần tìm kiếm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.ScorePerQuestion">
+            <summary>
+            Điểm mỗi câu hỏi (nếu không cung cấp, sẽ dùng điểm mặc định của câu hỏi)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.SelectionMethod">
+            <summary>
+            Phương thức chọn (random: ngẫu nhiên, newest: mới nhất, oldest: cũ nhất)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionSourceDTO.ExcludeIds">
+            <summary>
+            Danh sách ID câu hỏi cần loại trừ
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.MixSettingsDTO">
+            <summary>
+            Cài đặt cho kết quả trộn câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.MixSettingsDTO.Shuffle">
+            <summary>
+            Có xáo trộn câu hỏi sau khi kết hợp không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.MixSettingsDTO.IncludeAnswers">
+            <summary>
+            Có bao gồm đáp án hay không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.MixSettingsDTO.IncludeExplanations">
+            <summary>
+            Có bao gồm giải thích hay không
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionMixResultDTO">
+            <summary>
+            Kết quả từ API trộn câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixResultDTO.RequestedCount">
+            <summary>
+            Tổng số câu hỏi được yêu cầu
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixResultDTO.ActualCount">
+            <summary>
+            Tổng số câu hỏi thực tế lấy được
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixResultDTO.TotalScore">
+            <summary>
+            Tổng điểm của bộ câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixResultDTO.TypeStats">
+            <summary>
+            Thống kê theo loại câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixResultDTO.SubjectStats">
+            <summary>
+            Thống kê theo môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionMixResultDTO.Questions">
+            <summary>
+            Danh sách câu hỏi đã trộn
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionTypeStatDTO">
+            <summary>
+            Thống kê theo loại câu hỏi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.SubjectStatDTO">
+            <summary>
+            Thống kê theo môn học
+            </summary>
+        </member>
         <member name="T:webthitn_backend.DTOs.SubjectListDTO">
             <summary>
             DTO hiển thị thông tin môn học trong danh sách
@@ -2731,6 +3200,21 @@
             Ví dụ: {"1":3,"2":1,"3":4,"4":2} - ghép item bên trái với item bên phải
             </summary>
             <example>{"1":3,"2":1,"3":4,"4":2}</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CreateStructuredTestDTO">
+            <summary>
+            DTO cho việc tạo đề thi theo cấu trúc độ khó
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.TestCriterionDTO">
+            <summary>
+            DTO cho tiêu chí phân bổ câu hỏi
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CreatePracticeTestDTO">
+            <summary>
+            DTO cho việc tạo đề ôn tập tùy chọn
+            </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.UpdateAnswerScoreDTO">
             <summary>
@@ -3110,6 +3594,30 @@
             <inheritdoc />
         </member>
         <member name="M:webthitn_backend.Migrations.AddMatchingValueToQuestionOption.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddPracticeExamModels">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPracticeExamModels.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPracticeExamModels.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddPracticeExamModels.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddExamFeedbacks">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddExamFeedbacks.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddExamFeedbacks.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddExamFeedbacks.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
         <member name="T:webthitn_backend.Models.Subject">
@@ -3882,6 +4390,16 @@
             Cần đánh giá thủ công
             </summary>
         </member>
+        <member name="T:webthitn_backend.Models.PracticeExam">
+            <summary>
+            Đề ôn tập
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.PracticeResult">
+            <summary>
+            Kết quả làm bài ôn tập
+            </summary>
+        </member>
         <member name="T:webthitn_backend.Models.QuestionLevel">
             <summary>
             Entity đại diện cho mức độ khó của câu hỏi
@@ -4334,6 +4852,11 @@
             Xóa kết quả bài thi
             </summary>
         </member>
+        <member name="M:webthitn_backend.Services.ExamGradingService.UpdateExamResult(System.Int32,webthitn_backend.DTOs.UpdateResultDTO,System.Int32)">
+            <summary>
+            Cập nhật điểm bài thi (dành cho giáo viên)
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Services.ExamGradingService.GradeSingleChoiceAnswer(webthitn_backend.Models.Question,webthitn_backend.DTOs.AnswerSubmissionDTO,webthitn_backend.Models.StudentAnswer)">
             <summary>
             Chấm điểm cho câu trả lời trắc nghiệm một đáp án
@@ -4403,6 +4926,21 @@
         <member name="M:webthitn_backend.Services.IExamGradingService.UpdateExamResult(System.Int32,webthitn_backend.DTOs.UpdateResultDTO,System.Int32)">
             <summary>
             Cập nhật kết quả bài thi (dành cho giáo viên chấm điểm)
+            </summary>
+        </member>
+        <member name="P:ApproveExamDTO.Approved">
+            <summary>
+            Trạng thái phê duyệt (true: duyệt, false: từ chối)
+            </summary>
+        </member>
+        <member name="P:ApproveExamDTO.Comment">
+            <summary>
+            Nhận xét của người duyệt
+            </summary>
+        </member>
+        <member name="P:UpdateExamStatusDTO.IsActive">
+            <summary>
+            Trạng thái kích hoạt của đề thi (true: công khai, false: nháp)
             </summary>
         </member>
         <member name="T:UpdateQuestionDTO">
@@ -4523,6 +5061,21 @@
         <member name="P:UpdateQuestionOptionDTO.ScorePercentage">
             <summary>
             Mức điểm cho đáp án này (0-100%)
+            </summary>
+        </member>
+        <member name="M:WEBTHITN_Backend.Helpers.DateTimeHelper.ToVietnamTime(System.DateTime)">
+            <summary>
+            Chuyển đổi UTC DateTime sang múi giờ Việt Nam
+            </summary>
+        </member>
+        <member name="M:WEBTHITN_Backend.Helpers.DateTimeHelper.ToUtcFromVietnam(System.DateTime)">
+            <summary>
+            Chuyển đổi múi giờ Việt Nam sang UTC
+            </summary>
+        </member>
+        <member name="M:WEBTHITN_Backend.Helpers.DateTimeHelper.GetVietnamNow">
+            <summary>
+            Lấy thời gian hiện tại theo múi giờ Việt Nam
             </summary>
         </member>
     </members>

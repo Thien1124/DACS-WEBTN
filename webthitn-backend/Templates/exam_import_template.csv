@@ -1,0 +1,3 @@
+Title,Description,SubjectId,ExamTypeId,Duration,TotalScore,PassScore,MaxAttempts,StartTime,EndTime,IsActive,ShowResult,ShowAnswers,ShuffleQuestions,ShuffleOptions,AutoGradeShortAnswer,AllowPartialGrading,AccessCode,QuestionIds,QuestionScores
+"Kiểm tra giữa kỳ Toán","Bài kiểm tra kiến thức cơ bản về đạo hàm và tích phân",1,2,45,10,5,2,2025-04-20 08:00:00,2025-04-30 23:59:59,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,"math123","1;2;3;4;5","2;1;2;2;3"
+"Kiểm tra cuối kỳ Vật lý","Bài kiểm tra kiến thức nâng cao về cơ học và điện từ học",2,3,90,20,10,1,2025-05-01 08:00:00,2025-05-10 23:59:59,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,"physics123","6;7;8;9;10","4;4;4;4;4"

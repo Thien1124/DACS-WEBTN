@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
+using WEBTHITN_Backend.Helpers;
 
 namespace webthitn_backend.Services
 {
@@ -49,18 +50,30 @@ namespace webthitn_backend.Services
                 // Tính thời gian làm bài (giây)
                 int durationInSeconds = (int)(submitDto.EndTime - submitDto.StartTime).TotalSeconds;
 
+                // Ghi log thời gian để debug
+                _logger.LogInformation($"Debug: StartTime={submitDto.StartTime}, EndTime={submitDto.EndTime}");
+
                 // Bắt đầu transaction
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 try
                 {
+                    // Chuẩn hóa thời gian
+                    var startedAt = DateTimeHelper.ToVietnamTime(submitDto.StartTime);
+                    var completedAt = DateTimeHelper.ToVietnamTime(submitDto.EndTime);
+
+                    _logger.LogInformation($"Debug: VN StartTime={startedAt}, VN EndTime={completedAt}");
+
+                    // Trường QuestionTypeStatistics mặc định
+                    var defaultQuestionTypeStats = "{\"singleChoice\":{\"total\":0,\"correct\":0,\"partial\":0,\"totalScore\":0,\"maxScore\":0,\"correctPercentage\":0},\"trueFalse\":{\"total\":0,\"correct\":0,\"partial\":0,\"totalScore\":0,\"maxScore\":0,\"correctPercentage\":0},\"shortAnswer\":{\"total\":0,\"correct\":0,\"partial\":0,\"totalScore\":0,\"maxScore\":0,\"correctPercentage\":0}}";
+
                     // Tạo kết quả thi mới
                     var examResult = new ExamResult
                     {
                         ExamId = submitDto.ExamId,
                         StudentId = userId,
-                        StartedAt = submitDto.StartTime,
-                        CompletedAt = submitDto.EndTime,
+                        StartedAt = startedAt,
+                        CompletedAt = completedAt,
                         Score = 0, // Sẽ cập nhật sau khi tính điểm
                         Duration = durationInSeconds,
                         GradingStatus = 0, // 0: Pending, 1: Completed, 2: In Review
@@ -68,12 +81,14 @@ namespace webthitn_backend.Services
                         IsPassed = false, // Sẽ cập nhật sau khi tính điểm
                         AttemptNumber = attemptNumber,
                         IsSubmittedManually = submitDto.IsSubmittedManually,
-                        TeacherComment = null,
+                        TeacherComment = string.Empty, // Không để null
                         CorrectAnswers = 0, // Sẽ cập nhật sau khi tính điểm
+                        PartiallyCorrectAnswers = 0,
                         AnsweredQuestions = 0, // Sẽ cập nhật sau khi tính điểm
                         TotalQuestions = exam.ExamQuestions.Count,
                         PendingManualGradeCount = 0, // Sẽ cập nhật sau khi tính điểm
-                        PercentageScore = 0 // Sẽ cập nhật sau khi tính điểm
+                        PercentageScore = 0, // Sẽ cập nhật sau khi tính điểm
+                        QuestionTypeStatistics = defaultQuestionTypeStats // Trường bắt buộc không được null
                     };
 
                     _context.ExamResults.Add(examResult);
@@ -114,6 +129,17 @@ namespace webthitn_backend.Services
 
                         var question = examQuestion.Question;
 
+                        // Kiểm tra xem SelectedOptionId có tồn tại trong danh sách options của câu hỏi không
+                        bool isValidOptionId = false;
+                        if (answer.SelectedOptionId.HasValue)
+                        {
+                            isValidOptionId = question.Options.Any(o => o.Id == answer.SelectedOptionId.Value);
+                            if (!isValidOptionId)
+                            {
+                                _logger.LogWarning($"SelectedOptionId {answer.SelectedOptionId} không tồn tại trong câu hỏi {question.Id}");
+                            }
+                        }
+
                         // Tạo đối tượng StudentAnswer
                         var studentAnswer = new StudentAnswer
                         {
@@ -128,10 +154,10 @@ namespace webthitn_backend.Services
                             IsPartiallyCorrect = false,
                             RequiresManualReview = false,
                             Status = 0, // 0: Chưa chấm, 1: Đúng, 2: Đúng một phần, 3: Sai
-                            // Lưu trực tiếp giá trị câu trả lời
-                            SelectedOptionId = answer.SelectedOptionId,
-                            TextAnswer = answer.TextAnswer,
-                            TrueFalseAnswers = answer.TrueFalseAnswers
+                            // Chỉ gán SelectedOptionId nếu nó hợp lệ
+                            SelectedOptionId = isValidOptionId ? answer.SelectedOptionId : null,
+                            TextAnswer = answer.TextAnswer ?? string.Empty, // Đảm bảo không null
+                            TrueFalseAnswers = answer.TrueFalseAnswers ?? string.Empty // Đảm bảo không null
                         };
 
                         // Xử lý điểm số dựa trên loại câu hỏi
@@ -209,6 +235,17 @@ namespace webthitn_backend.Services
                         examResult.IsPassed = totalScore >= exam.PassScore.Value;
                     }
 
+                    // Cập nhật thống kê loại câu hỏi
+                    var questionTypeStats = new
+                    {
+                        singleChoice = GetQuestionTypeDetailStats(studentAnswers.Where(sa => sa.Question?.QuestionType == 1).ToList()),
+                        trueFalse = GetQuestionTypeDetailStats(studentAnswers.Where(sa => sa.Question?.QuestionType == 2).ToList()),
+                        shortAnswer = GetQuestionTypeDetailStats(studentAnswers.Where(sa => sa.Question?.QuestionType == 3).ToList())
+                    };
+
+                    // Chuyển thành JSON và lưu vào examResult
+                    examResult.QuestionTypeStatistics = System.Text.Json.JsonSerializer.Serialize(questionTypeStats);
+
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
@@ -218,6 +255,10 @@ namespace webthitn_backend.Services
                 {
                     await transaction.RollbackAsync();
                     _logger.LogError($"Lỗi trong transaction chấm điểm: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        _logger.LogError($"Inner exception: {ex.InnerException.Message}, Stack: {ex.InnerException.StackTrace}");
+                    }
                     return null;
                 }
             }
@@ -349,6 +390,63 @@ namespace webthitn_backend.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Lỗi khi xóa kết quả bài thi: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật điểm bài thi (dành cho giáo viên)
+        /// </summary>
+        public async Task<bool> UpdateExamResult(int resultId, UpdateResultDTO updateDto, int reviewerId)
+        {
+            try
+            {
+                // Lấy thông tin kết quả bài thi
+                var examResult = await _context.ExamResults
+                    .Include(er => er.Exam)
+                    .FirstOrDefaultAsync(er => er.Id == resultId);
+
+                if (examResult == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy kết quả bài thi ID: {resultId}");
+                    return false;
+                }
+
+                // Bắt đầu transaction
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                try
+                {
+                    // Cập nhật thông tin bằng dữ liệu từ service
+                    // Điều chỉnh trường dựa trên cấu trúc thực tế của UpdateResultDTO
+                    if (updateDto != null)
+                    {
+                        // Cập nhật thông tin cơ bản
+                        examResult.GradingStatus = 1; // Completed
+                        examResult.TeacherComment = "Đã chấm bởi giáo viên"; // Hoặc sử dụng updateDto.Message nếu có sẵn
+
+                        // Lưu thay đổi
+                        _context.ExamResults.Update(examResult);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    await transaction.CommitAsync();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError($"Lỗi khi cập nhật kết quả bài thi trong transaction: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        _logger.LogError($"Inner exception: {ex.InnerException.Message}");
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi cập nhật kết quả bài thi: {ex.Message}");
                 return false;
             }
         }
@@ -750,11 +848,6 @@ namespace webthitn_backend.Services
                 4 => "Ghép đôi",
                 _ => "Không xác định",
             };
-        }
-
-        public Task<bool> UpdateExamResult(int resultId, UpdateResultDTO updateDto, int reviewerId)
-        {
-            throw new NotImplementedException();
         }
 
         #endregion
