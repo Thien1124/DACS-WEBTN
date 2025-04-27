@@ -11,7 +11,8 @@ import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
 // Import thêm icons
-import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece } from 'react-icons/fa';
+import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle } from 'react-icons/fa';
+import NotificationBadge from '../notifications/NotificationBadge';
 
 // Styled components hiện tại...
 const HeaderContainer = styled.header`
@@ -457,6 +458,14 @@ function Header() {
               <NavItem theme={theme}>
                 <Link to="/contact" className={isActive('/contact') ? 'active' : ''}>Liên hệ</Link>
               </NavItem>
+              {user && user.role === 'Student' && (
+                <NavItem theme={theme}>
+                  <Link to="/leaderboard/subjects" className={isActive('/leaderboard/subjects') ? 'active' : ''}>
+                    <FaTrophy className="icon" />
+                    <span>Xếp hạng</span>
+                  </Link>
+                </NavItem>
+              )}
             </NavItems>
           </Nav>
 
@@ -487,6 +496,12 @@ function Header() {
                         <FaChartBar />
                         Bảng điều khiển
                       </DropdownItem>
+                      {user.role === 'Student' && (
+                      <DropdownItem to="/notifications" theme={theme}>
+                        <FaBell />
+                        Thông báo
+                      </DropdownItem>
+                      )}
                       {/* Thêm mục Lịch sử bài thi ở đây, chỉ hiển thị cho học sinh */}
                       {user.role === 'Student' && (
                         <DropdownItem to="/exam-history" theme={theme}>
@@ -537,12 +552,16 @@ function Header() {
                             Quản lý đề thi
                           </DropdownItem>
                           <DropdownItem to="/teacher/questions" theme={theme}>
-                            <FaQuestion />
-                            Quản lý câu hỏi
+                            <FaQuestionCircle />
+                            Ngân hàng câu hỏi
                           </DropdownItem>
                           <DropdownItem to="/teacher/statistics" theme={theme}>
                             <FaChartBar />
                             Thống kê bài thi
+                          </DropdownItem>
+                          <DropdownItem to="/teacher/analytics" theme={theme}>
+                            <FaChartBar className="icon" />
+                            <span className="label">Phân tích kết quả</span>
                           </DropdownItem>
                         </>
                       )}
@@ -550,6 +569,10 @@ function Header() {
                       <DropdownItem to="/settings" theme={theme}>
                         <FaCog />
                         Cài đặt tài khoản
+                      </DropdownItem>
+                      <DropdownItem to="/my-feedbacks" theme={theme}>
+                        <FaComment />
+                        Phản hồi của tôi
                       </DropdownItem>
                       <LogoutButton onClick={handleLogout}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">

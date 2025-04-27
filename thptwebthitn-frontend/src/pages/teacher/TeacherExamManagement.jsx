@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Card, Table, Form } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaFileExcel, FaFileImport, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaFileExcel, FaFileImport, FaSearch, FaChartBar } from 'react-icons/fa';
 import axios from 'axios';
 import { API_URL } from '../../config/constants';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -29,24 +29,83 @@ const TeacherExamManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/Exams/teacher`, {
+      
+      console.log('Fetching exams with params:', {
+        page: currentPage,
+        pageSize,
+        searchTerm
+      });
+      
+      const response = await axios.get(`${API_URL}/api/Exam`, {
         headers: { 'Authorization': `Bearer ${token}` },
         params: {
           page: currentPage,
           pageSize,
-          searchTerm
+          searchTerm: searchTerm || undefined // Only send if not empty
         }
       });
-
-      setExams(response.data.items);
-      setTotalPages(response.data.totalPages);
+      
+      console.log('API Response:', response.data);
+      
+      // Handle the response data with defensive coding
+      if (response.data && response.data.items && Array.isArray(response.data.items)) {
+        console.log('Found items array with length:', response.data.items.length);
+        setExams(response.data.items);
+        setTotalPages(response.data.totalPages || Math.ceil(response.data.totalCount / pageSize) || 1);
+      } else if (Array.isArray(response.data)) {
+        console.log('Response is direct array with length:', response.data.length);
+        setExams(response.data);
+        setTotalPages(Math.ceil(response.data.length / pageSize) || 1);
+      } else {
+        console.warn('Unexpected API response format:', response.data);
+        // Try to extract data from response if possible
+        const possibleItems = findArrayInObject(response.data);
+        if (possibleItems && possibleItems.length > 0) {
+          console.log('Found possible items array:', possibleItems.length);
+          setExams(possibleItems);
+          setTotalPages(Math.ceil(possibleItems.length / pageSize) || 1);
+        } else {
+          setExams([]);
+          setTotalPages(1);
+        }
+      }
+      
       setError(null);
     } catch (err) {
-      setError('Không thể tải danh sách đề thi. Vui lòng thử lại sau.');
       console.error('Error fetching exams:', err);
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.title ||
+                          'Không thể tải danh sách đề thi. Vui lòng thử lại sau.';
+      setError(errorMessage);
+      setExams([]); // Initialize as empty array to prevent undefined.length errors
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to find arrays in complex objects
+  const findArrayInObject = (obj) => {
+    if (!obj || typeof obj !== 'object') return null;
+    
+    // Check direct properties for arrays
+    for (const key in obj) {
+      if (Array.isArray(obj[key]) && obj[key].length > 0) {
+        return obj[key];
+      }
+    }
+    
+    // Check nested objects recursively (one level deep)
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        for (const nestedKey in obj[key]) {
+          if (Array.isArray(obj[key][nestedKey]) && obj[key][nestedKey].length > 0) {
+            return obj[key][nestedKey];
+          }
+        }
+      }
+    }
+    
+    return null;
   };
 
   const handleExportExcel = () => {
@@ -82,8 +141,24 @@ const TeacherExamManagement = () => {
     setCurrentPage(page);
   };
 
-  if (loading && exams.length === 0) return <LoadingSpinner />;
-  if (error) return <ErrorAlert message={error} />;
+  if (loading && (!exams || exams.length === 0)) return <LoadingSpinner />;
+  if (error) return (
+    <Container className="py-4">
+      <h2 className="mb-4">Quản lý đề thi</h2>
+      <Card className="mb-4 text-danger border-danger">
+        <Card.Body>
+          <h5><i className="bi bi-exclamation-triangle-fill me-2"></i>Lỗi</h5>
+          <p>{error}</p>
+          <Button 
+            variant="primary" 
+            onClick={() => fetchExams()}
+          >
+            Thử lại
+          </Button>
+        </Card.Body>
+      </Card>
+    </Container>
+  );
 
   return (
     <Container className="py-4">
@@ -120,6 +195,19 @@ const TeacherExamManagement = () => {
         </Col>
       </Row>
       
+      <div className="d-flex mb-3 gap-2">
+        <Button variant="primary" onClick={() => navigate('/teacher/exams/create')}>
+          <FaPlus className="me-2" /> Tạo đề thi
+        </Button>
+        <Button variant="success" onClick={() => navigate('/teacher/exams/create-structured')}>
+          <FaPlus className="me-2" /> Tạo đề thi theo cấu trúc
+        </Button>
+        {/* Thêm nút mới */}
+        <Button variant="info" onClick={() => navigate('/teacher/exams/create-topic')}>
+          <FaPlus className="me-2" /> Tạo đề thi theo chủ đề
+        </Button>
+      </div>
+
       <Card bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'}>
         <Card.Body>
           <div className="table-responsive">
@@ -136,14 +224,14 @@ const TeacherExamManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {exams.length > 0 ? (
+                {(exams && exams.length > 0) ? (
                   exams.map((exam, index) => (
-                    <tr key={exam.id}>
+                    <tr key={exam.id || index}>
                       <td>{(currentPage - 1) * pageSize + index + 1}</td>
-                      <td>{exam.title}</td>
-                      <td>{exam.subject?.name}</td>
-                      <td>{exam.duration} phút</td>
-                      <td>{exam.questionCount}</td>
+                      <td>{exam.title || 'Không có tiêu đề'}</td>
+                      <td>{exam.subject?.name || 'Không xác định'}</td>
+                      <td>{exam.duration || 0} phút</td>
+                      <td>{exam.questionCount || 0}</td>
                       <td>
                         <span className={`badge bg-${exam.isActive ? 'success' : 'danger'}`}>
                           {exam.isActive ? 'Kích hoạt' : 'Không kích hoạt'}
@@ -155,6 +243,15 @@ const TeacherExamManagement = () => {
                         </Link>
                         <Button variant="danger" size="sm">
                           <FaTrash />
+                        </Button>
+                        {/* Thêm nút phân tích vào các hành động trên mỗi đề thi */}
+                        <Button 
+                          variant="info" 
+                          size="sm"
+                          onClick={() => navigate(`/teacher/analytics/${exam.id}`)}
+                          title="Phân tích kết quả"
+                        >
+                          <FaChartBar /> Phân tích
                         </Button>
                       </td>
                     </tr>

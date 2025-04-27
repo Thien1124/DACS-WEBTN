@@ -6,7 +6,8 @@ import subjectReducer from './subjectSlice';
 import userReducer from './userSlice';
 import chapterReducer from './chapterSlice';
 import authMiddleware from './middleware/authMiddleware';
-import questionsReducer from '../redux/questionSlice'; // Make sure this import exists
+import questionsReducer from './questionSlice'; // Fixed this path
+import feedbackReducer from './feedbackSlice'; // Fixed this path
 
 export const store = configureStore({
   reducer: {
@@ -16,7 +17,8 @@ export const store = configureStore({
     subjects: subjectReducer,
     users: userReducer,
     chapters: chapterReducer,
-    questions: questionsReducer, // Make sure this line exists
+    questions: questionsReducer, 
+    feedback: feedbackReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(authMiddleware) // Only add your custom middleware

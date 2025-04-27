@@ -17,7 +17,8 @@ import { showWarningToast, showSuccessToast, showErrorToast } from '../../utils/
 import { FaClock, FaExclamationTriangle, FaPaperPlane, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import ConfirmModal from '../common/ConfirmModal';
 import { mockExam } from '../../data/mockExamData';
-
+import apiClient from '../../services/apiClient'; // Giả sử bạn đã tạo một apiClient với axios
+import FeedbackButton from '../feedback/FeedbackButton';
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -331,78 +332,90 @@ const ExamInterface = () => {
   };
   
   // Trong ExamInterface.jsx (khoảng dòng 321)
-const handleSubmitExam = useCallback(() => {
-  setIsSubmitting(true);
-  
-  // Format user answers correctly for the API
-  const submissionData = {
-    examId: parseInt(examId),
-    timeSpent: exam ? (exam.duration - Math.floor(timeRemaining / 60)) : 0, // time spent in minutes
-    answers: Object.entries(userAnswers).map(([questionId, selectedOptionId]) => ({
-      questionId: parseInt(questionId),
-      selectedOptionId: selectedOptionId
-    }))
-  };
-  
-  console.log('Submitting exam data:', submissionData);
-  
-  // Get authentication token
-  const token = localStorage.getItem('token');
-  
-  if (!token) {
-    showErrorToast('Không tìm thấy thông tin đăng nhập. Vui lòng đăng nhập lại.');
-    setIsSubmitting(false);
-    return;
-  }
-  
-  // Use the correct API endpoint from your documentation
-  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5006';
-  
-  axios.post(`${baseUrl}/api/Results`, submissionData, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  })
-    .then(response => {
-      console.log('Submission successful:', response.data);
-      showSuccessToast('Đã nộp bài thành công!');
-      navigate(`/exam-results/${response.data.id}`);
-    })
-    .catch(error => {
-      console.error('Error submitting exam:', error);
+const handleSubmitExam = async () => {
+  try {
+    setIsSubmitting(true);
+    closeSubmitModal();
+    
+    // Get current time for end time
+    const endTimeNow = new Date().toISOString();
+    
+    // Ensure we have at least empty answers for every question
+    // This is critical - the API needs an answer entry for each question
+    const allAnswers = questions.map(question => {
+      const existingAnswer = userAnswers[question.id];
       
-      // Improved error handling
-      if (error.response) {
-        // The request was made and the server responded with an error status code
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        
-        let errorMessage = 'Có lỗi xảy ra khi nộp bài';
-        
-        if (error.response.status === 404) {
-          errorMessage = 'Không tìm thấy API endpoint. Vui lòng liên hệ quản trị viên.';
-        } else if (error.response.status === 400) {
-          errorMessage = `Dữ liệu không hợp lệ: ${error.response.data?.title || 'Vui lòng kiểm tra lại'}`;
-        } else if (error.response.status === 401) {
-          errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        }
-        
-        showErrorToast(errorMessage);
-      } else if (error.request) {
-        // The request was made but no response was received
-        showErrorToast('Không nhận được phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.');
-      } else {
-        // Something happened in setting up the request
-        showErrorToast(`Lỗi: ${error.message}`);
-      }
-    })
-    .finally(() => {
-      setIsSubmitting(false);
+      return {
+        questionId: question.id,
+        startTime: exam.startTime,
+        endTime: endTimeNow,
+        selectedOptionId: existingAnswer || null,
+        textAnswer: "",
+        trueFalseAnswers: "{}",
+        matchingAnswers: "{}"
+      };
     });
-}, [examId, exam, questions, userAnswers, navigate, timeRemaining]);
+    
+    // Create a formatted payload matching the API requirements
+    const submissionData = {
+      examId: parseInt(examId),
+      startTime: exam.startTime,
+      endTime: endTimeNow,
+      notes: "Nộp bài thi", 
+      sessionId: `session_${Date.now()}`,
+      deviceInfo: navigator.userAgent || "Unknown Device",
+      isSubmittedManually: true,
+      answers: allAnswers
+    };
+    
+    console.log('Submitting exam data:', submissionData);
+    
+    // Ensure proper headers are set
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Results`, 
+      submissionData,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    console.log('API response:', response);
+    
+    if (response.data) {
+      showSuccessToast('Nộp bài thành công!');
+      
+      // Check different possible response structures
+      const resultId = response.data.id || response.data.resultId || response.data;
+      
+      if (resultId) {
+        navigate(`/exam-results/${resultId}`);
+      } else {
+        navigate('/dashboard');
+      }
+    } else {
+      showErrorToast('Không thể lấy kết quả bài thi');
+      navigate('/dashboard');
+    }
+  } catch (error) {
+    console.error('Error submitting exam:', error);
+    
+    // More detailed error logging
+    if (error.response) {
+      console.error('Response error data:', error.response.data);
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+    }
+    
+    const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.title || 
+                         'Có lỗi xảy ra khi nộp bài';
+    showErrorToast(errorMessage);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   const handleTimeUp = useCallback(() => {
     showErrorToast('Hết thời gian làm bài!');
     // Check if exam exists before submitting
@@ -533,6 +546,10 @@ const currentQuestionData = questions && questions.length > 0 ?
                 <FaArrowRight />
               </NavButton>
             </ButtonContainer>
+            <FeedbackButton 
+              testId={parseInt(examId)} 
+              questionId={currentQuestionData && currentQuestionData.id ? parseInt(currentQuestionData.id) : null} 
+            />
           </MainContent>
           
           <Sidebar>

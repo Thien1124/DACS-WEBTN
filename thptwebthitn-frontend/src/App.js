@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
 import SubjectTopStudentsPage from './pages/leaderboard/SubjectTopStudentsPage';
+import ExamResultDetail from './components/results/ExamResultDetail';
 
 
 //Teacher
@@ -63,38 +64,53 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AdminRoute from './components/Auth/AdminRoute';
 import TeacherRoute from './components/Auth/TeacherRoute';
 
-// Context & Providers
 import { AuthProvider } from './contexts/AuthProvider';
 import ToastProvider from './components/shared/ToastProvider';
-
-// Actions
 import { setAnimation } from './redux/uiSlice';
-
 import styled from 'styled-components';
 
 // CSS
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './assets/styles/toast.css';
+import TeacherExamStatisticsMockData from './pages/teacher/TeacherExamStatisticsMockData';
 
-// Thêm import
 import useRoleSynchronizer from './hooks/useRoleSynchronizer';
-
-// Add these imports
 import ExamLeaderboard from './pages/leaderboard/ExamLeaderboard';
 import SubjectLeaderboard from './pages/leaderboard/SubjectLeaderboard';
-
 import { initializeTokens } from './utils/tokenSync';
-
 import ExamQuestions from './components/admin/ExamQuestions';
 
-// Thêm imports cần thiết
 import useExamReminders from './hooks/useExamReminders';
 import ExamReminderBanner from './components/reminders/ExamReminderBanner';
 
-// Thêm import components (nếu chưa có)
 import CreateChapter from './components/admin/CreateChapter';
 import EditChapter from './components/admin/EditChapter';
+
+import PracticeBySubject from './components/practice/PracticeBySubject';
+
+import PracticeExam from './components/practice/PracticeExam';
+
+import NotificationsPage from './pages/NotificationsPage';
+
+import { NotificationProvider } from './contexts/NotificationContext';
+
+import MyFeedbacks from './pages/MyFeedbacks';
+import TeacherCreateStructuredExam from './pages/teacher/TeacherCreateStructuredExam';
+
+import SubjectsLeaderboardPage from './pages/leaderboard/SubjectsLeaderboardPage';
+
+// Thêm import cho component mới
+import TeacherQuestionBank from './pages/teacher/TeacherQuestionBank';
+
+// Thêm import mới
+import TeacherCreateTopicExam from './pages/teacher/TeacherCreateTopicExam';
+
+// Import component mới
+import TeacherExamStatistics from './pages/teacher/TeacherExamStatistics';
+
+// Thêm import cho component mới
+import TeacherResultAnalytics from './pages/teacher/TeacherResultAnalytics';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -184,264 +200,315 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContainer theme={theme}>
-          <ToastProvider />
-          
-          {isStudent && upcomingExams.length > 0 && (
-            <ExamReminderBanner 
-              upcomingExams={upcomingExams}
-              onDismiss={dismissExam}
-              theme={theme}
-            />
-          )}
-          
-          <Routes>
-            {/* Auth Routes - Ngoài Layout */}
-            <Route path="/login" element={<AuthPage type="login" />} />
-            <Route path="/register" element={<AuthPage type="register" />} />
-            <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
-            <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
+        <NotificationProvider>
+          <AppContainer theme={theme}>
+            <ToastProvider />
             
-            {/* Các routes bọc trong AppLayout */}
-            <Route element={<AppLayout />}>
-              {/* Home Page */}
-              <Route path="/" element={<HomePage />} />
+            {isStudent && upcomingExams.length > 0 && (
+              <ExamReminderBanner 
+                upcomingExams={upcomingExams}
+                onDismiss={dismissExam}
+                theme={theme}
+              />
+            )}
+            
+            <Routes>
+              {/* Auth Routes - Ngoài Layout */}
+              <Route path="/login" element={<AuthPage type="login" />} />
+              <Route path="/register" element={<AuthPage type="register" />} />
+              <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
+              <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
               
-              {/* Subject Routes */}
-              <Route path="/subjects" element={<SubjectsPage />} />
-              <Route path="/subjects/:subjectId" element={<SubjectDetail />} />
-              <Route path="/subjects/:subjectId/exams" element={<ExamList />} />
-              <Route path="/subject/create" element={
-                <ProtectedRoute roles={['Admin', 'Teacher']}>
-                  <CreateSubject />
-                </ProtectedRoute>
-              } />
-              <Route path="/subject/edit/:id" element={
-                <ProtectedRoute roles={['Admin', 'Teacher']}>
-                  <EditSubject />
-                </ProtectedRoute>
-              } />
-              <Route path="/subject/delete/:id" element={
-                <ProtectedRoute roles={['Admin']}>
-                  <DeleteSubject />
-                </ProtectedRoute>
-              } />
-              <Route path="/subject/toggle-status/:id" element={
-                <ProtectedRoute roles={['Admin', 'Teacher']}>
-                  <ToggleSubjectStatus />
-                </ProtectedRoute>
-              } />
-              
-              {/* Exam Routes */}
-              <Route path="/exams" element={<StudentExamList />} />
-              <Route path="/exams/:examId" element={
-                <ProtectedRoute>
-                  <ExamInterface />
-                </ProtectedRoute>
-              } />
-              <Route path="/Exam/:examId" element={<ExamInterface />} />
-              <Route path="/exams/:examId/questions" element={<ExamQuestionsList />} />
-              <Route path="/exam-results/:resultId" element={
-                <ProtectedRoute>
-                  <ExamResults />
-                </ProtectedRoute>
-              } />
-              <Route path="/results/history" element={
-                <ProtectedRoute>
-                  <ExamHistory />
-                </ProtectedRoute>
-              } />
-              <Route path="/exam-history" element={
-                <ProtectedRoute>
-                  <ExamHistory />
-                </ProtectedRoute>
-              } />
-              <Route path="/exams/by-subject/:subjectId" element={<ExamsBySubject />} />
-              
-              {/* User Routes */}
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/change-password" element={
-                <ProtectedRoute>
-                  <ChangePasswordForm />
-                </ProtectedRoute>
-              } />
-              
-              {/* Admin Routes */}
-              <Route path="/admin/subjects/create" element={
-                <AdminRoute>
-                  <CreateSubject />
-                </AdminRoute>
-              } />
-              <Route path="/admin/subjects/:id/edit" element={
-                <AdminRoute>
-                  <EditSubject />
-                </AdminRoute>
-              } />
-              <Route path="/admin/exams" element={
-                <AdminRoute>
-                  <ExamManagement />
-                </AdminRoute>
-              } />
-              <Route path="/admin/exams/create" element={
-                <AdminRoute>
-                  <CreateExam />
-                </AdminRoute>
-              } />
-              <Route path="/admin/exams/:id/edit" element={
-                <AdminRoute>
-                  <EditExam />
-                </AdminRoute>
-              } />
-              <Route path="/admin/questions" element={
-                <AdminRoute>
-                  <QuestionManagement />
-                </AdminRoute>
-              } />
-              <Route path="/admin/questions/create" element={
-                <AdminRoute>
-                  <CreateQuestion />
-                </AdminRoute>
-              } />
-              <Route path="/admin/questions/:id/edit" element={
-                <AdminRoute>
-                  <EditQuestion />
-                </AdminRoute>
-              } />
-              <Route path="/admin/users" element={
-                <AdminRoute>
-                  <UserManagement />
-                </AdminRoute>
-              } />
-              
-              {/* Add this new route for Admin Statistics */}
-              <Route path="/admin/statistics" element={
-                <AdminRoute>
-                  <AdminStatistics />
-                </AdminRoute>
-              } />
-              
-              {/* Add this new route for Teacher Statistics */}
-              <Route path="/teacher/statistics" element={
-                <TeacherRoute>
-                  <TeacherStatistics />
-                </TeacherRoute>
-              } />
-              
-              {/* In your Routes section, add these teacher exam management routes */}
-              <Route path="/teacher/exams" element={
-                <TeacherRoute>
-                  <TeacherExamManagement />
-                </TeacherRoute>
-              } />
-              <Route path="/teacher/exams/create" element={
-                <TeacherRoute>
-                  <TeacherCreateExam />
-                </TeacherRoute>
-              } />
-              <Route path="/teacher/exams/:id/edit" element={
-                <TeacherRoute>
-                  <TeacherEditExam />
-                </TeacherRoute>
-              } />
-              <Route path="/teacher/exams/import" element={
-                <TeacherRoute>
-                  <TeacherImportExam />
-                </TeacherRoute>
-              } />
+              {/* Các routes bọc trong AppLayout */}
+              <Route element={<AppLayout />}>
+                {/* Home Page */}
+                <Route path="/" element={<HomePage />} />
+                
+                {/* Subject Routes */}
+                <Route path="/subjects" element={<SubjectsPage />} />
+                <Route path="/subjects/:subjectId" element={<SubjectDetail />} />
+                <Route path="/subjects/:subjectId/exams" element={<ExamList />} />
+                <Route path="/subject/create" element={
+                  <ProtectedRoute roles={['Admin', 'Teacher']}>
+                    <CreateSubject />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subject/edit/:id" element={
+                  <ProtectedRoute roles={['Admin', 'Teacher']}>
+                    <EditSubject />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subject/delete/:id" element={
+                  <ProtectedRoute roles={['Admin']}>
+                    <DeleteSubject />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subject/toggle-status/:id" element={
+                  <ProtectedRoute roles={['Admin', 'Teacher']}>
+                    <ToggleSubjectStatus />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Exam Routes */}
+                <Route path="/exams" element={<StudentExamList />} />
+                <Route path="/exams/:examId" element={
+                  <ProtectedRoute>
+                    <ExamInterface />
+                  </ProtectedRoute>
+                } />
+                <Route path="/Exam/:examId" element={<ExamInterface />} />
+                <Route path="/exams/:examId/questions" element={<ExamQuestionsList />} />
+                <Route path="/exam-results/:resultId" element={
+                  <ProtectedRoute>
+                    <ExamResults />
+                  </ProtectedRoute>
+                } />
+                <Route path="/results/history" element={
+                  <ProtectedRoute>
+                    <ExamHistory />
+                  </ProtectedRoute>
+                } />
+                <Route path="/exam-history" element={
+                  <ProtectedRoute>
+                    <ExamHistory />
+                  </ProtectedRoute>
+                } />
+                <Route path="/exams/by-subject/:subjectId" element={<ExamsBySubject />} />
+                
+                {/* User Routes */}
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/change-password" element={
+                  <ProtectedRoute>
+                    <ChangePasswordForm />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/subjects/create" element={
+                  <AdminRoute>
+                    <CreateSubject />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/subjects/:id/edit" element={
+                  <AdminRoute>
+                    <EditSubject />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/exams" element={
+                  <AdminRoute>
+                    <ExamManagement />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/exams/create" element={
+                  <AdminRoute>
+                    <CreateExam />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/exams/:id/edit" element={
+                  <AdminRoute>
+                    <EditExam />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/questions" element={
+                  <AdminRoute>
+                    <QuestionManagement />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/questions/create" element={
+                  <AdminRoute>
+                    <CreateQuestion />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/questions/:id/edit" element={
+                  <AdminRoute>
+                    <EditQuestion />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <AdminRoute>
+                    <UserManagement />
+                  </AdminRoute>
+                } />
+                
+                {/* Add this new route for Admin Statistics */}
+                <Route path="/admin/statistics" element={
+                  <AdminRoute>
+                    <AdminStatistics />
+                  </AdminRoute>
+                } />
+                
+                
+                {/* In your Routes section, add these teacher exam management routes */}
+                <Route path="/teacher/exams" element={
+                  <TeacherRoute>
+                    <TeacherExamManagement />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/exams/create" element={
+                  <TeacherRoute>
+                    <TeacherCreateExam />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/exams/:id/edit" element={
+                  <TeacherRoute>
+                    <TeacherEditExam />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/exams/import" element={
+                  <TeacherRoute>
+                    <TeacherImportExam />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/exams/create-structured" element={
+                  <TeacherRoute>
+                    <TeacherCreateStructuredExam />
+                  </TeacherRoute>
+                } />
+                {/* Add these routes inside your Routes component */}
+                <Route path="/leaderboard/exams/:examId" element={
+                  <ProtectedRoute>
+                    <ExamLeaderboard />
+                  </ProtectedRoute>
+                } />
 
-              {/* Add these routes inside your Routes component */}
-              <Route path="/leaderboard/exams/:examId" element={
-                <ProtectedRoute>
-                  <ExamLeaderboard />
-                </ProtectedRoute>
-              } />
+                
 
-              <Route path="/leaderboard/subjects" element={
-                <ProtectedRoute>
-                  <SubjectLeaderboard />
-                </ProtectedRoute>
-              } />
+                {/* Add this new route for Chapter Management */}
+                <Route path="/admin/chapters" element={
+                  <AdminRoute>
+                    <ChapterManagement />
+                  </AdminRoute>
+                } />
+                <Route path="/subjects/:subjectId/top-students" element={<SubjectTopStudentsPage />} />
+                <Route path="/admin/exams/:examId/details" element={
+                            <ProtectedRoute requiredRoles={['Admin', 'Teacher']}>
+                              <ExamDetails />
+                            </ProtectedRoute>
+                          } />
+                <Route path="/admin/exams/:examId/questions" element={<ExamQuestions />} />
+                <Route path="/admin/exams/:examId/questions/create" element={<CreateQuestion />} />
+                <Route path="/admin/exams/:examId/questions/:questionId/edit" element={<EditQuestion />} />
 
-              {/* Add this new route for Chapter Management */}
-              <Route path="/admin/chapters" element={
-                <AdminRoute>
-                  <ChapterManagement />
-                </AdminRoute>
-              } />
-              <Route path="/subjects/:subjectId/top-students" element={<SubjectTopStudentsPage />} />
-              <Route path="/admin/exams/:examId/details" element={
-                          <ProtectedRoute requiredRoles={['Admin', 'Teacher']}>
-                            <ExamDetails />
-                          </ProtectedRoute>
-                        } />
-              <Route path="/admin/exams/:examId/questions" element={<ExamQuestions />} />
-              <Route path="/admin/exams/:examId/questions/create" element={<CreateQuestion />} />
-              <Route path="/admin/exams/:examId/questions/:questionId/edit" element={<EditQuestion />} />
+                {/* Routes quản lý chương */}
+                <Route path="/admin/chapters/create" element={
+                  <AdminRoute>
+                    <CreateChapter />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/chapters/:chapterId/edit" element={
+                  <AdminRoute>
+                    <EditChapter />
+                  </AdminRoute>
+                } />
+                
 
-              {/* Routes quản lý chương */}
-              <Route path="/admin/chapters/create" element={
-                <AdminRoute>
-                  <CreateChapter />
-                </AdminRoute>
-              } />
-              <Route path="/admin/chapters/:chapterId/edit" element={
-                <AdminRoute>
-                  <EditChapter />
-                </AdminRoute>
-              } />
+                <Route path="/admin/chapters" element={
+                  <AdminRoute>
+                    <ChapterManagement />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/chapters/create" element={
+                  <AdminRoute>
+                    <CreateChapter />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/chapters/edit" element={
+                  <AdminRoute>
+                    <EditChapter />
+                  </AdminRoute>
+                } />
+
+                {/* Thêm route phần teacher routes nếu bạn muốn giáo viên cũng quản lý được chương */}
+                <Route path="/teacher/chapters" element={
+                  <TeacherRoute>
+                    <ChapterManagement />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/chapters/create" element={
+                  <TeacherRoute>
+                    <CreateChapter />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/chapters/:chapterId/edit" element={
+                  <TeacherRoute>
+                    <EditChapter />
+                  </TeacherRoute>
+                } />
+                <Route path="/exam-results/:resultId" element={<ExamResultDetail />} />
+                {/* Thêm route mới */}
+                <Route path="/practice" element={<PracticeBySubject />} />
+                <Route path="/practice-exam" element={<PracticeExam />} />
+                <Route path="/teacher/exams/create-topic" element={<TeacherCreateTopicExam />} />
+                {/* Thêm route vào phần Routes trong AppLayout */}
+                <Route path="/notifications" element={
+                  <ProtectedRoute roles={['Student']}>
+                    <NotificationsPage />
+                  </ProtectedRoute>
+                } />
+
+                {/* Trong phần Routes, thêm route mới */}
+                <Route path="/my-feedbacks" element={
+                  <ProtectedRoute roles={['Student']}>
+                    <MyFeedbacks />
+                  </ProtectedRoute>
+                } />
+
+                {/* Trong phần Routes, thêm route mới */}
+                <Route path="/leaderboard/subjects" element={
+                  <ProtectedRoute roles={['Student']}>
+                    <SubjectsLeaderboardPage />
+                  </ProtectedRoute>
+                } />
+
+                {/* Thêm routes mới cho quản lý ngân hàng câu hỏi */}
+                <Route path="/teacher/questions" element={
+                  <TeacherRoute>
+                    <TeacherQuestionBank />
+                  </TeacherRoute>
+                } />
+
+                {/* Thêm route này vào phần Teacher Routes */}
+                <Route path="/teacher/statistics" element={
+                  <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                    <TeacherRoute>
+                    <TeacherExamStatisticsMockData />
+                    </TeacherRoute>
+                  </ProtectedRoute>
+                } />
+
+                {/* Thêm các routes sau vào phần TeacherRoute trong App.js */}
+                <Route path="/teacher/analytics" element={
+                  <TeacherRoute>
+                    <TeacherResultAnalytics />
+                  </TeacherRoute>
+                } />
+
+                <Route path="/teacher/analytics/:examId" element={
+                  <TeacherRoute>
+                    <TeacherResultAnalytics />
+                  </TeacherRoute>
+                } />
+                </Route>
               
-
-              <Route path="/admin/chapters" element={
-                <AdminRoute>
-                  <ChapterManagement />
-                </AdminRoute>
-              } />
-              <Route path="/admin/chapters/create" element={
-                <AdminRoute>
-                  <CreateChapter />
-                </AdminRoute>
-              } />
-              <Route path="/admin/chapters/edit" element={
-                <AdminRoute>
-                  <EditChapter />
-                </AdminRoute>
-              } />
-
-              {/* Thêm route phần teacher routes nếu bạn muốn giáo viên cũng quản lý được chương */}
-              <Route path="/teacher/chapters" element={
-                <TeacherRoute>
-                  <ChapterManagement />
-                </TeacherRoute>
-              } />
-              <Route path="/teacher/chapters/create" element={
-                <TeacherRoute>
-                  <CreateChapter />
-                </TeacherRoute>
-              } />
-              <Route path="/teacher/chapters/:chapterId/edit" element={
-                <TeacherRoute>
-                  <EditChapter />
-                </TeacherRoute>
-              } />
-            </Route>
-          </Routes>
-          
-        </AppContainer>
+            </Routes>
+            
+          </AppContainer>
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );

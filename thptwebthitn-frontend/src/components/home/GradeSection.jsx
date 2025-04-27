@@ -1,209 +1,155 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React from 'react';
+import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { FaBookOpen, FaChalkboardTeacher, FaGraduationCap, FaArrowRight } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useSelector } from 'react-redux';
-import SubjectSelectionModal from '../common/SubjectSelectionModal';
-
-const SectionContainer = styled.section`
-  padding: 4rem 2rem;
-  background-color: ${props => props.theme === 'dark' ? '#1a1e2b' : '#f8f9fa'};
-`;
 
 const SectionTitle = styled.h2`
   text-align: center;
-  margin-bottom: 3rem;
-  font-size: 2.5rem;
-  position: relative;
-  
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(45deg, #007bff, #00d6ff);
-  }
-`;
-
-const GradesContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const GradeCard = styled(motion.div)`
-  background: ${props => props.theme === 'dark' 
-    ? 'linear-gradient(145deg, #232a3d, #1e2433)' 
-    : 'linear-gradient(145deg, #ffffff, #f0f0f0)'};
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: ${props => props.theme === 'dark'
-    ? '0 10px 20px rgba(0,0,0,0.3)'
-    : '0 10px 20px rgba(0,0,0,0.1)'};
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Ensure all cards have the same height */
-  
-  &:hover {
-    transform: translateY(-10px);
-    box-shadow: ${props => props.theme === 'dark'
-      ? '0 15px 30px rgba(0,0,0,0.4)'
-      : '0 15px 30px rgba(0,0,0,0.15)'};
-  }
-`;
-
-const GradeHeader = styled.div`
-  padding: 1.5rem;
-  background: linear-gradient(45deg, ${props => props.gradientStart}, ${props => props.gradientEnd});
-  text-align: center;
-`;
-
-const GradeNumber = styled.h3`
-  font-size: 2.5rem;
-  margin: 0;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-`;
-
-const GradeContent = styled.div`
-  padding: 1.5rem;
-  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#333'};
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1; /* Allow content to grow and fill space */
-`;
-
-const SubjectsList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-  margin: 0 0 1.5rem 0;
-  flex-grow: 1; /* Make the list take up available space */
-`;
-
-const SubjectItem = styled.li`
-  margin-bottom: 0.75rem;
-  padding-left: 1.5rem;
-  position: relative;
-  
-  &:before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: #007bff;
-  }
-`;
-
-const PracticeButton = styled.button`
-  width: 100%;
-  padding: 0.75rem;
-  background: linear-gradient(45deg, #007bff, #00d6ff);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  margin-bottom: 2.5rem;
   font-weight: 600;
-  font-size: 1.1rem;
+`;
+
+const GradeCard = styled(Card)`
+  height: 100%;
+  transition: all 0.3s;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
-  margin-top: auto; /* Push button to the bottom of the card */
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    
+    .card-img-overlay {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    
+    .btn {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
-  &:active {
-    transform: translateY(0);
+  .card-img-overlay {
+    background-color: rgba(0, 0, 0, 0.4);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .btn {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s;
+  }
+  
+  .subject-list {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
   }
 `;
 
-// Updated grade data with the same number of subjects for each grade
-const grades = [
-  {
-    number: 10,
-    subjects: ['Toán học', 'Vật lý', 'Hóa học', 'Ngữ văn', 'Tiếng Anh'],
-    gradientStart: '#1e3c72',
-    gradientEnd: '#2a5298'
-  },
-  {
-    number: 11,
-    subjects: ['Toán nâng cao', 'Vật lý', 'Hóa học', 'Ngữ văn', 'Tiếng Anh'],
-    gradientStart: '#6a3093',
-    gradientEnd: '#a044ff'
-  },
-  {
-    number: 12,
-    subjects: ['Luyện thi đại học', 'Thực hành đề thi', 'Kỹ năng làm bài', 'Kỹ thuật viết luận', 'Lý thuyết trọng tâm'],
-    gradientStart: '#11998e',
-    gradientEnd: '#38ef7d'
-  }
-];
+const IconBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: ${props => props.bgColor};
+  color: white;
+  margin-right: 10px;
+`;
 
-function GradeSection() {
-  const { theme } = useSelector(state => state.ui);
-  const [selectedGrade, setSelectedGrade] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const StyledButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  transition: all 0.3s;
   
-  const handlePracticeClick = (grade) => {
-    setSelectedGrade(grade);
-    setIsModalOpen(true);
-  };
+  &:hover {
+    transform: translateX(5px);
+  }
+`;
+
+const GradeSection = () => {
+  const navigate = useNavigate();
   
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  // Data for grade levels with subjects and images
+  const grades = [
+    {
+      id: 10,
+      name: 'Lớp 10',
+      icon: <FaBookOpen />,
+      color: '#4A6FA5',
+      image: 'https://images.unsplash.com/photo-1504275107627-0c2ba7a43dba?auto=format&fit=crop&w=500&q=80',
+      subjects: ['Toán học', 'Vật lý', 'Hóa học', 'Ngữ văn', 'Tiếng Anh']
+    },
+    {
+      id: 11,
+      name: 'Lớp 11',
+      icon: <FaChalkboardTeacher />,
+      color: '#6B8E23',
+      image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=500&q=80',
+      subjects: ['Toán nâng cao', 'Vật lý', 'Hóa học', 'Ngữ văn', 'Tiếng Anh']
+    },
+    {
+      id: 12,
+      name: 'Lớp 12',
+      icon: <FaGraduationCap />,
+      color: '#B22222',
+      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=500&q=80',
+      subjects: ['Luyện thi đại học', 'Thực hành đề thi', 'Kỹ năng làm bài', 'Kỹ thuật viết luận', 'Lý thuyết trọng tâm']
+    }
+  ];
+  
+  const handleGradeSelect = (gradeId) => {
+    // Chuyển người dùng đến trang practice với tham số grade đã chọn
+    navigate(`/practice?grade=${gradeId}`);
   };
   
   return (
-    <SectionContainer theme={theme} id="courses">
-      <SectionTitle className="hero-title">Các Lớp Học</SectionTitle>
+    <Container className="my-5 py-4">
+      <SectionTitle>Luyện đề theo lớp</SectionTitle>
       
-      <GradesContainer>
-        {grades.map((grade, index) => (
-          <GradeCard 
-            key={grade.number}
-            theme={theme}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.2 }}
-          >
-            <GradeHeader 
-              gradientStart={grade.gradientStart} 
-              gradientEnd={grade.gradientEnd}
-            >
-              <GradeNumber>Lớp {grade.number}</GradeNumber>
-            </GradeHeader>
-            
-            <GradeContent theme={theme}>
-              <SubjectsList>
-                {grade.subjects.map((subject, i) => (
-                  <SubjectItem key={i}>{subject}</SubjectItem>
-                ))}
-              </SubjectsList>
-              
-              <PracticeButton onClick={() => handlePracticeClick(grade)}>
-                Luyện Ngay
-              </PracticeButton>
-            </GradeContent>
-          </GradeCard>
+      <Row>
+        {grades.map((grade) => (
+          <Col key={grade.id} md={4} className="mb-4">
+            <GradeCard className="text-white">
+              <Card.Img src={grade.image} alt={grade.name} style={{ height: '250px', objectFit: 'cover' }} />
+              <Card.ImgOverlay>
+                <div>
+                  <div className="d-flex align-items-center mb-2">
+                    <IconBadge bgColor={grade.color}>
+                      {grade.icon}
+                    </IconBadge>
+                    <h3 className="card-title mb-0">{grade.name}</h3>
+                  </div>
+                  <div className="subject-list">
+                    {grade.subjects.map((subject, idx) => (
+                      <div key={idx}>{subject}</div>
+                    ))}
+                  </div>
+                </div>
+                <StyledButton 
+                  variant="light" 
+                  className="w-100"
+                  onClick={() => handleGradeSelect(grade.id)}
+                >
+                  Luyện Ngay <FaArrowRight />
+                </StyledButton>
+              </Card.ImgOverlay>
+            </GradeCard>
+          </Col>
         ))}
-      </GradesContainer>
-      
-      {/* Subject Selection Modal */}
-      {selectedGrade && (
-        <SubjectSelectionModal 
-          isOpen={isModalOpen} 
-          onClose={handleCloseModal} 
-          gradeInfo={selectedGrade} 
-          theme={theme}
-        />
-      )}
-    </SectionContainer>
+      </Row>
+    </Container>
   );
-}
+};
 
 export default GradeSection;

@@ -589,36 +589,104 @@ const CreateQuestion = () => {
   }, []);
 
   // Load chapters when subject changes
-  useEffect(() => {
-    const fetchChapters = async () => {
-      if (!questionData.subjectId) {
-        setChapters([]);
-        return;
-      }
+useEffect(() => {
+  const fetchChapters = async () => {
+    if (!questionData.subjectId) {
+      setChapters([]);
+      return;
+    }
 
-      try {
-        setIsLoadingChapters(true);
-        const response = await apiClient.get(`/api/Chapter/BySubject/${questionData.subjectId}`);
+    try {
+      setIsLoadingChapters(true);
+      
+      console.log(`Đang tải danh sách chương cho môn học ID: ${questionData.subjectId}`);
+      
+      // Thử nhiều API endpoint khác nhau
+      const endpoints = [
+        // 1. API endpoint cũ
+        { url: `/api/Chapter/BySubject/${questionData.subjectId}`, params: {} },
         
-        if (response.data && Array.isArray(response.data)) {
-          setChapters(response.data);
-        } else if (response.data && Array.isArray(response.data.data)) {
-          setChapters(response.data.data);
-        } else if (response.data && Array.isArray(response.data.items)) {
-          setChapters(response.data.items);
-        } else {
-          setChapters([]);
+        // 2. API endpoint mới với tham số query
+        { 
+          url: `/api/Chapter`, 
+          params: {
+            subjectId: questionData.subjectId,
+            page: 1,
+            pageSize: 100,
+            includeInactive: false
+          } 
+        },
+        
+        // 3. Thử endpoint khác
+        { url: `/api/Chapter/by-subject/${questionData.subjectId}`, params: {} },
+        
+        // 4. Thử endpoint viết thường
+        { url: `/api/chapter/by-subject/${questionData.subjectId}`, params: {} },
+        
+        // 5. Thử endpoint cấu trúc khác
+        { url: `/api/subjects/${questionData.subjectId}/chapters`, params: {} }
+      ];
+      
+      let response = null;
+      let error = null;
+      
+      // Thử từng endpoint cho đến khi thành công
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`Thử tải chương với endpoint: ${endpoint.url}`, endpoint.params);
+          response = await apiClient.get(endpoint.url, { params: endpoint.params });
+          console.log(`Thành công với endpoint: ${endpoint.url}`, response.data);
+          break; // Thoát vòng lặp nếu thành công
+        } catch (err) {
+          console.log(`Thất bại với endpoint ${endpoint.url}:`, err.message);
+          error = err;
+          // Tiếp tục với endpoint khác
         }
-      } catch (error) {
-        console.error('Error fetching chapters:', error);
-        setChapters([]);
-      } finally {
-        setIsLoadingChapters(false);
       }
-    };
+      
+      if (!response && error) {
+        throw error;
+      }
+      
+      let chaptersData = [];
+      
+      // Xử lý các định dạng response khác nhau
+      if (response.data?.items && Array.isArray(response.data.items)) {
+        console.log('Trích xuất từ response.data.items', response.data.items.length);
+        chaptersData = response.data.items;
+      } else if (Array.isArray(response.data)) {
+        console.log('Response là một mảng trực tiếp', response.data.length);
+        chaptersData = response.data;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        console.log('Trích xuất từ response.data.data', response.data.data.length);
+        chaptersData = response.data.data;
+      } else if (response.data && typeof response.data === 'object') {
+        // Tìm bất kỳ thuộc tính nào là mảng trong đối tượng
+        for (const key in response.data) {
+          if (Array.isArray(response.data[key])) {
+            console.log(`Tìm thấy mảng trong thuộc tính: ${key}`, response.data[key].length);
+            chaptersData = response.data[key];
+            break;
+          }
+        }
+      }
+      
+      console.log('Dữ liệu chương đã xử lý:', chaptersData);
+      setChapters(chaptersData || []);
+      
+      if (chaptersData.length === 0) {
+        console.warn('Không tìm thấy chương nào cho môn học này.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi tải danh sách chương:', error);
+      setChapters([]);
+    } finally {
+      setIsLoadingChapters(false);
+    }
+  };
 
-    fetchChapters();
-  }, [questionData.subjectId]);
+  fetchChapters();
+}, [questionData.subjectId]);
 
   // Handle question type change
   useEffect(() => {

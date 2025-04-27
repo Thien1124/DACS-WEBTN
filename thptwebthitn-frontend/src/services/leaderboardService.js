@@ -14,3 +14,18 @@ export const getExamLeaderboard = async (examId) => {
     throw error;
   }
 };
+
+/**
+ * Get exams by subject ID
+ * @param {number} subjectId - Subject ID
+ * @returns {Promise} - Promise resolving to exams data
+ */
+export const getExamsBySubject = async (subjectId) => {
+  try {
+    const response = await apiClient.get(`/api/Exam/BySubject/${subjectId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching exams for subject ${subjectId}:`, error);
+    throw error;
+  }
+};

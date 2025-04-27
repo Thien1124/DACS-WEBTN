@@ -6,6 +6,8 @@ import { logout } from '../../redux/authSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUserData } from '../../utils/auth';
 import { showInfoToast,showSuccessToast } from '../../utils/toastUtils';
+import NotificationBadge from '../notifications/NotificationBadge';
+
 const NavbarContainer = styled.nav`
   background-color: ${props => props.theme === 'dark' ? '#222' : 'white'};
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -367,6 +369,10 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
                   <UserDropdownItem theme={theme} to="/profile">Hồ sơ cá nhân</UserDropdownItem>
                   <UserDropdownItem theme={theme} to="/history">Lịch sử bài thi</UserDropdownItem>
                   <UserDropdownItem theme={theme} to="/change-password">Đổi mật khẩu</UserDropdownItem>
+                  <UserDropdownItem theme={theme} to="/notifications">
+                    <NotificationBadge />
+                    Thông Báo
+                  </UserDropdownItem>
                   <LogoutButton theme={theme} onClick={handleLogout}>Đăng xuất</LogoutButton>
                 </UserDropdown>
               )}
@@ -408,6 +414,10 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
                 <MobileNavLink theme={theme} to="/profile">Hồ sơ cá nhân</MobileNavLink>
                 <MobileNavLink theme={theme} to="/history">Lịch sử bài thi</MobileNavLink>
                 <MobileNavLink theme={theme} to="/change-password">Đổi mật khẩu</MobileNavLink>
+                <MobileNavLink theme={theme} to="/notifications">
+                  <NotificationBadge />
+                  Thông Báo
+                </MobileNavLink>
                 <MobileNavLink 
                   theme={theme} 
                   as="button" 

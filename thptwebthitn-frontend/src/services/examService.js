@@ -1,4 +1,6 @@
-import apiClient from '../services/apiClient';
+import apiClient from './apiClient';
+import { getAllTests, getTeacherTests } from './testService';
+
 import { 
   mockGetExams, 
   mockGetExamById, 
@@ -75,30 +77,24 @@ export const getAllExams = async (filters = {}) => {
 
 // Thêm/sửa hàm getExams trong examService.js
 
-export const getExams = async (params = {}) => {
+export const getExams = async (page = 1, pageSize = 10, filters = {}) => {
   try {
-    // Đảm bảo tham số phân trang luôn hợp lệ
-    const queryParams = new URLSearchParams();
-    
-    // Đảm bảo page và pageSize luôn có giá trị hợp lệ
-    queryParams.append('page', params.page || 1); // Mặc định page 1
-    queryParams.append('pageSize', params.pageSize || 10); // Mặc định 10 item/trang
-    
-    // Các tham số tìm kiếm khác
-    if (params.SearchTerm) queryParams.append('SearchTerm', params.SearchTerm);
-    if (params.subjectId) queryParams.append('subjectId', params.subjectId);
-    if (params.activeOnly !== undefined) queryParams.append('activeOnly', params.activeOnly);
-    if (params.isApproved !== undefined) queryParams.append('isApproved', params.isApproved);
-    
-    console.log(`Fetching exams with URL: /api/Exam?${queryParams.toString()}`);
-    
-    const response = await apiClient.get(`/api/Exam?${queryParams.toString()}`);
-    console.log('API response:', response.data);
-    
-    return response.data;
+    return await getAllTests(page, pageSize, filters);
   } catch (error) {
-    console.error('Error fetching exams:', error);
-    throw error.response?.data || { message: 'Không thể tải danh sách đề thi.' };
+    // If the new endpoint fails, try the old one
+    try {
+      const response = await apiClient.get('/api/Exams', {
+        params: {
+          page,
+          pageSize,
+          ...filters
+        }
+      });
+      return response.data;
+    } catch (fallbackError) {
+      console.error('Error fetching exams with fallback:', fallbackError);
+      throw fallbackError;
+    }
   }
 };
 
@@ -483,5 +479,30 @@ export const getExamStatistics = async (params = {}) => {
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Không thể lấy thống kê đề thi.' };
+  }
+};
+
+
+// ... existing code ...
+
+// Update getTeacherExams to use the new endpoint
+export const getTeacherExams = async (page = 1, pageSize = 10, filters = {}) => {
+  try {
+    return await getTeacherTests(page, pageSize);
+  } catch (error) {
+    // If the new endpoint fails, try the old one
+    try {
+      const response = await apiClient.get('/api/Exams/teacher', {
+        params: {
+          page,
+          pageSize,
+          ...filters
+        }
+      });
+      return response.data;
+    } catch (fallbackError) {
+      console.error('Error fetching teacher exams with fallback:', fallbackError);
+      throw fallbackError;
+    }
   }
 };

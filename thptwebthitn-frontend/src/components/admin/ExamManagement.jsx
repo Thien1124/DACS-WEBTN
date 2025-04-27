@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 import { 
-  FaEdit, FaEye, FaPlus, FaTrash, FaSearch, 
+  FaEdit, FaEye, FaPlus, FaEyeSlash, FaSearch, 
   FaSort, FaList, FaFileImport, FaFileExport, FaFilter, 
   FaClock, FaCheckCircle, FaTimesCircle, FaSync, FaUnlock 
 } from 'react-icons/fa';
@@ -654,20 +654,12 @@ const getFilteredExams = () => {
   console.log('Normalized exam array for filtering:', examArray);
   
   return examArray.filter(exam => {
-    // Additional debug logging
-    if (approvalFilter !== 'all') {
-      console.log(`Exam ${exam.id} isApproved:`, exam.isApproved);
-    }
+    // Sửa lại logic lọc - dùng isActive thay vì isApproved
+    if (approvalFilter === 'approved' && exam.isActive !== true) return false;
+    if (approvalFilter === 'pending' && exam.isActive === true) return false;
     
-    // Check approval filter with more flexible handling
-    if (approvalFilter === 'approved' && exam.isApproved !== true) return false;
-    if (approvalFilter === 'pending' && exam.isApproved === true) return false;
-    
-    // Handle status filter with more flexible handling
-    if (statusFilter === 'active' && exam.isActive !== true) return false;
-    if (statusFilter === 'inactive' && exam.isActive === true) return false;
-    
-    // Rest of filtering logic
+    // Không cần lọc theo statusFilter nữa vì đã gộp với approvalFilter
+    // Chỉ giữ lại lọc theo subjectFilter và searchTerm
     if (subjectFilter && exam.subject?.id !== parseInt(subjectFilter)) return false;
     if (searchTerm && !exam.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     
@@ -713,52 +705,27 @@ const getFilteredExams = () => {
           </form>
         </SearchContainer>
         
-        <div>
-          <FilterButton 
-            theme={theme} 
-            active={statusFilter === 'all'} 
-            onClick={() => setStatusFilter('all')}
-          >
-            <FaFilter /> Tất cả
-          </FilterButton>
-          <FilterButton 
-            theme={theme} 
-            active={statusFilter === 'active'} 
-            onClick={() => setStatusFilter('active')}
-          >
-            Kích hoạt
-          </FilterButton>
-          <FilterButton 
-            theme={theme} 
-            active={statusFilter === 'inactive'} 
-            onClick={() => setStatusFilter('inactive')}
-          >
-            Ẩn
-          </FilterButton>
-        </div>
-        
-        {/* New approval filter buttons */}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <FilterButton 
             theme={theme}
             active={approvalFilter === 'all'} 
             onClick={() => setApprovalFilter('all')}
           >
-            Tất cả đề
+            <FaFilter /> Tất cả
           </FilterButton>
           <FilterButton 
             theme={theme}
             active={approvalFilter === 'approved'} 
             onClick={() => setApprovalFilter('approved')}
           >
-            <FaCheckCircle /> Đã duyệt
+            <FaEye /> Đã duyệt (Công khai)
           </FilterButton>
           <FilterButton 
             theme={theme}
             active={approvalFilter === 'pending'} 
             onClick={() => setApprovalFilter('pending')}
           >
-            <FaTimesCircle /> Chờ duyệt
+            <FaEyeSlash /> Chưa duyệt (Ẩn)
           </FilterButton>
         </div>
       </FiltersRow>
@@ -825,7 +792,7 @@ const getFilteredExams = () => {
                   Thời gian (phút) {getSortIcon('duration')}
                 </TableHeader>
                 <TableHeader theme={theme}>Trạng thái</TableHeader>
-                <TableHeader theme={theme}>Phê duyệt</TableHeader>
+                
                 <TableHeader theme={theme}>Thao tác</TableHeader>
               </TableRow>
             </TableHead>
@@ -842,11 +809,7 @@ const getFilteredExams = () => {
                       {exam.isActive ? 'Công khai' : 'Nháp'}
                     </StatusBadge>
                   </TableCell>
-                  <TableCell theme={theme}>
-                    <ApprovalBadge approved={exam.isApproved}>
-                      {exam.isApproved ? 'Đã duyệt' : 'Chờ duyệt'}
-                    </ApprovalBadge>
-                  </TableCell>
+                  
                   <TableCell theme={theme}>
                     <ActionButton 
                       variant="primary"

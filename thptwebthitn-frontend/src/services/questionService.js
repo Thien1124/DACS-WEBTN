@@ -27,6 +27,11 @@ export const getQuestions = async (params = {}) => {
     // Check if we should include options in our request
     const queryParams = { ...params };
     
+    // Đảm bảo tham số difficulty được truyền đúng cách
+    if (params.difficulty) {
+      queryParams.difficulty = params.difficulty;
+    }
+    
     // Make the request for questions
     const response = await apiClient.get('/api/Question', { params: queryParams });
     
@@ -187,6 +192,103 @@ export const getQuestionWithOptions = async (questionId) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching options for question ${questionId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Xuất câu hỏi ra file Excel
+ * @param {Object} exportRequest - Yêu cầu xuất dữ liệu
+ * @returns {Promise} - Promise trả về blob dữ liệu Excel
+ */
+export const exportQuestionsToExcel = async (exportRequest) => {
+  try {
+    const response = await apiClient.post('/api/Question/export', exportRequest, {
+      responseType: 'blob'
+    });
+    return response;
+  } catch (error) {
+    console.error('Error exporting questions to Excel:', error);
+    throw error;
+  }
+};
+
+/**
+ * Tải xuống mẫu file Excel để nhập câu hỏi
+ * @returns {Promise} - Promise trả về blob dữ liệu template Excel
+ */
+export const downloadImportTemplate = async () => {
+  try {
+    const response = await apiClient.get('/api/Question/import-template', {
+      responseType: 'blob'
+    });
+    return response;
+  } catch (error) {
+    console.error('Error downloading import template:', error);
+    throw error;
+  }
+};
+
+/**
+ * Lấy câu hỏi ngẫu nhiên theo các tiêu chí
+ * @param {Object} params - Các tham số lọc (subjectId, chapterId, levelId, etc.)
+ * @returns {Promise} - Promise trả về danh sách câu hỏi ngẫu nhiên
+ */
+export const getRandomQuestions = async (params = {}) => {
+  try {
+    const response = await apiClient.get('/api/Question/random', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching random questions:', error);
+    throw error;
+  }
+};
+
+/**
+ * Trộn câu hỏi ngẫu nhiên cho đề thi từ nhiều nguồn khác nhau
+ * @param {Object} mixRequest - Yêu cầu trộn câu hỏi
+ * @returns {Promise} - Promise trả về kết quả trộn câu hỏi
+ */
+export const mixQuestions = async (mixRequest) => {
+  try {
+    const response = await apiClient.post('/api/Question/mix', mixRequest);
+    return response.data;
+  } catch (error) {
+    console.error('Error mixing questions:', error);
+    throw error;
+  }
+};
+
+/**
+ * Nhập câu hỏi từ file Excel
+ * @param {FormData} formData - FormData chứa file Excel cần nhập
+ * @returns {Promise} - Promise trả về kết quả nhập câu hỏi
+ */
+export const importQuestionsFromExcel = async (formData) => {
+  try {
+    const response = await apiClient.post('/api/Question/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error importing questions from Excel:', error);
+    throw error;
+  }
+};
+
+/**
+ * Lấy danh sách câu hỏi theo đề thi
+ * @param {string|number} examId - ID của đề thi
+ * @returns {Promise} - Promise trả về danh sách câu hỏi của đề thi
+ */
+export const getQuestionsByExam = async (examId) => {
+  try {
+    const response = await apiClient.get(`/api/Exam/${examId}/questions`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching questions for exam ${examId}:`, error);
     throw error;
   }
 };

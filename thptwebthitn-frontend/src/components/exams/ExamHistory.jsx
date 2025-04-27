@@ -3,87 +3,20 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import axios from 'axios'; // Thêm import axios
 import { 
   FaArrowLeft, FaEye, FaRedo, FaSearch, 
-  FaSortAmountDown, FaSortAmountUp
+  FaSortAmountDown, FaSortAmountUp, FaExclamationTriangle
 } from 'react-icons/fa';
 import LoadingSpinner from '../common/LoadingSpinner';
-
-// Mẫu dữ liệu cho lịch sử bài thi
-const MOCK_EXAM_RESULTS = [
-  {
-    id: 1,
-    examId: 101,
-    examTitle: 'Bài kiểm tra Toán học - Đại số',
-    subjectName: 'Toán',
-    score: 8.5,
-    totalScore: 10,
-    startTime: '2024-04-10T08:30:00',
-    completionTime: 45,
-    correctAnswers: 17,
-    totalQuestions: 20,
-    isPassed: true
-  },
-  {
-    id: 2,
-    examId: 102,
-    examTitle: 'Bài kiểm tra Ngữ văn - Văn học hiện đại',
-    subjectName: 'Văn',
-    score: 7.0,
-    totalScore: 10,
-    startTime: '2024-04-05T10:15:00',
-    completionTime: 80,
-    correctAnswers: 14,
-    totalQuestions: 20,
-    isPassed: true
-  },
-  {
-    id: 3,
-    examId: 103,
-    examTitle: 'Bài kiểm tra Tiếng Anh - Unit 5',
-    subjectName: 'Tiếng Anh',
-    score: 6.5,
-    totalScore: 10,
-    startTime: '2024-03-28T14:00:00',
-    completionTime: 40,
-    correctAnswers: 13,
-    totalQuestions: 20,
-    isPassed: true
-  },
-  {
-    id: 4,
-    examId: 104,
-    examTitle: 'Bài kiểm tra Vật lý - Điện học',
-    subjectName: 'Vật lý',
-    score: 5.5,
-    totalScore: 10,
-    startTime: '2024-03-25T09:00:00',
-    completionTime: 50,
-    correctAnswers: 11,
-    totalQuestions: 20,
-    isPassed: false
-  },
-  {
-    id: 5,
-    examId: 105,
-    examTitle: 'Bài kiểm tra Hóa học - Hóa hữu cơ',
-    subjectName: 'Hóa học',
-    score: 9.0,
-    totalScore: 10,
-    startTime: '2024-03-20T13:30:00',
-    completionTime: 55,
-    correctAnswers: 18,
-    totalQuestions: 20,
-    isPassed: true
-  }
-];
 
 const ExamHistory = () => {
   const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
-  const { user } = useSelector(state => state.auth);
+  const { user, token } = useSelector(state => state.auth);
   
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); // Thêm state để xử lý lỗi
   const [results, setResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,30 +24,241 @@ const ExamHistory = () => {
   const [sortDirection, setSortDirection] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [resultsPerPage] = useState(5); // Hiển thị 5 kết quả mỗi trang
+  const [totalPages, setTotalPages] = useState(1); // Thêm state để lưu tổng số trang
   
-  // Lấy dữ liệu mẫu
+  // Lấy dữ liệu thực từ API
   useEffect(() => {
-    console.log("ExamHistory component mounted");
-    const fetchMockResults = () => {
-      setLoading(true);
-      
-      // Giả lập độ trễ của API
-      setTimeout(() => {
-        setResults(MOCK_EXAM_RESULTS);
-        setFilteredResults(MOCK_EXAM_RESULTS);
+    const fetchResults = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Kiểm tra xem có user không
+        if (!user || !user.id) {
+          setError("Vui lòng đăng nhập để xem lịch sử bài thi");
+          setLoading(false);
+          return;
+        }
+        
+        // URL API endpoint đúng để lấy kết quả bài thi theo user ID
+        const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Results/user/${user.id}`;
+        
+        // Thêm các tham số phân trang
+        const params = new URLSearchParams();
+        params.append('page', currentPage);
+        params.append('pageSize', resultsPerPage);
+        
+        console.log(`Fetching exam results from: ${apiUrl}?${params.toString()}`);
+        
+        // Gọi API với token xác thực nếu có
+        const response = await axios.get(`${apiUrl}?${params.toString()}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        
+        console.log("API response:", response.data);
+        
+        if (response.data) {
+          // Log cấu trúc response để debug
+          console.log("Response structure:", Object.keys(response.data));
+          
+          // Chuyển đổi dữ liệu API thành định dạng mà component cần
+          const formattedResults = Array.isArray(response.data) 
+            ? response.data
+            : response.data.items || response.data.data || [];
+          
+          console.log("Formatted results:", formattedResults);
+          
+          // Cập nhật hàm xử lý dữ liệu khi lấy từ API
+          const processedResults = formattedResults.map(result => {
+            console.log("Processing result item:", result);
+            
+            // Tìm tên bài thi từ exam hoặc dùng fallback
+            let examTitle = 'Bài thi';
+            if (result.exam && result.exam.title) {
+              examTitle = result.exam.title;
+            } else if (result.examTitle) {
+              examTitle = result.examTitle;
+            }
+            
+            // Tìm tên môn học
+            let subjectName = 'Chưa xác định';
+            if (result.exam && result.exam.subject && result.exam.subject.name) {
+              subjectName = result.exam.subject.name;
+            } else if (result.subjectName) {
+              subjectName = result.subjectName;
+            } else if (result.subject && result.subject.name) {
+              subjectName = result.subject.name;
+            }
+            
+            // Tìm thông tin số câu đúng/tổng số câu
+            let correctAnswers = 0;
+            let totalQuestions = 0;
+            
+            // Kiểm tra các trường có thể chứa thông tin số câu đúng và tổng số câu
+            if (result.correctAnswers !== undefined && result.totalQuestions !== undefined) {
+              correctAnswers = parseInt(result.correctAnswers) || 0;
+              totalQuestions = parseInt(result.totalQuestions) || 0;
+            } else if (result.correctCount !== undefined && result.totalCount !== undefined) {
+              correctAnswers = parseInt(result.correctCount) || 0;
+              totalQuestions = parseInt(result.totalCount) || 0;
+            } else if (result.answers && Array.isArray(result.answers)) {
+              // Nếu có mảng answers, đếm số câu đúng
+              correctAnswers = result.answers.filter(a => a.isCorrect).length;
+              totalQuestions = result.answers.length;
+            }
+            
+            // Thêm phần này trước khi xử lý statistics
+            // Kiểm tra các trường đặc biệt từ API
+            if (result.correctAnswer !== undefined) {
+              // CorrectAnswer là số câu đúng
+              correctAnswers = parseInt(result.correctAnswer);
+              console.log(`Found correctAnswer field: ${result.correctAnswer}`);
+            }
+
+            if (result.attempNumber !== undefined) {
+              // AttempNumber là tổng số câu
+              totalQuestions = parseInt(result.attempNumber);
+              console.log(`Found attempNumber field: ${result.attempNumber}`);
+            }
+
+            // Sửa phần xử lý statistics để luôn lấy được thông tin số câu đúng
+
+            // Tìm thông tin số câu đúng/tổng số câu từ trường statistics (đây là phần quan trọng)
+            if (result.statistics) {
+              try {
+                // Bắt buộc parse statistics để lấy thông tin
+                let statsObj;
+                if (typeof result.statistics === 'string') {
+                  console.log("Statistics is string, parsing:", result.statistics);
+                  statsObj = JSON.parse(result.statistics);
+                } else {
+                  statsObj = result.statistics;
+                }
+                
+                console.log("Parsed statistics object:", statsObj);
+                
+                let tempCorrect = 0;
+                let tempTotal = 0;
+                
+                // Luôn cập nhật thông tin câu đúng từ statistics nếu có
+                if (statsObj.singleChoice) {
+                  tempCorrect += statsObj.singleChoice.Correct || 0;
+                  tempTotal += statsObj.singleChoice.Total || 0;
+                  console.log(`Found in singleChoice: correct=${statsObj.singleChoice.Correct}, total=${statsObj.singleChoice.Total}`);
+                }
+                
+                if (statsObj.trueFalse) {
+                  tempCorrect += statsObj.trueFalse.Correct || 0;
+                  tempTotal += statsObj.trueFalse.Total || 0;
+                }
+                
+                if (statsObj.shortAnswer) {
+                  tempCorrect += statsObj.shortAnswer.Correct || 0;
+                  tempTotal += statsObj.shortAnswer.Total || 0;
+                }
+                
+                // Cập nhật biến chính nếu tìm thấy số liệu từ statistics
+                if (tempTotal > 0) {
+                  correctAnswers = tempCorrect;
+                  totalQuestions = tempTotal;
+                  console.log(`Final stats: correct=${correctAnswers}, total=${totalQuestions}`);
+                }
+              } catch (e) {
+                console.error("Error parsing statistics:", e);
+              }
+            }
+            
+            console.log(`Final counts for result ${result.id}: correctAnswers=${correctAnswers}, totalQuestions=${totalQuestions}`);
+            
+            // Đảm bảo có ít nhất một câu hỏi để tránh hiển thị 0/0
+            if (totalQuestions === 0 && correctAnswers > 0) {
+              totalQuestions = correctAnswers;
+            }
+            
+            // In log để xem giá trị cuối cùng
+            console.log(`Result ${result.id}: correctAnswers=${correctAnswers}, totalQuestions=${totalQuestions}`);
+            
+            // Thêm dòng code này ngay trước phần return để debug
+            console.log(`RIGHT BEFORE RETURN - Result ${result.id}: correctAnswers=${correctAnswers}, totalQuestions=${totalQuestions}`);
+
+            // Add this code before the return statement (around line 173)
+
+            // Tính thời gian làm bài (chính xác đến giây)
+            let completionTimeInSeconds = 0;
+            if (result.completionTime !== undefined && result.completionTime !== null) {
+              // Nếu completionTime là số giây hoặc phút
+              completionTimeInSeconds = result.completionTime;
+              // Kiểm tra nếu là phút (giá trị nhỏ), chuyển thành giây
+              if (completionTimeInSeconds < 100) {
+                completionTimeInSeconds *= 60;
+              }
+            } else if (result.startTime && result.endTime) {
+              // Tính từ thời gian bắt đầu và kết thúc
+              const start = new Date(result.startTime);
+              const end = new Date(result.endTime);
+              completionTimeInSeconds = Math.floor((end - start) / 1000);
+            }
+
+            console.log(`Result ${result.id}: completionTimeInSeconds=${completionTimeInSeconds}`);
+
+            // Sửa lại phần return để đảm bảo chính xác số câu đúng
+            return {
+              id: result.id,
+              examId: result.examId || result.exam?.id,
+              examTitle: examTitle,
+              subjectName: subjectName,
+              score: result.score || 0,
+              totalScore: result.maxScore || result.totalScore || 10,
+              startTime: result.startTime || result.startedAt || result.createdAt,
+              endTime: result.endTime || result.completedAt,
+              completionTime: result.completionTime || 0,
+              completionTimeInSeconds: completionTimeInSeconds,
+              
+              // Sửa phần này - Đặt correctAnswers = 1 nếu score > 0 và số đúng = 0
+              correctAnswers: (correctAnswers || (result.score > 0 ? 1 : 0)),
+              
+              // Đảm bảo totalQuestions luôn lớn hơn hoặc bằng correctAnswers
+              totalQuestions: Math.max(totalQuestions || 1, correctAnswers || 1),
+              
+              isPassed: (result.score || 0) >= (result.passScore || 5)
+            };
+          });
+          
+          console.log("Processed results:", processedResults);
+          
+          setResults(processedResults);
+          setFilteredResults(processedResults);
+          
+          // Nếu API trả về tổng số trang, cập nhật state
+          if (response.data.totalPages) {
+            setTotalPages(response.data.totalPages);
+          }
+        } else {
+          setResults([]);
+          setFilteredResults([]);
+        }
+      } catch (err) {
+        console.error("Error fetching exam results:", err);
+        if (err.response) {
+          console.error("Response status:", err.response.status);
+          console.error("Response data:", err.response.data);
+        }
+        setError("Không thể tải lịch sử bài thi. Vui lòng thử lại sau!");
+        setResults([]);
+        setFilteredResults([]);
+      } finally {
         setLoading(false);
-        console.log("Mock data loaded:", MOCK_EXAM_RESULTS);
-      }, 800);
+      }
     };
     
-    fetchMockResults();
-  }, []);
+    fetchResults();
+  }, [user, token, currentPage, resultsPerPage]); // Thêm currentPage và resultsPerPage vào dependencies
   
   // Xử lý tìm kiếm
   const handleSearch = () => {
     const filtered = results.filter(result => 
-      result.examTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      result.subjectName.toLowerCase().includes(searchTerm.toLowerCase())
+      (result.examTitle && result.examTitle.toLowerCase().includes(searchTerm.toLowerCase())) || 
+      (result.subjectName && result.subjectName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredResults(filtered);
     setCurrentPage(1);
@@ -144,14 +288,24 @@ const ExamHistory = () => {
   const indexOfLastResult = currentPage * resultsPerPage;
   const indexOfFirstResult = indexOfLastResult - resultsPerPage;
   const currentResults = filteredResults.slice(indexOfFirstResult, indexOfLastResult);
-  const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
   
   // Xử lý chuyển trang
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
-  // Format thời gian
-  const formatDate = (dateString) => {
+  // Cập nhật hàm format thời gian để linh hoạt hơn
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  
+  try {
+    // Hỗ trợ nhiều định dạng thời gian
     const date = new Date(dateString);
+    
+    // Kiểm tra xem ngày có hợp lệ không
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date format:", dateString);
+      return 'N/A';
+    }
+    
     return new Intl.DateTimeFormat('vi-VN', {
       day: '2-digit',
       month: '2-digit',
@@ -159,20 +313,42 @@ const ExamHistory = () => {
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
-  };
+  } catch (e) {
+    console.error("Error formatting date:", e, dateString);
+    return 'N/A';
+  }
+};
   
-  // Format thời gian làm bài
-  const formatTime = (minutes) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
-  };
+  // Cập nhật hàm format thời gian để hiển thị cả giây
+const formatTime = (minutes, seconds = 0) => {
+  // Nếu nhận vào số giây (từ completionTimeInSeconds)
+  if (seconds > 0) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    
+    if (h > 0) {
+      return `${h} giờ ${m} phút ${s} giây`;
+    } else if (m > 0) {
+      return `${m} phút ${s} giây`;
+    } else {
+      return `${s} giây`;
+    }
+  }
+  
+  // Xử lý trường hợp cũ khi nhận vào số phút
+  if (!minutes) return 'N/A';
+  
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
+};
   
   // Tính tổng điểm và tỷ lệ đúng
-  const totalScore = results.reduce((sum, result) => sum + result.score, 0);
+  const totalScore = results.reduce((sum, result) => sum + (result.score || 0), 0);
   const averageScore = results.length > 0 ? totalScore / results.length : 0;
   const correctRate = results.length > 0 
-    ? results.reduce((sum, result) => sum + (result.correctAnswers / result.totalQuestions), 0) / results.length * 100
+    ? results.reduce((sum, result) => sum + ((result.correctAnswers / (result.totalQuestions || 1)) || 0), 0) / results.length * 100
     : 0;
     
   return (
@@ -237,6 +413,19 @@ const ExamHistory = () => {
           <LoadingContainer>
             <LoadingSpinner size="lg" />
           </LoadingContainer>
+        ) : error ? (
+          // Hiển thị lỗi nếu có
+          <ErrorContainer theme={theme}>
+            <FaExclamationTriangle size={40} />
+            <ErrorMessage>{error}</ErrorMessage>
+            <Button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.reload()}
+            >
+              <FaRedo /> Thử lại
+            </Button>
+          </ErrorContainer>
         ) : currentResults.length === 0 ? (
           <EmptyState theme={theme}>
             <p>Không tìm thấy kết quả bài thi nào.</p>
@@ -260,21 +449,36 @@ const ExamHistory = () => {
                   <ResultCardHeader theme={theme}>
                     <SubjectBadge>{result.subjectName}</SubjectBadge>
                     <ScoreBadge passed={result.isPassed}>
-                      {result.score}/{result.totalScore}
+                      {result.score.toFixed(2)}/{result.totalScore}
                     </ScoreBadge>
                   </ResultCardHeader>
                   
-                  <ResultCardTitle>{result.examTitle}</ResultCardTitle>
+                  <ResultCardTitle>
+                    {/* Hiển thị tiêu đề bài thi với ID để đảm bảo luôn có thông tin */}
+                    {result.examTitle || `Bài thi #${result.examId || result.id}`}
+                  </ResultCardTitle>
                   
                   <ResultMeta>
                     <MetaItem theme={theme}>
                       <strong>Ngày làm:</strong> {formatDate(result.startTime)}
                     </MetaItem>
                     <MetaItem theme={theme}>
-                      <strong>Thời gian:</strong> {formatTime(result.completionTime)}
+                      <strong>Thời gian:</strong> {
+                        result.completionTimeInSeconds > 0 
+                          ? formatTime(0, result.completionTimeInSeconds)
+                          : typeof result.completionTime === 'number' && result.completionTime > 0
+                            ? formatTime(result.completionTime) 
+                            : result.endTime && result.startTime
+                              ? formatTime(0, Math.floor((new Date(result.endTime) - new Date(result.startTime)) / 1000))
+                              : 'N/A'
+                      }
                     </MetaItem>
+                    {/* Sửa đoạn hiển thị số câu đúng */}
                     <MetaItem theme={theme}>
-                      <strong>Đúng:</strong> {result.correctAnswers}/{result.totalQuestions} câu
+                      <strong>Đúng:</strong> {
+                        // Hiển thị số câu đúng từ statistics
+                        `${result.correctAnswers}/${result.totalQuestions} câu`
+                      }
                     </MetaItem>
                   </ResultMeta>
                   
@@ -310,7 +514,26 @@ const ExamHistory = () => {
   );
 };
 
-// Các styled components
+// Thêm styling cho hiển thị lỗi
+const ErrorContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#f7fafc'};
+  border-radius: 8px;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  gap: 1rem;
+`;
+
+const ErrorMessage = styled.p`
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 0;
+`;
+
+// Giữ nguyên các styled components hiện tại
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
