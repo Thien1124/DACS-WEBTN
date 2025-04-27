@@ -11,7 +11,13 @@ using System.IO;
 using webthitn_backend.Models;
 using Swashbuckle.AspNetCore.Filters;
 using webthitn_backend.Swagger;
-
+using webthitn_backend.Helpers;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using OfficeOpenXml.Table;
+using webthitn_backend.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
@@ -21,6 +27,8 @@ builder.Services.AddSingleton<EmailService>();
 // Cấu hình DbContext để kết nối với cơ sở dữ liệu
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Cấu hình Authentication với JWT Bearer Token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -88,6 +96,7 @@ builder.Services.AddLogging(logging =>
 // Cấu hình Swagger để tài liệu hóa các API
 builder.Services.AddSwaggerGen(c =>
 {
+
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Web Thi TN API",
@@ -98,6 +107,7 @@ builder.Services.AddSwaggerGen(c =>
             Name = "Thien1124",
             Email = "thien1124@example.com"
         }
+
     });
 
     // Thêm file XML Documentation
@@ -107,6 +117,9 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
+    // Thêm file XML cho các model
+    c.OperationFilter<FileUploadOperationFilter>();
+    c.OperationFilter<QuestionExamplesOperationFilter>();
 
     // Cấu hình Authorization
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -118,7 +131,7 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
     });
-    c.OperationFilter<QuestionExamplesOperationFilter>();
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -138,9 +151,15 @@ builder.Services.AddSwaggerGen(c =>
 
 // Thêm các dịch vụ API Controllers
 builder.Services.AddControllers();
-
+// Cấu hình JSON Serializer để sử dụng JsonDateTimeConverter    
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Cấu hình xử lý DateTime trong JSON response
+        options.JsonSerializerOptions.Converters.Add(new JsonDateTimeConverter());
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 var app = builder.Build();
-
 // Middleware Swagger 
 app.UseSwagger();
 app.UseSwaggerUI(c => {
@@ -153,6 +172,9 @@ app.UseCors("AllowMyOrigin");
 
 // Thêm middleware xử lý JSON token trước authentication
 app.UseMiddleware<JsonTokenAuthenticationMiddleware>();
+
+// Thêm middleware kiểm tra độ hợp lệ của đề thi
+app.UseMiddleware<ExamValidationMiddleware>();
 
 // Sử dụng Authentication và Authorization cho API
 app.UseAuthentication();  // Đảm bảo yêu cầu token hợp lệ cho các API yêu cầu xác thực

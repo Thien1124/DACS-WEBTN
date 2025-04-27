@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
 using webthitn_backend.Services;
+using System.Globalization;
+using WEBTHITN_Backend.Helpers;
 
 namespace webthitn_backend.Controllers
 {
@@ -75,12 +77,34 @@ namespace webthitn_backend.Controllers
                 }
 
                 // Kiểm tra xem bài thi có đang mở không
-                var now = DateTime.UtcNow;
-                if ((exam.StartTime.HasValue && exam.StartTime.Value > now) ||
-                    (exam.EndTime.HasValue && exam.EndTime.Value < now))
+                try
                 {
-                    _logger.LogWarning($"Bài thi ID: {model.ExamId} không trong thời gian làm bài");
-                    return BadRequest(new { message = "Bài thi không trong thời gian làm bài" });
+                    // Lấy thời gian hiện tại theo giờ Việt Nam
+                    var now = DateTimeHelper.GetVietnamNow();
+
+                    // Log thông tin để debug
+                    _logger.LogInformation($"Thời gian hiện tại (VN): {now.ToString("yyyy-MM-dd HH:mm:ss")}");
+
+                    if (exam.StartTime.HasValue)
+                        _logger.LogInformation($"Thời gian bắt đầu bài thi: {exam.StartTime.Value.ToString("yyyy-MM-dd HH:mm:ss")}");
+                    if (exam.EndTime.HasValue)
+                        _logger.LogInformation($"Thời gian kết thúc bài thi: {exam.EndTime.Value.ToString("yyyy-MM-dd HH:mm:ss")}");
+
+                    // Kiểm tra thời gian làm bài
+                    if ((exam.StartTime.HasValue && now < exam.StartTime.Value) ||
+                        (exam.EndTime.HasValue && now > exam.EndTime.Value))
+                    {
+                        _logger.LogWarning($"Bài thi ID: {model.ExamId} không trong thời gian làm bài. " +
+                            $"Thời gian hiện tại: {now.ToString("yyyy-MM-dd HH:mm:ss")}, " +
+                            $"Thời gian bắt đầu: {exam.StartTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "không có"}, " +
+                            $"Thời gian kết thúc: {exam.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "không có"}");
+                        return BadRequest(new { message = "Bài thi không trong thời gian làm bài" });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Lỗi xử lý múi giờ: {ex.Message}");
+                    return BadRequest(new { message = "Đã xảy ra lỗi khi kiểm tra thời gian làm bài" });
                 }
 
                 // Kiểm tra số lần làm bài tối đa
@@ -369,6 +393,7 @@ namespace webthitn_backend.Controllers
 
             return userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId) ? userId : 0;
         }
+
         /// <summary>
         /// Cập nhật điểm bài thi (dành cho giáo viên)
         /// </summary>
@@ -414,6 +439,7 @@ namespace webthitn_backend.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật kết quả bài thi" });
             }
         }
+
         /// <summary>
         /// Định dạng thời gian từ giây sang định dạng phút:giây
         /// </summary>

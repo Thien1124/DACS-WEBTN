@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
+using WEBTHITN_Backend.Helpers;
 
 namespace webthitn_backend.Controllers
 {
@@ -88,7 +89,7 @@ namespace webthitn_backend.Controllers
                 // Lọc theo trạng thái mở/đóng
                 if (filter.IsOpen.HasValue)
                 {
-                    var now = DateTime.UtcNow;
+                    var now = DateTimeHelper.GetVietnamNow();
                     if (filter.IsOpen.Value)
                     {
                         // Bài thi đang mở: đã đến thời gian bắt đầu và chưa hết thời gian kết thúc
@@ -489,7 +490,7 @@ namespace webthitn_backend.Controllers
                     AllowPartialGrading = model.AllowPartialGrading,
                     AccessCode = model.AccessCode?.Trim(),
                     CreatorId = currentUserId,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTimeHelper.GetVietnamNow(),
                     ScoringConfig = scoringConfig
                 };
 
@@ -734,7 +735,7 @@ namespace webthitn_backend.Controllers
                 // Xác định người dùng hiện tại có quyền xem đáp án không
                 bool canViewCorrectAnswers = User.IsInRole("Teacher") || User.IsInRole("Admin");
                 bool showAnswers = canViewCorrectAnswers ||
-                                 (exam.ShowAnswers && exam.EndTime.HasValue && DateTime.UtcNow > exam.EndTime.Value);
+                                 (exam.ShowAnswers && exam.EndTime.HasValue && DateTimeHelper.GetVietnamNow() > exam.EndTime.Value);
 
                 foreach (var eq in examQuestions)
                 {
@@ -866,8 +867,8 @@ namespace webthitn_backend.Controllers
         ///         "totalScore": 10,
         ///         "passScore": 6,
         ///         "maxAttempts": 2,
-        ///         "startTime": "2025-04-20T08:00:00Z",
-        ///         "endTime": "2025-04-30T23:59:59Z",
+        ///         "startTime": "2025-04-25T08:00:00Z",
+        ///         "endTime": "2025-04-25T23:59:59Z",
         ///         "isActive": true,
         ///         "showResult": true,
         ///         "showAnswers": false,
@@ -1043,7 +1044,7 @@ namespace webthitn_backend.Controllers
                     existingExam.ScoringConfig = scoringConfig;
 
                     // Cập nhật thời gian sửa đổi
-                    existingExam.UpdatedAt = DateTime.UtcNow;
+                    existingExam.UpdatedAt = DateTimeHelper.GetVietnamNow();
 
                     // Cập nhật đề thi trong database
                     _context.Exams.Update(existingExam);
@@ -1306,12 +1307,21 @@ namespace webthitn_backend.Controllers
             if (!exam.IsActive)
                 return "Không hoạt động";
 
-            var now = DateTime.UtcNow;
+            var now = DateTimeHelper.GetVietnamNow();
 
-            if (exam.StartTime.HasValue && now < exam.StartTime.Value)
+            // Chuyển startTime và endTime sang giờ Việt Nam trước khi so sánh
+            var startTimeVn = exam.StartTime.HasValue
+                ? DateTimeHelper.ToVietnamTime(exam.StartTime.Value)
+                : (DateTime?)null;
+
+            var endTimeVn = exam.EndTime.HasValue
+                ? DateTimeHelper.ToVietnamTime(exam.EndTime.Value)
+                : (DateTime?)null;
+
+            if (startTimeVn.HasValue && now < startTimeVn.Value)
                 return "Chưa mở";
 
-            if (exam.EndTime.HasValue && now > exam.EndTime.Value)
+            if (endTimeVn.HasValue && now > endTimeVn.Value)
                 return "Đã đóng";
 
             return "Đang mở";
@@ -1451,7 +1461,7 @@ namespace webthitn_backend.Controllers
                         AllowPartialGrading = sourceExam.AllowPartialGrading,
                         AccessCode = sourceExam.AccessCode,
                         CreatorId = currentUserId, // Người nhân bản sẽ là người tạo đề thi mới
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTimeHelper.GetVietnamNow(),
                         ScoringConfig = sourceExam.ScoringConfig
                     };
 
@@ -1625,7 +1635,7 @@ namespace webthitn_backend.Controllers
 
                 // Cập nhật trạng thái đề thi
                 existingExam.IsActive = model.IsActive;
-                existingExam.UpdatedAt = DateTime.UtcNow;
+                existingExam.UpdatedAt = DateTimeHelper.GetVietnamNow();
 
                 // Lưu thay đổi vào database
                 _context.Exams.Update(existingExam);
@@ -1764,7 +1774,7 @@ namespace webthitn_backend.Controllers
 
                 // Cập nhật trạng thái phê duyệt của đề thi
                 existingExam.IsActive = model.Approved;
-                existingExam.UpdatedAt = DateTime.UtcNow;
+                existingExam.UpdatedAt = DateTimeHelper.GetVietnamNow();
 
                 // Nếu có field khác trong schema để lưu thông tin phê duyệt, hãy cập nhật
                 // Ví dụ: existingExam.ApproverComment = model.Comment;

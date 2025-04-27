@@ -23,6 +23,10 @@ namespace webthitn_backend.Models
         public DbSet<ExamResult> ExamResults { get; set; }
         public DbSet<StudentAnswer> StudentAnswers { get; set; }
         public DbSet<Setting> Settings { get; set; }
+        public DbSet<PracticeExam> PracticeExams { get; set; }
+        public DbSet<PracticeResult> PracticeResults { get; set; }
+        public DbSet<ExamFeedback> ExamFeedbacks { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -78,7 +82,12 @@ namespace webthitn_backend.Models
                 .WithMany(u => u.ExamResults)
                 .HasForeignKey(er => er.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
+            // ExamResult - Exam
+            modelBuilder.Entity<PracticeResult>()
+            .HasOne(pr => pr.User)
+            .WithMany()
+            .HasForeignKey(pr => pr.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
             // Seed data
             SeedData(modelBuilder);
         }
