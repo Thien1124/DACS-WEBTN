@@ -24,9 +24,27 @@ builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
 // Email service
 builder.Services.AddSingleton<EmailService>();
 
+
 // Cấu hình DbContext để kết nối với cơ sở dữ liệu
+// ĐÃ SỬA: Tắt ExecutionStrategy bằng cách đặt maxRetryCount = 0
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlServerOptions =>
+        {
+            // Đặt maxRetryCount = 0 để tắt SqlServerRetryingExecutionStrategy
+            sqlServerOptions.EnableRetryOnFailure(
+                maxRetryCount: 0,  // Tắt retry - trước đây là 5
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+            sqlServerOptions.CommandTimeout(60);
+            // Cấu hình tương thích với các phiên bản SQL Server khác nhau
+            sqlServerOptions.UseCompatibilityLevel(120); // SQL Server 2014 compatibility level
+            // Vô hiệu hóa tracking để tăng hiệu suất cho các truy vấn chỉ đọc
+            // options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+        }
+    )
+);
 
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
