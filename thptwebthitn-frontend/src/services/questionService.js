@@ -1,13 +1,16 @@
-import apiClient from './apiClient';
-import axios from 'axios';
-import { getToken } from '../utils/auth';
-axios.interceptors.request.use(config => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-}, error => Promise.reject(error));
+import apiClient from "./apiClient";
+import axios from "axios";
+import { getToken } from "../utils/auth";
+axios.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = token;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 export const getExamQuestions = async (examId) => {
   try {
     const response = await apiClient.get(`/api/Exam/WithQuestions/${examId}`);
@@ -26,23 +29,30 @@ export const getQuestions = async (params = {}) => {
   try {
     // Check if we should include options in our request
     const queryParams = { ...params };
-    
+
     // Make the request for questions
-    const response = await apiClient.get('/api/Question', { params: queryParams });
-    
+    const response = await apiClient.get("/api/Question", {
+      params: queryParams,
+    });
+
     // If we have questions and need options, fetch them separately
-    if (response.data && (Array.isArray(response.data) || Array.isArray(response.data.data))) {
-      const questions = Array.isArray(response.data) ? response.data : response.data.data;
-      
+    if (
+      response.data &&
+      (Array.isArray(response.data) || Array.isArray(response.data.data))
+    ) {
+      const questions = Array.isArray(response.data)
+        ? response.data
+        : response.data.data;
+
       // For each question, get its details which should include options
       if (params.includeOptions) {
-        const questionDetailsPromises = questions.map(question => 
-          getQuestionWithOptionsById(question.id)
-            .catch(() => question) // Fallback to original question if fetch fails
+        const questionDetailsPromises = questions.map(
+          (question) =>
+            getQuestionWithOptionsById(question.id).catch(() => question) // Fallback to original question if fetch fails
         );
-        
+
         const questionsWithOptions = await Promise.all(questionDetailsPromises);
-        
+
         // Replace original questions with detailed ones
         if (Array.isArray(response.data)) {
           response.data = questionsWithOptions;
@@ -51,10 +61,10 @@ export const getQuestions = async (params = {}) => {
         }
       }
     }
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    console.error("Error fetching questions:", error);
     throw error;
   }
 };
@@ -63,27 +73,34 @@ export const getQuestions = async (params = {}) => {
 export const getQuestionWithOptionsById = async (id) => {
   try {
     const response = await apiClient.get(`/api/Question/${id}`);
-    
+
     // Add support for known option counts based on your data
-    if (response.data && (!response.data.options || response.data.options.length === 0)) {
+    if (
+      response.data &&
+      (!response.data.options || response.data.options.length === 0)
+    ) {
       const knownOptionCounts = {
         1: 4,
         2: 4,
-        3: 4
+        3: 4,
       };
-      
+
       // If we know this question should have options, add dummy ones
       if (knownOptionCounts[id]) {
-        console.log(`Adding ${knownOptionCounts[id]} placeholder options for question ${id}`);
-        response.data.options = Array(knownOptionCounts[id]).fill().map((_, i) => ({
-          id: `${id}_option_${i+1}`,
-          content: `Đáp án ${i+1}`,
-          isCorrect: i === 0, // First option is correct
-          questionId: id
-        }));
+        console.log(
+          `Adding ${knownOptionCounts[id]} placeholder options for question ${id}`
+        );
+        response.data.options = Array(knownOptionCounts[id])
+          .fill()
+          .map((_, i) => ({
+            id: `${id}_option_${i + 1}`,
+            content: `Đáp án ${i + 1}`,
+            isCorrect: i === 0, // First option is correct
+            questionId: id,
+          }));
       }
     }
-    
+
     return response.data;
   } catch (error) {
     console.error(`Error fetching question ${id}:`, error);
@@ -98,10 +115,10 @@ export const getQuestionById = async (id) => {
 
 export const createQuestion = async (questionData) => {
   try {
-    const response = await apiClient.post('/api/Question', questionData);
+    const response = await apiClient.post("/api/Question", questionData);
     return response.data;
   } catch (error) {
-    console.error('Error creating question:', error);
+    console.error("Error creating question:", error);
     throw error;
   }
 };
@@ -124,26 +141,31 @@ export const updateQuestion = async (id, questionData) => {
 
 export const getQuestionsBySubject = async (subjectId, options = {}) => {
   try {
-    const { page = 1, pageSize = 100, searchTerm, difficulty, topicId } = options;
-    
+    const {
+      page = 1,
+      pageSize = 100,
+      searchTerm,
+      difficulty,
+      topicId,
+    } = options;
+
     let params = {
       page,
       pageSize,
-      subjectId
+      subjectId,
     };
-    
+
     if (searchTerm) params.searchTerm = searchTerm;
     if (difficulty) params.difficulty = difficulty;
     if (topicId) params.topicId = topicId;
-    
-    const response = await apiClient.get('/api/Question', { params });
+
+    const response = await apiClient.get("/api/Question", { params });
     return response.data;
   } catch (error) {
-    console.error('Error fetching questions by subject:', error);
+    console.error("Error fetching questions by subject:", error);
     throw error;
   }
 };
-
 
 /**
  * Delete a question
@@ -168,10 +190,15 @@ export const deleteQuestion = async (id) => {
  */
 export const deleteQuestionOption = async (questionId, optionId) => {
   try {
-    const response = await apiClient.delete(`/api/Question/${questionId}/options/${optionId}`);
+    const response = await apiClient.delete(
+      `/api/Question/${questionId}/options/${optionId}`
+    );
     return response.data;
   } catch (error) {
-    console.error(`Error deleting option ${optionId} from question ${questionId}:`, error);
+    console.error(
+      `Error deleting option ${optionId} from question ${questionId}:`,
+      error
+    );
     throw error;
   }
 };

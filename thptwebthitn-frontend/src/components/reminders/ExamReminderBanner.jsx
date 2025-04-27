@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { Link } from 'react-router-dom';
-import { FaCalendarAlt, FaClock, FaBook, FaTimes, FaArrowRight, FaBell } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
+import { Link } from "react-router-dom";
+import {
+  FaCalendarAlt,
+  FaClock,
+  FaBook,
+  FaTimes,
+  FaArrowRight,
+  FaBell,
+} from "react-icons/fa";
 
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); }
@@ -16,7 +23,7 @@ const slideIn = keyframes`
 
 const BannerContainer = styled.div`
   position: relative;
-  background: ${props => props.theme === 'dark' ? '#2D3748' : '#fff'};
+  background: ${(props) => (props.theme === "dark" ? "#2D3748" : "#fff")};
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
@@ -25,16 +32,17 @@ const BannerContainer = styled.div`
   flex-direction: column;
   animation: ${slideIn} 0.5s ease-out forwards;
   overflow: hidden;
-  border: 1px solid ${props => props.theme === 'dark' ? '#4A5568' : '#E2E8F0'};
-  
+  border: 1px solid
+    ${(props) => (props.theme === "dark" ? "#4A5568" : "#E2E8F0")};
+
   &:before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     width: 5px;
     height: 100%;
-    background: linear-gradient(to bottom, #E53E3E, #F56565);
+    background: linear-gradient(to bottom, #e53e3e, #f56565);
   }
 
   @media (max-width: 768px) {
@@ -49,8 +57,8 @@ const BannerHeader = styled.div`
 `;
 
 const IconContainer = styled.div`
-  background: #FED7D7;
-  color: #E53E3E;
+  background: #fed7d7;
+  color: #e53e3e;
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -62,7 +70,7 @@ const IconContainer = styled.div`
 `;
 
 const BannerTitle = styled.h3`
-  color: ${props => props.theme === 'dark' ? '#F7FAFC' : '#1A202C'};
+  color: ${(props) => (props.theme === "dark" ? "#F7FAFC" : "#1A202C")};
   margin: 0;
   font-size: 1.2rem;
   flex: 1;
@@ -74,7 +82,7 @@ const BannerContent = styled.div`
   flex-wrap: wrap;
   gap: 15px;
   margin-left: 57px; // Align with title (icon width + margin)
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: 10px;
@@ -84,33 +92,40 @@ const BannerContent = styled.div`
 const InfoItem = styled.div`
   display: flex;
   align-items: center;
-  color: ${props => props.theme === 'dark' ? '#CBD5E0' : '#4A5568'};
+  color: ${(props) => (props.theme === "dark" ? "#CBD5E0" : "#4A5568")};
   font-size: 0.95rem;
-  background: ${props => props.theme === 'dark' ? '#3a3f4b' : '#F7FAFC'};
+  background: ${(props) => (props.theme === "dark" ? "#3a3f4b" : "#F7FAFC")};
   padding: 8px 15px;
   border-radius: 6px;
-  
+
   svg {
     margin-right: 8px;
-    color: ${props => props.emphasis ? '#E53E3E' : props.theme === 'dark' ? '#90CDF4' : '#4299E1'};
+    color: ${(props) =>
+      props.emphasis
+        ? "#E53E3E"
+        : props.theme === "dark"
+        ? "#90CDF4"
+        : "#4299E1"};
   }
-  
+
   span {
-    font-weight: ${props => props.emphasis ? '600' : '400'};
-    color: ${props => props.emphasis && (props.theme === 'dark' ? '#FEB2B2' : '#E53E3E')};
+    font-weight: ${(props) => (props.emphasis ? "600" : "400")};
+    color: ${(props) =>
+      props.emphasis && (props.theme === "dark" ? "#FEB2B2" : "#E53E3E")};
   }
 `;
 
 const CountdownContainer = styled.div`
-  background: ${props => props.theme === 'dark' ? '#2D3748' : '#FEF5F5'};
-  border: 1px solid ${props => props.theme === 'dark' ? '#4A5568' : '#FED7D7'};
+  background: ${(props) => (props.theme === "dark" ? "#2D3748" : "#FEF5F5")};
+  border: 1px solid
+    ${(props) => (props.theme === "dark" ? "#4A5568" : "#FED7D7")};
   border-radius: 8px;
   padding: 10px 15px;
   display: flex;
   align-items: center;
   margin-top: 12px;
   margin-left: 57px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
@@ -120,14 +135,14 @@ const CountdownContainer = styled.div`
 
 const CountdownLabel = styled.span`
   font-size: 0.9rem;
-  color: ${props => props.theme === 'dark' ? '#E2E8F0' : '#4A5568'};
+  color: ${(props) => (props.theme === "dark" ? "#E2E8F0" : "#4A5568")};
   margin-right: 10px;
 `;
 
 const CountdownValue = styled.div`
   display: flex;
   gap: 8px;
-  
+
   @media (max-width: 768px) {
     flex-wrap: wrap;
   }
@@ -137,16 +152,16 @@ const CountdownUnit = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  
+
   span:first-child {
     font-size: 1.2rem;
     font-weight: 700;
-    color: ${props => props.theme === 'dark' ? '#FEB2B2' : '#E53E3E'};
+    color: ${(props) => (props.theme === "dark" ? "#FEB2B2" : "#E53E3E")};
   }
-  
+
   span:last-child {
     font-size: 0.7rem;
-    color: ${props => props.theme === 'dark' ? '#A0AEC0' : '#718096'};
+    color: ${(props) => (props.theme === "dark" ? "#A0AEC0" : "#718096")};
     text-transform: uppercase;
   }
 `;
@@ -156,7 +171,7 @@ const BannerActions = styled.div`
   justify-content: flex-end;
   margin-top: 15px;
   gap: 10px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
@@ -172,22 +187,22 @@ const ActionButton = styled(Link)`
   transition: all 0.2s ease;
   font-weight: 600;
   font-size: 0.9rem;
-  
+
   &:hover {
     transform: translateY(-2px);
   }
-  
+
   svg {
     margin-left: 6px;
   }
 `;
 
 const ViewDetailsButton = styled(ActionButton)`
-  background: ${props => props.theme === 'dark' ? '#4299E1' : '#3182CE'};
+  background: ${(props) => (props.theme === "dark" ? "#4299E1" : "#3182CE")};
   color: white;
-  
+
   &:hover {
-    background: ${props => props.theme === 'dark' ? '#2B6CB0' : '#2B6CB0'};
+    background: ${(props) => (props.theme === "dark" ? "#2B6CB0" : "#2B6CB0")};
   }
 `;
 
@@ -197,7 +212,7 @@ const DismissButton = styled.button`
   right: 15px;
   background: transparent;
   border: none;
-  color: ${props => props.theme === 'dark' ? '#A0AEC0' : '#718096'};
+  color: ${(props) => (props.theme === "dark" ? "#A0AEC0" : "#718096")};
   cursor: pointer;
   padding: 5px;
   display: flex;
@@ -205,102 +220,104 @@ const DismissButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${props => props.theme === 'dark' ? '#4A5568' : '#EDF2F7'};
-    color: ${props => props.theme === 'dark' ? '#F7FAFC' : '#1A202C'};
+    background: ${(props) => (props.theme === "dark" ? "#4A5568" : "#EDF2F7")};
+    color: ${(props) => (props.theme === "dark" ? "#F7FAFC" : "#1A202C")};
   }
 `;
 
-const ExamReminderBanner = ({ exam, theme = 'light', onClose }) => {
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  
-  // Xác định ngày và giờ thi 
+const ExamReminderBanner = ({ exam, theme = "light", onClose }) => {
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  // Xác định ngày và giờ thi
   const examDate = new Date(exam.examDate || exam.startTime);
-  
+
   // Định dạng ngày tháng
   const formatDate = (date) => {
-    return new Intl.DateTimeFormat('vi-VN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Intl.DateTimeFormat("vi-VN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }).format(date);
   };
-  
+
   // Định dạng giờ
   const formatTime = (date) => {
-    return new Intl.DateTimeFormat('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Intl.DateTimeFormat("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
-  
+
   // Cập nhật đếm ngược
   useEffect(() => {
+    console.log("ExamReminderBanner rendered");
     const updateCountdown = () => {
       const now = new Date();
       const difference = examDate - now;
-      
       if (difference <= 0) {
-        // Kỳ thi đã bắt đầu
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
-      
       const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-      
       setCountdown({ days, hours, minutes, seconds });
     };
-    
-    // Cập nhật ngay lập tức
+
     updateCountdown();
-    
-    // Cập nhật mỗi giây
     const interval = setInterval(updateCountdown, 1000);
-    
     return () => clearInterval(interval);
   }, [examDate]);
-  
+
   const handleDismiss = () => {
     if (onClose) {
       onClose(exam.id);
     }
   };
-  
+
   return (
     <BannerContainer theme={theme}>
       <DismissButton theme={theme} onClick={handleDismiss}>
         <FaTimes size={16} />
       </DismissButton>
-      
+
       <BannerHeader>
         <IconContainer>
           <FaBell size={20} />
         </IconContainer>
         <BannerTitle theme={theme}>Sắp tới kỳ thi: {exam.title}</BannerTitle>
       </BannerHeader>
-      
+
       <BannerContent>
         <InfoItem theme={theme}>
           <FaCalendarAlt size={16} />
           <span>{formatDate(examDate)}</span>
         </InfoItem>
-        
+
         <InfoItem theme={theme}>
           <FaClock size={16} />
-          <span>{formatTime(examDate)} ({exam.duration} phút)</span>
+          <span>
+            {formatTime(examDate)} ({exam.duration} phút)
+          </span>
         </InfoItem>
-        
+
         <InfoItem theme={theme}>
           <FaBook size={16} />
-          <span>{exam.subject?.name || 'Chưa xác định'}</span>
+          <span>{exam.subject?.name || "Chưa xác định"}</span>
         </InfoItem>
       </BannerContent>
-      
+
       <CountdownContainer theme={theme}>
         <CountdownLabel theme={theme}>Thời gian còn lại:</CountdownLabel>
         <CountdownValue>
@@ -322,7 +339,7 @@ const ExamReminderBanner = ({ exam, theme = 'light', onClose }) => {
           </CountdownUnit>
         </CountdownValue>
       </CountdownContainer>
-      
+
       <BannerActions>
         <ViewDetailsButton to={`/exams/${exam.id}`} theme={theme}>
           Xem chi tiết <FaArrowRight size={14} />

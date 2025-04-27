@@ -9,9 +9,22 @@ import logo from "../../assets/images/logo.png";
 import AuthModal from "../Auth/AuthModal";
 import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
-import { updateUser } from '../../redux/authSlice';
+import { updateUser } from "../../redux/authSlice";
 // Import thêm icons
-import { FaUserCog, FaUsers, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece } from 'react-icons/fa';
+import {
+  FaBell,
+  FaFileExport,
+  FaFileImport,
+  FaUsers,
+  FaClipboardList,
+  FaBook,
+  FaQuestion,
+  FaChartBar,
+  FaGraduationCap,
+  FaCheckCircle,
+  FaHistory,
+  FaCog,
+} from "react-icons/fa";
 
 // Styled components hiện tại...
 const HeaderContainer = styled.header`
@@ -89,15 +102,15 @@ const NavItem = styled.li`
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
-    
+
     /* Add active state styling */
     &.active {
       color: #4285f4;
       font-weight: 600;
-      
+
       /* Add underline indicator */
       &:after {
-        content: '';
+        content: "";
         position: absolute;
         bottom: -5px;
         left: 0;
@@ -192,10 +205,10 @@ const DropdownItem = styled(Link)`
   color: ${(props) => (props.theme === "dark" ? "#e0e0e0" : "#333333")};
   text-decoration: none;
   transition: background-color 0.2s;
-  
+
   svg {
     margin-right: 10px;
-    color: ${props => props.theme === "dark" ? "#4285f4" : "#4285f4"};
+    color: ${(props) => (props.theme === "dark" ? "#4285f4" : "#4285f4")};
   }
 
   &:hover {
@@ -206,16 +219,16 @@ const DropdownItem = styled(Link)`
 
 const DropdownSeparator = styled.div`
   height: 1px;
-  background-color: ${props => 
-    props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
-  };
+  background-color: ${(props) =>
+    props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"};
   margin: 8px 0;
 `;
 
 const DropdownSection = styled.div`
   padding: 8px 16px;
   font-size: 0.85rem;
-  color: ${props => props.theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)"};
+  color: ${(props) =>
+    props.theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)"};
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: bold;
@@ -232,7 +245,7 @@ const LogoutButton = styled.button`
   color: #e74c3c;
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   svg {
     margin-right: 10px;
   }
@@ -360,42 +373,45 @@ function Header() {
   const handleLogout = () => {
     authService.logout();
     dispatch(logout());
-    toast.info('Đã đăng xuất thành công', {
+    toast.info("Đã đăng xuất thành công", {
       position: "top-right",
       autoClose: 3000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
-      draggable: true
+      draggable: true,
     });
-    navigate('/');
+    navigate("/");
   };
   useEffect(() => {
     // Đồng bộ role từ localStorage
-    const userData = JSON.parse(localStorage.getItem('user_data'));
-    const storedRole = localStorage.getItem('user_role'); // Đọc trực tiếp từ user_role
-    
+    const userData = JSON.parse(localStorage.getItem("user_data"));
+    const storedRole = localStorage.getItem("user_role"); // Đọc trực tiếp từ user_role
+
     if (userData) {
       // Ưu tiên role từ user_role nếu có
-      const role = storedRole || userData.role || (userData.roles && userData.roles[0]);
+      const role =
+        storedRole || userData.role || (userData.roles && userData.roles[0]);
       if (role) {
-        console.log('Synchronizing role from localStorage:', role);
-        dispatch(updateUser({
-          ...userData,
-          role: role
-        }));
+        console.log("Synchronizing role from localStorage:", role);
+        dispatch(
+          updateUser({
+            ...userData,
+            role: role,
+          })
+        );
       }
     }
   }, [dispatch]);
-  
+
   // Kiểm tra xem người dùng có phải admin không
-  const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
-  
+  const isAdmin = user && user.role && user.role.toLowerCase() === "admin";
+
   // Kiểm tra xem người dùng có phải teacher không
-  const isTeacher = user && user.role && user.role.toLowerCase() === 'teacher';
-  
+  const isTeacher = user && user.role && user.role.toLowerCase() === "teacher";
+
   // Định nghĩa đường dẫn tới trang bài thi tùy theo vai trò
-  const examsPath = isAdmin ? '/admin/exams' : '/exams';
+  const examsPath = isAdmin ? "/admin/exams" : "/exams";
 
   // Hàm lấy chữ cái đầu của tên người dùng
   const getInitials = (name) => {
@@ -406,7 +422,12 @@ function Header() {
   // Hàm lấy tên hiển thị
   const getDisplayName = () => {
     if (!user) return "Người dùng";
-    return user.fullName || user.username || user.email?.split("@")[0] || "Người dùng";
+    return (
+      user.fullName ||
+      user.username ||
+      user.email?.split("@")[0] ||
+      "Người dùng"
+    );
   };
 
   // Callback sau khi đăng nhập thành công
@@ -417,12 +438,12 @@ function Header() {
 
   // Add this inside your Header function
   const isActive = (path) => {
-    if (path === '/' && currentPath === '/') {
+    if (path === "/" && currentPath === "/") {
       return true;
     }
     // For other pages, check if the currentPath starts with the path
     // (allows for active states on nested routes)
-    return path !== '/' && currentPath.startsWith(path);
+    return path !== "/" && currentPath.startsWith(path);
   };
 
   return (
@@ -443,19 +464,47 @@ function Header() {
           <Nav $isMenuVisible={isMenuVisible} theme={theme}>
             <NavItems>
               <NavItem theme={theme}>
-                <Link to="/" className={isActive('/') ? 'active' : ''}>Trang chủ</Link>
+                <Link to="/" className={isActive("/") ? "active" : ""}>
+                  Trang chủ
+                </Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to="/subjects" className={isActive('/subjects') ? 'active' : ''}>Môn học</Link>
+                <Link
+                  to="/subjects"
+                  className={isActive("/subjects") ? "active" : ""}
+                >
+                  Môn học
+                </Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to={examsPath} className={isActive('/exams') || isActive('/admin/exams') || isActive('/teacher/exams') ? 'active' : ''}>Bài thi</Link>
+                <Link
+                  to={examsPath}
+                  className={
+                    isActive("/exams") ||
+                    isActive("/admin/exams") ||
+                    isActive("/teacher/exams")
+                      ? "active"
+                      : ""
+                  }
+                >
+                  Bài thi
+                </Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to="/about" className={isActive('/about') ? 'active' : ''}>Giới thiệu</Link>
+                <Link
+                  to="/about"
+                  className={isActive("/about") ? "active" : ""}
+                >
+                  Giới thiệu
+                </Link>
               </NavItem>
               <NavItem theme={theme}>
-                <Link to="/contact" className={isActive('/contact') ? 'active' : ''}>Liên hệ</Link>
+                <Link
+                  to="/contact"
+                  className={isActive("/contact") ? "active" : ""}
+                >
+                  Liên hệ
+                </Link>
               </NavItem>
             </NavItems>
           </Nav>
@@ -480,7 +529,7 @@ function Header() {
                       transition={{ duration: 0.2 }}
                     >
                       <DropdownItem to="/profile" theme={theme}>
-                        <FaUserCog />
+                        <FaUsers />
                         Hồ sơ cá nhân
                       </DropdownItem>
                       <DropdownItem to="/dashboard" theme={theme}>
@@ -488,7 +537,7 @@ function Header() {
                         Bảng điều khiển
                       </DropdownItem>
                       {/* Thêm mục Lịch sử bài thi ở đây, chỉ hiển thị cho học sinh */}
-                      {user.role === 'Student' && (
+                      {user.role === "Student" && (
                         <DropdownItem to="/exam-history" theme={theme}>
                           <FaHistory />
                           Lịch sử bài thi
@@ -508,6 +557,13 @@ function Header() {
                             <FaClipboardList />
                             Quản lý đề thi
                           </DropdownItem>
+                          <DropdownItem
+                            to="/admin/exams/official/create"
+                            theme={theme}
+                          >
+                            <FaCheckCircle />
+                            Tạo kỳ thi chính thức
+                          </DropdownItem>
                           <DropdownItem to="/admin/subjects" theme={theme}>
                             <FaBook />
                             Quản lý môn học
@@ -516,12 +572,27 @@ function Header() {
                             <FaQuestion />
                             Quản lý câu hỏi
                           </DropdownItem>
+                          <DropdownItem
+                            to="/admin/questions/import"
+                            theme={theme}
+                          >
+                            <FaFileImport />
+                            Nhập câu hỏi Excel
+                          </DropdownItem>
+                          <DropdownItem to="/admin/results" theme={theme}>
+                            <FaFileExport />
+                            Xuất điểm học sinh
+                          </DropdownItem>
+                          <DropdownItem to="/admin/notifications" theme={theme}>
+                            <FaBell />
+                            Gửi thông báo
+                          </DropdownItem>
                           <DropdownItem to="/admin/statistics" theme={theme}>
                             <FaChartBar />
                             Thống kê hệ thống
                           </DropdownItem>
                           <DropdownItem to="/admin/chapters" theme={theme}>
-                          <FaPuzzlePiece />
+                            <FaGraduationCap />
                             Quản lý chương học
                           </DropdownItem>
                         </>
@@ -552,9 +623,21 @@ function Header() {
                         Cài đặt tài khoản
                       </DropdownItem>
                       <LogoutButton onClick={handleLogout}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                          <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-                          <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          viewBox="0 0 16 16"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"
+                          />
+                          <path
+                            fillRule="evenodd"
+                            d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"
+                          />
                         </svg>
                         Đăng xuất
                       </LogoutButton>
