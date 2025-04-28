@@ -4,6 +4,36 @@
         <name>webthitn-backend</name>
     </assembly>
     <members>
+        <member name="M:webthitn_backend.Controllers.AnalyticsController.GetTestAnalytics(System.Int32)">
+            <summary>
+            Thống kê về đề thi: câu sai nhiều nhất, thời gian trung bình
+            </summary>
+            <param name="id">ID của đề thi</param>
+            <returns>Thống kê về đề thi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.AnalyticsController.GetStudentAnalytics(System.Int32)">
+            <summary>
+            Thống kê điểm trung bình theo môn cho một học sinh
+            </summary>
+            <param name="id">ID của học sinh</param>
+            <returns>Thống kê điểm trung bình theo môn</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.AnalyticsController.GetStudentRanking(System.Int32,System.Int32)">
+            <summary>
+            Xếp hạng học sinh theo môn học
+            </summary>
+            <param name="subjectId">ID môn học cần xếp hạng</param>
+            <param name="limit">Số lượng học sinh tối đa trong bảng xếp hạng</param>
+            <returns>Bảng xếp hạng học sinh theo môn học</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.AnalyticsController.GetChartData(System.Nullable{System.Int32},System.String)">
+            <summary>
+            Lấy dữ liệu cho biểu đồ điểm và thời gian thi
+            </summary>
+            <param name="subjectId">ID môn học (tùy chọn)</param>
+            <param name="period">Khoảng thời gian (week, month, year)</param>
+            <returns>Dữ liệu biểu đồ</returns>
+        </member>
         <member name="M:webthitn_backend.Controllers.ChapterController.GetChapters(System.Nullable{System.Int32},System.Int32,System.Int32,System.Boolean,System.String)">
             <summary>
             Lấy danh sách chương có phân trang và lọc theo môn học
@@ -534,6 +564,42 @@
             <response code="404">Không tìm thấy đề thi với ID đã cho</response>
             <response code="401">Không có quyền truy cập</response>
         </member>
+        <member name="M:webthitn_backend.Controllers.NotificationsController.SendEmailNotification(webthitn_backend.DTOs.EmailNotificationDTO)">
+            <summary>
+            Gửi thông báo qua email
+            </summary>
+            <param name="notificationDto">Thông tin thông báo email</param>
+            <returns>Kết quả gửi thông báo</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.NotificationsController.SendInAppNotification(webthitn_backend.DTOs.InAppNotificationDTO)">
+            <summary>
+            Gửi thông báo trong hệ thống
+            </summary>
+            <param name="notificationDto">Thông tin thông báo</param>
+            <returns>Kết quả gửi thông báo</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.NotificationsController.GetMyNotifications(System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Lấy thông báo của người dùng hiện tại
+            </summary>
+            <param name="page">Số trang</param>
+            <param name="pageSize">Số lượng mỗi trang</param>
+            <param name="onlyUnread">Chỉ lấy thông báo chưa đọc</param>
+            <returns>Danh sách thông báo</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.NotificationsController.MarkAsRead(System.Int32)">
+            <summary>
+            Đánh dấu thông báo đã đọc
+            </summary>
+            <param name="id">ID thông báo</param>
+            <returns>Kết quả đánh dấu đã đọc</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.NotificationsController.MarkAllAsRead">
+            <summary>
+            Đánh dấu tất cả thông báo là đã đọc
+            </summary>
+            <returns>Kết quả đánh dấu đã đọc</returns>
+        </member>
         <member name="M:webthitn_backend.Controllers.QuestionController.CreateQuestion(webthitn_backend.DTOs.CreateQuestionDTO)">
             <summary>
             Thêm một câu hỏi mới vào hệ thống
@@ -999,6 +1065,251 @@
         <member name="M:webthitn_backend.Data.UnitOfWork.Dispose(System.Boolean)">
             <summary>
             Dispose
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.QuestionAnalyticsDTO">
+            <summary>
+            DTO cho thống kê câu hỏi trong đề thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.QuestionId">
+            <summary>
+            ID của câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.QuestionContent">
+            <summary>
+            Nội dung câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.AttemptCount">
+            <summary>
+            Số lượt trả lời câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.CorrectCount">
+            <summary>
+            Số lượt trả lời đúng
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.IncorrectCount">
+            <summary>
+            Số lượt trả lời sai
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.TotalTimeSpent">
+            <summary>
+            Tổng thời gian làm câu hỏi (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.AverageTimeSpent">
+            <summary>
+            Thời gian trung bình làm câu hỏi (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.QuestionAnalyticsDTO.CorrectRate">
+            <summary>
+            Tỷ lệ trả lời đúng (%)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ScoreDistributionDTO">
+            <summary>
+            DTO cho phân phối điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreDistributionDTO.Range">
+            <summary>
+            Khoảng điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreDistributionDTO.Count">
+            <summary>
+            Số lượng bài thi trong khoảng điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreDistributionDTO.Percentage">
+            <summary>
+            Phần trăm bài thi trong khoảng điểm
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.StudentSubjectStatsDTO">
+            <summary>
+            DTO cho thống kê học sinh theo môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.SubjectId">
+            <summary>
+            ID của môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.SubjectName">
+            <summary>
+            Tên môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.ExamCount">
+            <summary>
+            Số lượng bài thi đã làm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.AverageScore">
+            <summary>
+            Điểm trung bình
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.HighestScore">
+            <summary>
+            Điểm cao nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.LowestScore">
+            <summary>
+            Điểm thấp nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.PassCount">
+            <summary>
+            Số lượt đạt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentSubjectStatsDTO.PassRate">
+            <summary>
+            Tỷ lệ đạt (%)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.StudentRecentExamDTO">
+            <summary>
+            DTO cho bài thi gần đây của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.ExamId">
+            <summary>
+            ID của đề thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.ExamTitle">
+            <summary>
+            Tiêu đề đề thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.SubjectName">
+            <summary>
+            Tên môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.Score">
+            <summary>
+            Điểm đạt được
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.MaxScore">
+            <summary>
+            Điểm tối đa
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.PassScore">
+            <summary>
+            Điểm đạt
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.IsPassed">
+            <summary>
+            Có đạt hay không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.CompletedAt">
+            <summary>
+            Thời gian hoàn thành
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRecentExamDTO.CompletionTime">
+            <summary>
+            Thời gian làm bài (giây)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.StudentRankingDTO">
+            <summary>
+            DTO cho xếp hạng học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.UserId">
+            <summary>
+            ID của học sinh
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.Username">
+            <summary>
+            Tên đăng nhập
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.FullName">
+            <summary>
+            Họ và tên
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.AvatarUrl">
+            <summary>
+            URL ảnh đại diện
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.ExamCount">
+            <summary>
+            Số lượng bài thi đã làm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.AverageScore">
+            <summary>
+            Điểm trung bình
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.AveragePercentage">
+            <summary>
+            Điểm trung bình theo tỷ lệ (%)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.HighestScore">
+            <summary>
+            Điểm cao nhất
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentRankingDTO.Rank">
+            <summary>
+            Thứ hạng
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.AnswerData">
+            <summary>
+            Cấu trúc dữ liệu câu trả lời trong bài thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.AnswerData.QuestionId">
+            <summary>
+            ID câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.AnswerData.SelectedOptionIds">
+            <summary>
+            ID đáp án đã chọn
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.AnswerData.TextAnswer">
+            <summary>
+            Câu trả lời văn bản (cho câu hỏi tự luận)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.AnswerData.IsCorrect">
+            <summary>
+            Đúng hay sai
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.AnswerData.Score">
+            <summary>
+            Điểm đạt được
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.AnswerData.TimeSpent">
+            <summary>
+            Thời gian làm câu hỏi (giây)
             </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.ChapterDetailDTO">
@@ -2252,6 +2563,161 @@
             Trạng thái kích hoạt
             </summary>
             <example>true</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.EmailNotificationDTO">
+            <summary>
+            DTO để gửi thông báo qua email
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.Recipients">
+            <summary>
+            Danh sách địa chỉ email người nhận (ngăn cách bởi dấu phẩy nếu nhiều người)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.Subject">
+            <summary>
+            Tiêu đề email
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.Content">
+            <summary>
+            Nội dung email (hỗ trợ HTML)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.Template">
+            <summary>
+            Mẫu email sử dụng (tùy chọn)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.TemplateData">
+            <summary>
+            Dữ liệu cho mẫu email (dạng JSON)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.SaveNotification">
+            <summary>
+            Có lưu bản ghi thông báo trong hệ thống không
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.Type">
+            <summary>
+            Loại thông báo (nếu lưu)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.RelatedEntityId">
+            <summary>
+            ID đối tượng liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.RelatedEntityType">
+            <summary>
+            Loại đối tượng liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.EmailNotificationDTO.Link">
+            <summary>
+            Đường dẫn liên quan đến thông báo
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.InAppNotificationDTO">
+            <summary>
+            DTO để gửi thông báo trong hệ thống
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.UserId">
+            <summary>
+            ID người nhận thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.UserIds">
+            <summary>
+            Danh sách ID người nhận (nếu gửi nhiều người)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.Title">
+            <summary>
+            Tiêu đề thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.Content">
+            <summary>
+            Nội dung thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.Type">
+            <summary>
+            Loại thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.Link">
+            <summary>
+            Đường dẫn liên quan đến thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.RelatedEntityId">
+            <summary>
+            ID đối tượng liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.RelatedEntityType">
+            <summary>
+            Loại đối tượng liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.InAppNotificationDTO.SendEmail">
+            <summary>
+            Có gửi thông báo qua email không
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.NotificationDTO">
+            <summary>
+            DTO thông báo trả về
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.Id">
+            <summary>
+            ID thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.Title">
+            <summary>
+            Tiêu đề thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.Content">
+            <summary>
+            Nội dung thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.Type">
+            <summary>
+            Loại thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.IsRead">
+            <summary>
+            Thông báo đã đọc hay chưa
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.Link">
+            <summary>
+            Đường dẫn liên quan đến thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.CreatedAt">
+            <summary>
+            Thời gian tạo thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.RelatedEntityId">
+            <summary>
+            ID đối tượng liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.NotificationDTO.RelatedEntityType">
+            <summary>
+            Loại đối tượng liên quan
+            </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.QuestionListDTO">
             <summary>
@@ -3620,6 +4086,18 @@
         <member name="M:webthitn_backend.Migrations.AddExamFeedbacks.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:webthitn_backend.Migrations.AddNotificationsTable">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddNotificationsTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddNotificationsTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddNotificationsTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:webthitn_backend.Models.Subject">
             <summary>
             Model đại diện cho môn học trong hệ thống
@@ -4388,6 +4866,101 @@
         <member name="P:webthitn_backend.Models.ShortAnswerEvaluationInfo.RequiresManualReview">
             <summary>
             Cần đánh giá thủ công
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.Notifications.NotificationType">
+            <summary>
+            Loại thông báo trong hệ thống
+            </summary>
+        </member>
+        <member name="F:webthitn_backend.Models.Notifications.NotificationType.General">
+            <summary>
+            Thông báo chung
+            </summary>
+        </member>
+        <member name="F:webthitn_backend.Models.Notifications.NotificationType.Exam">
+            <summary>
+            Thông báo về bài thi
+            </summary>
+        </member>
+        <member name="F:webthitn_backend.Models.Notifications.NotificationType.Result">
+            <summary>
+            Thông báo về kết quả
+            </summary>
+        </member>
+        <member name="F:webthitn_backend.Models.Notifications.NotificationType.System">
+            <summary>
+            Thông báo về hệ thống
+            </summary>
+        </member>
+        <member name="F:webthitn_backend.Models.Notifications.NotificationType.Account">
+            <summary>
+            Thông báo về tài khoản
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Models.Notifications.Notification">
+            <summary>
+            Thông báo trong hệ thống
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.Title">
+            <summary>
+            Tiêu đề thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.Content">
+            <summary>
+            Nội dung thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.UserId">
+            <summary>
+            ID của người dùng nhận thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.User">
+            <summary>
+            Đối tượng người dùng nhận thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.Type">
+            <summary>
+            Loại thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.IsRead">
+            <summary>
+            Thông báo đã đọc hay chưa
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.Link">
+            <summary>
+            Đường dẫn liên quan đến thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.CreatedAt">
+            <summary>
+            Thời gian tạo thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.ReadAt">
+            <summary>
+            Thời gian đọc thông báo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.RelatedEntityId">
+            <summary>
+            ID đối tượng liên quan (ví dụ: ID bài thi, ID kết quả)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.RelatedEntityType">
+            <summary>
+            Loại đối tượng liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Notifications.Notification.SentViaEmail">
+            <summary>
+            Thông báo đã gửi qua email chưa
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.PracticeExam">

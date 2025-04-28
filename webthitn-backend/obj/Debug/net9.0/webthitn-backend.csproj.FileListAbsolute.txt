@@ -697,7 +697,6 @@ C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbu
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.webthitn-backend.props
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.webthitn-backend.props
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.pack.json
-C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\webthitn.81648C40.Up2Date
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\webthitn-backend.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\refint\webthitn-backend.dll
@@ -712,3 +711,4 @@ C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\CsvHelper.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\EPPlus.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\Microsoft.IO.RecyclableMemoryStream.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\Newtonsoft.Json.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
