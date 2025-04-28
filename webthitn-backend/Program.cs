@@ -1,29 +1,32 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
-using webthitn_backend.Services;
-using webthitn_backend.Middleware;
-using System;
-using System.Reflection;
-using System.IO;
-using webthitn_backend.Models;
-using Swashbuckle.AspNetCore.Filters;
-using webthitn_backend.Swagger;
-using webthitn_backend.Helpers;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using OfficeOpenXml;
-using OfficeOpenXml.Style;
-using OfficeOpenXml.Table;
+using Swashbuckle.AspNetCore.Filters;
+using System;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using webthitn_backend.Helpers;
+using webthitn_backend.Middleware;
 using webthitn_backend.Middlewares;
+using webthitn_backend.Models;
+using webthitn_backend.Services;
+using webthitn_backend.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
-// Email service
-builder.Services.AddSingleton<EmailService>();
 
+// Đăng ký các dịch vụ
+builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
+builder.Services.AddSingleton<EmailService>();
 
 // Cấu hình DbContext để kết nối với cơ sở dữ liệu
 // ĐÃ SỬA: Tắt ExecutionStrategy bằng cách đặt maxRetryCount = 0
@@ -46,6 +49,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     )
 );
 
+// Cấu hình EPPlus (Excel)
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Cấu hình Authentication với JWT Bearer Token
@@ -97,9 +101,13 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder
-                .WithOrigins("http://localhost:3000") // Thay đổi thành domain của frontend bạn
+                .WithOrigins(
+                    "http://localhost:3000",
+                    "https://webthitn.vn" // Thêm domain production nếu có
+                )
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials(); // Cho phép credentials nếu cần
         });
 });
 
@@ -109,12 +117,14 @@ builder.Services.AddLogging(logging =>
     logging.ClearProviders();
     logging.AddConsole();
     logging.AddDebug();
+
+    // Tùy chọn: Thêm cấu hình log file
+    // logging.AddFile("Logs/webthitn-{Date}.log");
 });
 
 // Cấu hình Swagger để tài liệu hóa các API
 builder.Services.AddSwaggerGen(c =>
 {
-
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Web Thi TN API",
@@ -125,7 +135,6 @@ builder.Services.AddSwaggerGen(c =>
             Name = "Thien1124",
             Email = "thien1124@example.com"
         }
-
     });
 
     // Thêm file XML Documentation
@@ -135,6 +144,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
+
     // Thêm file XML cho các model
     c.OperationFilter<FileUploadOperationFilter>();
     c.OperationFilter<QuestionExamplesOperationFilter>();
@@ -166,18 +176,28 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
 // Thêm các dịch vụ API Controllers
-builder.Services.AddControllers();
-// Cấu hình JSON Serializer để sử dụng JsonDateTimeConverter    
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         // Cấu hình xử lý DateTime trong JSON response
         options.JsonSerializerOptions.Converters.Add(new JsonDateTimeConverter());
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
+
+// Thêm dịch vụ Memory Cache nếu cần
+builder.Services.AddMemoryCache();
+
+// Thêm HttpClient Factory nếu cần gọi API bên ngoài
+builder.Services.AddHttpClient();
+
+// Xây dựng ứng dụng
 var app = builder.Build();
+
+// Middleware xử lý lỗi toàn cầu (thêm mới)
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 // Middleware Swagger 
 app.UseSwagger();
 app.UseSwaggerUI(c => {
@@ -200,6 +220,29 @@ app.UseAuthorization();   // Kiểm tra quyền truy cập của người dùng
 
 // Định tuyến các Controllers
 app.MapControllers();
+
+// Áp dụng migrations tự động khi khởi động ứng dụng
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        // Áp dụng tất cả các migrations đang chờ
+        context.Database.Migrate();
+
+        // Log thành công
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        // Log lỗi
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while applying migrations to the database");
+    }
+}
 
 // Chạy ứng dụng
 app.Run();

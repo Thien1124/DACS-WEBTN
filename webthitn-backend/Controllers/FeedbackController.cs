@@ -99,6 +99,8 @@ namespace webthitn_backend.Controllers
                     ExamId = id,
                     UserId = userId,
                     Content = model.Content.Trim(),
+                    // FIX: Thêm giá trị mặc định cho ResponseContent
+                    ResponseContent = "",  // Giá trị mặc định rỗng thay vì null
                     CreatedAt = DateTime.UtcNow,
                     Status = FeedbackStatus.Pending,
                     Type = (FeedbackType)model.FeedbackType,

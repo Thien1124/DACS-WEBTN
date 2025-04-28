@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using webthitn_backend.Models.Notifications;
 using webthitn_backend.Models.Users;
 
 namespace webthitn_backend.Models
@@ -26,6 +27,8 @@ namespace webthitn_backend.Models
         public DbSet<PracticeExam> PracticeExams { get; set; }
         public DbSet<PracticeResult> PracticeResults { get; set; }
         public DbSet<ExamFeedback> ExamFeedbacks { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

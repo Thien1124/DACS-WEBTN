@@ -10,6 +10,195 @@
     "version": "v1"
   },
   "paths": {
+    "/api/analytics/test/{id}": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Thống kê về đề thi: câu sai nhiều nhất, thời gian trung bình",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của đề thi",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/analytics/student/{id}": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Thống kê điểm trung bình theo môn cho một học sinh",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID của học sinh",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/analytics/rank": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Xếp hạng học sinh theo môn học",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "ID môn học cần xếp hạng",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Số lượng học sinh tối đa trong bảng xếp hạng",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/analytics/chart-data": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Lấy dữ liệu cho biểu đồ điểm và thời gian thi",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "ID môn học (tùy chọn)",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "description": "Khoảng thời gian (week, month, year)",
+            "schema": {
+              "type": "string",
+              "default": "month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/Auth/register": {
       "post": {
         "tags": [
@@ -1825,6 +2014,229 @@
           },
           "401": {
             "description": "Không có quyền truy cập"
+          }
+        }
+      }
+    },
+    "/api/notifications/email": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Gửi thông báo qua email",
+        "requestBody": {
+          "description": "Thông tin thông báo email",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailNotificationDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailNotificationDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailNotificationDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/notifications/in-app": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Gửi thông báo trong hệ thống",
+        "requestBody": {
+          "description": "Thông tin thông báo",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InAppNotificationDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InAppNotificationDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InAppNotificationDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Lấy thông báo của người dùng hiện tại",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số lượng mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "onlyUnread",
+            "in": "query",
+            "description": "Chỉ lấy thông báo chưa đọc",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Đánh dấu thông báo đã đọc",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID thông báo",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/notifications/mark-all-read": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Đánh dấu tất cả thông báo là đã đọc",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -4229,7 +4641,7 @@
           },
           "defaultScore": {
             "maximum": 10,
-            "minimum": 0.1,
+            "minimum": 0,1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",
@@ -4431,6 +4843,68 @@
         "additionalProperties": false,
         "description": "DTO dùng để tạo mới môn học"
       },
+      "EmailNotificationDTO": {
+        "required": [
+          "content",
+          "recipients",
+          "subject"
+        ],
+        "type": "object",
+        "properties": {
+          "recipients": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Danh sách địa chỉ email người nhận (ngăn cách bởi dấu phẩy nếu nhiều người)",
+            "format": "email"
+          },
+          "subject": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string",
+            "description": "Tiêu đề email"
+          },
+          "content": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Nội dung email (hỗ trợ HTML)"
+          },
+          "template": {
+            "type": "string",
+            "description": "Mẫu email sử dụng (tùy chọn)",
+            "nullable": true
+          },
+          "templateData": {
+            "type": "string",
+            "description": "Dữ liệu cho mẫu email (dạng JSON)",
+            "nullable": true
+          },
+          "saveNotification": {
+            "type": "boolean",
+            "description": "Có lưu bản ghi thông báo trong hệ thống không"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "relatedEntityId": {
+            "type": "integer",
+            "description": "ID đối tượng liên quan",
+            "format": "int32",
+            "nullable": true
+          },
+          "relatedEntityType": {
+            "type": "string",
+            "description": "Loại đối tượng liên quan",
+            "nullable": true
+          },
+          "link": {
+            "type": "string",
+            "description": "Đường dẫn liên quan đến thông báo",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để gửi thông báo qua email"
+      },
       "ExamQuestionCreateDTO": {
         "type": "object",
         "properties": {
@@ -4450,7 +4924,7 @@
             "type": "number",
             "description": "Điểm số cho câu hỏi trong bài thi",
             "format": "double",
-            "example": 1.5
+            "example": 1,5
           }
         },
         "additionalProperties": false,
@@ -4529,6 +5003,66 @@
         },
         "additionalProperties": false
       },
+      "InAppNotificationDTO": {
+        "required": [
+          "content",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "ID người nhận thông báo",
+            "format": "int32",
+            "nullable": true
+          },
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Danh sách ID người nhận (nếu gửi nhiều người)",
+            "nullable": true
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string",
+            "description": "Tiêu đề thông báo"
+          },
+          "content": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Nội dung thông báo"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "link": {
+            "type": "string",
+            "description": "Đường dẫn liên quan đến thông báo",
+            "nullable": true
+          },
+          "relatedEntityId": {
+            "type": "integer",
+            "description": "ID đối tượng liên quan",
+            "format": "int32",
+            "nullable": true
+          },
+          "relatedEntityType": {
+            "type": "string",
+            "description": "Loại đối tượng liên quan",
+            "nullable": true
+          },
+          "sendEmail": {
+            "type": "boolean",
+            "description": "Có gửi thông báo qua email không"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO để gửi thông báo trong hệ thống"
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -4564,6 +5098,18 @@
         },
         "additionalProperties": false,
         "description": "Cài đặt cho kết quả trộn câu hỏi"
+      },
+      "NotificationType": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "description": "Loại thông báo trong hệ thống",
+        "format": "int32"
       },
       "ProblemDetails": {
         "type": "object",
@@ -4836,7 +5382,7 @@
           },
           "score": {
             "maximum": 100,
-            "minimum": 0.1,
+            "minimum": 0,1,
             "type": "number",
             "format": "double"
           }
@@ -4857,7 +5403,7 @@
             "type": "number",
             "description": "Điểm cập nhật",
             "format": "double",
-            "example": 0.75
+            "example": 0,75
           },
           "comment": {
             "type": "string",
@@ -4967,7 +5513,7 @@
           },
           "defaultScore": {
             "maximum": 10,
-            "minimum": 0.1,
+            "minimum": 0,1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",

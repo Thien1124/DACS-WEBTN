@@ -246,7 +246,7 @@ namespace webthitn_backend.DTOs
         /// Từ khóa tìm kiếm (tên, mô tả)
         /// </summary>
         /// <example>kiểm tra</example>
-        public required string? SearchTerm { get; set; }
+        public required string SearchTerm { get; set; }
     }
 
     /// <summary>
