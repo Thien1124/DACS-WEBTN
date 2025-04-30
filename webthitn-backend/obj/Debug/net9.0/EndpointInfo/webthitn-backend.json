@@ -4641,7 +4641,7 @@
           },
           "defaultScore": {
             "maximum": 10,
-            "minimum": 0,1,
+            "minimum": 0.1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",
@@ -4924,7 +4924,7 @@
             "type": "number",
             "description": "Điểm số cho câu hỏi trong bài thi",
             "format": "double",
-            "example": 1,5
+            "example": 1.5
           }
         },
         "additionalProperties": false,
@@ -5382,7 +5382,7 @@
           },
           "score": {
             "maximum": 100,
-            "minimum": 0,1,
+            "minimum": 0.1,
             "type": "number",
             "format": "double"
           }
@@ -5403,7 +5403,7 @@
             "type": "number",
             "description": "Điểm cập nhật",
             "format": "double",
-            "example": 0,75
+            "example": 0.75
           },
           "comment": {
             "type": "string",
@@ -5513,7 +5513,7 @@
           },
           "defaultScore": {
             "maximum": 10,
-            "minimum": 0,1,
+            "minimum": 0.1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",

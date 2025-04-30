@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\dtos\\examdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:dtos\\examdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
@@ -59,19 +63,32 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "ExamDTO.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\ExamDTO.cs",
+              "RelativeDocumentMoniker": "DTOs\\ExamDTO.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\ExamDTO.cs",
+              "RelativeToolTip": "DTOs\\ExamDTO.cs",
+              "ViewState": "AgIAAOwAAAAAAAAAAAAhwPcAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-30T04:19:35.145Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
               "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
               "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAACCAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAA+AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
               "WhenOpened": "2025-04-28T02:29:05.362Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "FeedbackController.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\FeedbackController.cs",
               "RelativeDocumentMoniker": "Controllers\\FeedbackController.cs",
@@ -79,12 +96,11 @@
               "RelativeToolTip": "Controllers\\FeedbackController.cs",
               "ViewState": "AgIAANUAAAAAAAAAAAAiwOYAAAA3AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T15:48:58.175Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-27T15:48:58.175Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "FeedbackDTOs.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\FeedbackDTOs.cs",
               "RelativeDocumentMoniker": "DTOs\\FeedbackDTOs.cs",
@@ -96,7 +112,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "QuestionController.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\QuestionController.cs",
               "RelativeDocumentMoniker": "Controllers\\QuestionController.cs",
@@ -108,7 +124,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "GlobalExceptionHandlerMiddleware.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Middleware\\GlobalExceptionHandlerMiddleware.cs",
               "RelativeDocumentMoniker": "Middleware\\GlobalExceptionHandlerMiddleware.cs",
@@ -120,7 +136,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "NotificationsController.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\NotificationsController.cs",
               "RelativeDocumentMoniker": "Controllers\\NotificationsController.cs",
@@ -132,7 +148,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "NotificationDTOs.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\NotificationDTOs.cs",
               "RelativeDocumentMoniker": "DTOs\\NotificationDTOs.cs",
@@ -144,7 +160,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "ApplicationDbContext.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
               "RelativeDocumentMoniker": "Models\\ApplicationDbContext.cs",
@@ -156,7 +172,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
@@ -168,7 +184,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "20250426142113_AddPracticeExamModels.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250426142113_AddPracticeExamModels.cs",
               "RelativeDocumentMoniker": "Migrations\\20250426142113_AddPracticeExamModels.cs",
