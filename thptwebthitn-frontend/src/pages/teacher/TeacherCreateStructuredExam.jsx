@@ -326,48 +326,51 @@ const TeacherCreateStructuredExam = () => {
       }
       
       // Prepare exam data with structured criteria
+      // Modify your examData before sending
       const examData = {
-        title: formData.title,
-        description: formData.description,
-        subjectId: parseInt(formData.subjectId),
-        examTypeId: 1, // Default exam type ID
-        duration: parseInt(formData.duration),
-        totalScore: 10, // Total score
-        passScore: parseFloat(formData.passingScore),
-        isPublic: formData.isPublic,
-        isActive: formData.isActive, // Thêm trường này
-        shuffleQuestions: true,
-        showResult: true,
-        showAnswers: true,
-        autoGradeShortAnswer: true,
-        criteria: [
-          {
-            levelId: 1, // Easy
-            questionType: 0, // All types
-            chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
-            topic: "",
-            count: questionCounts.easy,
-            score: 1 // 1 point per easy question
-          },
-          {
-            levelId: 2, // Medium
-            questionType: 0, // All types
-            chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
-            topic: "",
-            count: questionCounts.medium,
-            score: 1 // 1 point per medium question
-          },
-          {
-            levelId: 3, // Hard
-            questionType: 0, // All types
-            chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
-            topic: "",
-            count: questionCounts.hard,
-            score: 1 // 1 point per hard question
-          }
-        ]
+        model: { // Add this wrapper object
+          title: formData.title,
+          description: formData.description,
+          subjectId: parseInt(formData.subjectId),
+          examTypeId: 1,
+          duration: parseInt(formData.duration),
+          totalScore: 10,
+          passScore: parseFloat(formData.passingScore),
+          isPublic: formData.isPublic,
+          isActive: formData.isActive,
+          shuffleQuestions: true,
+          showResult: true,
+          showAnswers: true,
+          autoGradeShortAnswer: true,
+          criteria: [
+            {
+              levelId: 1, // Easy
+              questionType: 0,
+              chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
+              topic: "",
+              count: questionCounts.easy,
+              score: 1
+            },
+            {
+              levelId: 2, // Medium
+              questionType: 0,
+              chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
+              topic: "",
+              count: questionCounts.medium,
+              score: 1
+            },
+            {
+              levelId: 3, // Hard
+              questionType: 0,
+              chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
+              topic: "",
+              count: questionCounts.hard,
+              score: 1
+            }
+          ]
+        }
       };
-      
+
       console.log('Gửi dữ liệu:', examData);
       
       // Thử gọi trực tiếp API để kiểm tra lỗi

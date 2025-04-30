@@ -1,0 +1,45 @@
+.notification-badge-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.notification-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-icon {
+  font-size: 1.4rem;
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #f44336;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Dark theme support */
+.dark .notification-icon {
+  color: #e2e8f0;
+}
+
+.notification-badge-wrapper:hover .notification-icon {
+  color: var(--primary-color);
+}

@@ -6,6 +6,7 @@ import { createChapter } from '../../services/chapterService';
 import { getSubjects } from '../../services/subjectService';
 import { FaSave, FaTimes } from 'react-icons/fa';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 const Container = styled.div`
   padding: 2rem;
@@ -206,14 +207,16 @@ const CreateChapter = () => {
         subjectId: parseInt(formData.subjectId)
       });
       
-      // Redirect sau khi tạo thành công
-      navigate(subjectId 
-        ? `/admin/subjects/${subjectId}/chapters` 
-        : '/admin/chapters'
-      );
+      // Show success message
+      showSuccessToast('Tạo chương mới thành công!');
+      
+      // Redirect back to the subject detail page instead of the chapters page
+      navigate(`/subjects/${formData.subjectId}`);
     } catch (err) {
       console.error('Error creating chapter:', err);
-      setError(err.response?.data?.message || 'Không thể tạo chương. Vui lòng thử lại.');
+      const errorMessage = err.response?.data?.message || 'Không thể tạo chương. Vui lòng thử lại.';
+      setError(errorMessage);
+      showErrorToast(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -295,10 +298,7 @@ const CreateChapter = () => {
           <CancelButton
             theme={theme}
             type="button"
-            onClick={() => navigate(subjectId 
-              ? `/admin/subjects/${subjectId}/chapters` 
-              : '/admin/chapters'
-            )}
+            onClick={() => navigate(`/subjects/${formData.subjectId}`)}
           >
             <FaTimes /> Hủy
           </CancelButton>

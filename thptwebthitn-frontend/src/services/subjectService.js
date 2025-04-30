@@ -19,7 +19,7 @@ export const getSubjects = async (params = {}) => {
     const queryParams = new URLSearchParams(defaultParams).toString();
     console.log(`Fetching subjects with params: ${queryParams}`);
     
-    const response = await apiClient.get(`/api/Subject/list?${queryParams}`);
+    const response = await apiClient.get(`/api/Subject/all?${queryParams}`);
     
     if (response.data) {
       if (Array.isArray(response.data)) {
@@ -88,10 +88,49 @@ export const getAllSubjectsNoPaging = async () => {
 // Tạo môn học mới
 export const createSubject = async (subjectData) => {
   try {
-    const response = await apiClient.post('/api/Subject', subjectData);
-    return response.data;
+    // Kiểm tra grade nếu có
+    let gradeValue = null;
+    if (subjectData.grade) {
+      gradeValue = parseInt(subjectData.grade, 10);
+      // Kiểm tra giá trị hợp lệ
+      if (gradeValue < 10 || gradeValue > 12) {
+        throw new Error('Khối lớp phải có giá trị từ 10 đến 12');
+      }
+    }
+    
+    // Đảm bảo định dạng dữ liệu với tên trường chính xác
+    const payload = {
+      name: subjectData.name.trim(),
+      code: subjectData.code.trim(),
+      description: subjectData.description || '',
+      // Đổi tên trường từ 'grade' thành 'gradeLevel'
+      gradeLevel: gradeValue
+    };
+    
+    // Log payload trước khi gửi 
+    console.log('Creating subject with payload:', payload);
+    
+    // Gửi request đến API
+    const response = await apiClient.post('/api/Subject', payload);
+    
+    // Kiểm tra và xử lý response
+    if (response.data) {
+      console.log('Subject created successfully:', response.data);
+      return response.data;
+    } else {
+      throw new Error('Không nhận được dữ liệu từ API');
+    }
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể tạo môn học mới.' };
+    console.error('Error in createSubject service:', error);
+    
+    // Log chi tiết thông tin lỗi
+    if (error.response) {
+      console.log('Error response:', error.response.status);
+      console.log('Error data:', error.response.data);
+    }
+    
+    // Truyền lại lỗi để xử lý ở component
+    throw error;
   }
 };
 

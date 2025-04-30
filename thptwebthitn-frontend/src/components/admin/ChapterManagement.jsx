@@ -117,6 +117,7 @@ const TableCell = styled.td`
   color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
 `;
 
+// Update the ActionButton styled component
 const ActionButton = styled.button`
   background: ${props => props.theme === 'dark' ? '#2d3748' : '#f7fafc'};
   color: ${props => props.theme === 'dark' 
@@ -125,16 +126,19 @@ const ActionButton = styled.button`
   };
   border: none;
   border-radius: 0.375rem;
-  width: 2rem;
-  height: 2rem;
+  padding: 0.5rem 0.75rem;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
   
   &:hover {
-    background: ${props => props.theme === 'dark' ? '#4a5568' : '#edf2f7'};
+    background: ${props => props.theme === 'dark' 
+      ? (props.delete ? '#742a2a' : '#2a4365') 
+      : (props.delete ? '#fed7d7' : '#bee3f8')};
   }
 `;
 
@@ -415,7 +419,7 @@ const ChapterManagement = () => {
                         onClick={() => handleEditChapter(chapter)}
                         title="Chỉnh sửa"
                       >
-                        <FaEdit />
+                        <FaEdit /> Sửa
                       </ActionButton>
                       <ActionButton 
                         theme={theme}
@@ -423,7 +427,7 @@ const ChapterManagement = () => {
                         onClick={() => handleDeleteChapter(chapter)}
                         title="Xóa"
                       >
-                        <FaTrash />
+                        <FaTrash /> Xóa
                       </ActionButton>
                     </ActionsContainer>
                   </TableCell>

@@ -951,6 +951,7 @@ useEffect(() => {
       const questionType = parseInt(questionData.questionType, 10);
       
       const payload = {
+        model: "Question",
         content: questionData.content,
         explanation: questionData.explanation || '',
         subjectId: parseInt(questionData.subjectId, 10),
@@ -974,7 +975,7 @@ useEffect(() => {
           matchingValue: opt.matchingValue || '',
           isPartOfTrueFalseGroup: questionType === 2,
           groupId: questionType === 2 ? idx + 1 : 0,
-          scorePercentage: opt.scorePercentage || (opt.isCorrect ? 100 : 0)
+          scorePercentage: parseInt(opt.scorePercentage || (opt.isCorrect ? 100 : 0), 10)
         }))
       };
       

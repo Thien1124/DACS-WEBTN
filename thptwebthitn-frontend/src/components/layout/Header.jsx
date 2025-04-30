@@ -539,6 +539,9 @@ function Header() {
                           <FaPuzzlePiece />
                             Quản lý chương học
                           </DropdownItem>
+                          <DropdownItem to="/admin/notifications" className={({ isActive }) => isActive ? "active" : ""}>
+                            <FaBell /> Quản lý thông báo
+                          </DropdownItem>
                         </>
                       )}
                       {isTeacher && !isAdmin && (

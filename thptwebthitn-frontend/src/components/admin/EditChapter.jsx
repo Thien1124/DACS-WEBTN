@@ -6,7 +6,7 @@ import { getChapter, updateChapter } from '../../services/chapterService';
 import { getSubjects } from '../../services/subjectService';
 import { FaSave, FaTimes } from 'react-icons/fa';
 import LoadingSpinner from '../common/LoadingSpinner';
-
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 // Sử dụng cùng styled components như trong CreateChapter
 
 const Container = styled.div`
@@ -227,11 +227,15 @@ const EditChapter = () => {
         subjectId: parseInt(formData.subjectId)
       });
       
-      // Redirect sau khi cập nhật thành công
-      navigate('/admin/chapters');
+      // Show success message
+      showSuccessToast('Cập nhật chương học thành công!');
+      
+      // Redirect back to the subject detail page after updating
+      navigate(`/subjects/${formData.subjectId}`);
     } catch (err) {
       console.error('Error updating chapter:', err);
       setError(err.response?.data?.message || 'Không thể cập nhật chương. Vui lòng thử lại.');
+      showErrorToast('Không thể cập nhật chương. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -320,7 +324,7 @@ const EditChapter = () => {
           <CancelButton
             theme={theme}
             type="button"
-            onClick={() => navigate('/admin/chapters')}
+            onClick={() => navigate(`/subjects/${formData.subjectId}`)}
           >
             <FaTimes /> Hủy
           </CancelButton>

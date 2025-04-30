@@ -14,8 +14,14 @@ import {
   FaUserShield,
   FaArrowLeft,
   FaTrophy, // Thêm biểu tượng này
-  // Loại bỏ các icon không sử dụng
+  // Thêm các icon cho các nút
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaBook
 } from "react-icons/fa";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -273,103 +279,62 @@ const SubjectGrade = styled.div`
   border-radius: 4px;
 `;
 
+// Thay đổi ButtonGroup để cải thiện bố cục
 const ButtonGroup = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
 `;
 
-const ActionButtons = styled(Link)`
+// Tạo LabeledButton mới thay thế ButtonAction cũ
+const LabeledButton = styled.button`
   display: flex;
   align-items: center;
-  padding: 0.6rem 1.2rem;
-  background-color: ${(props) =>
-    props.bgColor || (props.theme === "dark" ? "#4a5568" : "#4285f4")};
-  color: white;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 0.95rem;
+  justify-content: center;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
   font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: 0.8rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  svg {
+    margin-right: 0.4rem;
+    font-size: 0.9rem;
+  }
+  
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    background-color: ${(props) =>
-      props.hoverColor || (props.theme === "dark" ? "#718096" : "#3367d6")};
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
-
-  svg {
-    margin-right: 0.5rem;
-  }
-`;
-
-const ButtonAction = styled.button`
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: 0.5rem;
 
   &.view {
-    background-color: ${(props) =>
-      props.theme === "dark" ? "#4285f4" : "#4285f4"};
+    background-color: #4285f4;
     color: white;
-
-    &:hover {
-      background-color: ${(props) =>
-        props.theme === "dark" ? "#3367d6" : "#3367d6"};
-    }
-  }
-
-  &.edit {
-    background-color: ${(props) =>
-      props.theme === "dark" ? "#f6ad55" : "#f6ad55"};
-    color: white;
-
-    &:hover {
-      background-color: ${(props) =>
-        props.theme === "dark" ? "#dd6b20" : "#dd6b20"};
-    }
-  }
-
-  &.delete {
-    background-color: ${(props) =>
-      props.theme === "dark" ? "#f56565" : "#f56565"};
-    color: white;
-
-    &:hover {
-      background-color: ${(props) =>
-        props.theme === "dark" ? "#e53e3e" : "#e53e3e"};
-    }
-  }
-
-  &.status {
-    background-color: ${(props) =>
-      props.theme === "dark" ? "#38b2ac" : "#38b2ac"};
-    color: white;
-
-    &:hover {
-      background-color: ${(props) =>
-        props.theme === "dark" ? "#2c7a7b" : "#2c7a7b"};
-    }
+    &:hover { background-color: #3367d6; }
   }
 
   &.exam {
-    background-color: ${(props) =>
-      props.theme === "dark" ? "#38b2ac" : "#38b2ac"};
+    background-color: #38b2ac;
     color: white;
+    &:hover { background-color: #2c7a7b; }
+  }
 
-    &:hover {
-      background-color: ${(props) =>
-        props.theme === "dark" ? "#2c7a7b" : "#2c7a7b"};
-    }
+  &.edit {
+    background-color: #f6ad55;
+    color: white;
+    &:hover { background-color: #dd6b20; }
+  }
+
+  &.delete {
+    background-color: #f56565;
+    color: white;
+    &:hover { background-color: #e53e3e; }
   }
 `;
 
@@ -839,10 +804,40 @@ const SubjectsPage = () => {
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
   `;
   const { upcomingExams, dismissExam } = useExamReminders(7); // Hiển thị nhắc nhở trước 7 ngày
+  
+  // Hàm xóa môn học cần được thêm vào component SubjectsPage
+  const deleteSubject = async (subjectId) => {
+    try {
+      setLoading(true);
+      console.log(`Đang xóa môn học ID: ${subjectId}`);
+      
+      // Gọi API để xóa môn học
+      const response = await fetch(`http://localhost:5006/api/Subject/${subjectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Nếu cần xác thực
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+      }
+      
+      // Cập nhật danh sách môn học sau khi xóa
+      setSubjects(subjects.filter(subject => subject.id !== subjectId));
+      toast.success('Xóa môn học thành công!');
+    } catch (error) {
+      console.error('Lỗi khi xóa môn học:', error);
+      toast.error('Không thể xóa môn học. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PageContainer theme={theme}>
       <Header />
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <ContentContainer>
         {/* Hiển thị banner nhắc nhở nếu có kỳ thi sắp diễn ra */}
         {upcomingExams.length > 0 && (
@@ -975,35 +970,44 @@ const SubjectsPage = () => {
                   
                   <SubjectFooter>
                     <ButtonGroup>
-                      <ButtonAction
+                      <LabeledButton
                         className="view"
                         onClick={() => navigate(`/subjects/${subject.id}`)}
                         theme={theme}
                       >
-                        Xem
-                      </ButtonAction>
+                        <FaEye /> Chi tiết
+                      </LabeledButton>
                       
-                      {/* Thêm nút Đề thi ở đây */}
-                      <ButtonAction
+                      <LabeledButton
                         className="exam"
                         onClick={() => navigate(`/exams/by-subject/${subject.id}`)}
                         theme={theme}
-                        style={{ 
-                          backgroundColor: "#38b2ac", 
-                          color: "white" 
-                        }}
                       >
-                        <FaFileAlt style={{ marginRight: "5px" }} /> Đề thi
-                      </ButtonAction>
+                        <FaFileAlt /> Đề thi
+                      </LabeledButton>
                       
                       {hasEditAccess() && (
-                        <ButtonAction
-                          className="edit"
-                          onClick={() => navigate(`/subject/edit/${subject.id}`)}
-                          theme={theme}
-                        >
-                          Sửa
-                        </ButtonAction>
+                        <>
+                          <LabeledButton
+                            className="edit"
+                            onClick={() => navigate(`/subject/edit/${subject.id}`)}
+                            theme={theme}
+                          >
+                            <FaEdit /> Sửa
+                          </LabeledButton>
+                          
+                          <LabeledButton
+                            className="delete"
+                            onClick={() => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa môn học "${subject.name}" không?`)) {
+                                deleteSubject(subject.id);
+                              }
+                            }}
+                            theme={theme}
+                          >
+                            <FaTrash /> Xóa
+                          </LabeledButton>
+                        </>
                       )}
                     </ButtonGroup>
                   </SubjectFooter>

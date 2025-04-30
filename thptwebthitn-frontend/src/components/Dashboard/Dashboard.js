@@ -310,6 +310,7 @@ const Dashboard = () => {
       strengths: ''
     },
     recentExams: [],
+    completedExams: [], // Add this new property for completed exams
     activities: [],
     events: []
   });
@@ -522,6 +523,48 @@ const Dashboard = () => {
         ) : (
           <EmptyState theme={theme}>
             <p>Bạn chưa có bài thi nào đang làm.</p>
+            <Link to="/exams" style={{ display: 'inline-block', marginTop: '1rem', color: '#4285f4', textDecoration: 'none' }}>
+              Bắt đầu làm bài thi ngay
+            </Link>
+          </EmptyState>
+        )}
+
+        {/* Add this section after the recentExams section */}
+        <SectionTitle theme={theme}>
+          <FaCheckCircle /> Bài thi đã hoàn thành
+        </SectionTitle>
+
+        {dashboardData.completedExams && dashboardData.completedExams.length > 0 ? (
+          <RecentExamsGrid>
+            {dashboardData.completedExams.map(exam => (
+              <ExamCard key={exam.id} to={`/exam-results/${exam.resultId}`} theme={theme}>
+                <ExamTitle theme={theme}>{exam.title}</ExamTitle>
+                <ExamInfo theme={theme}>
+                  <FaGraduationCap /> {exam.subject}
+                </ExamInfo>
+                <ExamInfo theme={theme}>
+                  <FaClock /> {exam.completedDate}
+                </ExamInfo>
+                <ExamProgress>
+                  <ProgressLabel theme={theme}>
+                    <span>Kết quả: {exam.score}/{exam.totalScore} điểm</span>
+                    <span>{Math.round((exam.score/exam.totalScore)*100)}%</span>
+                  </ProgressLabel>
+                  <ProgressBar theme={theme}>
+                    <ProgressFill 
+                      progress={Math.round((exam.score/exam.totalScore)*100)}
+                      style={{ 
+                        background: `linear-gradient(90deg, ${exam.isPassed ? '#34a853' : '#ea4335'}, ${exam.isPassed ? '#4285f4' : '#fbbc05'})`
+                      }} 
+                    />
+                  </ProgressBar>
+                </ExamProgress>
+              </ExamCard>
+            ))}
+          </RecentExamsGrid>
+        ) : (
+          <EmptyState theme={theme}>
+            <p>Bạn chưa hoàn thành bài thi nào.</p>
             <Link to="/exams" style={{ display: 'inline-block', marginTop: '1rem', color: '#4285f4', textDecoration: 'none' }}>
               Bắt đầu làm bài thi ngay
             </Link>

@@ -88,8 +88,8 @@ const StudentExamList = () => {
           examParams.append('PageSize', pageSize.toString());
           
           // Bỏ tham số lọc quá nghiêm ngặt để test
-          // examParams.append('ActiveOnly', 'true');
-          // examParams.append('IsOpen', 'true');
+          //examParams.append('ActiveOnly', 'true');
+          //examParams.append('IsOpen', 'true');
           
           if (searchTerm) examParams.append('SearchTerm', searchTerm);
   

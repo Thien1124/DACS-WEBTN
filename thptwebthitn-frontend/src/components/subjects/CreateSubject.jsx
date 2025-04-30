@@ -5,7 +5,7 @@ import axios from 'axios';
 import Header from '../layout/Header';
 import Footer from '../layout/Footer';
 import { createSubject } from '../../services/subjectService'; // Import service function
-
+import { showSuccessToast, showWarningToast } from '../../utils/toastUtils'; // Import toast utility function
 const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -211,6 +211,20 @@ const handleSubmit = async (e) => {
     return;
   }
   
+  // Validate grade nếu có nhập
+  if (formData.grade && (parseInt(formData.grade) < 10 || parseInt(formData.grade) > 12)) {
+    setError('Khối lớp phải có giá trị từ 10 đến 12');
+    return;
+  }
+  
+  if (formData.grade) {
+    const gradeValue = parseInt(formData.grade, 10);
+    if (gradeValue < 10 || gradeValue > 12) {
+      showWarningToast('Khối lớp phải có giá trị từ 10 đến 12');
+      return;
+    }
+  }
+  
   setLoading(true);
   setError('');
   
@@ -221,13 +235,14 @@ const handleSubmit = async (e) => {
     const result = await createSubject(formData);
     console.log(`[${currentTime}] API response:`, result);
     
-    setSuccess('Tạo môn học thành công!');
+    showSuccessToast('Tạo môn học thành công!');
     
     // Reset form sau khi thành công
     setFormData({
       name: '',
       code: '',
-      description: ''
+      description: '',
+      grade: ''
     });
     
     // Redirect after a short delay - với force reload để đảm bảo lấy dữ liệu mới
@@ -236,7 +251,36 @@ const handleSubmit = async (e) => {
     }, 2000);
   } catch (error) {
     console.error(`[${currentTime}] Error creating subject:`, error);
-    setError(error.response?.data?.message || 'Có lỗi xảy ra khi tạo môn học. Vui lòng thử lại sau.');
+    
+    // Xử lý lỗi chi tiết hơn
+    if (error.response) {
+      // Lỗi từ server với response
+      console.log('Error response:', error.response);
+      
+      if (error.response.data && error.response.data.errors) {
+        // Xử lý lỗi validation từ API
+        const validationErrors = Object.values(error.response.data.errors)
+          .flat()
+          .join(', ');
+        setError(`Lỗi dữ liệu: ${validationErrors}`);
+      } else if (error.response.data && error.response.data.message) {
+        setError(error.response.data.message);
+      } else if (error.response.status === 400) {
+        setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.');
+      } else if (error.response.status === 401) {
+        setError('Không có quyền thực hiện. Vui lòng đăng nhập lại.');
+      } else if (error.response.status === 409) {
+        setError('Mã môn học đã tồn tại. Vui lòng sử dụng mã khác.');
+      } else {
+        setError(`Lỗi máy chủ (${error.response.status}). Vui lòng thử lại sau.`);
+      }
+    } else if (error.request) {
+      // Request được gửi nhưng không nhận được response
+      setError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+    } else {
+      // Lỗi khác
+      setError('Có lỗi xảy ra: ' + error.message);
+    }
   } finally {
     setLoading(false);
   }
@@ -282,6 +326,18 @@ const handleSubmit = async (e) => {
               disabled={loading}
             />
           </FormGroup>
+          
+          <FormGroup>
+            <Label theme={theme}>Mô tả</Label>
+            <TextArea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Nhập mô tả về môn học"
+              theme={theme}
+              disabled={loading}
+            />
+          </FormGroup>
           <FormGroup>
             <Label theme={theme}>Khối lớp</Label>
             <Select
@@ -297,18 +353,6 @@ const handleSubmit = async (e) => {
               <option value="12">Lớp 12</option>
             </Select>
           </FormGroup>
-          <FormGroup>
-            <Label theme={theme}>Mô tả</Label>
-            <TextArea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Nhập mô tả về môn học"
-              theme={theme}
-              disabled={loading}
-            />
-          </FormGroup>
-          
           <ButtonGroup>
             <Button
               type="button"

@@ -112,6 +112,10 @@ import TeacherExamStatistics from './pages/teacher/TeacherExamStatistics';
 // Thêm import cho component mới
 import TeacherResultAnalytics from './pages/teacher/TeacherResultAnalytics';
 
+// Add this near your other imports
+import NotificationBadge from './components/notifications/NotificationBadge';
+import NotificationSender from './components/admin/NotificationSender';
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#121212' : '#f7f7f7'};
@@ -352,6 +356,12 @@ function App() {
                   </AdminRoute>
                 } />
                 
+                {/* Add this in the Admin Routes section */}
+                <Route path="/admin/notifications" element={
+                  <AdminRoute>
+                    <NotificationSender />
+                  </AdminRoute>
+                } />
                 
                 {/* In your Routes section, add these teacher exam management routes */}
                 <Route path="/teacher/exams" element={
@@ -501,6 +511,20 @@ function App() {
                 <Route path="/teacher/analytics/:examId" element={
                   <TeacherRoute>
                     <TeacherResultAnalytics />
+                  </TeacherRoute>
+                } />
+
+                {/* Add this route if it's not already there: */}
+                <Route path="/admin/subjects/:subjectId/chapters/create" element={
+                  <AdminRoute>
+                    <CreateChapter />
+                  </AdminRoute>
+                } />
+
+                {/* And for teacher: */}
+                <Route path="/teacher/subjects/:subjectId/chapters/create" element={
+                  <TeacherRoute>
+                    <CreateChapter />
                   </TeacherRoute>
                 } />
                 </Route>
