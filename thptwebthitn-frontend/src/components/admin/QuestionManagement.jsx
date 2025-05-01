@@ -669,6 +669,13 @@ const QuestionManagement = () => {
             <FaFileDownload /> Mẫu nhập liệu
           </Button>
           
+          <Button 
+            onClick={() => navigate('/admin/questions/import-excel')}
+            theme={theme}
+          >
+            <FaFileExcel /> Nhập từ Excel
+          </Button>
+          
           <Button theme={theme} primary onClick={handleCreateQuestion}>
             <FaPlus /> Thêm câu hỏi mới
           </Button>

@@ -111,10 +111,14 @@ import TeacherExamStatistics from './pages/teacher/TeacherExamStatistics';
 
 // Thêm import cho component mới
 import TeacherResultAnalytics from './pages/teacher/TeacherResultAnalytics';
+import SystemNotifications from './components/admin/SystemNotifications';
 
-// Add this near your other imports
 import NotificationBadge from './components/notifications/NotificationBadge';
 import NotificationSender from './components/admin/NotificationSender';
+import CreateOfficialExam from './components/admin/CreateOfficialExam';
+import AssignStudentsToExam from './components/admin/AssignStudentsToExam';
+import ImportQuestionsExcel from './components/admin/ImportQuestionsExcel';
+import StudentClassManagement from './components/admin/StudentClassManagement';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -217,16 +221,15 @@ function App() {
             )}
             
             <Routes>
-              {/* Auth Routes - Ngoài Layout */}
-              <Route path="/login" element={<AuthPage type="login" />} />
-              <Route path="/register" element={<AuthPage type="register" />} />
-              <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
-              <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              
-              {/* Các routes bọc trong AppLayout */}
               <Route element={<AppLayout />}>
-                {/* Home Page */}
+                {/* Auth Routes - Ngoài Layout */}
+                <Route path="/login" element={<AuthPage type="login" />} />
+                <Route path="/register" element={<AuthPage type="register" />} />
+                <Route path="/forgot-password" element={<AuthPage type="forgot-password" />} />
+                <Route path="/reset-password" element={<AuthPage type="reset-password" />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                
+                {/* Các routes bọc trong AppLayout */}
                 <Route path="/" element={<HomePage />} />
                 
                 {/* Subject Routes */}
@@ -360,6 +363,27 @@ function App() {
                 <Route path="/admin/notifications" element={
                   <AdminRoute>
                     <NotificationSender />
+                  </AdminRoute>
+                } />
+                
+                {/* Add this route in the Admin Routes section */}
+                <Route path="/admin/exams/create-official" element={
+                  <AdminRoute>
+                    <CreateOfficialExam />
+                  </AdminRoute>
+                } />
+                
+                {/* Add this route inside the AdminRoute section */}
+                <Route path="/admin/exams/assign-students" element={
+                  <AdminRoute>
+                    <AssignStudentsToExam />
+                  </AdminRoute>
+                } />
+                
+                {/* Add this route inside the Admin routes section */}
+                <Route path="/admin/notifications" element={
+                  <AdminRoute>
+                    <SystemNotifications />
                   </AdminRoute>
                 } />
                 
@@ -526,6 +550,31 @@ function App() {
                   <TeacherRoute>
                     <CreateChapter />
                   </TeacherRoute>
+                } />
+                <Route path="/admin/notifications/send" element={
+                  <AdminRoute>
+                    <NotificationSender />
+                  </AdminRoute>
+                } />
+
+                <Route path="/admin/notifications/manage" element={
+                  <AdminRoute>
+                    <SystemNotifications />
+                  </AdminRoute>
+                } />
+
+                {/* Add this route inside the Admin routes section */}
+                <Route path="/admin/questions/import-excel" element={
+                  <AdminRoute>
+                    <ImportQuestionsExcel />
+                  </AdminRoute>
+                } />
+
+                {/* Add this route inside the AdminRoute section */}
+                <Route path="/admin/students/classes" element={
+                  <AdminRoute>
+                    <StudentClassManagement />
+                  </AdminRoute>
                 } />
                 </Route>
               

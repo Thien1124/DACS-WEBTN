@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { FaInfoCircle, FaSave, FaTimes, FaQuestionCircle } from 'react-icons/fa';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import { createStructuredExam } from '../../services/testService';
-
+import apiClient from '../../services/apiClient';
 const DifficultyCard = styled(Card)`
   border-left: 4px solid ${props => {
     if (props.difficulty === 'easy') return '#48bb78';
@@ -58,9 +58,17 @@ const TeacherCreateStructuredExam = () => {
     chapterId: '',
     duration: 45,
     passingScore: 5,
+    difficulty: 'medium', // Add default difficulty - this was missing
     isPublic: true,
-    isActive: true
+    isActive: true,
+    shuffleQuestions: true,  // Add these missing options
+    shuffleOptions: true,
+    showResult: true,
+    showAnswers: false
   });
+
+  // 1. Add the missing examStructure state
+  const [examStructure, setExamStructure] = useState([]);
 
   // Fetch subjects on component mount
   useEffect(() => {
@@ -285,6 +293,47 @@ const TeacherCreateStructuredExam = () => {
     }
   }, [formData.subjectId]);
 
+  // 2. Create useEffect to update examStructure when questionCounts change
+  useEffect(() => {
+    if (formData.subjectId) {
+      // Convert difficulty-based counts to exam structure
+      const newStructure = [
+        // Easy questions section
+        {
+          title: "Câu hỏi mức độ Dễ",
+          description: "Phần câu hỏi dễ",
+          questionCount: questionCounts.easy,
+          questionType: 1, // Default to single choice
+          difficulty: "easy",
+          topics: formData.chapterId ? [parseInt(formData.chapterId)] : [],
+          scorePerQuestion: 1.0
+        },
+        // Medium questions section
+        {
+          title: "Câu hỏi mức độ Trung bình",
+          description: "Phần câu hỏi trung bình",
+          questionCount: questionCounts.medium,
+          questionType: 1,
+          difficulty: "medium",
+          topics: formData.chapterId ? [parseInt(formData.chapterId)] : [],
+          scorePerQuestion: 1.0
+        },
+        // Hard questions section
+        {
+          title: "Câu hỏi mức độ Khó",
+          description: "Phần câu hỏi khó",
+          questionCount: questionCounts.hard,
+          questionType: 1,
+          difficulty: "hard",
+          topics: formData.chapterId ? [parseInt(formData.chapterId)] : [],
+          scorePerQuestion: 1.0
+        }
+      ];
+      
+      setExamStructure(newStructure);
+    }
+  }, [questionCounts, formData.subjectId, formData.chapterId]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -300,144 +349,106 @@ const TeacherCreateStructuredExam = () => {
     });
   };
 
+  // 3. Fix the handleSubmit function by replacing setIsSubmitting with setSubmitting
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setSubmitting(true);
+    setError(null);
+
     try {
-      setSubmitting(true);
-      setError(null);
+      // Validate total questions
+      const totalQuestions = examStructure.reduce((sum, section) => 
+        sum + parseInt(section.questionCount || 0), 0);
       
-      // Lấy token để kiểm tra
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
-        setSubmitting(false);
-        return;
+      if (totalQuestions === 0) {
+        throw new Error('Vui lòng thêm ít nhất một câu hỏi vào đề thi');
       }
-      
-      console.log('Token hiện tại:', token);
-      
-      const totalQuestions = questionCounts.easy + questionCounts.medium + questionCounts.hard;
-      
-      if (totalQuestions <= 0) {
-        setError('Tổng số câu hỏi phải lớn hơn 0');
-        setSubmitting(false);
-        return;
+
+      // Validate required fields
+      if (!formData.title || !formData.subjectId || !formData.duration) {
+        throw new Error('Vui lòng điền đầy đủ các trường bắt buộc (Tên đề thi, Môn học, Thời gian)');
       }
-      
-      // Prepare exam data with structured criteria
-      // Modify your examData before sending
+
+      // Filter out sections with zero questions
+      const validSections = examStructure.filter(section => 
+        parseInt(section.questionCount) > 0
+      );
+
+      if (validSections.length === 0) {
+        throw new Error('Vui lòng thêm ít nhất một phần có câu hỏi');
+      }
+
+      // Format exam sections correctly
+      const formattedSections = validSections.map(section => ({
+        title: section.title || 'Phần không có tiêu đề',
+        description: section.description || '',
+        questionCount: parseInt(section.questionCount) || 0,
+        questionType: parseInt(section.questionType) || 1,
+        difficulty: section.difficulty || 'medium',
+        topics: Array.isArray(section.topics) ? 
+          section.topics.filter(t => t).map(t => parseInt(t)) : 
+          (formData.chapterId ? [parseInt(formData.chapterId)] : []),
+        scorePerQuestion: parseFloat(section.scorePerQuestion) || 1.0
+      }));
+
+      // Create the request payload with the correct format
       const examData = {
-        model: { // Add this wrapper object
-          title: formData.title,
-          description: formData.description,
-          subjectId: parseInt(formData.subjectId),
-          examTypeId: 1,
-          duration: parseInt(formData.duration),
-          totalScore: 10,
-          passScore: parseFloat(formData.passingScore),
-          isPublic: formData.isPublic,
-          isActive: formData.isActive,
-          shuffleQuestions: true,
-          showResult: true,
-          showAnswers: true,
-          autoGradeShortAnswer: true,
-          criteria: [
-            {
-              levelId: 1, // Easy
-              questionType: 0,
-              chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
-              topic: "",
-              count: questionCounts.easy,
-              score: 1
-            },
-            {
-              levelId: 2, // Medium
-              questionType: 0,
-              chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
-              topic: "",
-              count: questionCounts.medium,
-              score: 1
-            },
-            {
-              levelId: 3, // Hard
-              questionType: 0,
-              chapterId: formData.chapterId ? parseInt(formData.chapterId) : 0,
-              topic: "",
-              count: questionCounts.hard,
-              score: 1
-            }
-          ]
-        }
+        title: formData.title,
+        description: formData.description || '',
+        subjectId: parseInt(formData.subjectId),
+        duration: parseInt(formData.duration),
+        difficulty: formData.difficulty || 'medium', // Use default if undefined
+        passScore: parseFloat(formData.passingScore) || 5,
+        isActive: formData.isActive === true, // Ensure boolean
+        shuffleQuestions: formData.shuffleQuestions === true,
+        shuffleOptions: formData.shuffleOptions === true,
+        showResult: formData.showResult === true,
+        showAnswers: formData.showAnswers === true,
+        sections: formattedSections
       };
 
-      console.log('Gửi dữ liệu:', examData);
+      console.log('Structured exam data being sent:', examData);
+
+      // Make the API call
+      const response = await apiClient.post('/api/Exams/structured', examData);
       
-      // Thử gọi trực tiếp API để kiểm tra lỗi
-      try {
-        const response = await axios.post(`${API_URL}/api/Exam/structured`, examData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+      if (response.status === 201 || response.status === 200) {
+        showSuccessToast('Đề thi đã được tạo thành công!');
+        navigate('/teacher/exams');
+      } else {
+        throw new Error('Unexpected response from server');
+      }
+    } catch (err) {
+      console.error('Lỗi khi gọi API thay thế:', err);
+      
+      // Extract validation errors if available
+      let errorMessage = 'Failed to create exam: ';
+      if (err.response?.data?.errors) {
+        const validationErrors = err.response.data.errors;
+        const errorMessages = [];
         
-        console.log('Phản hồi API:', response.data);
-        
-        showSuccessToast('Đã tạo đề thi thành công!');
-        
-        // Handle the different possible response structures
-        let examId;
-        if (response.data && response.data.id) {
-          examId = response.data.id;
-        } else if (response.data && response.data.examId) {
-          examId = response.data.examId;
-        } else if (response.data && response.data.testId) {
-          examId = response.data.testId;
+        // Format validation errors for display
+        for (const field in validationErrors) {
+          errorMessages.push(`${field}: ${validationErrors[field].join(', ')}`);
         }
         
-        if (examId) {
-          navigate(`/teacher/exams/${examId}/questions`);
-        } else {
-          navigate('/teacher/exams');
-        }
-        
-      } catch (directError) {
-        console.error('Lỗi khi gọi API trực tiếp:', directError);
-        console.log('Phản hồi chi tiết:', directError.response?.data);
-        
-        // Thử với đường dẫn API khác
-        try {
-          const alternativeResponse = await axios.post(`${API_URL}/api/Exams/structured`, examData, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          console.log('Phản hồi từ API thay thế:', alternativeResponse.data);
-          
-          showSuccessToast('Đã tạo đề thi thành công!');
-          navigate('/teacher/exams');
-          
-        } catch (alternativeError) {
-          console.error('Lỗi khi gọi API thay thế:', alternativeError);
-          throw alternativeError;
-        }
+        errorMessage += errorMessages.join('; ');
+      } else if (err.response?.data?.message) {
+        errorMessage += err.response.data.message;
+      } else if (err.message) {
+        errorMessage += err.message;
+      } else {
+        errorMessage += 'Unknown error';
       }
       
-    } catch (err) {
-      console.error('Failed to create exam:', err);
-      const errorMessage = err.response?.data?.Message || 
-                           err.response?.data?.detail || 
-                           err.response?.data?.message || 
-                           'Không thể tạo đề thi. Vui lòng thử lại sau.';
+      console.error(errorMessage);
       setError(errorMessage);
-      showErrorToast('Tạo đề thi thất bại!');
+      showErrorToast('Đề thi không hợp lệ. Vui lòng kiểm tra lại thông tin.');
     } finally {
       setSubmitting(false);
     }
   };
+  
 
   return (
     <Container>

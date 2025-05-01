@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import Navbar from './Navbar';
+import Header from './Header';
 import Footer from './Footer';
 import { useSelector } from 'react-redux';
 // Thêm imports mới
@@ -29,6 +29,12 @@ const BannerContainer = styled.div`
   padding: 0 20px;
   margin-top: 15px;
   margin-bottom: 15px;
+`;
+
+const MainContent = styled.main`
+  min-height: calc(100vh - 130px); /* Adjust based on your header and footer heights */
+  padding: 20px;
+  background-color: ${props => props.theme === 'dark' ? '#121212' : '#f5f5f5'};
 `;
 
 const AppLayout = () => {
@@ -93,8 +99,8 @@ const AppLayout = () => {
   };
   
   return (
-    <MainContainer theme={theme}>
-      <Navbar theme={theme} toggleTheme={toggleTheme} isAuthenticated={isAuthenticated} />
+    <>
+      <Header theme={theme} toggleTheme={toggleTheme} isAuthenticated={isAuthenticated} />
       
       {/* Thêm banner nhắc nhở thi ở đây - ngay sau Navbar và trước Content */}
       {isStudent && upcomingExams && upcomingExams.length > 0 && (
@@ -108,9 +114,11 @@ const AppLayout = () => {
         </BannerContainer>
       )}
       
-      <Content>{<Outlet context={{ theme }} />}</Content>
+      <MainContent theme={theme}>
+        <Outlet context={{ theme }} />
+      </MainContent>
       {shouldShowNavFooter() && <Footer theme={theme} />}
-    </MainContainer>
+    </>
   );
 };
 

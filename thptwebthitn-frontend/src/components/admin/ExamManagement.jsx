@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { 
   FaEdit, FaEye, FaPlus, FaEyeSlash, FaSearch, 
   FaSort, FaList, FaFileImport, FaFileExport, FaFilter, 
-  FaClock, FaCheckCircle, FaTimesCircle, FaSync, FaUnlock 
+  FaClock, FaCheckCircle, FaTimesCircle, FaSync, FaUnlock, FaGraduationCap, FaUserGraduate 
 } from 'react-icons/fa';
 import { 
   fetchExams, 
@@ -685,6 +685,12 @@ const getFilteredExams = () => {
           </Button>
           <Button theme={theme} onClick={() => setShowExportModal(true)}>
             <FaFileExport /> Xuất Excel
+          </Button>
+          <Button theme={theme} onClick={() => navigate('/admin/exams/create-official')}>
+            <FaGraduationCap /> Tạo kỳ thi chính thức
+          </Button>
+          <Button theme={theme} onClick={() => navigate('/admin/exams/assign-students')}>
+            <FaUserGraduate /> Phân công học sinh
           </Button>
         </ButtonsContainer>
       </Header>

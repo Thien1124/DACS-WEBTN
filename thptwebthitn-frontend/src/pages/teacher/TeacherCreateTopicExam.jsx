@@ -241,54 +241,99 @@ const handleSubmit = async (e) => {
       'Content-Type': 'application/json'
     };
     
-    // Thử endpoint tạo đề thi từ chương
+    // Replace the API call section with this fixed version:
     try {
-      console.log('Thử với endpoint: /api/Tests/generate-from-chapters');
-      const response = await axios.post(`${API_URL}/api/Tests/generate-from-chapters`, examData, { headers });
+      console.log('Creating exam with proper validation payload');
       
+      // Fix #1: Format all fields to match API expectations
+      const payload = {
+        title: formData.title.trim(), // Ensure title isn't empty
+        description: formData.description || '',
+        subjectId: parseInt(formData.subjectId),
+        duration: parseInt(formData.duration),
+        passScore: parseFloat(formData.passingScore) || 5,
+        totalScore: 10, // Add missing required field
+        maxAttempts: 1, // Add missing required field
+        
+        // Fix #2: Make sure boolean values are explicitly true/false
+        isActive: formData.isPublic === true,
+        shuffleQuestions: formData.shuffleQuestions === true,
+        shuffleOptions: formData.shuffleQuestions === true, // Use same as shuffle questions
+        showResult: formData.showResult === true,
+        showAnswers: formData.showAnswers === true,
+        
+        // Fix #3: Include all required fields for standard exam API
+        difficulty: "medium",
+        examTypeId: 1,
+        
+        // Fix #4: Properly format question-related fields
+        questionIds: [], // Empty array to indicate auto-generation
+        
+        // Add topic/chapter information
+        chapterIds: formData.topicIds.map(id => parseInt(id)),
+        questionCount: parseInt(formData.questionCount),
+        
+        // Add the missing required fields from the error message
+        questions: [], // Empty array to satisfy validation
+        accessCode: "", // Empty string for access code
+        scoringConfig: JSON.stringify({  // Add scoring configuration
+          gradingMethod: "sum",
+          partialCreditMethod: "proportional",
+          penaltyForWrongAnswer: 0
+        })
+      };
+      
+      console.log('Sending improved exam payload:', payload);
+      
+      // Fix #5: Properly handle authorization with token
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
+      // Use the standard exam creation endpoint
+      const response = await axios.post(`${API_URL}/api/Exam`, payload, { headers });
+      
+      console.log('API response:', response.data);
       showSuccessToast('Đã tạo đề thi thành công!');
       
-      // Điều hướng sau khi tạo thành công
+      // Navigate to the appropriate page
       if (response.data && response.data.id) {
         navigate(`/teacher/exams/${response.data.id}`);
-      } else if (response.data && response.data.examId) {
-        navigate(`/teacher/exams/${response.data.examId}`);
       } else {
         navigate('/teacher/exams');
       }
-      return;
     } catch (err) {
-      console.log('Lỗi với endpoint đầu tiên:', err.response?.data || err.message);
+      console.error('Error with exam creation:', err);
       
-      // Lưu lại response data cho việc debug
+      // Extract detailed validation errors
+      let errorMessage = 'Không thể tạo đề thi: ';
+      
       if (err.response?.data) {
-        console.error('Chi tiết lỗi:', JSON.stringify(err.response.data, null, 2));
+        console.log('Complete API Error Response:', JSON.stringify(err.response.data, null, 2));
+        
+        if (err.response.data.title) {
+          errorMessage += err.response.data.title;
+        } else if (err.response.data.errors) {
+          // Format and display each validation error
+          const errorDetails = [];
+          for (const field in err.response.data.errors) {
+            errorDetails.push(`${field}: ${err.response.data.errors[field]}`);
+          }
+          errorMessage += errorDetails.join('; ');
+        } else if (typeof err.response.data === 'string') {
+          errorMessage += err.response.data;
+        } else {
+          errorMessage += JSON.stringify(err.response.data);
+        }
+      } else if (err.message) {
+        errorMessage += err.message;
       }
       
-      // Thử với endpoint backup
-      try {
-        console.log('Thử với endpoint backup: /api/Exam/generate-by-chapters');
-        
-        // Thêm thông tin người dùng rõ ràng hơn
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        examData.userId = userData.id;
-        examData.userName = userData.username || userData.email;
-        examData.generationStrategy = "ByChapter";
-        
-        const response = await axios.post(`${API_URL}/api/Exam/generate-by-chapters`, examData, { headers });
-        
-        showSuccessToast('Đã tạo đề thi thành công!');
-        
-        if (response.data && response.data.id) {
-          navigate(`/teacher/exams/${response.data.id}`);
-        } else {
-          navigate('/teacher/exams');
-        }
-        return;
-      } catch (secondErr) {
-        console.log('Lỗi với endpoint backup:', secondErr.response?.data || secondErr.message);
-        throw secondErr; // Ném lỗi để xử lý bên ngoài
-      }
+      console.error(errorMessage);
+      setError(errorMessage);
+      showErrorToast('Tạo đề thi thất bại. Chi tiết lỗi đã được hiển thị bên dưới.');
     }
     
   } catch (err) {

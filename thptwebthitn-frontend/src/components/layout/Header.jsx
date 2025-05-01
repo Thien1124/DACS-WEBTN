@@ -11,7 +11,7 @@ import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
 // Import thêm icons
-import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle } from 'react-icons/fa';
+import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate } from 'react-icons/fa';
 import NotificationBadge from '../notifications/NotificationBadge';
 
 // Styled components hiện tại...
@@ -539,8 +539,14 @@ function Header() {
                           <FaPuzzlePiece />
                             Quản lý chương học
                           </DropdownItem>
-                          <DropdownItem to="/admin/notifications" className={({ isActive }) => isActive ? "active" : ""}>
+                          <DropdownItem to="/admin/notifications/send" className={({ isActive }) => isActive ? "active" : ""}>
                             <FaBell /> Quản lý thông báo
+                          </DropdownItem>
+                          <DropdownItem to="/admin/notifications/manage" active={location.pathname === '/admin/notifications'}>
+                            <FaBell /> Thông báo hệ thống
+                          </DropdownItem>
+                          <DropdownItem to="/admin/students/classes" theme={theme}>
+                            <FaUserGraduate /> Quản lý học sinh theo lớp
                           </DropdownItem>
                         </>
                       )}
