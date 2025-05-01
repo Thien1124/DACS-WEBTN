@@ -3,13 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaPlus, FaSync,FaEdit, FaTrash, FaEye, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaSync, FaEdit, FaTrash, FaEye, FaSearch, FaFilter, FaFileExcel, FaFileDownload } from 'react-icons/fa';
 import { fetchQuestions, removeQuestion } from '../../redux/questionSlice';
 import { fetchAllSubjects } from '../../redux/subjectSlice';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import ConfirmModal from '../common/ConfirmModal';
 import apiClient from '../../services/apiClient';
+import { getAllSubjectsNoPaging } from '../../services/subjectService';
+
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -437,6 +439,65 @@ const QuestionManagement = () => {
   // Add a useEffect to load options for questions that don't have them
   const [questionOptions, setQuestionOptions] = useState({});
 
+  // Add state for subjects loaded from the service directly
+  const [subjectsList, setSubjectsList] = useState([]);
+  
+  // Replace the subject loading useEffect with this direct API call
+  useEffect(() => {
+    // Load subjects directly using the no-paging API
+    const loadSubjects = async () => {
+      try {
+        const data = await getAllSubjectsNoPaging();
+        console.log('Subjects loaded successfully:', data);
+        setSubjectsList(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to load subjects:', error);
+        showErrorToast('Không thể tải danh sách môn học');
+      }
+    };
+    
+    loadSubjects();
+  }, []);
+
+  // Add separate useEffect to reset page when filters change
+  useEffect(() => {
+    // Reset to page 1 when changing filters to avoid empty results
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      // If already on page 1, just load questions
+      loadQuestions();
+    }
+  }, [difficulty, subjectId]);
+
+  // Keep the existing useEffect for page changes
+  useEffect(() => {
+    loadQuestions();
+  }, [page, difficulty, subjectId]);
+  
+
+  // Update the loadQuestions function to handle filters correctly
+  const loadQuestions = () => {
+    const params = {
+      page,
+      pageSize: 12,
+      difficulty: difficulty !== 'all' ? difficulty : undefined,
+      subjectId: subjectId || undefined,
+      searchTerm: searchTerm || undefined
+    };
+    
+    console.log('Loading questions with params:', params);
+    dispatch(fetchQuestions(params));
+  };
+
+  // Add a clear filters function
+  const clearFilters = () => {
+    setDifficulty('all');
+    setSubjectId('');
+    setSearchTerm('');
+    setPage(1);
+  };
+
   useEffect(() => {
     // Only run if we have questions but they don't have options
     if (list.length > 0 && list.some(q => !q.options || q.options.length === 0)) {
@@ -472,24 +533,16 @@ const QuestionManagement = () => {
     }
   }, [list]);
 
+  // Update the useEffect to load subjects correctly (without pagination)
   useEffect(() => {
+    // Fetch all subjects (no pagination needed)
     dispatch(fetchAllSubjects());
+  }, [dispatch]);
+
+  // Add separate useEffect for loading questions with filters
+  useEffect(() => {
     loadQuestions();
-  }, [dispatch, page, difficulty, subjectId]);
-  
-  // Update the loadQuestions function
-  const loadQuestions = () => {
-    const params = {
-      page,
-      pageSize: 12, // Match API parameter name (was "limit")
-      difficultyLevel: difficulty !== 'all' ? difficulty : undefined, // Match API parameter name
-      subjectId: subjectId || undefined,
-      searchTerm: searchTerm || undefined // Match API parameter name (was "search")
-    };
-    
-    console.log('Loading questions with params:', params);
-    dispatch(fetchQuestions(params));
-  };
+  }, [page, difficulty, subjectId]);
 
   // Add a debugging useEffect to log the Redux state
   useEffect(() => {
@@ -535,6 +588,51 @@ const QuestionManagement = () => {
         });
     }
   };
+
+  // Add these new functions to handle export and import template
+  const handleExportQuestions = () => {
+    apiClient.post('/api/Question/export', {}, { responseType: 'blob' })
+      .then(response => {
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        // Get current date for filename
+        const date = new Date().toISOString().split('T')[0];
+        link.setAttribute('download', `questions-export-${date}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        // Clean up
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        showSuccessToast('Xuất dữ liệu câu hỏi thành công!');
+      })
+      .catch(error => {
+        console.error('Export error:', error);
+        showErrorToast('Lỗi khi xuất dữ liệu câu hỏi');
+      });
+  };
+
+  const handleDownloadImportTemplate = () => {
+    apiClient.get('/api/Question/import-template', { responseType: 'blob' })
+      .then(response => {
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'question-import-template.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        // Clean up
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        showSuccessToast('Tải xuống mẫu nhập liệu thành công!');
+      })
+      .catch(error => {
+        console.error('Template download error:', error);
+        showErrorToast('Lỗi khi tải xuống mẫu nhập liệu');
+      });
+  };
   
   return (
     <Container>
@@ -550,8 +648,27 @@ const QuestionManagement = () => {
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <Button theme={theme} onClick={() => loadQuestions()}>
-            <FaSearch /> Tải lại
+            <FaSync /> Tải lại
           </Button>
+          
+          {/* Add Export button */}
+          <Button 
+            theme={theme} 
+            onClick={handleExportQuestions}
+            style={{ backgroundColor: theme === 'dark' ? '#2d3748' : '#e2e8f0' }}
+          >
+            <FaFileExcel /> Xuất Excel
+          </Button>
+          
+          {/* Add Import Template button */}
+          <Button 
+            theme={theme} 
+            onClick={handleDownloadImportTemplate}
+            style={{ backgroundColor: theme === 'dark' ? '#2d3748' : '#e2e8f0' }}
+          >
+            <FaFileDownload /> Mẫu nhập liệu
+          </Button>
+          
           <Button theme={theme} primary onClick={handleCreateQuestion}>
             <FaPlus /> Thêm câu hỏi mới
           </Button>
@@ -581,11 +698,18 @@ const QuestionManagement = () => {
             </form>
           </SearchContainer>
           
+          {/* Replace the difficulty filter buttons with this corrected code */}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <FilterButton 
               theme={theme} 
               active={difficulty === 'all'} 
               onClick={() => setDifficulty('all')}
+              style={{
+                backgroundColor: difficulty === 'all' ? 
+                  (theme === 'dark' ? '#4299e1' : '#4299e1') : 
+                  'transparent',
+                color: difficulty === 'all' ? 'white' : undefined
+              }}
             >
               <FaFilter /> Tất cả
             </FilterButton>
@@ -594,8 +718,9 @@ const QuestionManagement = () => {
               active={difficulty === 'easy'} 
               onClick={() => setDifficulty('easy')}
               style={{
-                backgroundColor: difficulty === 'easy' ? '#48bb78' : '',
-                borderColor: difficulty === 'easy' ? '#48bb78' : ''
+                backgroundColor: difficulty === 'easy' ? '#48bb78' : 'transparent',
+                borderColor: difficulty === 'easy' ? '#48bb78' : undefined,
+                color: difficulty === 'easy' ? 'white' : undefined
               }}
             >
               Dễ
@@ -605,8 +730,9 @@ const QuestionManagement = () => {
               active={difficulty === 'medium'} 
               onClick={() => setDifficulty('medium')}
               style={{
-                backgroundColor: difficulty === 'medium' ? '#ecc94b' : '',
-                borderColor: difficulty === 'medium' ? '#ecc94b' : ''
+                backgroundColor: difficulty === 'medium' ? '#ecc94b' : 'transparent',
+                borderColor: difficulty === 'medium' ? '#ecc94b' : undefined,
+                color: difficulty === 'medium' ? 'white' : undefined
               }}
             >
               Trung bình
@@ -616,21 +742,31 @@ const QuestionManagement = () => {
               active={difficulty === 'hard'} 
               onClick={() => setDifficulty('hard')}
               style={{
-                backgroundColor: difficulty === 'hard' ? '#f56565' : '',
-                borderColor: difficulty === 'hard' ? '#f56565' : ''
+                backgroundColor: difficulty === 'hard' ? '#f56565' : 'transparent',
+                borderColor: difficulty === 'hard' ? '#f56565' : undefined,
+                color: difficulty === 'hard' ? 'white' : undefined
               }}
             >
               Khó
             </FilterButton>
           </div>
           
+          {/* Replace the subject dropdown with this updated code */}
           <Select 
             value={subjectId} 
-            onChange={e => setSubjectId(e.target.value)}
+            onChange={e => {
+              const value = e.target.value;
+              console.log('Selected subject ID:', value);
+              setSubjectId(value);
+            }}
             theme={theme}
+            style={{
+              minWidth: '200px',
+              border: `2px solid ${subjectId ? '#4299e1' : (theme === 'dark' ? '#4a5568' : '#e2e8f0')}`,
+            }}
           >
             <option value="">Tất cả môn học</option>
-            {subjects?.map(subject => (
+            {subjectsList && subjectsList.map(subject => (
               <option key={subject.id} value={subject.id}>
                 {subject.name}
               </option>
@@ -656,13 +792,7 @@ const QuestionManagement = () => {
           <div>
             <Button 
               theme={theme} 
-              onClick={() => {
-                setSearchTerm('');
-                setDifficulty('all');
-                setSubjectId('');
-                setPage(1);
-                loadQuestions();
-              }}
+              onClick={clearFilters}
               style={{ fontSize: '0.9rem' }}
             >
               <FaFilter /> Xóa bộ lọc

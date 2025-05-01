@@ -169,42 +169,53 @@ const ExamDetails = () => {
 
   // Replace the handleApproveSubmit function with this improved version
 
-const handleApproveSubmit = async (examId, comment) => {
+const handleApproveSubmit = async (comment) => {
   try {
     console.log(`Approving exam ${examId} with comment: ${comment}`);
     
-    // Make sure comment is never empty
-    const finalComment = comment || "Đề thi đã được duyệt";
-    
-    // Direct API call with proper structure
+    // First API call - Approve the exam
     const response = await apiClient.post(`/api/Exam/${examId}/approve`, {
-      comment: finalComment
+      approved: true,
+      comment: comment || "Đề thi đã được duyệt"
     });
     
     console.log('Approval response:', response);
+    console.log('Approval response data:', response.data);
     
     if (response && response.status === 200) {
-      // Update local state immediately to reflect change in UI
-      setExamData(prevData => ({
-        ...prevData,
-        isApproved: true
-      }));
+      // Second API call - Ensure visibility is set to public
+      try {
+        console.log(`Setting exam ${examId} visibility to public`);
+        const visibilityResponse = await apiClient.patch(`/api/Exam/${examId}/status`, { 
+          isActive: true 
+        });
+        
+        console.log('Visibility update response:', visibilityResponse);
+        console.log('Visibility update data:', visibilityResponse.data);
+        
+        if (!visibilityResponse || visibilityResponse.status !== 200) {
+          throw new Error('Visibility update API call was not successful');
+        }
+      } catch (visibilityError) {
+        console.error('Error updating visibility:', visibilityError);
+        showErrorToast(`Đề thi đã được duyệt nhưng chưa công khai: ${visibilityError.message}`);
+      }
       
-      // Signal to ExamManagement that data has changed
-      localStorage.setItem('examStatusChanged', 'true');
-      sessionStorage.setItem('examListNeedsRefresh', 'true');
-      
-      // Dispatch Redux action to update global state
-      dispatch(approveExam({ 
-        examId,
-        approved: true,
-        comment: finalComment,
-      }));
-      
-      showSuccessToast('Đề thi đã được duyệt thành công!');
+      showSuccessToast('Đề thi đã được duyệt và công khai thành công!');
       setShowApproveModal(false);
       
-      // Don't reload data immediately to avoid race conditions
+      setExamData(prevData => {
+        console.log('Updating exam data state:', {
+          ...prevData,
+          isApproved: true,
+          isActive: true
+        });
+        return {
+          ...prevData,
+          isApproved: true,
+          isActive: true // Public state
+        };
+      });
       return true;
     }
     
@@ -415,19 +426,6 @@ const handleVisibilitySubmit = async (examId, makePublic) => {
             </ActionButtonNew>
           )}
           
-          {/* Nút chuyển đổi trạng thái hiển thị (nháp/công khai) */}
-          <ActionButtonNew 
-            onClick={handleVisibilityToggle}
-            color={examData.isActive ? "#6b7280" : "#3b82f6"}
-            hoverColor={examData.isActive ? "#4b5563" : "#2563eb"}
-            textColor="#ffffff"
-          >
-            {examData.isActive 
-              ? <><FaEyeSlash /> Không công khai</>
-              : <><FaEye /> Công khai</>
-            }
-          </ActionButtonNew>
-          
           {/* Nút Chỉnh sửa thời gian */}
           <ActionButtonNew 
             onClick={() => handleEditDuration(examData)}
@@ -455,46 +453,27 @@ const handleVisibilitySubmit = async (examId, makePublic) => {
           <div className="d-flex justify-content-between align-items-center">
             <h2 className="m-0">{examData.title}</h2>
             <div className="d-flex flex-column align-items-end">
-  {/* Trạng thái duyệt */}
-  <div className="mb-1">
-    <span 
-      className={`badge px-3 py-2 d-flex align-items-center gap-1 ${
-        examData.isApproved ? 'bg-success' : 'bg-warning'
-      }`}
-      style={{ fontSize: '0.85rem' }}
-    >
-      {examData.isApproved ? (
-        <>
-          <FaCheckCircle /> Đã duyệt
-        </>
-      ) : (
-        <>
-          <FaClock /> Chờ duyệt
-        </>
-      )}
-    </span>
-  </div>
-  
-  {/* Trạng thái công khai */}
-  <div>
-    <span 
-      className={`badge px-3 py-2 d-flex align-items-center gap-1 ${
-        examData.isActive ? 'bg-primary' : 'bg-secondary'
-      }`}
-      style={{ fontSize: '0.85rem' }}
-    >
-      {examData.isActive ? (
-        <>
-          <FaEye /> Công khai
-        </>
-      ) : (
-        <>
-          <FaEyeSlash /> Nháp
-        </>
-      )}
-    </span>
-  </div>
-</div>
+            
+            {/* Trạng thái công khai */}
+            <div>
+              <span 
+                className={`badge px-3 py-2 d-flex align-items-center gap-1 ${
+                  examData.isActive ? 'bg-primary' : 'bg-secondary'
+                }`}
+                style={{ fontSize: '0.85rem' }}
+              >
+                {examData.isActive ? (
+                  <>
+                    <FaEye /> Công khai
+                  </>
+                ) : (
+                  <>
+                    <FaEyeSlash /> Nháp
+                  </>
+                )}
+              </span>
+            </div>
+          </div>
 
           </div>
         </CardHeader>
@@ -753,7 +732,7 @@ const handleVisibilitySubmit = async (examId, makePublic) => {
       <ApproveExamModal
         show={showApproveModal}
         onHide={() => setShowApproveModal(false)}
-        onSubmit={(comment) => handleApproveSubmit(examId, comment)}
+        onSubmit={handleApproveSubmit}
         examId={examId}
         theme={theme}
       />

@@ -202,7 +202,7 @@ const CreateExam = () => {
     difficulty: 'medium', // Added difficulty field
     startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Tomorrow
     endTime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Two weeks from now
-    isActive: true,
+    isActive: false,
     showResult: true,
     showAnswers: false,
     shuffleQuestions: true,
@@ -389,8 +389,12 @@ const CreateExam = () => {
         subjectId: Number(formData.subjectId),
         passScore: formData.passScore || 5, // Chắc chắn có passScore
         questions: questionsToSubmit,
-        isDraft: isDraft // Thêm trường này nếu backend hỗ trợ
+        isDraft: isDraft, // Thêm trường này nếu backend hỗ trợ
+        // If it's a draft, force isActive to false
+        isActive: isDraft ? false : formData.isActive
       };
+      
+      console.log('Creating exam with visibility:', examData.isActive ? 'Public' : 'Private');
       
       dispatch(createNewExam(examData))
         .then((result) => {
@@ -584,8 +588,8 @@ const CreateExam = () => {
             <CheckboxContainer>
               <Checkbox
                 type="checkbox"
-                name="isPublic"
-                checked={formData.isPublic}
+                name="isActive"
+                checked={formData.isActive}
                 onChange={handleChange}
               />
               <CheckboxLabel theme={theme}>

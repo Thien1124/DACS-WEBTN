@@ -88,9 +88,9 @@ const StudentExamList = () => {
           examParams.append('PageSize', pageSize.toString());
           
           // Bỏ tham số lọc quá nghiêm ngặt để test
-          //examParams.append('ActiveOnly', 'true');
-          //examParams.append('IsOpen', 'true');
-          
+          examParams.append('IsApproved', 'true'); // Only show approved exams
+          examParams.append('ActiveOnly', 'true'); // Only show active (public) exams
+
           if (searchTerm) examParams.append('SearchTerm', searchTerm);
   
           // Kiểm tra API URL đầy đủ
