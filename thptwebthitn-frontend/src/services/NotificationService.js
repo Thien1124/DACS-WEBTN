@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5006';
 
@@ -8,8 +8,8 @@ export const NotificationService = {
    */
   getNotifications: async (token, page = 1, pageSize = 10, onlyUnread = false) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/notifications?page=${page}&pageSize=${pageSize}&onlyUnread=${onlyUnread}`,
+      const response = await apiClient.get(
+        `/api/notifications?page=${page}&pageSize=${pageSize}&onlyUnread=${onlyUnread}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return response.data;
@@ -24,8 +24,8 @@ export const NotificationService = {
    */
   markAsRead: async (token, notificationId) => {
     try {
-      const response = await axios.put(
-        `${API_URL}/api/notifications/${notificationId}/read`,
+      const response = await apiClient.put(
+        `/api/notifications/${notificationId}/read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -41,8 +41,8 @@ export const NotificationService = {
    */
   markAllAsRead: async (token) => {
     try {
-      const response = await axios.put(
-        `${API_URL}/api/notifications/mark-all-read`,
+      const response = await apiClient.put(
+        `/api/notifications/mark-all-read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -68,8 +68,8 @@ export const NotificationService = {
    */
   sendInAppNotification: async (token, data) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/api/notifications/in-app`,
+      const response = await apiClient.post(
+        `/api/notifications/in-app`,
         data,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -96,14 +96,42 @@ export const NotificationService = {
    */
   sendEmailNotification: async (token, data) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/api/notifications/email`,
+      const response = await apiClient.post(
+        `/api/notifications/email`,
         data,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return response.data;
     } catch (error) {
       console.error('Error sending email notification:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get notification history for admin
+   * @param {string} token - Auth token
+   * @param {number} page - Page number (optional, default: 1)
+   * @param {number} pageSize - Items per page (optional, default: 10)
+   * @param {string} searchTerm - Search term (optional)
+   * @param {string} type - Filter by notification type (optional)
+   */
+  getNotificationHistory: async (token, page = 1, pageSize = 10, searchTerm = '', type = '') => {
+    try {
+      const queryParams = new URLSearchParams({
+        page,
+        pageSize,
+        ...(searchTerm && { search: searchTerm }),
+        ...(type && { type })
+      }).toString();
+      
+      const response = await apiClient.get(
+        `/api/notifications/history?${queryParams}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching notification history:', error);
       throw error;
     }
   }

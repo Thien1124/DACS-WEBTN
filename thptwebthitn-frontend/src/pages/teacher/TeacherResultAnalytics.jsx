@@ -4,8 +4,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaChartBar, FaChartPie, FaClock, FaFileDownload, FaFilter, FaSearch } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { API_URL } from '../../config/constants';
-import { showSuccessToast } from '../../utils/toastUtils';
-import { generateMockResults, generateMockExamDetails } from '../../utils/mockData';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+
+// Import services
+import { getTestAnalytics } from '../../services/analyticsService';
+import { getAllSubjectsNoPaging } from '../../services/subjectService';
+import { getExamsBySubject } from '../../services/examService';
 
 import { 
   Chart as ChartJS,
@@ -21,7 +25,6 @@ import {
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import axios from 'axios';
-import { showErrorToast } from '../../utils/toastUtils';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -44,7 +47,7 @@ const TeacherResultAnalytics = () => {
   const { theme } = useSelector(state => state.ui);
   const [loading, setLoading] = useState(true);
   
-  // Tạo state cho dữ liệu mẫu
+  // State for exam data
   const [examDetails, setExamDetails] = useState(null);
   const [results, setResults] = useState([]);
   const [statistics, setStatistics] = useState({
@@ -57,83 +60,127 @@ const TeacherResultAnalytics = () => {
     questionStats: []
   });
   
-  // Danh sách môn học mẫu
-  const mockSubjects = [
-    { id: 1, name: 'Toán' },
-    { id: 2, name: 'Vật lý' },
-    { id: 3, name: 'Hóa học' },
-    { id: 4, name: 'Sinh học' },
-    { id: 5, name: 'Ngữ văn' },
-    { id: 6, name: 'Lịch sử' },
-    { id: 7, name: 'Địa lý' },
-    { id: 8, name: 'Tiếng Anh' }
-  ];
-  
-  // Danh sách đề thi mẫu
-  const mockExams = [
-    { id: 1, title: 'Bài kiểm tra 15 phút - Đại số', subjectId: 1 },
-    { id: 2, title: 'Bài kiểm tra 1 tiết - Hình học', subjectId: 1 },
-    { id: 3, title: 'Bài kiểm tra học kỳ 1 - Toán', subjectId: 1 },
-    { id: 4, title: 'Bài kiểm tra chuyên đề - Vật lý điện', subjectId: 2 },
-    { id: 5, title: 'Bài kiểm tra giữa kỳ - Vật lý', subjectId: 2 },
-    { id: 6, title: 'Bài kiểm tra 1 tiết - Hóa học đại cương', subjectId: 3 }
-  ];
-  
-  const [subjects, setSubjects] = useState(mockSubjects);
-  const [exams, setExams] = useState([]);
-  
-  // Filters
+  // Single filter state (fixed the duplicate declaration)
   const [filters, setFilters] = useState({
-    subjectId: examId ? '1' : '',
-    examId: examId || '1',
+    subjectId: examId ? '' : '',
+    examId: examId || '',
     dateFrom: '',
     dateTo: ''
   });
 
-  // Tải danh sách đề thi khi môn học thay đổi - chỉ lọc từ dữ liệu mẫu
+  // Using real subjects from API instead of mock data
+  const [subjects, setSubjects] = useState([]);
+  const [exams, setExams] = useState([]);
+  
+  // Load subjects from API
   useEffect(() => {
-    if (filters.subjectId) {
-      const filteredExams = mockExams.filter(exam => 
-        exam.subjectId == filters.subjectId
-      );
-      setExams(filteredExams);
-    } else {
-      setExams(mockExams);
-    }
+    const fetchSubjects = async () => {
+      try {
+        const subjectsData = await getAllSubjectsNoPaging();
+        setSubjects(subjectsData);
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+        showErrorToast('Không thể tải danh sách môn học');
+      }
+    };
+    
+    fetchSubjects();
+  }, []);
+
+  // Fetch exams when subject changes
+  useEffect(() => {
+    const fetchExams = async () => {
+      if (filters.subjectId) {
+        try {
+          const examsData = await getExamsBySubject({
+            subjectId: filters.subjectId,
+            activeOnly: true
+          });
+          
+          console.log("Exams data received:", examsData);
+          
+          // Ensure exams is always an array, checking all possible response formats
+          if (Array.isArray(examsData)) {
+            setExams(examsData);
+          } else if (examsData && Array.isArray(examsData.items)) {
+            setExams(examsData.items);
+          } else if (examsData && Array.isArray(examsData.data)) {
+            // Add this condition to handle the new data format
+            setExams(examsData.data);
+          } else {
+            console.warn('Unexpected exams data format:', examsData);
+            setExams([]);
+          }
+        } catch (error) {
+          console.error('Error fetching exams:', error);
+          showErrorToast('Không thể tải danh sách đề thi');
+          setExams([]);
+        }
+      } else {
+        setExams([]);
+      }
+    };
+    
+    fetchExams();
   }, [filters.subjectId]);
   
-  // Load dữ liệu mẫu ngay khi component được tải
+  // Load test analytics when exam ID changes from URL
   useEffect(() => {
-    loadMockData();
-  }, []);
-  
-  // Tự động tải lại dữ liệu mẫu khi đề thi thay đổi
+    if (examId) {
+      setFilters(prev => ({ ...prev, examId }));
+      // Wait a short delay to ensure filters are updated
+      setTimeout(() => {
+        fetchAnalyticsData();
+      }, 100);
+    }
+  }, [examId]);
+
+  // Also load analytics data when exam selection changes in the dropdown
   useEffect(() => {
-    if (filters.examId) {
-      loadMockData();
+    if (filters.examId && filters.examId !== examId) {
+      fetchAnalyticsData();
     }
   }, [filters.examId]);
   
-  // Hàm tải dữ liệu mẫu
-  const loadMockData = () => {
+  // Fetch analytics data from API
+  const fetchAnalyticsData = async () => {
     setLoading(true);
     
-    setTimeout(() => {
-      const mockExam = generateMockExamDetails(filters.examId || 1);
-      const mockResults = generateMockResults(filters.examId || 1, 30);
+    try {
+      // Validate that we have an exam ID
+      if (!filters.examId) {
+        showErrorToast('Vui lòng chọn đề thi trước khi tải dữ liệu phân tích');
+        setLoading(false);
+        return;
+      }
       
-      setExamDetails(mockExam);
-      setResults(mockResults);
+      console.log(`Fetching analytics for exam: ${filters.examId}`);
+      const analyticsData = await getTestAnalytics(filters.examId);
       
-      // Tính toán thống kê
-      calculateStatistics(mockResults, mockExam);
+      // Set exam details from API response
+      setExamDetails(analyticsData.examDetails || {});
+      
+      // Set results from API response
+      setResults(analyticsData.results || []);
+      
+      // Either use the statistics directly if they're already calculated in the API
+      // or calculate them based on the data returned
+      if (analyticsData.statistics) {
+        setStatistics(analyticsData.statistics);
+      } else {
+        calculateStatistics(analyticsData.results || [], analyticsData.examDetails || {});
+      }
       
       setLoading(false);
-      showSuccessToast('Đã tải dữ liệu phân tích mẫu');
-    }, 800); // Thêm độ trễ nhỏ để có hiệu ứng loading
+      showSuccessToast('Đã tải dữ liệu phân tích thành công');
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      showErrorToast('Có lỗi khi tải dữ liệu phân tích');
+      setLoading(false);
+    }
   };
   
-  // Tính toán thống kê từ dữ liệu
+  // Keep the calculateStatistics function as fallback
   const calculateStatistics = (resultsData, examDetailsData) => {
     const totalAttempts = resultsData.length;
     
@@ -333,9 +380,9 @@ const TeacherResultAnalytics = () => {
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Phân Tích Kết Quả Đề Thi (Demo)</h2>
-        <Button variant="success" onClick={loadMockData}>
-          <FaChartBar className="me-2" /> Tải lại dữ liệu mẫu
+        <h2>Phân Tích Kết Quả Đề Thi</h2>
+        <Button variant="success" onClick={fetchAnalyticsData}>
+          <FaChartBar className="me-2" /> Tải dữ liệu phân tích
         </Button>
       </div>
       
@@ -344,7 +391,7 @@ const TeacherResultAnalytics = () => {
           <h5>Bộ Lọc</h5>
         </Card.Header>
         <Card.Body>
-          <Form onSubmit={(e) => { e.preventDefault(); loadMockData(); }}>
+          <Form onSubmit={(e) => { e.preventDefault(); fetchAnalyticsData(); }}>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -375,7 +422,9 @@ const TeacherResultAnalytics = () => {
                     className={theme === 'dark' ? 'bg-dark text-white' : ''}
                   >
                     <option value="">Chọn đề thi</option>
-                    {exams.length === 0 ? (
+                    {!Array.isArray(exams) ? (
+                      <option disabled>Không thể tải đề thi</option>
+                    ) : exams.length === 0 ? (
                       <option disabled>Không tìm thấy đề thi</option>
                     ) : (
                       exams.map(exam => (

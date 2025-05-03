@@ -98,7 +98,6 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import MyFeedbacks from './pages/MyFeedbacks';
 import TeacherCreateStructuredExam from './pages/teacher/TeacherCreateStructuredExam';
 
-import SubjectsLeaderboardPage from './pages/leaderboard/SubjectsLeaderboardPage';
 
 // Thêm import cho component mới
 import TeacherQuestionBank from './pages/teacher/TeacherQuestionBank';
@@ -111,7 +110,6 @@ import TeacherExamStatistics from './pages/teacher/TeacherExamStatistics';
 
 // Thêm import cho component mới
 import TeacherResultAnalytics from './pages/teacher/TeacherResultAnalytics';
-import SystemNotifications from './components/admin/SystemNotifications';
 
 import NotificationBadge from './components/notifications/NotificationBadge';
 import NotificationSender from './components/admin/NotificationSender';
@@ -119,6 +117,21 @@ import CreateOfficialExam from './components/admin/CreateOfficialExam';
 import AssignStudentsToExam from './components/admin/AssignStudentsToExam';
 import ImportQuestionsExcel from './components/admin/ImportQuestionsExcel';
 import StudentClassManagement from './components/admin/StudentClassManagement';
+
+import ChatBox from './components/chat/ChatBox';
+
+import TeacherMaterials from './pages/teacher/TeacherMaterials';
+
+// Trong file routes hoặc App.jsx
+import About from './pages/About';  
+import Contact from './pages/Contact';
+
+// Add these imports at the top of your file with the other component imports
+import StudentAnalytics from './pages/student/StudentAnalytics';
+import StudentRankings from './pages/student/StudentRankings';
+
+// Add this import near the top with other component imports
+import AnalyticsCharts from './pages/analytics/AnalyticsCharts';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -380,12 +393,7 @@ function App() {
                   </AdminRoute>
                 } />
                 
-                {/* Add this route inside the Admin routes section */}
-                <Route path="/admin/notifications" element={
-                  <AdminRoute>
-                    <SystemNotifications />
-                  </AdminRoute>
-                } />
+                
                 
                 {/* In your Routes section, add these teacher exam management routes */}
                 <Route path="/teacher/exams" element={
@@ -502,12 +510,6 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* Trong phần Routes, thêm route mới */}
-                <Route path="/leaderboard/subjects" element={
-                  <ProtectedRoute roles={['Student']}>
-                    <SubjectsLeaderboardPage />
-                  </ProtectedRoute>
-                } />
 
                 {/* Thêm routes mới cho quản lý ngân hàng câu hỏi */}
                 <Route path="/teacher/questions" element={
@@ -551,15 +553,9 @@ function App() {
                     <CreateChapter />
                   </TeacherRoute>
                 } />
-                <Route path="/admin/notifications/send" element={
+                <Route path="/admin/notifications" element={
                   <AdminRoute>
                     <NotificationSender />
-                  </AdminRoute>
-                } />
-
-                <Route path="/admin/notifications/manage" element={
-                  <AdminRoute>
-                    <SystemNotifications />
                   </AdminRoute>
                 } />
 
@@ -576,6 +572,51 @@ function App() {
                     <StudentClassManagement />
                   </AdminRoute>
                 } />
+
+                {/* Add this new route for Student Chat */}
+                <Route path="/chat" element={
+                  <ProtectedRoute roles={['Student']}>
+                    <ChatBox />
+                  </ProtectedRoute>
+                } />
+
+                {/* Add this new route for Teacher Materials */}
+                <Route path="/teacher/materials" element={
+                  <ProtectedRoute roles={['Teacher']}>
+                    <TeacherMaterials />
+                  </ProtectedRoute>
+                } />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+
+                {/* Student Analytics Routes */}
+                <Route 
+                  path="/student/analytics/:studentId" 
+                  element={
+                    <ProtectedRoute requiredRoles={['student', 'teacher', 'admin']}>
+                      <StudentAnalytics />
+                    </ProtectedRoute>
+                  } 
+                />
+
+                <Route 
+                  path="/student/rankings" 
+                  element={
+                    <ProtectedRoute requiredRoles={['student', 'teacher', 'admin']}>
+                      <StudentRankings />
+                    </ProtectedRoute>
+                  } 
+                />
+
+                {/* Then add this route in your Routes component */}
+                <Route 
+                  path="/analytics/charts" 
+                  element={
+                    <ProtectedRoute requiredRoles={['teacher', 'admin']}>
+                      <AnalyticsCharts />
+                    </ProtectedRoute>
+                  } 
+                />
                 </Route>
               
             </Routes>

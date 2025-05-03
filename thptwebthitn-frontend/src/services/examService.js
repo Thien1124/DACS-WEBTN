@@ -124,9 +124,7 @@ export const createExam = async (examData) => {
 
 /**
  * Get exams by subject ID
- * @param {string} subjectId - Subject ID
- * @param {number} page - Page number (default: 1)
- * @param {number} pageSize - Items per page (default: 10)
+ * @param {Object} params - Request parameters
  * @returns {Promise} - Promise resolving to exams data
  */
 export const getExamsBySubject = async (params) => {
@@ -173,6 +171,7 @@ export const getExamsBySubject = async (params) => {
   }
 };
 
+
 export const getExamWithQuestions = async (examId) => {
   try {
     console.log(`Fetching exam ${examId} with questions`);
@@ -208,13 +207,16 @@ export const getExamDetails = async (examId) => {
 };
 /**
  * Get exams for students by subject ID
- * @param {string} subjectId - Subject ID
- * @param {Object} params - Query parameters
+ * @param {number} subjectId - Subject ID
+ * @param {Object} params - Request parameters
  * @returns {Promise} - Promise resolving to exams data
  */
 export const getExamsForStudents = async (subjectId, params = {}) => {
   try {
-    const response = await apiClient.get(`/api/Exam/ForStudents/${subjectId}`, { params });
+    // Make sure subjectId is converted to string if needed
+    const id = subjectId;
+    
+    const response = await apiClient.get(`/api/Exam/ForStudents/${id}`, { params });
     return response.data;
   } catch (error) {
     console.error(`Error fetching student exams for subject ${subjectId}:`, error);

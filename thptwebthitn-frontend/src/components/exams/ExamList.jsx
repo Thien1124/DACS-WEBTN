@@ -20,7 +20,7 @@ const Header = styled.div`
   align-items: center;
   margin-bottom: 2rem;
 `;
-const Button = styled.button`
+const Button = styled(({ primary, ...rest }) => <button {...rest} />)`
   background: ${props => props.primary ? 'linear-gradient(135deg, #4285f4, #34a853)' : 'transparent'};
   color: ${props => props.primary ? 'white' : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
   border: 1px solid ${props => props.primary ? 'transparent' : props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};

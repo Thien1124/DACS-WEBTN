@@ -154,7 +154,7 @@ const NotificationSender = () => {
   const { token } = useSelector(state => state.auth);
   const { theme } = useSelector(state => state.ui);
   const [formData, setFormData] = useState({
-    userIds: [],
+    userIds: '',
     title: '',
     content: '',
     type: 0,
@@ -169,31 +169,40 @@ const NotificationSender = () => {
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+  
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' 
-        ? checked 
-        : name === 'userIds' && type === 'text' 
-          ? value.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
-          : name === 'relatedEntityId' && value === ''
-            ? null
-            : name === 'relatedEntityId'
-              ? parseInt(value)
-              : value
+      [name]: type === 'checkbox'
+        ? checked
+        : name === 'relatedEntityId' && value === ''
+          ? null
+          : name === 'relatedEntityId'
+            ? parseInt(value)
+            : value
     }));
   };
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess(false);
-    
+  
     try {
-      await NotificationService.sendInAppNotification(token, formData);
+      // Chuyển đổi userIds từ chuỗi sang mảng số
+      const processedData = {
+        ...formData,
+        userIds: formData.userIds
+          ? formData.userIds
+              .split(',')
+              .map(id => parseInt(id.trim()))
+              .filter(id => !isNaN(id))
+          : []
+      };
+  
+      await NotificationService.sendInAppNotification(token, processedData);
       setSuccess(true);
       setFormData({
-        userIds: [],
+        userIds: '', // đổi từ [] thành '' vì giờ đang lưu chuỗi
         title: '',
         content: '',
         type: 0,
@@ -253,7 +262,7 @@ const NotificationSender = () => {
                   theme={theme}
                   type="text"
                   name="userIds"
-                  value={formData.userIds.join(', ')}
+                  value={formData.userIds} // Changed from formData.userIds.join(', ')
                   onChange={handleChange}
                   placeholder="VD: 1, 2, 3"
                   required

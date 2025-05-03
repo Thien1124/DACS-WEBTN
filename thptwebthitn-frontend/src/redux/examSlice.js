@@ -40,7 +40,7 @@ export const fetchExamsBySubject = createAsyncThunk(
     try {
       return await examService.getExamsBySubject(params);
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || 'Lỗi khi tải đề thi');
     }
   }
 );
@@ -359,27 +359,21 @@ const examSlice = createSlice({
         state.loading = false;
         state.error = null;
         
-        console.log('API response for exams by subject:', action.payload);
+        console.log('Raw data in Redux:', action.payload);
         
-        // Handle different response structures
-        if (action.payload?.items) {
-          // If API returns paginated data
-          state.list = action.payload.items;
-          state.totalItems = action.payload.totalCount || 0;
-          state.currentPage = action.payload.currentPage || 1;
-          state.totalPages = action.payload.totalPages || 1;
-        } else if (action.payload?.data) {
-          // Structure with data property
+        // Đơn giản hóa logic xử lý - sửa lỗi chính ở đây
+        if (action.payload && action.payload.data) {
+          // Gán trực tiếp mảng đề thi vào state.list
           state.list = action.payload.data;
-          state.totalItems = action.payload.totalCount || action.payload.data.length;
-        } else if (Array.isArray(action.payload)) {
-          // If API returns direct array
-          state.list = action.payload;
-          state.totalItems = action.payload.length;
+          state.totalItems = action.payload.totalCount;
+          state.totalPages = action.payload.totalPages;
+          state.currentPage = action.payload.page;
+          
+          console.log('Processed data in Redux, items:', state.list.length);
         } else {
-          console.warn('Unknown API response structure', action.payload);
+          console.warn('Unexpected API response structure:', action.payload);
+          // Trong trường hợp API không có cấu trúc mong đợi, gán mảng rỗng
           state.list = [];
-          state.totalItems = 0;
         }
       })
       .addCase(fetchExamsBySubject.rejected, (state, action) => {

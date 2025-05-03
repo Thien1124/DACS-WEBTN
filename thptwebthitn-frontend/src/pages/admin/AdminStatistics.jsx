@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Row, Col } from 'react-bootstrap';
 import { FaUsers, FaFileAlt, FaPencilAlt, FaBookOpen } from 'react-icons/fa';
-import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { API_URL } from '../../config/constants';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorAlert from '../../components/common/ErrorAlert';
 import styled from 'styled-components';
+// Import services
+import { getSystemOverview, getSubjectStatistics } from '../../services/statisticsService';
+import { getChartData } from '../../services/analyticsService';
 
 const StatCard = styled.div`
   background-color: ${props => props.theme === 'dark' ? '#2d2d2d' : 'white'};
@@ -40,6 +41,7 @@ const StatCard = styled.div`
 const AdminStatistics = () => {
   const [overview, setOverview] = useState(null);
   const [subjectStats, setSubjectStats] = useState([]);
+  const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { theme } = useSelector(state => state.ui);
@@ -48,13 +50,16 @@ const AdminStatistics = () => {
     const fetchStatistics = async () => {
       try {
         setLoading(true);
-        const [overviewRes, subjectStatsRes] = await Promise.all([
-          axios.get(`${API_URL}/api/Statistics/overview`),
-          axios.get(`${API_URL}/api/Statistics/by-subject`)
+        // Use services instead of direct Axios calls
+        const [overviewData, subjectStatsData, examChartData] = await Promise.all([
+          getSystemOverview(),
+          getSubjectStatistics(),
+          getChartData()
         ]);
         
-        setOverview(overviewRes.data);
-        setSubjectStats(subjectStatsRes.data);
+        setOverview(overviewData);
+        setSubjectStats(subjectStatsData);
+        setChartData(examChartData);
         setError(null);
       } catch (err) {
         setError('Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.');

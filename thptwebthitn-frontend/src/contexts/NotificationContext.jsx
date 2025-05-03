@@ -29,12 +29,16 @@ export const NotificationProvider = ({ children }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
+      // Ensure we have array data
+      const notificationData = response.data.items || response.data;
+      const notificationsArray = Array.isArray(notificationData) ? notificationData : [];
+      
       if (page === 1) {
         // Replace notifications for first page
-        setNotifications(response.data.items || response.data);
+        setNotifications(notificationsArray);
       } else {
         // Append for pagination
-        setNotifications(prev => [...prev, ...(response.data.items || response.data)]);
+        setNotifications(prev => [...prev, ...notificationsArray]);
       }
       
       // Update pagination if available in response
@@ -47,8 +51,8 @@ export const NotificationProvider = ({ children }) => {
         });
       }
       
-      // Count unread notifications - this depends on your API response structure
-      const unreadNotifications = (response.data.items || response.data).filter(n => !n.isRead);
+      // Count unread notifications - now safely using an array
+      const unreadNotifications = notificationsArray.filter(n => !n.isRead);
       if (page === 1) {
         setUnreadCount(unreadNotifications.length);
       }

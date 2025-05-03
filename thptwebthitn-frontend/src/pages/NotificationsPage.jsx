@@ -7,7 +7,7 @@ import {
   FaRegBell, FaCheckCircle, FaExclamationTriangle,
   FaInfoCircle, FaCalendarAlt, FaChevronDown, FaCheck
 } from 'react-icons/fa';
-
+import NotificationService from '../services/NotificationService';
 // Styled Components
 const NotificationsContainer = styled.div`
   padding: 2rem;
@@ -218,16 +218,82 @@ const IconWrapper = styled.span`
 const NotificationsPage = () => {
   const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
-  const { 
-    notifications = [], // Provide a default empty array
-    loading, 
-    markAsRead, 
-    markAllAsRead
-  } = useNotification();
+  const { token } = useSelector(state => state.auth); // Get token from Redux
+  
+  // Replace useNotification hook with local state
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   const [activeFilter, setActiveFilter] = useState('all');
   const [filteredNotifications, setFilteredNotifications] = useState([]);
   const [expandedNotifications, setExpandedNotifications] = useState({});
+  
+  // Add these functions to replace the ones from the context
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await NotificationService.getNotifications(token);
+      console.log('Fetched notifications:', response);
+      
+      // Extract notifications correctly from the API response
+      let notificationsData = [];
+      
+      if (response) {
+        // Check for the exact structure from your API
+        if (response.data && response.data.notifications) {
+          // This matches your API response structure
+          notificationsData = response.data.notifications;
+        } else if (response.notifications) {
+          notificationsData = response.notifications;
+        } else if (response.items) {
+          notificationsData = response.items;
+        } else if (Array.isArray(response)) {
+          notificationsData = response;
+        }
+      }
+      
+      console.log('Extracted notifications:', notificationsData);
+      setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const markAsRead = async (notificationId) => {
+    try {
+      await NotificationService.markAsRead(token, notificationId);
+      // Update local state after successful API call
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId 
+            ? { ...notif, isRead: true } 
+            : notif
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+  
+  const markAllAsRead = async () => {
+    try {
+      await NotificationService.markAllAsRead(token);
+      // Update local state after successful API call
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, isRead: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+  
+  // Fetch notifications on component mount
+  useEffect(() => {
+    fetchNotifications();
+  }, [token]);
   
   // Safely check if there are unread notifications
   const hasUnreadNotifications = Array.isArray(notifications) && 
