@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -16,6 +18,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using webthitn_backend.Helpers;
+using webthitn_backend.Hubs;
 using webthitn_backend.Middleware;
 using webthitn_backend.Middlewares;
 using webthitn_backend.Models;
@@ -29,7 +32,6 @@ builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
 builder.Services.AddSingleton<EmailService>();
 
 // Cấu hình DbContext để kết nối với cơ sở dữ liệu
-// ĐÃ SỬA: Tắt ExecutionStrategy bằng cách đặt maxRetryCount = 0
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -132,11 +134,12 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API cho hệ thống thi trắc nghiệm trực tuyến",
         Contact = new OpenApiContact
         {
-            Name = "Thien1124",
-            Email = "thien1124@example.com"
+            Name = "Thien",
+            Email = "npthien124@gmail.com"
         }
     });
-
+    c.OperationFilter<OfficialExamExamplesOperationFilter>();
+    c.EnableAnnotations();
     // Thêm file XML Documentation
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -146,7 +149,7 @@ builder.Services.AddSwaggerGen(c =>
     }
 
     // Thêm file XML cho các model
-    c.OperationFilter<FileUploadOperationFilter>();
+    c.OperationFilter<FormFileOperationFilter>();
     c.OperationFilter<QuestionExamplesOperationFilter>();
 
     // Cấu hình Authorization
@@ -192,11 +195,15 @@ builder.Services.AddMemoryCache();
 // Thêm HttpClient Factory nếu cần gọi API bên ngoài
 builder.Services.AddHttpClient();
 
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 524288000; // 500MB
+});
+builder.Services.AddSignalR();
 // Xây dựng ứng dụng
 var app = builder.Build();
 
-// Middleware xử lý lỗi toàn cầu (thêm mới)
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Middleware Swagger 
 app.UseSwagger();
@@ -208,6 +215,43 @@ app.UseSwaggerUI(c => {
 // Sử dụng CORS
 app.UseCors("AllowMyOrigin");
 
+// Middleware để phục vụ file tĩnh mặc định
+app.UseStaticFiles();
+
+// Cấu hình phục vụ các thư mục lưu trữ file
+var directories = new[]
+{
+    new { Path = "videos", RequestPath = "/api/files/videos" },
+    new { Path = "thumbnails", RequestPath = "/api/files/thumbnails" },
+    new { Path = "documents", RequestPath = "/api/files/documents" },
+    new { Path = "images", RequestPath = "/api/files/images" },
+    new { Path = "audios", RequestPath = "/api/files/audios" }
+};
+
+// Tự động tạo các thư mục lưu trữ và cấu hình StaticFiles
+string basePath = builder.Configuration["FileStorage:BasePath"];
+if (!string.IsNullOrEmpty(basePath))
+{
+    foreach (var directory in directories)
+    {
+        string dirPath = Path.Combine(basePath, directory.Path);
+        // Tạo thư mục nếu chưa tồn tại
+        Directory.CreateDirectory(dirPath);
+
+        // Cấu hình phục vụ file tĩnh
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(dirPath),
+            RequestPath = directory.RequestPath
+        });
+    }
+}
+else
+{
+    // Log lỗi khi không có cấu hình basePath
+    app.Logger.LogError("Không tìm thấy cấu hình FileStorage:BasePath trong appsettings.json");
+}
+
 // Thêm middleware xử lý JSON token trước authentication
 app.UseMiddleware<JsonTokenAuthenticationMiddleware>();
 
@@ -215,11 +259,20 @@ app.UseMiddleware<JsonTokenAuthenticationMiddleware>();
 app.UseMiddleware<ExamValidationMiddleware>();
 
 // Sử dụng Authentication và Authorization cho API
-app.UseAuthentication();  // Đảm bảo yêu cầu token hợp lệ cho các API yêu cầu xác thực
-app.UseAuthorization();   // Kiểm tra quyền truy cập của người dùng
+app.UseAuthentication(); // Đảm bảo yêu cầu token hợp lệ
+app.UseMiddleware<UserIdClaimMiddleware>();
+app.UseAuthorization(); // Kiểm tra quyền truy cập
+
+// Thêm middleware bảo vệ endpoint admin
+app.UseMiddleware<AdminAuthorizationMiddleware>();
 
 // Định tuyến các Controllers
 app.MapControllers();
+// Định tuyến các SignalR Hubs
+app.MapHub<ChatHub>("/chatHub");
+
+// Middleware xử lý lỗi toàn cầu
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Áp dụng migrations tự động khi khởi động ứng dụng
 using (var scope = app.Services.CreateScope())
@@ -228,13 +281,25 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-
-        // Áp dụng tất cả các migrations đang chờ
-        context.Database.Migrate();
-
-        // Log thành công
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Database migrations applied successfully");
+
+        // Kiểm tra kết nối database
+        logger.LogInformation("Kiểm tra kết nối đến cơ sở dữ liệu...");
+
+        // Thử kết nối trước khi áp dụng migrations
+        if (context.Database.CanConnect())
+        {
+            logger.LogInformation("Kết nối cơ sở dữ liệu thành công. Áp dụng migrations...");
+
+            // Áp dụng tất cả các migrations đang chờ
+            context.Database.Migrate();
+
+            logger.LogInformation("Database migrations applied successfully");
+        }
+        else
+        {
+            logger.LogWarning("Không thể kết nối đến cơ sở dữ liệu. Bỏ qua việc áp dụng migrations.");
+        }
     }
     catch (Exception ex)
     {

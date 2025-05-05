@@ -1,50 +1,38 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\",
+  "WorkspaceRootPath": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\dtos\\examdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:dtos\\examdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\feedbackcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\feedbackcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\dtos\\feedbackdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:dtos\\feedbackdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\questioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\questioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\middleware\\adminauthorizationmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:middleware\\adminauthorizationmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\notificationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\notificationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\swagger\\officialexamexamplesoperationfilter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:swagger\\officialexamexamplesoperationfilter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\dtos\\notificationdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:dtos\\notificationdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\controllers\\exportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\exportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\middleware\\globalexceptionhandlermiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:middleware\\globalexceptionhandlermiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\controllers\\reportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\reportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\controllers\\officialexamcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\officialexamcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\migrations\\20250426142113_addpracticeexammodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:migrations\\20250426142113_addpracticeexammodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\controllers\\examcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\examcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\thien\\dacs-webtn\\webthitn-backend\\dtos\\createofficialexamdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:dtos\\createofficialexamdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -57,142 +45,118 @@
           "SelectedChildIndex": 1,
           "Children": [
             {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
-            },
-            {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "ExamDTO.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\ExamDTO.cs",
-              "RelativeDocumentMoniker": "DTOs\\ExamDTO.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\ExamDTO.cs",
-              "RelativeToolTip": "DTOs\\ExamDTO.cs",
-              "ViewState": "AgIAAOwAAAAAAAAAAAAhwPcAAAAnAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "AdminAuthorizationMiddleware.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Middleware\\AdminAuthorizationMiddleware.cs",
+              "RelativeDocumentMoniker": "Middleware\\AdminAuthorizationMiddleware.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Middleware\\AdminAuthorizationMiddleware.cs",
+              "RelativeToolTip": "Middleware\\AdminAuthorizationMiddleware.cs",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAiwFsAAAA1AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-30T04:19:35.145Z",
+              "WhenOpened": "2025-05-05T11:20:36.45Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
-              "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
-              "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAA+AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-04-28T02:29:05.362Z",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAACABAAAAAAAAAAAiwDABAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-05T11:16:59.611Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "FeedbackController.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\FeedbackController.cs",
-              "RelativeDocumentMoniker": "Controllers\\FeedbackController.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\FeedbackController.cs",
-              "RelativeToolTip": "Controllers\\FeedbackController.cs",
-              "ViewState": "AgIAANUAAAAAAAAAAAAiwOYAAAA3AAAAAAAAAA==",
+              "Title": "OfficialExamExamplesOperationFilter.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Swagger\\OfficialExamExamplesOperationFilter.cs",
+              "RelativeDocumentMoniker": "Swagger\\OfficialExamExamplesOperationFilter.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Swagger\\OfficialExamExamplesOperationFilter.cs",
+              "RelativeToolTip": "Swagger\\OfficialExamExamplesOperationFilter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T15:48:58.175Z"
+              "WhenOpened": "2025-05-05T11:16:37.974Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "FeedbackDTOs.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\FeedbackDTOs.cs",
-              "RelativeDocumentMoniker": "DTOs\\FeedbackDTOs.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\FeedbackDTOs.cs",
-              "RelativeToolTip": "DTOs\\FeedbackDTOs.cs",
-              "ViewState": "AgIAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Title": "ExportController.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExportController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ExportController.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExportController.cs",
+              "RelativeToolTip": "Controllers\\ExportController.cs",
+              "ViewState": "AgIAAHkBAAAAAAAAAAAiwI8BAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T15:48:49.527Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "QuestionController.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\QuestionController.cs",
-              "RelativeDocumentMoniker": "Controllers\\QuestionController.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\QuestionController.cs",
-              "RelativeToolTip": "Controllers\\QuestionController.cs",
-              "ViewState": "AgIAAA0AAAAAAAAAAAAiwBoAAABHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T14:38:54.054Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "GlobalExceptionHandlerMiddleware.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Middleware\\GlobalExceptionHandlerMiddleware.cs",
-              "RelativeDocumentMoniker": "Middleware\\GlobalExceptionHandlerMiddleware.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Middleware\\GlobalExceptionHandlerMiddleware.cs",
-              "RelativeToolTip": "Middleware\\GlobalExceptionHandlerMiddleware.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T09:17:56.141Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "NotificationsController.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\NotificationsController.cs",
-              "RelativeDocumentMoniker": "Controllers\\NotificationsController.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\NotificationsController.cs",
-              "RelativeToolTip": "Controllers\\NotificationsController.cs",
-              "ViewState": "AgIAABkBAAAAAAAAAAAiwDEBAAA2AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T08:36:53.072Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "NotificationDTOs.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\NotificationDTOs.cs",
-              "RelativeDocumentMoniker": "DTOs\\NotificationDTOs.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\DTOs\\NotificationDTOs.cs",
-              "RelativeToolTip": "DTOs\\NotificationDTOs.cs",
-              "ViewState": "AgIAAIYAAAAAAAAAAAAgwKwAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T08:36:21.769Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "Models\\ApplicationDbContext.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\ApplicationDbContext.cs",
-              "RelativeToolTip": "Models\\ApplicationDbContext.cs",
-              "ViewState": "AgIAAAQAAAAAAAAAAAAAAB0AAAA+AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-27T08:35:56.645Z"
+              "WhenOpened": "2025-05-05T11:07:07.329Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAAADEAAAACAAAAAAAAAA==",
+              "Title": "ReportController.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\ReportController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ReportController.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\ReportController.cs",
+              "RelativeToolTip": "Controllers\\ReportController.cs",
+              "ViewState": "AgIAAEcBAAAAAAAAAAAgwIsBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T15:42:51.141Z"
+              "WhenOpened": "2025-05-05T10:59:37.647Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "20250426142113_AddPracticeExamModels.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250426142113_AddPracticeExamModels.cs",
-              "RelativeDocumentMoniker": "Migrations\\20250426142113_AddPracticeExamModels.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Migrations\\20250426142113_AddPracticeExamModels.cs",
-              "RelativeToolTip": "Migrations\\20250426142113_AddPracticeExamModels.cs",
-              "ViewState": "AgIAABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 5,
+              "Title": "OfficialExamController.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\OfficialExamController.cs",
+              "RelativeDocumentMoniker": "Controllers\\OfficialExamController.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\OfficialExamController.cs",
+              "RelativeToolTip": "Controllers\\OfficialExamController.cs",
+              "ViewState": "AgIAABoEAAAAAAAAAAApwC8EAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T14:21:13.459Z"
+              "WhenOpened": "2025-05-05T08:12:21.14Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "CreateOfficialExamDTO.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\DTOs\\CreateOfficialExamDTO.cs",
+              "RelativeDocumentMoniker": "DTOs\\CreateOfficialExamDTO.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\DTOs\\CreateOfficialExamDTO.cs",
+              "RelativeToolTip": "DTOs\\CreateOfficialExamDTO.cs",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAgwFkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-05T08:11:44.989Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ExamController.cs",
+              "DocumentMoniker": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExamController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ExamController.cs",
+              "ToolTip": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExamController.cs",
+              "RelativeToolTip": "Controllers\\ExamController.cs",
+              "ViewState": "AgIAAJIAAAAAAAAAAAApwJ8AAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-05T07:55:56.402Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 95,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
             }
           ]
         }

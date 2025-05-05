@@ -122,6 +122,28 @@
             </summary>
             <example>5</example>
         </member>
+        <member name="M:webthitn_backend.Controllers.ChatController.SendMessage(webthitn_backend.DTOs.NewMessageDTO)">
+            <summary>
+            Gửi tin nhắn trong chatbox
+            </summary>
+            <param name="messageDto">Thông tin tin nhắn mới</param>
+            <returns>Thông tin tin nhắn sau khi đã gửi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ChatController.GetConversation(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Lấy cuộc trò chuyện với một người dùng cụ thể
+            </summary>
+            <param name="userId">ID của người dùng cần lấy cuộc trò chuyện</param>
+            <param name="page">Số trang, mặc định là 1</param>
+            <param name="pageSize">Kích thước trang, mặc định là 20</param>
+            <returns>Danh sách tin nhắn của cuộc trò chuyện</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ChatController.GetUnreadMessages">
+            <summary>
+            Lấy danh sách tin nhắn chưa đọc của người dùng hiện tại
+            </summary>
+            <returns>Danh sách tin nhắn chưa đọc</returns>
+        </member>
         <member name="T:webthitn_backend.Controllers.ExamController">
             <summary>
             API để quản lý và truy xuất thông tin bài thi
@@ -503,6 +525,20 @@
             </summary>
             <returns>File CSV mẫu</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.ExportController.ExportStudentsList(webthitn_backend.Controllers.ExportStudentsRequest)">
+            <summary>
+            Xuất danh sách học sinh theo lớp
+            </summary>
+            <param name="request">Thông tin yêu cầu xuất danh sách</param>
+            <returns>File Excel chứa danh sách học sinh</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExportController.ExportScores(webthitn_backend.Controllers.ExportScoresRequest)">
+            <summary>
+            Xuất bảng điểm theo kỳ thi
+            </summary>
+            <param name="request">Thông tin yêu cầu xuất bảng điểm</param>
+            <returns>File Excel chứa bảng điểm</returns>
+        </member>
         <member name="M:webthitn_backend.Controllers.FeedbackController.CreateFeedback(System.Int32,webthitn_backend.DTOs.CreateFeedbackDTO)">
             <summary>
             Gửi phản hồi về bài thi
@@ -564,6 +600,28 @@
             <response code="404">Không tìm thấy đề thi với ID đã cho</response>
             <response code="401">Không có quyền truy cập</response>
         </member>
+        <member name="M:webthitn_backend.Controllers.MaterialsController.GetDocuments(System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách tài liệu ôn tập
+            </summary>
+            <remarks>
+            API này cho phép lấy danh sách tài liệu ôn tập (PDF, slides, etc.) theo các tiêu chí lọc.
+            </remarks>
+            <param name="subjectId">ID của môn học (tùy chọn)</param>
+            <param name="chapterId">ID của chương học (tùy chọn)</param>
+            <param name="documentType">Loại tài liệu (PDF, Slide, etc.) (tùy chọn)</param>
+            <param name="search">Từ khóa tìm kiếm (tùy chọn)</param>
+            <param name="page">Số trang, mặc định là 1</param>
+            <param name="pageSize">Kích thước trang, mặc định là 10</param>
+            <returns>Danh sách tài liệu ôn tập phù hợp với tiêu chí lọc</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.MaterialsController.GetDocumentById(System.Int32)">
+            <summary>
+            Lấy chi tiết tài liệu theo ID
+            </summary>
+            <param name="id">ID của tài liệu</param>
+            <returns>Thông tin chi tiết của tài liệu</returns>
+        </member>
         <member name="M:webthitn_backend.Controllers.NotificationsController.SendEmailNotification(webthitn_backend.DTOs.EmailNotificationDTO)">
             <summary>
             Gửi thông báo qua email
@@ -599,6 +657,87 @@
             Đánh dấu tất cả thông báo là đã đọc
             </summary>
             <returns>Kết quả đánh dấu đã đọc</returns>
+        </member>
+        <member name="T:webthitn_backend.Controllers.OfficialExamController">
+            <summary>
+            API để quản lý các kỳ thi chính thức trong hệ thống
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.Extensions.Logging.ILogger{webthitn_backend.Controllers.OfficialExamController})">
+            <summary>
+            Khởi tạo controller với các dependency
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.CreateOfficialExam(webthitn_backend.Controllers.CreateOfficialExamDTO)">
+            <summary>
+            Tạo kỳ thi chính thức mới
+            </summary>
+            <remarks>
+            API này cho phép tạo kỳ thi chính thức dựa trên một đề thi có sẵn
+            </remarks>
+            <param name="model">Thông tin kỳ thi chính thức</param>
+            <returns>Thông tin kỳ thi đã tạo</returns>
+            <response code="201">Kỳ thi được tạo thành công</response>
+            <response code="400">Dữ liệu không hợp lệ</response>
+            <response code="404">Không tìm thấy đề thi</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.GetOfficialExam(System.Int32)">
+            <summary>
+            Lấy thông tin chi tiết kỳ thi chính thức
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <returns>Thông tin chi tiết kỳ thi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.GetOfficialExams(System.String,System.Nullable{System.Boolean},System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách kỳ thi chính thức
+            </summary>
+            <returns>Danh sách kỳ thi chính thức</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.UpdateOfficialExam(System.Int32,webthitn_backend.Controllers.UpdateOfficialExamDTO)">
+            <summary>
+            Cập nhật thông tin kỳ thi chính thức
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <param name="model">Thông tin cập nhật</param>
+            <returns>Thông tin kỳ thi sau khi cập nhật</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.AssignStudents(System.Int32,webthitn_backend.Controllers.AssignStudentsDTO)">
+            <summary>
+            Phân công học sinh tham gia kỳ thi
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <param name="model">Danh sách ID học sinh</param>
+            <returns>Kết quả phân công</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.GetStudents(System.Int32)">
+            <summary>
+            Lấy danh sách học sinh tham gia kỳ thi
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <returns>Danh sách học sinh tham gia</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.ReleaseResult(System.Int32,webthitn_backend.Controllers.ReleaseResultDTO)">
+            <summary>
+            Công bố kết quả kỳ thi
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <param name="model">Thông tin công bố kết quả</param>
+            <returns>Kết quả công bố</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.DeleteOfficialExam(System.Int32)">
+            <summary>
+            Xóa kỳ thi chính thức
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <returns>Kết quả xóa</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.GetOfficialExamStatistics(System.Int32)">
+            <summary>
+            Lấy thống kê tổng quan về kỳ thi chính thức
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <returns>Thống kê tổng quan</returns>
         </member>
         <member name="M:webthitn_backend.Controllers.QuestionController.CreateQuestion(webthitn_backend.DTOs.CreateQuestionDTO)">
             <summary>
@@ -657,11 +796,7 @@
             <param name="id">ID của câu hỏi cần xóa</param>
             <returns>Thông báo kết quả xóa</returns>
         </member>
-        <member name="M:webthitn_backend.Controllers.QuestionController.ImportQuestions(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Boolean)">
-            <summary>
-            Nhập câu hỏi từ file Excel
-            </summary>
-        </member>
+        <!-- Badly formed XML comment ignored for member "M:webthitn_backend.Controllers.QuestionController.ImportQuestions(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Boolean)" -->
         <member name="M:webthitn_backend.Controllers.QuestionController.ExportQuestions(webthitn_backend.DTOs.ExportQuestionsDTO)">
             <summary>
             Xuất câu hỏi ra file Excel
@@ -706,6 +841,26 @@
             </summary>
             <param name="request">Thông tin yêu cầu trộn câu hỏi</param>
             <returns>Danh sách câu hỏi đã trộn</returns>
+        </member>
+        <member name="T:webthitn_backend.Controllers.ReportController">
+            <summary>
+            API để cung cấp báo cáo và thống kê hệ thống
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ReportController.GetReport(System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String,System.Nullable{System.Int32})">
+            <summary>
+            Lấy báo cáo tổng quan về các kỳ thi trong hệ thống
+            </summary>
+            <param name="startDate">Ngày bắt đầu thống kê (định dạng yyyy-MM-dd)</param>
+            <param name="endDate">Ngày kết thúc thống kê (định dạng yyyy-MM-dd)</param>
+            <returns>Báo cáo tổng quan</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ReportController.GetExamReport(System.Int32)">
+            <summary>
+            Lấy báo cáo chi tiết về một kỳ thi cụ thể
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <returns>Báo cáo chi tiết kỳ thi</returns>
         </member>
         <member name="T:webthitn_backend.Controllers.ResultsController">
             <summary>
@@ -862,6 +1017,22 @@
             <param name="activeOnly">Chỉ lấy môn học đang hoạt động</param>
             <returns>Danh sách môn học đơn giản</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GetUserIdFromClaims">
+            <summary>
+            Phương thức helper để lấy userId từ claims - phiên bản sửa lỗi
+            </summary>
+            <returns>User ID hoặc giá trị mặc định nếu không tìm thấy</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GetTokenInfo">
+            <summary>
+            API để kiểm tra thông tin token hiện tại
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.VerifyToken(webthitn_backend.Controllers.TokenVerificationRequest)">
+            <summary>
+            Kiểm tra và xử lý token thủ công
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.TestController.CreateStructuredTest(webthitn_backend.DTOs.CreateStructuredTestDTO)">
             <summary>
             Tạo đề thi theo cấu trúc độ khó
@@ -886,6 +1057,21 @@
             API này cho phép tạo đề ôn tập theo các tùy chọn của người dùng
             </remarks>
         </member>
+        <member name="M:webthitn_backend.Controllers.TestController.CreatePracticeTestFixed(webthitn_backend.DTOs.CreatePracticeTestDTO)">
+            <summary>
+            API tạm thời cho đề ôn tập với userId cố định - Dùng khi API chính gặp vấn đề
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.SimplePractice(webthitn_backend.Controllers.SimplePracticeDTO)">
+            <summary>
+            API đơn giản để tạo đề ôn tập khi API chính gặp vấn đề
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.Ping">
+            <summary>
+            API kiểm tra để xác nhận controller hoạt động đúng
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.TestController.GetPracticeHistory(System.Int32,System.Int32,System.Int32)">
             <summary>
             Lấy lịch sử luyện đề ôn tập của người dùng
@@ -898,6 +1084,50 @@
             <summary>
             Lấy tên loại câu hỏi từ mã số
             </summary>
+        </member>
+        <member name="T:webthitn_backend.Controllers.SimplePracticeDTO">
+            <summary>
+            DTO đơn giản cho API tạo đề ôn tập khi API chính gặp vấn đề
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.Controllers.TokenVerificationRequest">
+            <summary>
+            DTO cho API kiểm tra token
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.VideosController.UploadVideo(Microsoft.AspNetCore.Http.IFormFile,System.String,System.String,System.Int32,System.Nullable{System.Int32},System.String)">
+            <summary>
+            Upload video ôn tập cho môn học
+            </summary>
+            <remarks>
+            API này cho phép giáo viên hoặc admin upload video ôn tập cho một môn học cụ thể.
+            Video phải có định dạng mp4, avi, mov, wmv hoặc mkv và kích thước không quá 500MB.
+            
+            Sample request:
+            
+                POST /api/videos/upload
+                Content-Type: multipart/form-data
+                Form data:
+                  - file: [video file]
+                  - title: "Ôn tập Toán học chương 3"
+                  - description: "Video ôn tập về đạo hàm và tích phân"
+                  - subjectId: 1
+                  - chapterId: 3 (optional)
+                  - tags: "đạo hàm, tích phân" (optional)
+            
+            </remarks>
+            <param name="file">File video cần upload</param>
+            <param name="title">Tiêu đề video</param>
+            <param name="description">Mô tả video (tùy chọn)</param>
+            <param name="subjectId">ID của môn học</param>
+            <param name="chapterId">ID của chương học (tùy chọn)</param>
+            <param name="tags">Các tag, phân cách bởi dấu phẩy (tùy chọn)</param>
+            <returns>Thông tin video đã upload bao gồm URL để xem</returns>
+            <response code="201">Video đã được upload thành công</response>
+            <response code="400">Dữ liệu không hợp lệ</response>
+            <response code="401">Không có quyền truy cập</response>
+            <response code="413">File quá lớn</response>
+            <response code="500">Lỗi máy chủ</response>
         </member>
         <member name="T:webthitn_backend.Data.IRepository`1">
             <summary>
@@ -1465,6 +1695,11 @@
             Thứ tự hiển thị
             </summary>
             <example>1</example>
+        </member>
+        <member name="T:webthitn_backend.DTOs.DocumentDTO">
+            <summary>
+            DTO cho thông tin tài liệu
+            </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.ExamListDTO">
             <summary>
@@ -3882,6 +4117,131 @@
             </summary>
             <example>true</example>
         </member>
+        <member name="T:webthitn_backend.DTOs.VideoDTO">
+            <summary>
+            DTO hiển thị thông tin video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.Id">
+            <summary>
+            ID của video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.Title">
+            <summary>
+            Tiêu đề video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.Description">
+            <summary>
+            Mô tả video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.Url">
+            <summary>
+            Đường dẫn tới file video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.ThumbnailUrl">
+            <summary>
+            Đường dẫn tới thumbnail của video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.Duration">
+            <summary>
+            Thời lượng video (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.FormattedDuration">
+            <summary>
+            Định dạng thời lượng dạng hh:mm:ss
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.FileSize">
+            <summary>
+            Kích thước file (bytes)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.FormattedFileSize">
+            <summary>
+            Kích thước file định dạng chuỗi (KB, MB, GB)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.FileType">
+            <summary>
+            Loại file (mp4, avi, etc.)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.SubjectId">
+            <summary>
+            ID của môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.SubjectName">
+            <summary>
+            Tên môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.ChapterId">
+            <summary>
+            ID của chương học (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.ChapterName">
+            <summary>
+            Tên chương học (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.Tags">
+            <summary>
+            Các tag/từ khóa liên quan đến video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.ViewCount">
+            <summary>
+            Số lượt xem
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoDTO.CreatedAt">
+            <summary>
+            Thời gian tạo
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.DTOs.VideoDTO.FormatFileSize(System.Int64)">
+            <summary>
+            Helper method để định dạng kích thước file
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.VideoUploadDTO">
+            <summary>
+            DTO cho việc tải lên video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoUploadDTO.Title">
+            <summary>
+            Tiêu đề video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoUploadDTO.Description">
+            <summary>
+            Mô tả video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoUploadDTO.SubjectId">
+            <summary>
+            ID của môn học liên quan
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoUploadDTO.ChapterId">
+            <summary>
+            ID của chương học (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.VideoUploadDTO.Tags">
+            <summary>
+            Các tag/từ khóa liên quan đến video, phân cách bằng dấu phẩy
+            </summary>
+        </member>
         <member name="T:webthitn_backend.Migrations.Initial">
             <inheritdoc />
         </member>
@@ -4096,6 +4456,54 @@
             <inheritdoc />
         </member>
         <member name="M:webthitn_backend.Migrations.AddNotificationsTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddVideoResource">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddVideoResource.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddVideoResource.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddVideoResource.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddDocumentResources">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddDocumentResources.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddDocumentResources.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddDocumentResources.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddChatMessagesTable">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddChatMessagesTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddChatMessagesTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddChatMessagesTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddOfficialExams">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddOfficialExams.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddOfficialExams.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddOfficialExams.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
         <member name="T:webthitn_backend.Models.Subject">
@@ -5410,6 +5818,106 @@
             Kết quả các bài thi đã làm (chỉ áp dụng cho Student)
             </summary>
         </member>
+        <member name="T:webthitn_backend.Models.VideoResource">
+            <summary>
+            Entity đại diện cho tài nguyên video ôn tập
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Id">
+            <summary>
+            ID của video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Title">
+            <summary>
+            Tiêu đề video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Description">
+            <summary>
+            Mô tả video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Url">
+            <summary>
+            Đường dẫn tới file video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.ThumbnailUrl">
+            <summary>
+            Đường dẫn tới thumbnail của video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Duration">
+            <summary>
+            Thời lượng video (giây)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.FileSize">
+            <summary>
+            Kích thước file (bytes)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.FileType">
+            <summary>
+            Loại file (mp4, avi, etc.)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.SubjectId">
+            <summary>
+            ID của môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Subject">
+            <summary>
+            Môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.ChapterId">
+            <summary>
+            ID của chương học (nếu có)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Chapter">
+            <summary>
+            Chương học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.Tags">
+            <summary>
+            Các tag/từ khóa liên quan đến video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.UploadedById">
+            <summary>
+            ID của người upload
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.UploadedBy">
+            <summary>
+            Người upload
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.ViewCount">
+            <summary>
+            Số lượt xem
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.IsActive">
+            <summary>
+            Trạng thái kích hoạt của video
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.CreatedAt">
+            <summary>
+            Thời gian tạo
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.VideoResource.UpdatedAt">
+            <summary>
+            Thời gian cập nhật gần nhất
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Services.ExamGradingService.GradeAndSaveExamResult(webthitn_backend.DTOs.SubmitExamDTO,System.Int32)">
             <summary>
             Chấm điểm và lưu kết quả bài thi
@@ -5649,6 +6157,11 @@
         <member name="M:WEBTHITN_Backend.Helpers.DateTimeHelper.GetVietnamNow">
             <summary>
             Lấy thời gian hiện tại theo múi giờ Việt Nam
+            </summary>
+        </member>
+        <member name="T:UserIdClaimMiddleware">
+            <summary>
+            Middleware để xử lý authentication claim
             </summary>
         </member>
     </members>
