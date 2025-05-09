@@ -28,6 +28,11 @@ namespace webthitn_backend.Models
         public DbSet<PracticeResult> PracticeResults { get; set; }
         public DbSet<ExamFeedback> ExamFeedbacks { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<VideoResource> VideoResources { get; set; }
+        public DbSet<DocumentResource> DocumentResources { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<OfficialExam> OfficialExams { get; set; }
+        public DbSet<OfficialExamStudent> OfficialExamStudents { get; set; }
 
 
 
@@ -91,6 +96,63 @@ namespace webthitn_backend.Models
             .WithMany()
             .HasForeignKey(pr => pr.UserId)
             .OnDelete(DeleteBehavior.NoAction);
+            // Cấu hình cho VideoResource
+            modelBuilder.Entity<VideoResource>()
+                .HasOne(v => v.Subject)
+                .WithMany()
+                .HasForeignKey(v => v.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VideoResource>()
+                .HasOne(v => v.Chapter)
+                .WithMany()
+                .HasForeignKey(v => v.ChapterId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<VideoResource>()
+                .HasOne(v => v.UploadedBy)
+                .WithMany()
+                .HasForeignKey(v => v.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Cấu hình quan hệ ChatMessage
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Cấu hình quan hệ OfficialExam với Exam
+            modelBuilder.Entity<OfficialExam>()
+                .HasOne(oe => oe.Exam)
+                .WithMany()
+                .HasForeignKey(oe => oe.ExamId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình quan hệ OfficialExam với User (Creator)
+            modelBuilder.Entity<OfficialExam>()
+                .HasOne(oe => oe.Creator)
+                .WithMany()
+                .HasForeignKey(oe => oe.CreatorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình quan hệ OfficialExamStudent với OfficialExam
+            modelBuilder.Entity<OfficialExamStudent>()
+                .HasOne(oes => oes.OfficialExam)
+                .WithMany(oe => oe.Students)
+                .HasForeignKey(oes => oes.OfficialExamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Cấu hình quan hệ OfficialExamStudent với User (Student)
+            modelBuilder.Entity<OfficialExamStudent>()
+                .HasOne(oes => oes.Student)
+                .WithMany()
+                .HasForeignKey(oes => oes.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
             // Seed data
             SeedData(modelBuilder);
         }

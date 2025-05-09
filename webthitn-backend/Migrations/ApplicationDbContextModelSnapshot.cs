@@ -62,6 +62,115 @@ namespace webthitn_backend.Migrations
                     b.ToTable("Chapters");
                 });
 
+            modelBuilder.Entity("webthitn_backend.Models.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReceiverId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.DocumentResource", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("DownloadCount")
+                        .HasColumnType("int");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UploadedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("DocumentResources");
+                });
+
             modelBuilder.Entity("webthitn_backend.Models.Exam", b =>
                 {
                     b.Property<int>("Id")
@@ -481,6 +590,93 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.OfficialExam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClassroomName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResultsReleased")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("StartTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("ExamId");
+
+                    b.ToTable("OfficialExams");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.OfficialExamStudent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExamResultId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("HasTaken")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OfficialExamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamResultId");
+
+                    b.HasIndex("OfficialExamId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("OfficialExamStudents");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.PracticeExam", b =>
@@ -1333,7 +1529,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$NdFfWsul4g5BNzgfBKVa7uUr7/IR1U1U5R1XunT13TQMmi5AYjfhu",
+                            Password = "$2a$11$DSOVKYjggyzpqmXc5QlGa.cRE/lp.Er.edIWOZpZyLXbeXFYJbP4.",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1348,7 +1544,7 @@ namespace webthitn_backend.Migrations
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$SolxrPoc2FVgKwMAmecZWOEZ5tIdt6IbqVw0Ps4Xxf3gn.eFCHKie",
+                            Password = "$2a$11$jPm5V.10Fr7Xr3Rhz24sxuLUKb.sugw9QCjX1HwQN.blz9bxfR5WC",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1362,12 +1558,85 @@ namespace webthitn_backend.Migrations
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$vIa8ndUFmN3mkeWe7CmL5eWeuUejlDE4bovxxgtbwrtlVLVrnV2/G",
+                            Password = "$2a$11$3tpF.2tDQgCNOxWQRD8PyO.ksYHjtYU9lHFG5rHRQ7SIKBkFMiylS",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",
                             Username = "student1"
                         });
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.VideoResource", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("int");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UploadedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ViewCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("UploadedById");
+
+                    b.ToTable("VideoResources");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.Chapter", b =>
@@ -1377,6 +1646,42 @@ namespace webthitn_backend.Migrations
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.ChatMessage", b =>
+                {
+                    b.HasOne("webthitn_backend.Models.Users.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.Users.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.DocumentResource", b =>
+                {
+                    b.HasOne("webthitn_backend.Models.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId");
+
+                    b.HasOne("webthitn_backend.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chapter");
 
                     b.Navigation("Subject");
                 });
@@ -1505,6 +1810,50 @@ namespace webthitn_backend.Migrations
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.OfficialExam", b =>
+                {
+                    b.HasOne("webthitn_backend.Models.Users.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.Exam", "Exam")
+                        .WithMany()
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Exam");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.OfficialExamStudent", b =>
+                {
+                    b.HasOne("webthitn_backend.Models.ExamResult", "ExamResult")
+                        .WithMany()
+                        .HasForeignKey("ExamResultId");
+
+                    b.HasOne("webthitn_backend.Models.OfficialExam", "OfficialExam")
+                        .WithMany("Students")
+                        .HasForeignKey("OfficialExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.Users.User", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExamResult");
+
+                    b.Navigation("OfficialExam");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.PracticeExam", b =>
@@ -1643,6 +1992,32 @@ namespace webthitn_backend.Migrations
                     b.Navigation("StudentAnswer");
                 });
 
+            modelBuilder.Entity("webthitn_backend.Models.VideoResource", b =>
+                {
+                    b.HasOne("webthitn_backend.Models.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("webthitn_backend.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.Users.User", "UploadedBy")
+                        .WithMany()
+                        .HasForeignKey("UploadedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Chapter");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("UploadedBy");
+                });
+
             modelBuilder.Entity("webthitn_backend.Models.Chapter", b =>
                 {
                     b.Navigation("Lessons");
@@ -1668,6 +2043,11 @@ namespace webthitn_backend.Migrations
             modelBuilder.Entity("webthitn_backend.Models.Lesson", b =>
                 {
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.OfficialExam", b =>
+                {
+                    b.Navigation("Students");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.Question", b =>

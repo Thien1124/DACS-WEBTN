@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace webthitn_backend.Middlewares
 {
@@ -24,9 +25,31 @@ namespace webthitn_backend.Middlewares
             }
             catch (Exception ex)
             {
+                // Kiểm tra nếu đây là request liên quan đến Swagger hoặc lỗi từ SwaggerGen
+                if (IsSwaggerRelated(context, ex))
+                {
+                    // Log lỗi nhưng để Swagger xử lý nó
+                    _logger.LogWarning(ex, "Swagger generation exception - bypassing exception handler");
+                    throw; // Ném lại exception để được xử lý bởi pipeline mặc định
+                }
+
+                // Xử lý các exception khác như bình thường
                 _logger.LogError(ex, "Unhandled exception");
                 await HandleExceptionAsync(context, ex);
             }
+        }
+
+        private bool IsSwaggerRelated(HttpContext context, Exception ex)
+        {
+            // Kiểm tra nếu request path bắt đầu với /swagger
+            bool isSwaggerPath = context.Request.Path.StartsWithSegments("/swagger");
+
+            // Kiểm tra nếu exception liên quan đến Swagger
+            bool isSwaggerException = ex is SwaggerGeneratorException ||
+                                     (ex.InnerException != null && ex.InnerException is SwaggerGeneratorException) ||
+                                     ex.GetType().FullName.Contains("Swagger");
+
+            return isSwaggerPath || isSwaggerException;
         }
 
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception)

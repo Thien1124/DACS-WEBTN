@@ -126,9 +126,9 @@ namespace webthitn_backend.Controllers
         }
 
         // 3. Admin: Lấy danh sách người dùng
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         [HttpGet("list")]
-        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? grade=null)
         {
             var totalCount = await _context.Users.CountAsync();
 
@@ -142,6 +142,8 @@ namespace webthitn_backend.Controllers
                     Email = u.Email,
                     FullName = u.FullName,
                     PhoneNumber = u.PhoneNumber,
+                    Role = u.Role,
+                    Grade = u.Grade,
                     CreatedAt = u.CreatedAt,
                     LastLogin = u.LastLogin,
                     UpdatedAt = u.UpdatedAt

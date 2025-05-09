@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -35,9 +36,11 @@ namespace webthitn_backend.Middlewares
                 var originalBodyStream = context.Request.Body;
                 var requestBody = await ReadRequestBodyAsync(context.Request);
 
-                // Parse dữ liệu đề thi từ body
                 try
                 {
+                    // Log request body để debug
+                    _logger.LogDebug($"Request body: {requestBody}");
+
                     // Bước 1: Parse dữ liệu đề thi
                     dynamic examData = JsonConvert.DeserializeObject(requestBody);
 
@@ -66,7 +69,7 @@ namespace webthitn_backend.Middlewares
                     await WriteResponseAsync(context, 400, new
                     {
                         Success = false,
-                        Message = "Lỗi định dạng dữ liệu đề thi"
+                        Message = "Lỗi định dạng dữ liệu đề thi: " + ex.Message
                     });
                     return;
                 }
@@ -84,6 +87,15 @@ namespace webthitn_backend.Middlewares
         {
             var path = context.Request.Path.Value?.ToLower();
             var method = context.Request.Method;
+
+            // Bỏ qua các API không yêu cầu validation đầy đủ
+            if (path?.Contains("simple-practice") == true ||
+                path?.Contains("practice-fixed") == true ||
+                path?.Contains("verify-token") == true ||
+                path?.Contains("ping") == true)
+            {
+                return false;
+            }
 
             return (path?.Contains("/api/exams") == true || path?.Contains("/api/tests") == true) &&
                   (method == "POST" || method == "PUT") &&
@@ -118,6 +130,10 @@ namespace webthitn_backend.Middlewares
 
             try
             {
+                string path = context.Request.Path.Value?.ToLower() ?? "";
+                bool isStructuredExam = path.Contains("structured");
+                bool isPracticeExam = path.Contains("practice") && !path.Contains("simple-practice");
+
                 // 1. Kiểm tra các trường bắt buộc
                 if (examData.title == null || string.IsNullOrWhiteSpace(examData.title.ToString()))
                 {
@@ -129,14 +145,15 @@ namespace webthitn_backend.Middlewares
                     result.AddError("subjectId", "Môn học không hợp lệ");
                 }
 
-                if (examData.duration == null || (int)examData.duration <= 0)
+                // Duration không bắt buộc cho practice exam
+                if (!isPracticeExam && (examData.duration == null || (int)examData.duration <= 0))
                 {
                     result.AddError("duration", "Thời gian làm bài phải lớn hơn 0");
                 }
 
                 // 2. Kiểm tra câu hỏi
                 var hasQuestions = false;
-                var questions = new System.Collections.Generic.List<dynamic>();
+                var questions = new List<dynamic>();
 
                 // Trích xuất câu hỏi từ các cấu trúc khác nhau trong các API khác nhau
                 if (examData.questions != null)
@@ -157,7 +174,29 @@ namespace webthitn_backend.Middlewares
                 }
                 else if (examData.criteria != null) // Tạo đề theo cấu trúc
                 {
-                    // Với API tạo đề theo cấu trúc, không cần kiểm tra câu hỏi trước
+                    // Kiểm tra tiêu chí
+                    int totalCount = 0;
+                    decimal totalPoints = 0;
+
+                    foreach (var criterion in examData.criteria)
+                    {
+                        if (criterion.count != null && (int)criterion.count > 0)
+                        {
+                            totalCount += (int)criterion.count;
+
+                            if (criterion.score != null)
+                            {
+                                totalPoints += (decimal)criterion.score * (int)criterion.count;
+                            }
+                        }
+                    }
+
+                    // Kiểm tra tổng điểm
+                    if (examData.totalScore != null && Math.Abs(totalPoints - (decimal)examData.totalScore) > 0.01m)
+                    {
+                        result.AddError("criteria", $"Tổng điểm theo tiêu chí ({totalPoints}) không khớp với tổng điểm đề thi ({(decimal)examData.totalScore})");
+                    }
+
                     hasQuestions = true;
                 }
 
@@ -167,13 +206,11 @@ namespace webthitn_backend.Middlewares
                 }
                 else if (questions.Any())
                 {
-                    // Kiểm tra từng câu hỏi
-                    var processedQuestionIds = new System.Collections.Generic.HashSet<int>();
-                    decimal totalScore = 0;
-
+                    // Sử dụng phương pháp tối ưu hơn để kiểm tra câu hỏi
+                    var processedQuestionIds = new HashSet<int>();
                     foreach (var question in questions)
                     {
-                        // Trích xuất ID câu hỏi (có thể nằm ở questionId hoặc id)
+                        // Trích xuất ID câu hỏi
                         int questionId = 0;
                         if (question.questionId != null)
                             questionId = (int)question.questionId;
@@ -194,79 +231,81 @@ namespace webthitn_backend.Middlewares
                         }
 
                         processedQuestionIds.Add(questionId);
+                    }
 
-                        // Kiểm tra câu hỏi tồn tại trong CSDL
-                        var dbQuestion = await dbContext.Questions
+                    // Sau đó mới truy vấn để kiểm tra tất cả cùng một lúc
+                    if (processedQuestionIds.Count > 0)
+                    {
+                        var dbQuestions = await dbContext.Questions
+                            .Where(q => processedQuestionIds.Contains(q.Id))
                             .Include(q => q.Options)
-                            .FirstOrDefaultAsync(q => q.Id == questionId);
+                            .ToDictionaryAsync(q => q.Id, q => q);
 
-                        if (dbQuestion == null)
+                        decimal totalScore = 0;
+                        foreach (var questionId in processedQuestionIds)
                         {
-                            result.AddError("questions", $"Câu hỏi ID: {questionId} không tồn tại");
-                            continue;
+                            if (!dbQuestions.TryGetValue(questionId, out var dbQuestion))
+                            {
+                                result.AddError("questions", $"Câu hỏi ID: {questionId} không tồn tại");
+                                continue;
+                            }
+
+                            if (!dbQuestion.IsActive)
+                            {
+                                result.AddError("questions", $"Câu hỏi ID: {questionId} không còn hoạt động");
+                                continue;
+                            }
+
+                            if (dbQuestion.Options == null || !dbQuestion.Options.Any())
+                            {
+                                result.AddError("questions", $"Câu hỏi ID: {questionId} không có đáp án");
+                                continue;
+                            }
+
+                            if (dbQuestion.QuestionType == 1 && dbQuestion.Options.Count(o => o.IsCorrect) != 1)
+                            {
+                                result.AddError("questions", $"Câu hỏi trắc nghiệm ID: {questionId} phải có đúng một đáp án đúng");
+                                continue;
+                            }
+
+                            totalScore += dbQuestion.DefaultScore;
                         }
 
-                        if (!dbQuestion.IsActive)
+                        // Chỉ áp dụng kiểm tra số lượng câu hỏi tối thiểu cho đề thi thực tế, không phải đề ôn tập
+                        if (!isPracticeExam && !path.Contains("simple") && processedQuestionIds.Count < 2)
                         {
-                            result.AddError("questions", $"Câu hỏi ID: {questionId} không còn hoạt động");
-                            continue;
+                            result.AddError("questions", $"Đề thi phải có ít nhất 2 câu hỏi (hiện tại: {processedQuestionIds.Count})");
                         }
 
-                        // Kiểm tra câu hỏi có đáp án hợp lệ
-                        if (dbQuestion.Options == null || !dbQuestion.Options.Any())
+                        if (!isPracticeExam && totalScore <= 0)
                         {
-                            result.AddError("questions", $"Câu hỏi ID: {questionId} không có đáp án");
-                            continue;
+                            result.AddError("totalScore", "Tổng điểm của đề thi phải lớn hơn 0");
                         }
-
-                        if (dbQuestion.QuestionType == 1 && dbQuestion.Options.Count(o => o.IsCorrect) != 1)
-                        {
-                            result.AddError("questions", $"Câu hỏi trắc nghiệm ID: {questionId} phải có đúng một đáp án đúng");
-                            continue;
-                        }
-
-                        // Tính điểm
-                        decimal score = dbQuestion.DefaultScore;
-                        if (question.score != null)
-                        {
-                            score = (decimal)question.score;
-                        }
-
-                        totalScore += score;
-                    }
-
-                    // Kiểm tra tổng số câu hỏi
-                    if (processedQuestionIds.Count < 3)
-                    {
-                        result.AddError("questions", $"Đề thi phải có ít nhất 3 câu hỏi (hiện tại: {processedQuestionIds.Count})");
-                    }
-
-                    // Đảm bảo tổng điểm > 0
-                    if (totalScore <= 0)
-                    {
-                        result.AddError("totalScore", "Tổng điểm của đề thi phải lớn hơn 0");
                     }
                 }
 
-                // 3. Kiểm tra quyền của người dùng
-                var userIdClaim = context.User.FindFirst("userId") ??
-                                  context.User.FindFirst("UserId") ??
-                                  context.User.FindFirst("userid");
+                // 3. Kiểm tra quyền của người dùng - bỏ qua nếu là API practice đặc biệt
+                if (!path.Contains("practice-fixed") && !path.Contains("simple-practice"))
+                {
+                    var userIdClaim = context.User.FindFirst("userId") ??
+                                      context.User.FindFirst("UserId") ??
+                                      context.User.FindFirst("userid");
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    result.AddError("user", "Không xác định được người dùng");
-                }
-                else
-                {
-                    var user = await dbContext.Users.FindAsync(userId);
-                    if (user == null)
+                    if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                     {
-                        result.AddError("user", "Người dùng không tồn tại");
+                        result.AddError("user", "Không xác định được người dùng");
                     }
-                    else if (!context.User.IsInRole("Admin") && !context.User.IsInRole("Teacher"))
+                    else
                     {
-                        result.AddError("user", "Bạn không có quyền tạo hoặc cập nhật đề thi");
+                        var user = await dbContext.Users.FindAsync(userId);
+                        if (user == null)
+                        {
+                            result.AddError("user", "Người dùng không tồn tại");
+                        }
+                        else if (!context.User.IsInRole("Admin") && !context.User.IsInRole("Teacher"))
+                        {
+                            result.AddError("user", "Bạn không có quyền tạo hoặc cập nhật đề thi");
+                        }
                     }
                 }
 
@@ -280,7 +319,6 @@ namespace webthitn_backend.Middlewares
                     }
 
                     // Nếu đang cập nhật đề thi (kiểm tra từ URL)
-                    string path = context.Request.Path.Value ?? "";
                     if (context.Request.Method == "PUT" && int.TryParse(path.Split('/').LastOrDefault(), out int examId))
                     {
                         var existingExam = await dbContext.Exams.FindAsync(examId);
@@ -299,7 +337,7 @@ namespace webthitn_backend.Middlewares
                 }
 
                 // 6. Kiểm tra loại đề thi
-                if (examData.examTypeId != null && (int)examData.examTypeId > 0)
+                if (!isPracticeExam && examData.examTypeId != null && (int)examData.examTypeId > 0)
                 {
                     var examType = await dbContext.ExamTypes.FindAsync((int)examData.examTypeId);
                     if (examType == null)
@@ -334,7 +372,7 @@ namespace webthitn_backend.Middlewares
         {
             public bool IsValid { get; set; }
             public string Message { get; set; }
-            public System.Collections.Generic.Dictionary<string, string> Errors { get; } = new System.Collections.Generic.Dictionary<string, string>();
+            public Dictionary<string, string> Errors { get; } = new Dictionary<string, string>();
 
             public void AddError(string field, string message)
             {

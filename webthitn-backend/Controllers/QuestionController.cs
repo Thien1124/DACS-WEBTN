@@ -7,6 +7,7 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -14,6 +15,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
+
 
 namespace webthitn_backend.Controllers
 {
@@ -1053,23 +1055,30 @@ namespace webthitn_backend.Controllers
             }
         }
 
-        /// <summary>
+        // <summary>
         /// Nhập câu hỏi từ file Excel
         /// </summary>
+        /// <param name="file">File Excel chứa dữ liệu câu hỏi</param>
+        /// <param name="subjectId">ID của môn học</param>
+        /// <param name="categoryId">ID của danh mục/chương (không bắt buộc)</param>
+        /// <param name="levelId">ID của mức độ câu hỏi (không bắt buộc)</param>
+        /// <param name="overrideExisting">Ghi đè câu hỏi đã tồn tại</param>
+        /// <param name="validateOnly">Chỉ kiểm tra mà không lưu dữ liệu</param>
+        [ApiExplorerSettings(IgnoreApi = true)] 
         [Authorize(Roles = "Admin,Teacher")]
         [HttpPost("import")]
-        [ApiExplorerSettings(IgnoreApi = true)]
+        [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> ImportQuestions(
-            [FromForm] IFormFile file,
-            [FromForm] int subjectId,
-            [FromForm] int? categoryId = null,
-            [FromForm] int? levelId = null,
-            [FromForm] bool overrideExisting = false,
-            [FromForm] bool validateOnly = false)
-        {
+        [Required, FromForm] IFormFile file,
+        [Required, FromForm] int subjectId,
+        [FromForm] int? categoryId = null,
+        [FromForm] int? levelId = null,
+        [FromForm] bool overrideExisting = false,
+        [FromForm] bool validateOnly = false)
+            {
             try
             {
                 _logger.LogInformation("Bắt đầu nhập câu hỏi từ Excel");
@@ -1475,7 +1484,6 @@ namespace webthitn_backend.Controllers
                 });
             }
         }
-
         /// <summary>
         /// Xuất câu hỏi ra file Excel
         /// </summary>

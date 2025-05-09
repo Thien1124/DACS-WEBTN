@@ -42,7 +42,7 @@ namespace webthitn_backend.DTOs
         /// </summary>
         /// <example>Teacher</example>
         public string Role { get; set; }
-
+        public string? Grade { get; set; }
         /// <summary>
         /// Thời điểm tạo tài khoản
         /// </summary>
