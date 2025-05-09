@@ -721,6 +721,7 @@ C:\Users\84949\OneDrive\Máy tính\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\Swashbuckle.AspNetCore.Annotations.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+<<<<<<< HEAD
 C:\Users\84949\OneDrive\Máy tính\clone\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\appsettings.Development.json
 C:\Users\84949\OneDrive\Máy tính\clone\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\appsettings.json
 C:\Users\84949\OneDrive\Máy tính\clone\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\webthitn-backend.staticwebassets.endpoints.json
@@ -909,3 +910,5 @@ C:\Users\84949\OneDrive\Máy tính\clone\DACS-WEBTN\webthitn-backend\obj\Debug\n
 C:\Users\84949\OneDrive\Máy tính\clone\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\ref\webthitn-backend.dll
 C:\Users\84949\OneDrive\Máy tính\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\Swashbuckle.AspNetCore.Annotations.dll
 C:\Users\84949\OneDrive\Máy tính\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll
+=======
+>>>>>>> 6be3f0cccf2c61e02d60d2ea9495ce546789a08c
