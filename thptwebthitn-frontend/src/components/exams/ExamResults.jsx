@@ -235,7 +235,7 @@ const ExamResults = () => {
             isCorrect: Boolean(answer.isCorrect),
             options: Array.isArray(answer.options) ? answer.options.map(opt => ({
               id: opt.id,
-              text: opt.text || '',
+              text: opt.content || opt.text || '', // Check for both content and text properties
               label: opt.label || String.fromCharCode(65 + (answer.options.indexOf(opt) % 26))
             })) : [],
             correctAnswerId: answer.correctOptionId,
@@ -504,6 +504,7 @@ const ExamResults = () => {
                     dangerouslySetInnerHTML={{ __html: question.text }} 
                   />
                   
+                  <h6 className="mb-3">Các đáp án:</h6>
                   <div className="options-container mb-3">
                     {question.options.map((option, oIndex) => {
                       const isSelectedOption = question.userAnswer === option.id;
@@ -532,39 +533,51 @@ const ExamResults = () => {
                             {isSelectedIncorrect && (
                               <FaTimesCircle size={20} color="#dc3545" />
                             )}
+                            {!isCorrectAnswer && !isSelectedOption && (
+                              <div style={{ width: 20 }}></div>
+                            )}
                           </div>
                         </OptionItem>
                       );
                     })}
                   </div>
                   
-                  {!isCorrect && (
-                    <div className="mt-3">
-                      <div className="text-danger mb-2" style={{ fontSize: '0.9rem' }}>
-                        {isAnswered ? (
-                          <div className="d-flex align-items-center">
-                            <FaTimesCircle className="me-2" />
-                            {selectedOption ? (
-                              <span>Bạn đã chọn <strong>{selectedOption.label}</strong>, đây không phải là đáp án đúng.</span>
-                            ) : (
-                              <span>Bạn chọn sai đáp án.</span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="d-flex align-items-center">
-                            <FaInfoCircle className="me-2" />
-                            <span>Bạn chưa trả lời câu hỏi này.</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-success">
+                  <div className="mt-3">
+                    {/* Student's answer status */}
+                    <div className={isCorrect ? "text-success mb-2" : "text-danger mb-2"} style={{ fontSize: '0.9rem' }}>
+                      {isAnswered ? (
                         <div className="d-flex align-items-center">
-                          <FaCheckCircle className="me-2" />
-                          <span>Đáp án đúng là: <strong>{correctOption?.label || ''}: {correctOption?.text || ''}</strong></span>
+                          {isCorrect ? (
+                            <>
+                              <FaCheckCircle className="me-2" />
+                              <span>Bạn đã chọn <strong>{selectedOption?.label || ''}</strong>, đây là đáp án đúng!</span>
+                            </>
+                          ) : (
+                            <>
+                              <FaTimesCircle className="me-2" />
+                              <span>Bạn đã chọn <strong>{selectedOption?.label || ''}</strong>, đây không phải là đáp án đúng.</span>
+                            </>
+                          )}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="d-flex align-items-center">
+                          <FaInfoCircle className="me-2" />
+                          <span>Bạn chưa trả lời câu hỏi này.</span>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Always show correct answer with full text for all questions */}
+                    <div className="text-success border-top pt-2">
+                      <div className="d-flex align-items-center">
+                        <FaCheckCircle className="me-2" />
+                        <span className="fw-bold">Đáp án đúng là: <strong>{correctOption?.label || ''}</strong></span>
+                      </div>
+                      {correctOption?.text && (
+                        <div className="ms-4 mt-2 p-2 bg-light rounded" dangerouslySetInnerHTML={{ __html: correctOption.text }}></div>
+                      )}
+                    </div>
+                  </div>
                   
                   {question.explanation && (
                     <ExplanationCard 

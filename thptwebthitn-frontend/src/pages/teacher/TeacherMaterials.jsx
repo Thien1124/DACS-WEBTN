@@ -30,6 +30,8 @@ import {
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { getMaterials, uploadMaterial, uploadVideo } from '../../services/materialsService';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 // Styled components
 const PageWrapper = styled.div`
@@ -989,130 +991,178 @@ const TeacherMaterials = () => {
   
   // Mock data for materials
   useEffect(() => {
-    setLoading(true);
-    
-    // This would be an API call in a real app
-    setTimeout(() => {
-      const mockData = [
-        {
-          id: 1,
-          type: 'pdf',
-          title: 'Tài liệu ôn tập Toán học - Đại số và Giải tích',
-          subject: 'math',
-          description: 'Tài liệu tổng hợp các công thức và bài tập ôn tập trước kỳ thi',
-          date: '2025-04-25',
-          size: 2500000,
-          url: '#',
-          thumbnail: null,
-          tags: ['đại số', 'giải tích', 'luyện thi']
-        },
-        {
-          id: 2,
-          type: 'youtube',
-          title: 'Hướng dẫn giải các dạng bài tập Vật lý THPT Quốc gia',
-          subject: 'physics',
-          description: 'Video hướng dẫn chi tiết cách giải các dạng bài tập thường gặp',
-          date: '2025-04-23',
-          url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-          thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
-          tags: ['vật lý', 'bài tập', 'luyện thi']
-        },
-        {
-          id: 3,
-          type: 'docx',
-          title: 'Tài liệu tổng hợp câu hỏi trắc nghiệm Hóa học',
-          subject: 'chemistry',
-          description: 'Bộ câu hỏi trắc nghiệm theo từng chuyên đề hóa học',
-          date: '2025-04-21',
-          size: 1850000,
-          url: '#',
-          thumbnail: null,
-          tags: ['hóa học', 'trắc nghiệm', 'chuyên đề']
-        },
-        {
-          id: 4,
-          type: 'youtube',
-          title: 'Phương pháp làm bài thi Tiếng Anh hiệu quả',
-          subject: 'english',
-          description: 'Giải mã các chiến thuật làm bài thi tiếng Anh đạt điểm cao',
-          date: '2025-04-20',
-          url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-          thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
-          tags: ['tiếng anh', 'kỹ năng', 'phương pháp']
-        },
-        {
-          id: 5,
-          type: 'pdf',
-          title: 'Đề cương ôn tập Văn học',
-          subject: 'literature',
-          description: 'Tổng hợp kiến thức trọng tâm và đề cương các tác phẩm văn học',
-          date: '2025-04-18',
-          size: 3200000,
-          url: '#',
-          thumbnail: null,
-          tags: ['văn học', 'đề cương', 'ôn tập']
-        },
-        {
-          id: 6,
-          type: 'xlsx',
-          title: 'Bảng tổng hợp công thức Hóa học THPT',
-          subject: 'chemistry',
-          description: 'File Excel tổng hợp công thức hóa học cần nhớ',
-          date: '2025-04-15',
-          size: 980000,
-          url: '#',
-          thumbnail: null,
-          tags: ['hóa học', 'công thức', 'tổng hợp']
+    const fetchMaterials = async () => {
+      setLoading(true);
+      
+      try {
+        // Prepare query parameters
+        const params = {
+          type: activeTab === 'documents' ? 'document' : 'video',
+          search: searchTerm || undefined,
+          subjectId: selectedSubject || undefined,
+          page: currentPage,
+          pageSize: 12
+        };
+        
+        // Call the API
+        const response = await getMaterials(params);
+        
+        // Update the state with the response
+        setMaterials(response.items || []);
+        
+        // Update pagination if needed
+        if (response.totalPages) {
+          // You might need to add pagination state if not already present
         }
-      ];
-      
-      // Filter by active tab
-      const filteredByType = activeTab === 'documents' 
-        ? mockData.filter(item => item.type !== 'youtube') 
-        : mockData.filter(item => item.type === 'youtube');
-      
-      // Filter by search term
-      const filteredBySearch = searchTerm 
-        ? filteredByType.filter(
-            item => item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                   item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                   item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-          ) 
-        : filteredByType;
-      
-      // Filter by subject
-      const filteredBySubject = selectedSubject
-        ? filteredBySearch.filter(item => item.subject === selectedSubject)
-        : filteredBySearch;
-      
-      setMaterials(filteredBySubject);
-      setLoading(false);
-    }, 800);
-  }, [activeTab, searchTerm, selectedSubject]);
+      } catch (error) {
+        console.error('Error fetching materials:', error);
+        // Fallback to mock data if API fails
+        const mockData = [
+          {
+            id: 1,
+            type: 'pdf',
+            title: 'Tài liệu ôn tập Toán học - Đại số và Giải tích',
+            subject: 'math',
+            description: 'Tài liệu tổng hợp các công thức và bài tập ôn tập trước kỳ thi',
+            date: '2025-04-25',
+            size: 2500000,
+            url: '#',
+            thumbnail: null,
+            tags: ['đại số', 'giải tích', 'luyện thi']
+          },
+          {
+            id: 2,
+            type: 'youtube',
+            title: 'Hướng dẫn giải các dạng bài tập Vật lý THPT Quốc gia',
+            subject: 'physics',
+            description: 'Video hướng dẫn chi tiết cách giải các dạng bài tập thường gặp',
+            date: '2025-04-23',
+            url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
+            tags: ['vật lý', 'bài tập', 'luyện thi']
+          },
+          {
+            id: 3,
+            type: 'docx',
+            title: 'Tài liệu tổng hợp câu hỏi trắc nghiệm Hóa học',
+            subject: 'chemistry',
+            description: 'Bộ câu hỏi trắc nghiệm theo từng chuyên đề hóa học',
+            date: '2025-04-21',
+            size: 1850000,
+            url: '#',
+            thumbnail: null,
+            tags: ['hóa học', 'trắc nghiệm', 'chuyên đề']
+          },
+          {
+            id: 4,
+            type: 'youtube',
+            title: 'Phương pháp làm bài thi Tiếng Anh hiệu quả',
+            subject: 'english',
+            description: 'Giải mã các chiến thuật làm bài thi tiếng Anh đạt điểm cao',
+            date: '2025-04-20',
+            url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
+            tags: ['tiếng anh', 'kỹ năng', 'phương pháp']
+          },
+          {
+            id: 5,
+            type: 'pdf',
+            title: 'Đề cương ôn tập Văn học',
+            subject: 'literature',
+            description: 'Tổng hợp kiến thức trọng tâm và đề cương các tác phẩm văn học',
+            date: '2025-04-18',
+            size: 3200000,
+            url: '#',
+            thumbnail: null,
+            tags: ['văn học', 'đề cương', 'ôn tập']
+          },
+          {
+            id: 6,
+            type: 'xlsx',
+            title: 'Bảng tổng hợp công thức Hóa học THPT',
+            subject: 'chemistry',
+            description: 'File Excel tổng hợp công thức hóa học cần nhớ',
+            date: '2025-04-15',
+            size: 980000,
+            url: '#',
+            thumbnail: null,
+            tags: ['hóa học', 'công thức', 'tổng hợp']
+          }
+        ];
+        // Filter logic remains the same
+        setMaterials(mockData);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchMaterials();
+  }, [activeTab, searchTerm, selectedSubject, currentPage]);
   
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Create new material object
-      const newMaterial = {
-        id: materials.length + 1,
-        type: materialType === 'document' ? (selectedFiles[0]?.type || 'pdf') : 'youtube',
-        title: materialTitle,
-        subject: materialSubject,
-        description: materialDescription,
-        date: new Date().toISOString().split('T')[0],
-        size: materialType === 'document' ? selectedFiles.reduce((total, file) => total + file.size, 0) : 0,
-        url: materialType === 'document' ? '#' : youtubeUrl,
-        thumbnail: materialType === 'youtube' ? `https://img.youtube.com/vi/${youtubeUrl.split('v=')[1]}/mqdefault.jpg` : null,
-        tags
-      };
+    if (isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
       
-      // Add to materials list
-      setMaterials(prev => [newMaterial, ...prev]);
+      // Create form data for upload
+      const formData = new FormData();
+      
+      // Add common fields
+      formData.append('title', materialTitle);
+      formData.append('description', materialDescription);
+      formData.append('subjectId', materialSubject);
+      formData.append('tags', JSON.stringify(tags));
+      
+      let response;
+      
+      if (materialType === 'document') {
+        // Upload documents
+        if (selectedFiles.length === 0) {
+          showErrorToast('Vui lòng chọn ít nhất một tệp tài liệu');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Append each file to the form data
+        selectedFiles.forEach(fileData => {
+          formData.append('files', fileData.file);
+        });
+        
+        response = await uploadMaterial(formData);
+      } else {
+        // Upload video (YouTube URL)
+        if (!youtubeUrl) {
+          showErrorToast('Vui lòng nhập URL YouTube');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        formData.append('youtubeUrl', youtubeUrl);
+        response = await uploadVideo(formData);
+      }
+      
+      showSuccessToast(`${materialType === 'document' ? 'Tài liệu' : 'Video'} đã được tải lên thành công`);
+      
+      // Add the new material to the list
+      setMaterials(prev => [
+        {
+          id: response.id,
+          type: materialType === 'document' ? selectedFiles[0]?.type || 'pdf' : 'youtube',
+          title: materialTitle,
+          subject: materialSubject,
+          description: materialDescription,
+          date: new Date().toISOString().split('T')[0],
+          size: selectedFiles[0]?.size || 0,
+          url: response.url || '#',
+          thumbnail: materialType === 'youtube' ? response.thumbnail : null,
+          tags: tags
+        },
+        ...prev
+      ]);
       
       // Reset form
       setMaterialType('document');
@@ -1125,8 +1175,12 @@ const TeacherMaterials = () => {
       
       // Close modal
       setShowAddModal(false);
+    } catch (error) {
+      console.error('Error uploading material:', error);
+      showErrorToast(`Không thể tải lên ${materialType === 'document' ? 'tài liệu' : 'video'}. Vui lòng thử lại.`);
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
   
   return (

@@ -10,6 +10,7 @@ import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import { getTestAnalytics } from '../../services/analyticsService';
 import { getAllSubjectsNoPaging } from '../../services/subjectService';
 import { getExamsBySubject } from '../../services/examService';
+import { getExamLeaderboard } from '../../services/leaderboardService';
 
 import { 
   Chart as ChartJS,
@@ -60,122 +61,110 @@ const TeacherResultAnalytics = () => {
     questionStats: []
   });
   
-  // Single filter state (fixed the duplicate declaration)
+  // Use examId from URL directly
   const [filters, setFilters] = useState({
-    subjectId: examId ? '' : '',
-    examId: examId || '',
-    dateFrom: '',
-    dateTo: ''
+    examId: examId || ''
   });
 
-  // Using real subjects from API instead of mock data
-  const [subjects, setSubjects] = useState([]);
-  const [exams, setExams] = useState([]);
-  
-  // Load subjects from API
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        const subjectsData = await getAllSubjectsNoPaging();
-        setSubjects(subjectsData);
-      } catch (error) {
-        console.error('Error fetching subjects:', error);
-        showErrorToast('Không thể tải danh sách môn học');
-      }
-    };
-    
-    fetchSubjects();
-  }, []);
+  // Add state for leaderboard data
+  const [leaderboardData, setLeaderboardData] = useState([]);
 
-  // Fetch exams when subject changes
-  useEffect(() => {
-    const fetchExams = async () => {
-      if (filters.subjectId) {
-        try {
-          const examsData = await getExamsBySubject({
-            subjectId: filters.subjectId,
-            activeOnly: true
-          });
-          
-          console.log("Exams data received:", examsData);
-          
-          // Ensure exams is always an array, checking all possible response formats
-          if (Array.isArray(examsData)) {
-            setExams(examsData);
-          } else if (examsData && Array.isArray(examsData.items)) {
-            setExams(examsData.items);
-          } else if (examsData && Array.isArray(examsData.data)) {
-            // Add this condition to handle the new data format
-            setExams(examsData.data);
-          } else {
-            console.warn('Unexpected exams data format:', examsData);
-            setExams([]);
-          }
-        } catch (error) {
-          console.error('Error fetching exams:', error);
-          showErrorToast('Không thể tải danh sách đề thi');
-          setExams([]);
-        }
-      } else {
-        setExams([]);
-      }
-    };
-    
-    fetchExams();
-  }, [filters.subjectId]);
-  
-  // Load test analytics when exam ID changes from URL
+  // Load test analytics when component mounts if we have an examId
   useEffect(() => {
     if (examId) {
-      setFilters(prev => ({ ...prev, examId }));
-      // Wait a short delay to ensure filters are updated
-      setTimeout(() => {
-        fetchAnalyticsData();
-      }, 100);
-    }
-  }, [examId]);
-
-  // Also load analytics data when exam selection changes in the dropdown
-  useEffect(() => {
-    if (filters.examId && filters.examId !== examId) {
       fetchAnalyticsData();
     }
-  }, [filters.examId]);
+  }, [examId]);
   
   // Fetch analytics data from API
   const fetchAnalyticsData = async () => {
     setLoading(true);
     
     try {
+      // Use examId from URL param
+      const targetExamId = examId || filters.examId;
+      
       // Validate that we have an exam ID
-      if (!filters.examId) {
-        showErrorToast('Vui lòng chọn đề thi trước khi tải dữ liệu phân tích');
+      if (!targetExamId) {
+        showErrorToast('Không tìm thấy ID đề thi');
         setLoading(false);
         return;
       }
       
-      console.log(`Fetching analytics for exam: ${filters.examId}`);
-      const analyticsData = await getTestAnalytics(filters.examId);
+      console.log(`Fetching analytics for exam: ${targetExamId}`);
+      const response = await getTestAnalytics(targetExamId);
       
-      // Set exam details from API response
-      setExamDetails(analyticsData.examDetails || {});
-      
-      // Set results from API response
-      setResults(analyticsData.results || []);
-      
-      // Either use the statistics directly if they're already calculated in the API
-      // or calculate them based on the data returned
-      if (analyticsData.statistics) {
-        setStatistics(analyticsData.statistics);
-      } else {
-        calculateStatistics(analyticsData.results || [], analyticsData.examDetails || {});
+      // Also fetch leaderboard data
+      try {
+        const leaderboardResponse = await getExamLeaderboard(targetExamId);
+        if (leaderboardResponse && leaderboardResponse.success && leaderboardResponse.data) {
+          setLeaderboardData(leaderboardResponse.data);
+          // Also use this data for results to display in the table
+          setResults(leaderboardResponse.data);
+        } else {
+          console.warn('Leaderboard data structure is not as expected');
+        }
+      } catch (leaderboardError) {
+        console.error('Failed to fetch leaderboard data:', leaderboardError);
+        // We'll continue with analytics data even if leaderboard fails
       }
+      
+      // Process analytics data as before
+      if (!response || !response.success || !response.data) {
+        showErrorToast('Không thể tải dữ liệu phân tích');
+        setLoading(false);
+        return;
+      }
+      
+      const analyticsData = response.data;
+      
+      // Map API response to component's expected structure
+      setExamDetails({
+        id: analyticsData.examInfo.id,
+        title: analyticsData.examInfo.title,
+        subjectName: analyticsData.examInfo.subjectName,
+        totalScore: analyticsData.examInfo.totalScore,
+        passScore: analyticsData.examInfo.passScore
+      });
+      
+      
+      // Map the question stats to include the content field needed by the UI
+      const questionStats = analyticsData.questionAnalytics 
+        ? analyticsData.questionAnalytics.map(q => ({
+            questionId: q.questionId,
+            content: q.questionContent, // Map questionContent to content for UI compatibility
+            correctRate: q.correctRate,
+            avgTimeSpent: q.averageTimeSpent || 0
+          }))
+        : [];
+      
+      // Do the same for difficult questions
+      const mostDifficultQuestions = analyticsData.mostMissedQuestions 
+        ? analyticsData.mostMissedQuestions.map(q => ({
+            questionId: q.questionId,
+            content: q.questionContent, // Map questionContent to content for UI compatibility
+            correctRate: q.correctRate
+          }))
+        : [];
+        
+      // Set statistics from API data
+      setStatistics({
+        totalAttempts: analyticsData.attemptCount || 0,
+        averageScore: analyticsData.averageScore || 0,
+        passRate: analyticsData.passRate || 0,
+        averageDuration: analyticsData.averageTime || 0,
+        mostDifficultQuestions: mostDifficultQuestions,
+        easiestQuestions: questionStats.length > 0 
+          ? [...questionStats].sort((a, b) => b.correctRate - a.correctRate).slice(0, 5) 
+          : [],
+        questionStats: questionStats
+      });
       
       setLoading(false);
       showSuccessToast('Đã tải dữ liệu phân tích thành công');
     } catch (error) {
       console.error('Error fetching analytics data:', error);
-      showErrorToast('Có lỗi khi tải dữ liệu phân tích');
+      showErrorToast('Có lỗi khi tải dữ liệu phân tích: ' + (error.message || 'Unknown error'));
       setLoading(false);
     }
   };
@@ -353,107 +342,56 @@ const TeacherResultAnalytics = () => {
     }]
   };
 
-  // Chart data for question difficulty
-  const questionDifficultyData = {
-    labels: statistics.questionStats.slice(0, 10).map(q => `Câu ${q.questionId}`),
-    datasets: [{
-      label: 'Tỷ lệ trả lời đúng (%)',
-      data: statistics.questionStats.slice(0, 10).map(q => q.correctRate),
-      backgroundColor: theme === 'dark' ? 'rgba(54, 162, 235, 0.7)' : 'rgba(54, 162, 235, 0.8)',
-      borderColor: theme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
-      borderWidth: 1
-    }]
-  };
+  // Chart data for question difficulty - Add null checks
+const questionDifficultyData = {
+  labels: statistics.questionStats && statistics.questionStats.length > 0 
+    ? statistics.questionStats.slice(0, 10).map(q => `Câu ${q.questionId}`)
+    : [],
+  datasets: [{
+    label: 'Tỷ lệ trả lời đúng (%)',
+    data: statistics.questionStats && statistics.questionStats.length > 0
+      ? statistics.questionStats.slice(0, 10).map(q => q.correctRate)
+      : [],
+    backgroundColor: theme === 'dark' ? 'rgba(54, 162, 235, 0.7)' : 'rgba(54, 162, 235, 0.8)',
+    borderColor: theme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
+    borderWidth: 1
+  }]
+};
 
-  // Chart data for time spent per question
-  const timeSpentData = {
-    labels: statistics.questionStats.slice(0, 10).map(q => `Câu ${q.questionId}`),
-    datasets: [{
-      label: 'Thời gian trung bình (giây)',
-      data: statistics.questionStats.slice(0, 10).map(q => q.avgTimeSpent),
-      backgroundColor: theme === 'dark' ? 'rgba(255, 159, 64, 0.7)' : 'rgba(255, 159, 64, 0.8)',
-      borderColor: theme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
-      borderWidth: 1
-    }]
-  };
+// Chart data for time spent per question - Add null checks
+const timeSpentData = {
+  labels: statistics.questionStats && statistics.questionStats.length > 0
+    ? statistics.questionStats.slice(0, 10).map(q => `Câu ${q.questionId}`)
+    : [],
+  datasets: [{
+    label: 'Thời gian trung bình (giây)',
+    data: statistics.questionStats && statistics.questionStats.length > 0
+      ? statistics.questionStats.slice(0, 10).map(q => q.avgTimeSpent)
+      : [],
+    backgroundColor: theme === 'dark' ? 'rgba(255, 159, 64, 0.7)' : 'rgba(255, 159, 64, 0.8)',
+    borderColor: theme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
+    borderWidth: 1
+  }]
+};
 
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Phân Tích Kết Quả Đề Thi</h2>
         <Button variant="success" onClick={fetchAnalyticsData}>
-          <FaChartBar className="me-2" /> Tải dữ liệu phân tích
+          <FaChartBar className="me-2" /> Tải lại dữ liệu
         </Button>
       </div>
-      
-      <Card bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'} className="mb-4">
-        <Card.Header>
-          <h5>Bộ Lọc</h5>
-        </Card.Header>
-        <Card.Body>
-          <Form onSubmit={(e) => { e.preventDefault(); fetchAnalyticsData(); }}>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Môn học</Form.Label>
-                  <Form.Select
-                    name="subjectId"
-                    value={filters.subjectId}
-                    onChange={handleFilterChange}
-                    className={theme === 'dark' ? 'bg-dark text-white' : ''}
-                  >
-                    <option value="">Tất cả môn học</option>
-                    {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Đề thi</Form.Label>
-                  <Form.Select
-                    name="examId"
-                    value={filters.examId}
-                    onChange={handleFilterChange}
-                    className={theme === 'dark' ? 'bg-dark text-white' : ''}
-                  >
-                    <option value="">Chọn đề thi</option>
-                    {!Array.isArray(exams) ? (
-                      <option disabled>Không thể tải đề thi</option>
-                    ) : exams.length === 0 ? (
-                      <option disabled>Không tìm thấy đề thi</option>
-                    ) : (
-                      exams.map(exam => (
-                        <option key={exam.id} value={exam.id}>
-                          {exam.title}
-                        </option>
-                      ))
-                    )}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-            
-            <div className="d-flex justify-content-end">
-              <Button variant="primary" type="submit" className="d-flex align-items-center">
-                <FaSearch className="me-2" /> Tìm kiếm
-              </Button>
-            </div>
-          </Form>
-        </Card.Body>
-      </Card>
       
       {loading ? (
         <div className="text-center my-5">
           <Spinner animation="border" variant="primary" />
           <p className="mt-2">Đang tải dữ liệu phân tích...</p>
         </div>
-      ) : examDetails && results.length > 0 ? (
+      ) : examDetails ? (
+        // Changed to only check for examDetails, not results length
         <div id="analytics-report">
+          {/* Rest of your analytics UI remains the same */}
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>{examDetails.title}</h3>
             <Button variant="success" onClick={() => {
@@ -714,10 +652,10 @@ const TeacherResultAnalytics = () => {
           </Card>
         </div>
       ) : (
-        <Alert variant="info" className="text-center">
+        <Alert variant="warning" className="text-center">
           <FaChartBar size={30} className="mb-3" />
-          <h5>Không có dữ liệu hiển thị</h5>
-          <p className="mb-0">Hãy chọn môn học và đề thi, sau đó nhấn "Tìm kiếm" để xem phân tích.</p>
+          <h5>Không tìm thấy dữ liệu phân tích</h5>
+          <p className="mb-0">Vui lòng nhấn "Tải lại dữ liệu" để thử lại.</p>
         </Alert>
       )}
     </Container>

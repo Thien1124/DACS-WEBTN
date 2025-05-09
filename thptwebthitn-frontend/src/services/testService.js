@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { API_URL } from '../config/constants';
 import apiClient from './apiClient';
+
 /**
  * Tạo đề thi theo cấu trúc độ khó
  * @param {Object} examData - Dữ liệu của đề thi cần tạo
  * @returns {Promise} - Promise chứa dữ liệu đề thi đã tạo
  */
-export const createStructuredExam = async (examData) => {
+export const createStructuredTest = async (examData) => {
   try {
     // Lấy token xác thực từ localStorage
     const token = localStorage.getItem('token');
@@ -19,7 +20,7 @@ export const createStructuredExam = async (examData) => {
     console.log('Gửi dữ liệu:', JSON.stringify(examData));
     
     // Thực hiện gọi API với header xác thực
-    const response = await axios.post(`${API_URL}/api/Exam/structured`, examData, {
+    const response = await apiClient.post('/api/tests/structured', examData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -138,6 +139,80 @@ export const getUserPracticeHistory = async (userId, page = 1, pageSize = 10) =>
 };
 
 /**
+ * Get information about the current token
+ * @returns {Promise} - Promise with token information
+ */
+export const getTokenInfo = async () => {
+  try {
+    const response = await apiClient.get('/api/tests/token-info');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting token information:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verify and process token manually
+ * @param {Object} tokenData - Token data for verification
+ * @param {string} tokenData.token - The token to verify
+ * @returns {Promise} - Promise with verification result
+ */
+export const verifyToken = async (tokenData) => {
+  try {
+    const response = await apiClient.post('/api/tests/verify-token', tokenData);
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create practice exam with fixed userId (temporary API)
+ * @param {Object} practiceOptions - Practice options
+ * @returns {Promise} - Promise with created practice exam data
+ */
+export const createFixedPracticeExam = async (practiceOptions) => {
+  try {
+    const response = await apiClient.post('/api/tests/practice-fixed', practiceOptions);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating fixed practice exam:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create simple practice exam (fallback API)
+ * @param {Object} practiceOptions - Simple practice options
+ * @returns {Promise} - Promise with created practice exam data
+ */
+export const createSimplePracticeExam = async (practiceOptions) => {
+  try {
+    const response = await apiClient.post('/api/tests/simple-practice', practiceOptions);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating simple practice exam:', error);
+    throw error;
+  }
+};
+
+/**
+ * Ping test controller to verify it's working
+ * @returns {Promise} - Promise with ping response
+ */
+export const pingTestController = async () => {
+  try {
+    const response = await apiClient.get('/api/tests/ping');
+    return response.data;
+  } catch (error) {
+    console.error('Error pinging test controller:', error);
+    throw error;
+  }
+};
+
+/**
  * Get all exams/tests with pagination
  * @param {number} page - Page number
  * @param {number} pageSize - Page size
@@ -182,10 +257,16 @@ export const getTeacherTests = async (page = 1, pageSize = 10) => {
 };
 
 export default {
-  createStructuredExam,
+  createStructuredTest,
   getExamsByTopic,
   createPracticeExam,
   getUserPracticeHistory,
   getAllTests,
-  getTeacherTests
+  getTeacherTests,
+  // Add new functions to the default export
+  getTokenInfo,
+  verifyToken,
+  createFixedPracticeExam,
+  createSimplePracticeExam,
+  pingTestController
 };

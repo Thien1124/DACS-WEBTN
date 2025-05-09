@@ -686,12 +686,10 @@ const getFilteredExams = () => {
           <Button theme={theme} onClick={() => setShowExportModal(true)}>
             <FaFileExport /> Xuất Excel
           </Button>
-          <Button theme={theme} onClick={() => navigate('/admin/exams/create-official')}>
+          <Button theme={theme} onClick={() => navigate('/admin/official-exams/create')}>
             <FaGraduationCap /> Tạo kỳ thi chính thức
           </Button>
-          <Button theme={theme} onClick={() => navigate('/admin/exams/assign-students')}>
-            <FaUserGraduate /> Phân công học sinh
-          </Button>
+
         </ButtonsContainer>
       </Header>
       

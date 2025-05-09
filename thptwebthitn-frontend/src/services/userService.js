@@ -6,13 +6,43 @@ import { updateUserProfile } from '../services/authService'; // Import từ auth
  */
 export const getUsers = async (params = {}) => {
   try {
-    const response = await apiClient.get('/api/User/list', { params });
-    console.log('User service raw response:', response);
+    console.log('Fetching users with params:', params);
     
-    // Make sure we're returning the actual data from the API
-    return response.data;
+    // Xử lý params đặc biệt cho lọc role nếu cần
+    let queryParams = { ...params };
+ 
+    // Pass query parameters to the API request
+    const response = await apiClient.get('/api/User/list', { params: queryParams });
+    
+    // Kiểm tra và xử lý cấu trúc response linh hoạt hơn
+    let users = [];
+    
+    if (response && response.data) {
+      if (Array.isArray(response.data)) {
+        users = response.data;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        // Nếu API trả về dạng { data: [...] }
+        users = response.data.data;
+      } else if (response.data.items && Array.isArray(response.data.items)) {
+        // Nếu API trả về dạng { items: [...] }
+        users = response.data.items;
+      } else if (response.data.users && Array.isArray(response.data.users)) {
+        // Nếu API trả về dạng { users: [...] }
+        users = response.data.users;
+      }
+    }
+    
+    console.log(`Retrieved ${users.length} users from API`);
+    return users || [];
   } catch (error) {
     console.error('Error in getUsers service:', error);
+    
+    // Return empty array for 403 errors
+    if (error.response && error.response.status === 403) {
+      console.warn('Permission denied to access user list');
+      return [];
+    }
+    
     throw error;
   }
 };

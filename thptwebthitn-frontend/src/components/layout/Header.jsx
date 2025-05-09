@@ -11,7 +11,7 @@ import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
 // Import thêm icons
-import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload } from 'react-icons/fa';
+import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments } from 'react-icons/fa';
 import NotificationBadge from '../notifications/NotificationBadge';
 
 // Styled components hiện tại...
@@ -184,6 +184,29 @@ const UserDropdown = styled(motion.div)`
   margin-top: 8px;
   overflow: hidden;
   z-index: 1000;
+  
+  /* Add these properties for scrolling */
+  max-height: 80vh; /* Limit height to 80% of viewport height */
+  overflow-y: auto; /* Enable vertical scrolling */
+  
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${(props) => props.theme === "dark" ? "#1e1e1e" : "#f1f1f1"};
+    border-radius: 0 8px 8px 0;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${(props) => props.theme === "dark" ? "#4a4a4a" : "#c1c1c1"};
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${(props) => props.theme === "dark" ? "#555" : "#a8a8a8"};
+  }
 `;
 
 const DropdownItem = styled(Link)`
@@ -193,6 +216,7 @@ const DropdownItem = styled(Link)`
   color: ${(props) => (props.theme === "dark" ? "#e0e0e0" : "#333333")};
   text-decoration: none;
   transition: background-color 0.2s;
+  position: relative; /* Add this to enable positioning of badge */
   
   svg {
     margin-right: 10px;
@@ -202,6 +226,15 @@ const DropdownItem = styled(Link)`
   &:hover {
     background-color: ${(props) =>
       props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"};
+  }
+  
+  /* Add this for the badge styling */
+  .badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.7rem;
+    padding: 0.2em 0.45em;
   }
 `;
 
@@ -320,6 +353,7 @@ function Header() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   // Xử lý click bên ngoài dropdown
   useEffect(() => {
@@ -533,6 +567,10 @@ function Header() {
                             <FaClipboardList />
                             Quản lý đề thi
                           </DropdownItem>
+                          <DropdownItem to="/admin/official-exams" theme={theme}>
+                            <FaTrophy />
+                            Kỳ thi chính thức
+                          </DropdownItem>
                           <DropdownItem to="/admin/subjects" theme={theme}>
                             <FaBook />
                             Quản lý môn học
@@ -563,6 +601,15 @@ function Header() {
                             <FaChartLine />
                             Biểu đồ phân tích
                           </DropdownItem>
+                          <DropdownItem to="/admin/chat" theme={theme} className="position-relative">
+                            <FaComments />
+                            Quản lý tin nhắn
+                            {unreadChatCount > 0 && (
+                              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '0.7rem'}}>
+                                {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                              </span>
+                            )}
+                          </DropdownItem>
                         </>
                       )}
                       {isTeacher && !isAdmin && (
@@ -574,6 +621,10 @@ function Header() {
                           <DropdownItem to="/teacher/exams" theme={theme}>
                             <FaClipboardList />
                             Quản lý đề thi
+                          </DropdownItem>
+                          <DropdownItem to="/teacher/results-to-grade" theme={theme}>
+                            <FaFileAlt />
+                            Chấm bài thi
                           </DropdownItem>
                           <DropdownItem to="/teacher/questions" theme={theme}>
                             <FaQuestionCircle />
@@ -598,6 +649,15 @@ function Header() {
                           <DropdownItem to="/teacher/materials" theme={theme}>
                             <FaFileUpload />
                             Tài liệu ôn tập
+                          </DropdownItem>
+                          <DropdownItem to="/teacher/chat" theme={theme} className="position-relative">
+                            <FaComments />
+                            Quản lý tin nhắn
+                            {unreadChatCount > 0 && (
+                              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '0.7rem'}}>
+                                {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                              </span>
+                            )}
                           </DropdownItem>
                         </>
                       )}

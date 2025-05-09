@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { FaInfoCircle, FaSave, FaTimes, FaQuestionCircle } from 'react-icons/fa';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
-import { createStructuredExam } from '../../services/testService';
+import { createStructuredTest } from '../../services/testService';
 import apiClient from '../../services/apiClient';
 const DifficultyCard = styled(Card)`
   border-left: 4px solid ${props => {
@@ -410,7 +410,7 @@ const TeacherCreateStructuredExam = () => {
       console.log('Structured exam data being sent:', examData);
 
       // Make the API call
-      const response = await apiClient.post('/api/Exams/structured', examData);
+      const response = await apiClient.post('/api/tests/structured', examData);
       
       if (response.status === 201 || response.status === 200) {
         showSuccessToast('Đề thi đã được tạo thành công!');

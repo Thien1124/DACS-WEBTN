@@ -881,7 +881,7 @@ const StudentClassManagement = () => {
         console.log('API Response - Users:', usersResponse);
         console.log('API Response - Classes:', classesResponse);
         
-        // Check if we got valid student data
+        // Xử lý dữ liệu học sinh từ API
         let studentData = [];
         
         // Handle different response formats
@@ -892,36 +892,42 @@ const StudentClassManagement = () => {
         } else if (usersResponse && Array.isArray(usersResponse.data)) {
           studentData = usersResponse.data;
         } else if (usersResponse && typeof usersResponse === 'object') {
-          // If it's another structure, try to extract the data
-          console.log('User response is not in expected format:', usersResponse);
-          // Use empty array as fallback, but show data in console for debugging
-          studentData = [];
+          // Try to find arrays in response
+          for (const key in usersResponse) {
+            if (Array.isArray(usersResponse[key])) {
+              studentData = usersResponse[key];
+              break;
+            }
+          }
         }
         
-        // If we have no students, add some mock data for testing
-        if (studentData.length === 0) {
-          console.log('No student data found, adding mock data for testing');
-          studentData = generateMockStudents(10);
-        }
+        // Xử lý dữ liệu - đảm bảo các trường cần thiết có giá trị
+        const processedStudents = studentData.map(student => ({
+          ...student,
+          grade: student.grade || (student.class?.name ? student.class.name.substring(0, 2) : ''),
+          gradesStatus: student.gradesStatus || 'pending',
+          averageGrade: student.averageGrade || 0
+        }));
         
-        setStudents(studentData);
+        setStudents(processedStudents);
         setClasses(Array.isArray(classesResponse) ? classesResponse : []);
         setExams(Array.isArray(examsResponse) ? examsResponse : []);
-        setFilteredStudents(studentData);
+        setFilteredStudents(processedStudents);
         
         // Calculate stats
-        calculateStats(studentData);
+        calculateStats(processedStudents);
         
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
         showErrorToast('Có lỗi xảy ra khi tải dữ liệu');
         
-        // Add mock data when API fails
-        const mockStudentData = generateMockStudents(10);
-        setStudents(mockStudentData);
-        setFilteredStudents(mockStudentData);
-        calculateStats(mockStudentData);
+        // Không sử dụng mock data nữa, hiển thị mảng rỗng khi có lỗi
+        setStudents([]);
+        setFilteredStudents([]);
+        setClasses([]);
+        setExams([]);
+        calculateStats([]);
         
         setLoading(false);
       }
@@ -930,46 +936,10 @@ const StudentClassManagement = () => {
     fetchData();
   }, [dispatch]);
   
-  // Add this helper function to generate mock data for testing
-  const generateMockStudents = (count) => {
-    const classes = [
-      { id: '1', name: '10A1' },
-      { id: '2', name: '10A2' },
-      { id: '3', name: '11A1' },
-      { id: '4', name: '12A1' }
-    ];
-    
-    const statusOptions = ['approved', 'pending', 'failed'];
-    
-    return Array.from({ length: count }, (_, i) => {
-      const classObj = classes[Math.floor(Math.random() * classes.length)];
-      const grade = classObj.name.substring(0, 2);
-      
-      return {
-        id: `student_${i + 1}`,
-        studentId: `SV${10000 + i}`,
-        username: `student${i + 1}`,
-        fullName: `Học sinh ${i + 1}`,
-        email: `student${i + 1}@example.com`,
-        phone: `098765432${i % 10}`,
-        address: 'Thành phố Hồ Chí Minh',
-        birthDate: '2000-01-01',
-        class: classObj,
-        grade: grade,
-        averageGrade: parseFloat((Math.random() * 10).toFixed(1)),
-        gradesStatus: statusOptions[Math.floor(Math.random() * statusOptions.length)]
-      };
-    });
-  };
   
   // Update filtered students when filters change
   useEffect(() => {
     let filtered = [...students];
-    
-    // Filter by class
-    if (selectedClass) {
-      filtered = filtered.filter(student => student.class?.id === selectedClass);
-    }
     
     // Filter by grade
     if (selectedGrade) {
@@ -1015,7 +985,7 @@ const StudentClassManagement = () => {
     setFilteredStudents(filtered);
     calculateStats(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [students, selectedClass, selectedGrade, searchTerm, sortConfig]);
+  }, [students, selectedGrade, searchTerm, sortConfig]);
   
   // Calculate statistics
   const calculateStats = (studentsData) => {
@@ -1126,53 +1096,54 @@ const StudentClassManagement = () => {
   };
   
   // Export student data to Excel
-  const handleExportToExcel = () => {
-    try {
-      // Determine which students to export
-      const studentsToExport = selectedStudents.length > 0
-        ? filteredStudents.filter(student => selectedStudents.includes(student.id))
-        : filteredStudents;
-      
-      if (studentsToExport.length === 0) {
-        showErrorToast('Không có dữ liệu học sinh để xuất');
-        return;
-      }
-      
-      // Prepare data for export
-      const exportData = studentsToExport.map(student => ({
-        'Mã học sinh': student.studentId || '',
-        'Họ và tên': student.fullName || '',
-        'Lớp': student.class?.name || '',
-        'Khối': student.grade || '',
-        'Email': student.email || '',
-        'Số điện thoại': student.phone || '',
-        'Địa chỉ': student.address || '',
-        'Ngày sinh': student.birthDate || '',
-        'Điểm trung bình': student.averageGrade || '',
-        'Trạng thái': student.gradesStatus || '',
-      }));
-      
-      // Create worksheet
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      
-      // Create workbook
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách học sinh');
-      
-      // Generate file name
-      const fileName = selectedClass 
-        ? `danh_sach_hs_lop_${classes.find(c => c.id === selectedClass)?.name || selectedClass}.xlsx`
-        : 'danh_sach_hoc_sinh.xlsx';
-      
-      // Export to file
-      XLSX.writeFile(workbook, fileName);
-      
-      showSuccessToast(`Đã xuất ${exportData.length} học sinh ra file Excel`);
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      showErrorToast('Có lỗi xảy ra khi xuất file Excel');
+  // Sửa phần handleExportToExcel, thay đổi cách tạo tên file
+const handleExportToExcel = () => {
+  try {
+    // Determine which students to export
+    const studentsToExport = selectedStudents.length > 0
+      ? filteredStudents.filter(student => selectedStudents.includes(student.id))
+      : filteredStudents;
+    
+    if (studentsToExport.length === 0) {
+      showErrorToast('Không có dữ liệu học sinh để xuất');
+      return;
     }
-  };
+    
+    // Prepare data for export
+    const exportData = studentsToExport.map(student => ({
+      'Mã học sinh': student.studentId || '',
+      'Họ và tên': student.fullName || '',
+      'Khối': student.grade || '',
+      'Email': student.email || '',
+      'Số điện thoại': student.phone || '',
+      'Địa chỉ': student.address || '',
+      'Ngày sinh': student.birthDate || '',
+      'Điểm trung bình': student.averageGrade || '',
+      'Trạng thái': student.gradesStatus || '',
+    }));
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách học sinh');
+    
+    // Generate file name based on grade if selected
+    let fileName = 'danh_sach_hoc_sinh.xlsx';
+    if (selectedGrade) {
+      fileName = `danh_sach_hs_khoi_${selectedGrade}.xlsx`;
+    }
+    
+    // Export to file
+    XLSX.writeFile(workbook, fileName);
+    
+    showSuccessToast(`Đã xuất ${exportData.length} học sinh ra file Excel`);
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    showErrorToast('Có lỗi xảy ra khi xuất file Excel');
+  }
+};
   
   // Handle print
   const handlePrint = () => {
@@ -1181,7 +1152,6 @@ const StudentClassManagement = () => {
   
   // Handle reset filters
   const handleResetFilters = () => {
-    setSelectedClass('');
     setSelectedGrade('');
     setSearchTerm('');
     setSortConfig({ key: 'fullName', direction: 'asc' });
@@ -1260,22 +1230,7 @@ const StudentClassManagement = () => {
         </CardHeader>
         <CardBody>
           <FiltersContainer>
-            <FilterGroup>
-              <Label theme={theme}>Lớp</Label>
-              <Select 
-                value={selectedClass}
-                onChange={handleClassChange}
-                theme={theme}
-              >
-                <option value="">Tất cả lớp</option>
-                {classes.map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </Select>
-            </FilterGroup>
-            
+           
             <FilterGroup>
               <Label theme={theme}>Khối</Label>
               <Select 
@@ -1416,10 +1371,7 @@ const StudentClassManagement = () => {
                         Họ và tên
                         <span className="sort-icon">{getSortIcon('fullName')}</span>
                       </TableHeader>
-                      <TableHeader onClick={() => handleSort('class.name')} theme={theme}>
-                        Lớp
-                        <span className="sort-icon">{getSortIcon('class.name')}</span>
-                      </TableHeader>
+                      
                       <TableHeader onClick={() => handleSort('grade')} theme={theme}>
                         Khối
                         <span className="sort-icon">{getSortIcon('grade')}</span>
@@ -1440,41 +1392,41 @@ const StudentClassManagement = () => {
                   <tbody>
                     {currentStudents.map((student, index) => (
                       <motion.tr 
-                        key={student.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: index * 0.03 }}
-                      >
-                        <td>
-                          <CheckboxContainer>
-                            <CustomCheckbox 
-                              checked={selectedStudents.includes(student.id)}
-                              onChange={() => handleSelectStudent(student.id)}
-                              theme={theme}
-                            />
-                          </CheckboxContainer>
-                        </td>
-                        <td style={{ fontWeight: '500' }}>{student.studentId || 'N/A'}</td>
-                        <td style={{ fontWeight: '500' }}>{student.fullName || student.username}</td>
-                        <td>{student.class?.name || 'Chưa gán'}</td>
-                        <td style={{ textAlign: 'center' }}>{student.grade || 'N/A'}</td>
-                        <td style={{ textAlign: 'center', fontWeight: '500' }}>
-                          {typeof student.averageGrade === 'number' 
-                            ? student.averageGrade.toFixed(1) 
-                            : typeof student.averageGrade === 'string' 
-                              ? student.averageGrade 
-                              : 'N/A'}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <Badge
-                            status={student.gradesStatus || 'pending'}
+                      key={student.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.03 }}
+                    >
+                      <td>
+                        <CheckboxContainer>
+                          <CustomCheckbox 
+                            checked={selectedStudents.includes(student.id)}
+                            onChange={() => handleSelectStudent(student.id)}
                             theme={theme}
-                          >
-                            {student.gradesStatus === 'approved' ? 'Đã duyệt' :
-                             student.gradesStatus === 'pending' ? 'Chưa duyệt' :
-                             student.gradesStatus === 'failed' ? 'Không đạt' : 'N/A'}
-                          </Badge>
-                        </td>
+                          />
+                        </CheckboxContainer>
+                      </td>
+                      <td style={{ fontWeight: '500' }}>{student.studentId || 'N/A'}</td>
+                      <td style={{ fontWeight: '500' }}>{student.fullName || student.username}</td>
+                      {/* Xóa cột lớp */}
+                      <td style={{ textAlign: 'center' }}>{student.grade || 'N/A'}</td>
+                      <td style={{ textAlign: 'center', fontWeight: '500' }}>
+                        {typeof student.averageGrade === 'number' 
+                          ? student.averageGrade.toFixed(1) 
+                          : typeof student.averageGrade === 'string' 
+                            ? student.averageGrade 
+                            : 'N/A'}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <Badge
+                          status={student.gradesStatus || 'pending'}
+                          theme={theme}
+                        >
+                          {student.gradesStatus === 'approved' ? 'Đã duyệt' :
+                           student.gradesStatus === 'pending' ? 'Chưa duyệt' :
+                           student.gradesStatus === 'failed' ? 'Không đạt' : 'N/A'}
+                        </Badge>
+                      </td>
                         <td>
                           <ActionIcons>
                             <ActionButton 

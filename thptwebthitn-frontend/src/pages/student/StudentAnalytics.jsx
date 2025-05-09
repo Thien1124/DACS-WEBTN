@@ -37,23 +37,24 @@ const StudentAnalytics = () => {
   });
 
   useEffect(() => {
-    const fetchStudentAnalytics = async () => {
-      setLoading(true);
+    const fetchAnalytics = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const data = await getStudentAnalytics(studentId);
         setAnalytics(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching student analytics:', err);
-        setError('Không thể tải dữ liệu thống kê học sinh. Vui lòng thử lại sau.');
-        showErrorToast('Có lỗi khi tải dữ liệu thống kê học sinh');
+      } catch (error) {
+        console.error('Error fetching student analytics:', error);
+        setError('Không thể tải dữ liệu phân tích. Vui lòng thử lại sau.');
+        showErrorToast('Không thể tải dữ liệu phân tích');
       } finally {
         setLoading(false);
       }
     };
-
+    
     if (studentId) {
-      fetchStudentAnalytics();
+      fetchAnalytics();
     }
   }, [studentId]);
 

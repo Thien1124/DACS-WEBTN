@@ -94,10 +94,11 @@ const ConfirmButton = styled(Button)`
   }
 `;
 
-const ConfirmModal = ({ show, title, message, confirmText, cancelText, onConfirm, onCancel }) => {
+const ConfirmModal = ({ show = true, title, message, confirmLabel, cancelLabel, onConfirm, onCancel }) => {
   const theme = useSelector(state => state.ui?.theme || 'light');
   
-  if (!show) return null;
+  // If show is false, don't render anything
+  if (show === false) return null;
   
   return (
     <ModalOverlay onClick={onCancel}>
@@ -115,10 +116,10 @@ const ConfirmModal = ({ show, title, message, confirmText, cancelText, onConfirm
         
         <ModalFooter theme={theme}>
           <CancelButton theme={theme} onClick={onCancel}>
-            <FaTimes /> {cancelText || 'Hủy'}
+            <FaTimes /> {cancelLabel || 'Hủy'}
           </CancelButton>
           <ConfirmButton theme={theme} onClick={onConfirm}>
-            <FaCheck /> {confirmText || 'Xác nhận'}
+            <FaCheck /> {confirmLabel || 'Xác nhận'}
           </ConfirmButton>
         </ModalFooter>
       </ModalContainer>

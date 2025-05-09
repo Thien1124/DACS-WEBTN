@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Table, Badge } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
-import { FaTrophy, FaMedal, FaAward } from 'react-icons/fa';
+import { FaTrophy, FaMedal, FaAward, FaUser } from 'react-icons/fa';
 import styled from 'styled-components';
 
 const RankIcon = styled.div`
@@ -71,36 +71,51 @@ const Leaderboard = ({ title, leaders, currentUserId }) => {
               <tr>
                 <th style={{ width: '10%' }}>Xếp hạng</th>
                 <th style={{ width: '30%' }}>Học sinh</th>
-                <th style={{ width: '20%' }}>Lớp/Trường</th>
+                <th style={{ width: '20%' }}>Khối</th>
                 <th style={{ width: '15%' }}>Điểm số</th>
                 <th style={{ width: '15%' }}>Thời gian làm bài</th>
                 <th style={{ width: '10%' }}>Ngày thi</th>
               </tr>
             </thead>
             <tbody>
-              {leaders.map((leader, index) => (
-                <UserRow 
-                  key={index} 
-                  isCurrentUser={leader.userId === currentUserId}
-                  theme={theme}
-                >
-                  <td>
-                    <RankIcon rank={index + 1}>
-                      {getRankIcon(index + 1)}
-                    </RankIcon>
-                  </td>
-                  <td>
-                    {leader.fullName}
-                    {leader.userId === currentUserId && (
-                      <Badge bg="info" className="ms-2">Bạn</Badge>
-                    )}
-                  </td>
-                  <td>{leader.className || "Không có thông tin"}</td>
-                  <ScoreCell theme={theme}>{leader.score.toFixed(2)}</ScoreCell>
-                  <td>{leader.duration ? `${Math.floor(leader.duration / 60)}:${(leader.duration % 60).toString().padStart(2, '0')}` : 'N/A'}</td>
-                  <DateCell theme={theme}>{formatDate(leader.completedAt)}</DateCell>
-                </UserRow>
-              ))}
+              {leaders.map((leader, index) => {
+                // Lấy thông tin học sinh từ đúng cấu trúc API
+                const studentName = leader.student?.fullName || "Không có thông tin";
+                const studentGrade = leader.student?.grade || "Không có thông tin";
+                // Kiểm tra ID người dùng hiện tại
+                const isCurrentUser = currentUserId && leader.student?.id === parseInt(currentUserId);
+                
+                return (
+                  <UserRow 
+                    key={index} 
+                    isCurrentUser={isCurrentUser}
+                    theme={theme}
+                  >
+                    <td>
+                      <RankIcon rank={leader.rank || (index + 1)}>
+                        {getRankIcon(leader.rank || (index + 1))}
+                      </RankIcon>
+                    </td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        {!studentName || studentName === "Không có thông tin" ? (
+                          <FaUser className="text-muted me-2" />
+                        ) : null}
+                        {studentName}
+                        {isCurrentUser && (
+                          <Badge bg="info" className="ms-2">Bạn</Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td>{studentGrade}</td>
+                    <ScoreCell theme={theme}>
+                      {typeof leader.score === 'number' ? leader.score.toFixed(2) : '0.00'}
+                    </ScoreCell>
+                    <td>{leader.duration ? `${Math.floor(leader.duration / 60)}:${(leader.duration % 60).toString().padStart(2, '0')}` : 'N/A'}</td>
+                    <DateCell theme={theme}>{formatDate(leader.completedAt)}</DateCell>
+                  </UserRow>
+                );
+              })}
               
               {leaders.length === 0 && (
                 <tr>

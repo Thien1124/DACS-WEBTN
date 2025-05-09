@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
 import SubjectTopStudentsPage from './pages/leaderboard/SubjectTopStudentsPage';
 import ExamResultDetail from './components/results/ExamResultDetail';
-
+import OfficialExamsList from './components/admin/OfficialExamsList';
+import OfficialExamDetail from './components/admin/OfficialExamDetail';
 
 //Teacher
 import TeacherExamManagement from './pages/teacher/TeacherExamManagement';
@@ -18,7 +19,7 @@ import AppLayout from './components/layout/AppLayout';
 // Add these new imports
 import AdminStatistics from './pages/admin/AdminStatistics';
 import TeacherStatistics from './pages/teacher/TeacherStatistics';
-
+import TeacherChatBox from './components/chat/TeacherChatBox';
 // Pages
 import HomePage from './components/Home';
 import ProfilePage from './pages/profile/Profile';
@@ -98,7 +99,6 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import MyFeedbacks from './pages/MyFeedbacks';
 import TeacherCreateStructuredExam from './pages/teacher/TeacherCreateStructuredExam';
 
-
 // Thêm import cho component mới
 import TeacherQuestionBank from './pages/teacher/TeacherQuestionBank';
 
@@ -114,9 +114,10 @@ import TeacherResultAnalytics from './pages/teacher/TeacherResultAnalytics';
 import NotificationBadge from './components/notifications/NotificationBadge';
 import NotificationSender from './components/admin/NotificationSender';
 import CreateOfficialExam from './components/admin/CreateOfficialExam';
-import AssignStudentsToExam from './components/admin/AssignStudentsToExam';
+
 import ImportQuestionsExcel from './components/admin/ImportQuestionsExcel';
 import StudentClassManagement from './components/admin/StudentClassManagement';
+import ManageExamStudents from './components/admin/ManageExamStudents';
 
 import ChatBox from './components/chat/ChatBox';
 
@@ -132,6 +133,12 @@ import StudentRankings from './pages/student/StudentRankings';
 
 // Add this import near the top with other component imports
 import AnalyticsCharts from './pages/analytics/AnalyticsCharts';
+
+// Add this import near the top with other component imports
+import EditOfficialExam from './components/admin/EditOfficialExam';
+
+// Add this import at the top
+import OfficialExamResults from './components/admin/OfficialExamResults';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -339,6 +346,16 @@ function App() {
                     <CreateExam />
                   </AdminRoute>
                 } />
+                <Route path="/teacher/exams/create" element={
+                  <TeacherRoute>
+                    <CreateExam />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/exams/:id/edit" element={
+                  <TeacherRoute>
+                    <EditExam />
+                  </TeacherRoute>
+                } />
                 <Route path="/admin/exams/:id/edit" element={
                   <AdminRoute>
                     <EditExam />
@@ -378,22 +395,33 @@ function App() {
                     <NotificationSender />
                   </AdminRoute>
                 } />
-                
+                <Route path="/admin/official-exams" element={<OfficialExamsList />} />
                 {/* Add this route in the Admin Routes section */}
-                <Route path="/admin/exams/create-official" element={
+                <Route path="/admin/official-exams/create" element={
                   <AdminRoute>
                     <CreateOfficialExam />
                   </AdminRoute>
                 } />
-                
-                {/* Add this route inside the AdminRoute section */}
-                <Route path="/admin/exams/assign-students" element={
+                {/* Add this route in the Admin Routes section */}
+                <Route path="/admin/official-exams/:id" element={
                   <AdminRoute>
-                    <AssignStudentsToExam />
+                    <OfficialExamDetail />
                   </AdminRoute>
                 } />
                 
-                
+                <Route path="/admin/official-exams/:id/students" element={
+                  <ProtectedRoute>
+                    <AdminRoute>
+                      <ManageExamStudents />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                } />
+                {/* Add this route inside the existing routes section (around line 400 where other official exam routes are) */}
+                <Route path="/admin/official-exams/edit/:id" element={
+                  <AdminRoute>
+                    <EditOfficialExam />
+                  </AdminRoute>
+                } />
                 
                 {/* In your Routes section, add these teacher exam management routes */}
                 <Route path="/teacher/exams" element={
@@ -416,6 +444,7 @@ function App() {
                     <TeacherImportExam />
                   </TeacherRoute>
                 } />
+                
                 <Route path="/teacher/exams/create-structured" element={
                   <TeacherRoute>
                     <TeacherCreateStructuredExam />
@@ -591,7 +620,7 @@ function App() {
 
                 {/* Student Analytics Routes */}
                 <Route 
-                  path="/student/analytics/:studentId" 
+                  path="/analytics/student/:studentId" 
                   element={
                     <ProtectedRoute requiredRoles={['student', 'teacher', 'admin']}>
                       <StudentAnalytics />
@@ -617,6 +646,24 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
+                
+                <Route path="/admin/chat" element={
+                  <AdminRoute>
+                    <TeacherChatBox />
+                  </AdminRoute>
+                } />
+                <Route path="/teacher/chat" element={
+                  <TeacherRoute>
+                    <TeacherChatBox />
+                  </TeacherRoute>
+                } />
+                {/* Then add this route inside the Admin Routes section */}
+                <Route path="/admin/official-exams/:id/results" element={
+                  <AdminRoute>
+                    <OfficialExamResults />
+                  </AdminRoute>
+                } />
+                
                 </Route>
               
             </Routes>

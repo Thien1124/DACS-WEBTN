@@ -7,10 +7,14 @@ import apiClient from './apiClient';
  */
 export const getExamLeaderboard = async (examId) => {
   try {
-    const response = await apiClient.get(`/api/Leaderboard/${examId}`);
+    const response = await apiClient.get(`/api/Leaderboard/${examId}`, {
+      headers: {
+        'Authorization': localStorage.getItem('token')
+      }
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching leaderboard for exam ${examId}:`, error);
+    console.error('Error fetching leaderboard:', error);
     throw error;
   }
 };
