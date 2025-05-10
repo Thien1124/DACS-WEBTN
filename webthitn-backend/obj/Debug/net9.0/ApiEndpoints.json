@@ -3295,6 +3295,22 @@
   },
   {
     "ContainingType": "webthitn_backend.Controllers.UserController",
+    "Method": "UploadAvatar",
+    "RelativePath": "api/User/avatar",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "webthitn_backend.Controllers.UserController",
     "Method": "GetUsers",
     "RelativePath": "api/User/list",
     "HttpMethod": "GET",

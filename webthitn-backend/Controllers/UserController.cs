@@ -9,7 +9,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
-
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 namespace webthitn_backend.Controllers
 {
     [Route("api/[controller]")]
@@ -18,11 +19,16 @@ namespace webthitn_backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UserController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public UserController(ApplicationDbContext context, ILogger<UserController> logger)
+        public UserController(
+            ApplicationDbContext context, 
+            ILogger<UserController> logger,
+            IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
+            _configuration = configuration;
         }
 
         // 1. Lấy thông tin người dùng hiện tại
@@ -124,7 +130,109 @@ namespace webthitn_backend.Controllers
                 }
             });
         }
+        // 2.1 Cập nhật ảnh đại diện
+        [Authorize]
+        [HttpPost("avatar")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { message = "Không có file được upload" });
+                }
 
+                // Kiểm tra định dạng file
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        Message = "Định dạng file không được hỗ trợ. Chỉ hỗ trợ jpg, jpeg, png, gif"
+                    });
+                }
+
+                // Kiểm tra kích thước file (max 5MB)
+                if (file.Length > 5242880) // 5MB in bytes
+                {
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        Message = "File quá lớn. Kích thước tối đa là 5MB"
+                    });
+                }
+
+                var userId = User.FindFirst("userId")?.Value;
+                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int userIdInt))
+                {
+                    return Unauthorized(new { message = "Không thể xác định người dùng" });
+                }
+
+                // Tìm user
+                var user = await _context.Users.FindAsync(userIdInt);
+                if (user == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy người dùng" });
+                }
+
+                // Tạo tên file duy nhất
+                var fileName = $"avatar_{userIdInt}_{Guid.NewGuid()}{fileExtension}";
+                
+                // Lấy đường dẫn từ cấu hình
+                string basePath = _configuration["FileStorage:BasePath"];
+                var avatarDirectory = Path.Combine(basePath, "uploads", "avatars");
+                
+                // Tạo thư mục nếu chưa tồn tại
+                Directory.CreateDirectory(avatarDirectory);
+
+                var filePath = Path.Combine(avatarDirectory, fileName);
+
+                // Lưu file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Xóa avatar cũ nếu có và không phải avatar mặc định
+                if (!string.IsNullOrEmpty(user.AvatarUrl) && !user.AvatarUrl.Contains("default-avatar"))
+                {
+                    try
+                    {
+                        // Xử lý đường dẫn để lấy tên file
+                        var oldAvatarFileName = Path.GetFileName(user.AvatarUrl.Replace("/uploads/avatars/", ""));
+                        var oldAvatarPath = Path.Combine(avatarDirectory, oldAvatarFileName);
+                        
+                        if (System.IO.File.Exists(oldAvatarPath))
+                        {
+                            System.IO.File.Delete(oldAvatarPath);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Không thể xóa avatar cũ: {ex.Message}");
+                    }
+                }
+
+                // Cập nhật URL avatar trong database
+                var avatarUrl = $"/uploads/avatars/{fileName}";
+                user.AvatarUrl = avatarUrl;
+                user.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Cập nhật ảnh đại diện thành công",
+                    avatarUrl = avatarUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi upload avatar: {ex.Message}, Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật ảnh đại diện" });
+            }
+        }
         // 3. Admin: Lấy danh sách người dùng
         [Authorize(Roles = "Admin,Teacher,Student")]
         [HttpGet("list")]
@@ -179,6 +287,7 @@ namespace webthitn_backend.Controllers
             return Ok(new { message = "Cập nhật vai trò thành công." });
         }
 
+        
         // 5. Admin: Khóa/mở khóa tài khoản người dùng
         [Authorize(Roles = "Admin")]
         [HttpPut("status/{id}")]

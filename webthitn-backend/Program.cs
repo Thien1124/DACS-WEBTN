@@ -24,7 +24,7 @@ using webthitn_backend.Middlewares;
 using webthitn_backend.Models;
 using webthitn_backend.Services;
 using webthitn_backend.Swagger;
-
+using System.IO;
 var builder = WebApplication.CreateBuilder(args);
 
 // Đăng ký các dịch vụ
@@ -225,7 +225,8 @@ var directories = new[]
     new { Path = "thumbnails", RequestPath = "/api/files/thumbnails" },
     new { Path = "documents", RequestPath = "/api/files/documents" },
     new { Path = "images", RequestPath = "/api/files/images" },
-    new { Path = "audios", RequestPath = "/api/files/audios" }
+    new { Path = "audios", RequestPath = "/api/files/audios" },
+    new { Path = "uploads/avatars", RequestPath = "/uploads/avatars" }
 };
 
 // Tự động tạo các thư mục lưu trữ và cấu hình StaticFiles

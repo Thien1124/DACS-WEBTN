@@ -914,7 +914,7 @@ namespace webthitn_backend.Controllers
             {
                 _logger.LogInformation($"Cập nhật đề thi ID: {id}, Tiêu đề mới: {model.Title}");
 
-                // Input validation
+                // Validate dữ liệu đầu vào
                 if (string.IsNullOrEmpty(model.Title))
                 {
                     return BadRequest(new { message = "Tiêu đề đề thi không được để trống" });
@@ -930,9 +930,10 @@ namespace webthitn_backend.Controllers
                     return BadRequest(new { message = "Điểm tối đa phải lớn hơn 0" });
                 }
 
-                // Check if exam exists
+                // Kiểm tra đề thi tồn tại
                 var existingExam = await _context.Exams
                     .Include(e => e.Creator)
+                    .Include(e => e.ExamQuestions)
                     .FirstOrDefaultAsync(e => e.Id == id);
 
                 if (existingExam == null)
@@ -941,7 +942,7 @@ namespace webthitn_backend.Controllers
                     return NotFound(new { message = "Không tìm thấy đề thi" });
                 }
 
-                // Check permissions - only Admin or creator can update
+                // Kiểm tra quyền - chỉ Admin hoặc người tạo ra đề thi mới có thể sửa
                 int currentUserId;
                 var userIdClaim = User.FindFirst("userId");
                 if (userIdClaim == null)
@@ -955,7 +956,7 @@ namespace webthitn_backend.Controllers
                     return StatusCode(500, new { message = "Không xác định được người dùng hiện tại" });
                 }
 
-                // Check update permissions - Admin or creator
+                // Kiểm tra quyền cập nhật - Admin hoặc người tạo
                 bool isAdmin = User.IsInRole("Admin");
                 bool isCreator = existingExam.CreatorId == currentUserId;
 
@@ -965,7 +966,7 @@ namespace webthitn_backend.Controllers
                     return StatusCode(403, new { message = "Bạn không có quyền cập nhật đề thi này" });
                 }
 
-                // Check if subject exists
+                // Kiểm tra môn học tồn tại
                 var subject = await _context.Subjects.FindAsync(model.SubjectId);
                 if (subject == null)
                 {
@@ -973,7 +974,7 @@ namespace webthitn_backend.Controllers
                     return NotFound(new { message = "Không tìm thấy môn học" });
                 }
 
-                // Check if exam type exists
+                // Kiểm tra loại đề thi tồn tại
                 var examType = await _context.ExamTypes.FindAsync(model.ExamTypeId);
                 if (examType == null)
                 {
@@ -981,38 +982,47 @@ namespace webthitn_backend.Controllers
                     return NotFound(new { message = "Không tìm thấy loại đề thi" });
                 }
 
-                // Check question list
+                // Kiểm tra danh sách câu hỏi
                 if (model.Questions == null || !model.Questions.Any())
                 {
                     return BadRequest(new { message = "Đề thi phải có ít nhất một câu hỏi" });
                 }
 
-                // Check if all questions exist
+                // Kiểm tra các câu hỏi tồn tại
                 var questionIds = model.Questions.Select(q => q.QuestionId).Distinct().ToList();
-                var existingQuestions = await _context.Questions
-                    .Where(q => questionIds.Contains(q.Id))
-                    .Select(q => q.Id)
-                    .ToListAsync();
+                bool allQuestionsExist = true;
+                List<int> missingQuestionIds = new List<int>();
 
-                var missingQuestionIds = questionIds.Except(existingQuestions).ToList();
-                if (missingQuestionIds.Any())
+                foreach (var questionId in questionIds)
+                {
+                    var exists = await _context.Questions.AnyAsync(q => q.Id == questionId);
+                    if (!exists)
+                    {
+                        allQuestionsExist = false;
+                        missingQuestionIds.Add(questionId);
+                    }
+                }
+
+                if (!allQuestionsExist)
                 {
                     _logger.LogWarning($"Không tìm thấy các câu hỏi với ID: {string.Join(", ", missingQuestionIds)}");
                     return BadRequest(new { message = $"Không tìm thấy các câu hỏi với ID: {string.Join(", ", missingQuestionIds)}" });
                 }
 
-                // Process ScoringConfig
+                // Xử lý ScoringConfig
                 string scoringConfig = model.ScoringConfig;
                 if (model.ScoringConfig == "string" || string.IsNullOrEmpty(model.ScoringConfig))
                 {
+                    // Giữ nguyên cấu hình cũ nếu không có cập nhật
                     scoringConfig = existingExam.ScoringConfig;
                 }
 
+                // Bắt đầu transaction để đảm bảo tất cả dữ liệu được lưu nhất quán
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 try
                 {
-                    // Update exam info
+                    // Cập nhật thông tin đề thi (giữ nguyên)
                     existingExam.Title = model.Title.Trim();
                     existingExam.Description = model.Description?.Trim() ?? "";
                     existingExam.SubjectId = model.SubjectId;
@@ -1033,47 +1043,66 @@ namespace webthitn_backend.Controllers
                     existingExam.AccessCode = model.AccessCode?.Trim();
                     existingExam.ScoringConfig = scoringConfig;
                     existingExam.UpdatedAt = DateTimeHelper.GetVietnamNow();
-
-                    // Update exam in database
+                    
+                    // Lưu thay đổi đề thi trước
                     _context.Exams.Update(existingExam);
                     await _context.SaveChangesAsync();
-
-                    // Delete old exam questions and add new ones - safer approach
-                    var oldExamQuestions = await _context.ExamQuestions
+                    
+                    // Trước tiên, lấy ID của tất cả các ExamQuestions hiện tại
+                    var currentExamQuestionIds = await _context.ExamQuestions
                         .Where(eq => eq.ExamId == id)
+                        .Select(eq => eq.Id)
                         .ToListAsync();
-
-                    // Remove all existing questions
-                    _context.ExamQuestions.RemoveRange(oldExamQuestions);
-                    await _context.SaveChangesAsync();
-
-                    // Add new questions
-                    var newExamQuestions = model.Questions.Select(q => new ExamQuestion
+                    
+                    // 1. Xóa tất cả các câu trả lời của học sinh liên quan đến các câu hỏi này
+                    if (currentExamQuestionIds.Any())
                     {
-                        ExamId = id,
-                        QuestionId = q.QuestionId,
-                        OrderIndex = q.Order,
-                        Score = q.Score
-                    }).ToList();
-
-                    // Add all new questions
-                    await _context.ExamQuestions.AddRangeAsync(newExamQuestions);
+                        // Tạo chuỗi phần tử số cho mệnh đề IN
+                        string inClause = string.Join(",", currentExamQuestionIds);
+                        
+                        // Sử dụng chuỗi SQL đã được format đúng
+                        string sql = $"DELETE FROM StudentAnswers WHERE ExamQuestionId IN ({inClause})";
+                        
+                        // Thực thi câu lệnh SQL đã tạo
+                        await _context.Database.ExecuteSqlRawAsync(sql);
+                    }
+                    
+                    // 2. Bây giờ an toàn để xóa các câu hỏi trong đề thi
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "DELETE FROM ExamQuestions WHERE ExamId = {0}", id);
+                    
+                    // 3. Thêm lại các câu hỏi mới
+                    foreach (var questionDTO in model.Questions)
+                    {
+                        var examQuestion = new ExamQuestion
+                        {
+                            ExamId = id,
+                            QuestionId = questionDTO.QuestionId,
+                            OrderIndex = questionDTO.Order,
+                            Score = questionDTO.Score
+                        };
+                        
+                        _context.ExamQuestions.Add(examQuestion);
+                    }
+                    
+                    // Lưu các câu hỏi mới
                     await _context.SaveChangesAsync();
-
+                    
+                    // Hoàn tất transaction
                     await transaction.CommitAsync();
-                    _logger.LogInformation($"Đã cập nhật thành công đề thi ID: {id}");
+                    _logger.LogInformation($"Đã commit transaction cập nhật đề thi ID: {id}");
 
-                    // Reload exam to get fresh data
+                    // Tải lại đề thi để lấy thông tin chi tiết
                     var freshExam = await _context.Exams
                         .Include(e => e.Subject)
                         .Include(e => e.ExamType)
                         .Include(e => e.Creator)
                         .FirstOrDefaultAsync(e => e.Id == id);
 
-                    // Get question type statistics
+                    // Lấy thống kê câu hỏi theo loại
                     var questionTypeStats = GetQuestionTypeStatistics(id);
 
-                    // Create response DTO
+                    // Tạo đối tượng DTO để trả về
                     var examDTO = new ExamListDTO
                     {
                         Id = freshExam.Id,
@@ -1081,7 +1110,7 @@ namespace webthitn_backend.Controllers
                         Type = freshExam.ExamType.Name,
                         Description = freshExam.Description,
                         Duration = freshExam.Duration,
-                        QuestionCount = newExamQuestions.Count,
+                        QuestionCount = model.Questions.Count,
                         TotalScore = freshExam.TotalScore,
                         PassScore = freshExam.PassScore,
                         MaxAttempts = freshExam.MaxAttempts,
@@ -1113,9 +1142,16 @@ namespace webthitn_backend.Controllers
 
                     return Ok(examDTO);
                 }
+                catch (DbUpdateException dbEx)
+                {
+                    // Xử lý ngoại lệ cụ thể của Entity Framework
+                    await transaction.RollbackAsync();
+                    _logger.LogError($"Lỗi cập nhật DB đề thi ID: {id}, Chi tiết: {dbEx.InnerException?.Message}, Stack trace: {dbEx.StackTrace}");
+                    return StatusCode(500, new { message = "Lỗi cập nhật dữ liệu", error = dbEx.InnerException?.Message ?? dbEx.Message });
+                }
                 catch (Exception ex)
                 {
-                    // Rollback transaction if error occurs
+                    // Các lỗi khác
                     await transaction.RollbackAsync();
                     _logger.LogError($"Lỗi khi cập nhật đề thi ID: {id}, Lỗi: {ex.Message}, Stack trace: {ex.StackTrace}");
                     throw;

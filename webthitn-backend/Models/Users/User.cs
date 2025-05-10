@@ -91,7 +91,6 @@ namespace webthitn_backend.Models.Users
         /// </summary>
         [MaxLength(255)]
         public string? AvatarUrl { get; set; }
-
         /// <summary>
         /// Mã đặt lại mật khẩu
         /// </summary>
