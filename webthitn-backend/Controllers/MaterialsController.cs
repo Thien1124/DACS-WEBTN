@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using webthitn_backend.DTOs;
@@ -18,13 +19,16 @@ namespace webthitn_backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<MaterialsController> _logger;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         public MaterialsController(
             ApplicationDbContext context,
-            ILogger<MaterialsController> logger)
+            ILogger<MaterialsController> logger,
+            IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _logger = logger;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         /// <summary>
@@ -227,13 +231,154 @@ namespace webthitn_backend.Controllers
             [FromForm] string documentType = null,
             [FromForm] string tags = null)
         {
-            // TODO: Implement document upload logic
-            // This would be similar to UploadVideo but for documents
-            return StatusCode(StatusCodes.Status501NotImplemented, new
+            try
             {
-                Success = false,
-                Message = "API chưa được triển khai"
-            });
+                // Validate inputs
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { Success = false, Message = "Không có file được upload" });
+                }
+
+                if (string.IsNullOrEmpty(title))
+                {
+                    return BadRequest(new { Success = false, Message = "Tiêu đề không được để trống" });
+                }
+
+                if (subjectId <= 0)
+                {
+                    return BadRequest(new { Success = false, Message = "Phải chọn môn học" });
+                }
+
+                // Check file extension
+                var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".zip", ".rar", ".txt" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        Message = "Định dạng file không được hỗ trợ. Chỉ hỗ trợ các định dạng phổ biến như PDF, DOC, PPT, XLS, ZIP, RAR, TXT"
+                    });
+                }
+
+                // Check file size (100MB max)
+                if (file.Length > 104857600)
+                {
+                    return StatusCode(StatusCodes.Status413PayloadTooLarge, new
+                    {
+                        Success = false,
+                        Message = "File quá lớn. Kích thước tối đa là 100MB"
+                    });
+                }
+
+                // Verify subject exists
+                var subject = await _context.Subjects.FindAsync(subjectId);
+                if (subject == null)
+                {
+                    return BadRequest(new { Success = false, Message = "Môn học không tồn tại" });
+                }
+
+                // Verify chapter if provided
+                if (chapterId.HasValue && chapterId.Value > 0)
+                {
+                    var chapter = await _context.Chapters.FindAsync(chapterId.Value);
+                    if (chapter == null)
+                    {
+                        return BadRequest(new { Success = false, Message = "Chương học không tồn tại" });
+                    }
+                }
+
+                // Get user ID from claims
+                int currentUserId;
+                var userIdClaim = User.FindFirst("userId");
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out currentUserId))
+                {
+                    return StatusCode(500, new { Success = false, Message = "Không xác định được người dùng" });
+                }
+
+                // Create upload directory if it doesn't exist
+                var documentsDir = Path.Combine(_webHostEnvironment.ContentRootPath, "uploads", "documents");
+                if (!Directory.Exists(documentsDir))
+                {
+                    Directory.CreateDirectory(documentsDir);
+                }
+
+                // Generate unique filename
+                var fileId = Guid.NewGuid().ToString();
+                var fileName = $"doc_{currentUserId}_{fileId}{fileExtension}";
+                var filePath = Path.Combine(documentsDir, fileName);
+
+                // Save file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Get document type if not specified
+                if (string.IsNullOrEmpty(documentType))
+                {
+                    documentType = fileExtension.TrimStart('.').ToUpper();
+                }
+
+                // Create document record
+                var document = new DocumentResource
+                {
+                    Title = title,
+                    Description = description,
+                    Url = $"/uploads/documents/{fileName}",
+                    ThumbnailUrl = fileExtension.Contains("pdf") ? "/images/pdf-icon.png" : 
+                                   fileExtension.Contains("doc") ? "/images/doc-icon.png" : 
+                                   fileExtension.Contains("xls") ? "/images/xls-icon.png" : 
+                                   fileExtension.Contains("ppt") ? "/images/ppt-icon.png" : 
+                                   "/images/document-icon.png",
+                    FileSize = file.Length,
+                    FileType = fileExtension.TrimStart('.').ToLower(),
+                    DocumentType = documentType,
+                    SubjectId = subjectId,
+                    ChapterId = chapterId,
+                    Tags = tags ?? "",
+                    UploadedById = currentUserId,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    DownloadCount = 0
+                };
+
+                _context.DocumentResources.Add(document);
+                await _context.SaveChangesAsync();
+
+                // Return success response
+                return StatusCode(StatusCodes.Status201Created, new
+                {
+                    Success = true,
+                    Message = "Tài liệu đã được tải lên thành công",
+                    Data = new
+                    {
+                        Id = document.Id,
+                        Title = document.Title,
+                        Description = document.Description,
+                        Url = document.Url,
+                        FileSize = document.FileSize,
+                        FileType = document.FileType,
+                        DocumentType = document.DocumentType,
+                        SubjectId = document.SubjectId,
+                        ChapterId = document.ChapterId,
+                        Tags = document.Tags,
+                        CreatedAt = document.CreatedAt
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi khi upload tài liệu: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = "Đã xảy ra lỗi khi upload tài liệu",
+                    Error = ex.Message
+                });
+            }
         }
     }
 }

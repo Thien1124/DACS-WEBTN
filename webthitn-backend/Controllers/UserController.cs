@@ -142,6 +142,18 @@ namespace webthitn_backend.Controllers
                     return BadRequest(new { message = "Không có file được upload" });
                 }
 
+                // Improved user identification - try multiple claim types
+                var userId = User.FindFirst("userId")?.Value ?? 
+                            User.FindFirst("sub")?.Value ?? 
+                            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                _logger.LogInformation($"Uploading avatar. User claims: {userId}");
+
+                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int userIdInt))
+                {
+                    return Unauthorized(new { message = "Không thể xác định người dùng" });
+                }
+
                 // Kiểm tra định dạng file
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
                 var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -162,12 +174,6 @@ namespace webthitn_backend.Controllers
                         Success = false,
                         Message = "File quá lớn. Kích thước tối đa là 5MB"
                     });
-                }
-
-                var userId = User.FindFirst("userId")?.Value;
-                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int userIdInt))
-                {
-                    return Unauthorized(new { message = "Không thể xác định người dùng" });
                 }
 
                 // Tìm user
@@ -219,18 +225,32 @@ namespace webthitn_backend.Controllers
                 var avatarUrl = $"/uploads/avatars/{fileName}";
                 user.AvatarUrl = avatarUrl;
                 user.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
+
+                // More detailed logging for database update
+                try {
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Avatar updated in database for user {userIdInt}: {avatarUrl}");
+                }
+                catch (Exception dbEx) {
+                    _logger.LogError($"Database error: {dbEx.Message}, {dbEx.InnerException?.Message}");
+                    return StatusCode(500, new { message = "Lỗi cập nhật database", error = dbEx.Message });
+                }
 
                 return Ok(new
                 {
+                    success = true,
                     message = "Cập nhật ảnh đại diện thành công",
                     avatarUrl = avatarUrl
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Lỗi khi upload avatar: {ex.Message}, Stack trace: {ex.StackTrace}");
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật ảnh đại diện" });
+                _logger.LogError($"Avatar upload error: {ex.Message}, {ex.StackTrace}");
+                return StatusCode(500, new { 
+                    success = false, 
+                    message = "Đã xảy ra lỗi khi cập nhật ảnh đại diện",
+                    error = ex.Message
+                });
             }
         }
         // 3. Admin: Lấy danh sách người dùng
