@@ -21,6 +21,7 @@ import AdminStatistics from './pages/admin/AdminStatistics';
 import TeacherStatistics from './pages/teacher/TeacherStatistics';
 import SubjectTopStudentsPage from './pages/leaderboard/SubjectTopStudentsPage';
 import ExamDetails from './components/admin/ExamDetails';
+import ResultsPage from './components/exams/ResultsPage';
 
 // Add fontawesome to the project
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -97,6 +98,7 @@ function App() {
           } />
           
           {/* Add other routes as needed */}
+          <Route path="/Results/:examId" element={<ResultsPage />} />
         </Route>
       </Routes>
     </Router>

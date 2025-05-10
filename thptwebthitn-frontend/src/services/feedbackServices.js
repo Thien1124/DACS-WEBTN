@@ -97,3 +97,70 @@ const feedbackServices = {
 };
 
 export default feedbackServices;
+
+// Get all feedbacks (admin only)
+export const getAllFeedbacks = async (page = 1, pageSize = 10, status = null) => {
+  try {
+    const params = { page, pageSize };
+    if (status !== null) {
+      params.status = status;
+    }
+    
+    const response = await apiClient.get('/api/tests/all-feedbacks', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all feedbacks:', error);
+    throw error;
+  }
+};
+
+// Get feedback details
+export const getFeedbackById = async (id) => {
+  try {
+    const response = await apiClient.get(`/api/tests/feedback/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching feedback details:', error);
+    throw error;
+  }
+};
+
+// Resolve a feedback
+export const resolveFeedback = async (testId, feedbackId, responseContent, status = 1) => {
+  try {
+    const response = await apiClient.post(`/api/tests/${testId}/resolve-feedback/${feedbackId}`, { 
+      responseContent,
+      status: parseInt(status, 10) // Ensure status is an integer
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error resolving feedback:', error);
+    throw error;
+  }
+};
+
+// Get user's own feedbacks
+export const getMyFeedbacks = async (page = 1, pageSize = 10) => {
+  try {
+    const response = await apiClient.get('/api/tests/my-feedbacks', {
+      params: { page, pageSize }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user feedbacks:', error);
+    throw error;
+  }
+};
+
+// Get test feedbacks
+export const getTestFeedbacks = async (testId, page = 1, pageSize = 10) => {
+  try {
+    const response = await apiClient.get(`/api/tests/${testId}/feedbacks`, {
+      params: { page, pageSize }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching test feedbacks:', error);
+    throw error;
+  }
+};

@@ -210,12 +210,21 @@ const ExamResults = () => {
         // Map API response to component's expected structure with safer property access
         const data = response.data || {};
         
+        // Check if questions data exists and log it
+        console.log('Student answers array:', data.studentAnswers);
+        console.log('Student answers length:', Array.isArray(data.studentAnswers) ? data.studentAnswers.length : 'Not an array');
+        
         // Check if essential data exists
         if (!data.exam) {
           console.error('Missing exam data in API response');
           setError('Dữ liệu bài thi không đầy đủ.');
           setLoading(false);
           return;
+        }
+        
+        // Log if studentAnswers array is empty
+        if (!Array.isArray(data.studentAnswers) || data.studentAnswers.length === 0) {
+          console.warn('studentAnswers array is empty in API response. Questions cannot be displayed.');
         }
         
         const mappedData = {
@@ -227,6 +236,7 @@ const ExamResults = () => {
           score: Number(data.score) || 0,
           totalScore: Number(data.totalScore) || 10,
           examId: data.exam?.id,
+          hasQuestionData: Array.isArray(data.studentAnswers) && data.studentAnswers.length > 0,
           // Map student answers to questions with proper error handling
           questions: Array.isArray(data.studentAnswers) ? data.studentAnswers.map(answer => ({
             id: answer.questionId,
@@ -401,201 +411,217 @@ const ExamResults = () => {
 
       {viewMode === 'review' && (
         <>
-          <div className="mb-4">
-            <Card bg={theme === 'dark' ? 'dark' : 'light'} className="shadow-sm">
-              <Card.Body>
-                <h6>Chú giải</h6>
-                <div className="d-flex flex-wrap">
-                  <div className="d-flex align-items-center me-3 mb-2">
-                    <div style={{ width: 16, height: 16, backgroundColor: '#28a745', borderRadius: '50%', marginRight: 8 }}></div>
-                    <small>Câu đúng</small>
-                  </div>
-                  <div className="d-flex align-items-center me-3 mb-2">
-                    <div style={{ width: 16, height: 16, backgroundColor: '#dc3545', borderRadius: '50%', marginRight: 8 }}></div>
-                    <small>Câu sai</small>
-                  </div>
-                  <div className="d-flex align-items-center mb-2">
-                    <div style={{ width: 16, height: 16, backgroundColor: '#6c757d', borderRadius: '50%', marginRight: 8 }}></div>
-                    <small>Chưa trả lời</small>
-                  </div>
-                </div>
-                <h6 className="mt-3">Điều hướng câu hỏi</h6>
-                <QuestionNavigator>
-                  {result.questions.map((question, index) => (
-                    <button 
-                      key={index} 
-                      className={`
-                        ${question.isCorrect ? 'correct' : question.userAnswer ? 'incorrect' : 'unanswered'}
-                        ${currentQuestion === index ? ' current' : ''}
-                      `}
-                      onClick={() => handleQuestionSelect(index)}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-                </QuestionNavigator>
-                <div className="d-flex justify-content-between mt-3">
-                  <Button 
-                    variant="outline-primary" 
-                    onClick={handlePrevious}
-                    disabled={currentQuestion === 0}
-                  >
-                    <FaArrowLeft className="me-1" /> Câu trước
-                  </Button>
-                  <Button 
-                    variant="outline-primary" 
-                    onClick={handleNext}
-                    disabled={currentQuestion === result.questions.length - 1}
-                  >
-                    Câu sau <FaArrowRight className="ms-1" />
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </div>
-          
-          {result.questions.map((question, qIndex) => {
-            const isAnswered = !!question.userAnswer;
-            const isCorrect = question.isCorrect;
-            const correctOption = question.options.find(o => o.id === question.correctAnswerId);
-            const selectedOption = question.options.find(o => o.id === question.userAnswer);
-            
-            return (
-              <QuestionCard 
-                key={qIndex}
-                ref={questionRefs.current[qIndex]}
-                isCorrect={isCorrect}
-                isAnswered={isAnswered && !isCorrect}
-                bg={theme === 'dark' ? 'dark' : 'light'} 
-                className="shadow-sm"
-                id={`question-${qIndex}`}
-              >
-                <Card.Header className="d-flex justify-content-between align-items-center">
-                  <div className="d-flex align-items-center">
-                    <span className="fw-bold me-2">Câu {qIndex + 1}: </span>
-                    {isCorrect ? (
-                      <ResultBadge bg="success">
-                        <FaCheckCircle /> Đúng
-                      </ResultBadge>
-                    ) : isAnswered ? (
-                      <ResultBadge bg="danger">
-                        <FaTimesCircle /> Sai
-                      </ResultBadge>
-                    ) : (
-                      <ResultBadge bg="secondary">
-                        <FaInfoCircle /> Chưa trả lời
-                      </ResultBadge>
-                    )}
-                  </div>
-                  <div className="d-flex align-items-center">
-                    {!isCorrect && isAnswered && (
-                      <small className="me-3 text-danger">
-                        {selectedOption ? `Bạn chọn: ${selectedOption.label}` : ''}
-                      </small>
-                    )}
-                    <small className={isCorrect ? "text-success fw-bold" : "text-primary fw-bold"}>
-                      {isAnswered ? (isCorrect ? 'Chính xác!' : `Đáp án đúng: ${correctOption?.label || ''}`) : 'Bạn chưa trả lời câu này'}
-                    </small>
-                  </div>
-                </Card.Header>
-                <Card.Body>
-                  <Card.Title 
-                    className="question-text mb-4"
-                    dangerouslySetInnerHTML={{ __html: question.text }} 
-                  />
-                  
-                  <h6 className="mb-3">Các đáp án:</h6>
-                  <div className="options-container mb-3">
-                    {question.options.map((option, oIndex) => {
-                      const isSelectedOption = question.userAnswer === option.id;
-                      const isCorrectAnswer = option.id === question.correctAnswerId;
-                      const isSelectedIncorrect = isSelectedOption && !isCorrectAnswer;
-                      
-                      return (
-                        <OptionItem 
-                          key={option.id} 
-                          isCorrectAnswer={isCorrectAnswer}
-                          isSelectedIncorrect={isSelectedIncorrect}
-                          isSelected={isSelectedOption}
-                          theme={theme}
+          {result.questions && result.questions.length > 0 ? (
+            <>
+              <div className="mb-4">
+                <Card bg={theme === 'dark' ? 'dark' : 'light'} className="shadow-sm">
+                  <Card.Body>
+                    <h6>Chú giải</h6>
+                    <div className="d-flex flex-wrap">
+                      <div className="d-flex align-items-center me-3 mb-2">
+                        <div style={{ width: 16, height: 16, backgroundColor: '#28a745', borderRadius: '50%', marginRight: 8 }}></div>
+                        <small>Câu đúng</small>
+                      </div>
+                      <div className="d-flex align-items-center me-3 mb-2">
+                        <div style={{ width: 16, height: 16, backgroundColor: '#dc3545', borderRadius: '50%', marginRight: 8 }}></div>
+                        <small>Câu sai</small>
+                      </div>
+                      <div className="d-flex align-items-center mb-2">
+                        <div style={{ width: 16, height: 16, backgroundColor: '#6c757d', borderRadius: '50%', marginRight: 8 }}></div>
+                        <small>Chưa trả lời</small>
+                      </div>
+                    </div>
+                    <h6 className="mt-3">Điều hướng câu hỏi</h6>
+                    <QuestionNavigator>
+                      {result.questions.map((question, index) => (
+                        <button 
+                          key={index} 
+                          className={`
+                            ${question.isCorrect ? 'correct' : question.userAnswer ? 'incorrect' : 'unanswered'}
+                            ${currentQuestion === index ? ' current' : ''}
+                          `}
+                          onClick={() => handleQuestionSelect(index)}
                         >
-                          <div className="option-marker">
-                            {option.label || String.fromCharCode(65 + oIndex)}
-                          </div>
-                          <div 
-                            className="option-text" 
-                            dangerouslySetInnerHTML={{ __html: option.text }}
-                          />
-                          <div className="option-icon">
-                            {isCorrectAnswer && (
-                              <FaCheckCircle size={20} color="#28a745" />
-                            )}
-                            {isSelectedIncorrect && (
-                              <FaTimesCircle size={20} color="#dc3545" />
-                            )}
-                            {!isCorrectAnswer && !isSelectedOption && (
-                              <div style={{ width: 20 }}></div>
-                            )}
-                          </div>
-                        </OptionItem>
-                      );
-                    })}
-                  </div>
-                  
-                  <div className="mt-3">
-                    {/* Student's answer status */}
-                    <div className={isCorrect ? "text-success mb-2" : "text-danger mb-2"} style={{ fontSize: '0.9rem' }}>
-                      {isAnswered ? (
-                        <div className="d-flex align-items-center">
-                          {isCorrect ? (
-                            <>
-                              <FaCheckCircle className="me-2" />
-                              <span>Bạn đã chọn <strong>{selectedOption?.label || ''}</strong>, đây là đáp án đúng!</span>
-                            </>
+                          {index + 1}
+                        </button>
+                      ))}
+                    </QuestionNavigator>
+                    <div className="d-flex justify-content-between mt-3">
+                      <Button 
+                        variant="outline-primary" 
+                        onClick={handlePrevious}
+                        disabled={currentQuestion === 0}
+                      >
+                        <FaArrowLeft className="me-1" /> Câu trước
+                      </Button>
+                      <Button 
+                        variant="outline-primary" 
+                        onClick={handleNext}
+                        disabled={currentQuestion === result.questions.length - 1}
+                      >
+                        Câu sau <FaArrowRight className="ms-1" />
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </div>
+              
+              {result.questions.map((question, qIndex) => {
+                const isAnswered = !!question.userAnswer;
+                const isCorrect = question.isCorrect;
+                const correctOption = question.options.find(o => o.id === question.correctAnswerId);
+                const selectedOption = question.options.find(o => o.id === question.userAnswer);
+                
+                return (
+                  <QuestionCard 
+                    key={qIndex}
+                    ref={questionRefs.current[qIndex]}
+                    isCorrect={isCorrect}
+                    isAnswered={isAnswered && !isCorrect}
+                    bg={theme === 'dark' ? 'dark' : 'light'} 
+                    className="shadow-sm"
+                    id={`question-${qIndex}`}
+                  >
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                      <div className="d-flex align-items-center">
+                        <span className="fw-bold me-2">Câu {qIndex + 1}: </span>
+                        {isCorrect ? (
+                          <ResultBadge bg="success">
+                            <FaCheckCircle /> Đúng
+                          </ResultBadge>
+                        ) : isAnswered ? (
+                          <ResultBadge bg="danger">
+                            <FaTimesCircle /> Sai
+                          </ResultBadge>
+                        ) : (
+                          <ResultBadge bg="secondary">
+                            <FaInfoCircle /> Chưa trả lời
+                          </ResultBadge>
+                        )}
+                      </div>
+                      <div className="d-flex align-items-center">
+                        {!isCorrect && isAnswered && (
+                          <small className="me-3 text-danger">
+                            {selectedOption ? `Bạn chọn: ${selectedOption.label}` : ''}
+                          </small>
+                        )}
+                        <small className={isCorrect ? "text-success fw-bold" : "text-primary fw-bold"}>
+                          {isAnswered ? (isCorrect ? 'Chính xác!' : `Đáp án đúng: ${correctOption?.label || ''}`) : 'Bạn chưa trả lời câu này'}
+                        </small>
+                      </div>
+                    </Card.Header>
+                    <Card.Body>
+                      <Card.Title 
+                        className="question-text mb-4"
+                        dangerouslySetInnerHTML={{ __html: question.text }} 
+                      />
+                      
+                      <h6 className="mb-3">Các đáp án:</h6>
+                      <div className="options-container mb-3">
+                        {question.options.map((option, oIndex) => {
+                          const isSelectedOption = question.userAnswer === option.id;
+                          const isCorrectAnswer = option.id === question.correctAnswerId;
+                          const isSelectedIncorrect = isSelectedOption && !isCorrectAnswer;
+                          
+                          return (
+                            <OptionItem 
+                              key={option.id} 
+                              isCorrectAnswer={isCorrectAnswer}
+                              isSelectedIncorrect={isSelectedIncorrect}
+                              isSelected={isSelectedOption}
+                              theme={theme}
+                            >
+                              <div className="option-marker">
+                                {option.label || String.fromCharCode(65 + oIndex)}
+                              </div>
+                              <div 
+                                className="option-text" 
+                                dangerouslySetInnerHTML={{ __html: option.text }}
+                              />
+                              <div className="option-icon">
+                                {isCorrectAnswer && (
+                                  <FaCheckCircle size={20} color="#28a745" />
+                                )}
+                                {isSelectedIncorrect && (
+                                  <FaTimesCircle size={20} color="#dc3545" />
+                                )}
+                                {!isCorrectAnswer && !isSelectedOption && (
+                                  <div style={{ width: 20 }}></div>
+                                )}
+                              </div>
+                            </OptionItem>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="mt-3">
+                        {/* Student's answer status */}
+                        <div className={isCorrect ? "text-success mb-2" : "text-danger mb-2"} style={{ fontSize: '0.9rem' }}>
+                          {isAnswered ? (
+                            <div className="d-flex align-items-center">
+                              {isCorrect ? (
+                                <>
+                                  <FaCheckCircle className="me-2" />
+                                  <span>Bạn đã chọn <strong>{selectedOption?.label || ''}</strong>, đây là đáp án đúng!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FaTimesCircle className="me-2" />
+                                  <span>Bạn đã chọn <strong>{selectedOption?.label || ''}</strong>, đây không phải là đáp án đúng.</span>
+                                </>
+                              )}
+                            </div>
                           ) : (
-                            <>
-                              <FaTimesCircle className="me-2" />
-                              <span>Bạn đã chọn <strong>{selectedOption?.label || ''}</strong>, đây không phải là đáp án đúng.</span>
-                            </>
+                            <div className="d-flex align-items-center">
+                              <FaInfoCircle className="me-2" />
+                              <span>Bạn chưa trả lời câu hỏi này.</span>
+                            </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="d-flex align-items-center">
-                          <FaInfoCircle className="me-2" />
-                          <span>Bạn chưa trả lời câu hỏi này.</span>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Always show correct answer with full text for all questions */}
-                    <div className="text-success border-top pt-2">
-                      <div className="d-flex align-items-center">
-                        <FaCheckCircle className="me-2" />
-                        <span className="fw-bold">Đáp án đúng là: <strong>{correctOption?.label || ''}</strong></span>
+                        {/* Always show correct answer with full text for all questions */}
+                        <div className="text-success border-top pt-2">
+                          <div className="d-flex align-items-center">
+                            <FaCheckCircle className="me-2" />
+                            <span className="fw-bold">Đáp án đúng là: <strong>{correctOption?.label || ''}</strong></span>
+                          </div>
+                          {correctOption?.text && (
+                            <div className="ms-4 mt-2 p-2 bg-light rounded" dangerouslySetInnerHTML={{ __html: correctOption.text }}></div>
+                          )}
+                        </div>
                       </div>
-                      {correctOption?.text && (
-                        <div className="ms-4 mt-2 p-2 bg-light rounded" dangerouslySetInnerHTML={{ __html: correctOption.text }}></div>
+                      
+                      {question.explanation && (
+                        <ExplanationCard 
+                          variant="info" 
+                          className="mt-3"
+                          theme={theme}
+                        >
+                          <div className="d-flex align-items-center mb-2">
+                            <FaInfoCircle className="me-2 text-info" />
+                            <strong>Giải thích:</strong>
+                          </div>
+                          <div dangerouslySetInnerHTML={{ __html: question.explanation }} />
+                        </ExplanationCard>
                       )}
-                    </div>
-                  </div>
-                  
-                  {question.explanation && (
-                    <ExplanationCard 
-                      variant="info" 
-                      className="mt-3"
-                      theme={theme}
-                    >
-                      <div className="d-flex align-items-center mb-2">
-                        <FaInfoCircle className="me-2 text-info" />
-                        <strong>Giải thích:</strong>
-                      </div>
-                      <div dangerouslySetInnerHTML={{ __html: question.explanation }} />
-                    </ExplanationCard>
-                  )}
-                </Card.Body>
-              </QuestionCard>
-            );
-          })}
+                    </Card.Body>
+                  </QuestionCard>
+                );
+              })}
+            </>
+          ) : (
+            <Alert variant="warning">
+              <FaInfoCircle className="me-2" />
+              <strong>Không có câu hỏi để hiển thị</strong>
+              <p className="mt-2 mb-0">Dữ liệu câu hỏi không có sẵn cho bài thi này. Điều này có thể do một trong các nguyên nhân sau:</p>
+              <ul className="mt-2">
+                <li>API không trả về dữ liệu câu hỏi (mảng studentAnswers trống)</li>
+                <li>Bài thi đã được tính điểm nhưng không lưu chi tiết câu trả lời</li>
+                <li>Hết thời gian lưu trữ chi tiết câu hỏi</li>
+              </ul>
+              <p>Vui lòng liên hệ với quản trị viên hệ thống nếu bạn cần xem chi tiết bài làm.</p>
+            </Alert>
+          )}
           
           <div className="d-flex justify-content-between mt-4">
             <Button variant="secondary" as={Link} to="/exam-history">
@@ -664,88 +690,97 @@ const ExamResults = () => {
               </Row>
             </div>
             
-            <div className="table-responsive">
-              <Table striped bordered hover variant={theme === 'dark' ? 'dark' : 'light'}>
-                <thead>
-                  <tr>
-                    <th style={{ width: '8%' }} className="text-center">Câu</th>
-                    <th style={{ width: '45%' }}>Nội dung</th>
-                    <th style={{ width: '17%' }} className="text-center">Đáp án của bạn</th>
-                    <th style={{ width: '17%' }} className="text-center">Đáp án đúng</th>
-                    <th style={{ width: '13%' }} className="text-center">Kết quả</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.questions.map((question, index) => {
-                    const selectedOption = question.options.find(o => o.id === question.userAnswer);
-                    const correctOption = question.options.find(o => o.id === question.correctAnswerId);
-                    
-                    return (
-                      <tr 
-                        key={index} 
-                        onClick={() => {
-                          setViewMode('review');
-                          setTimeout(() => handleQuestionSelect(index), 100);
-                        }} 
-                        style={{ 
-                          cursor: 'pointer',
-                          backgroundColor: question.isCorrect ? 'rgba(40, 167, 69, 0.05)' : 
-                                          question.userAnswer ? 'rgba(220, 53, 69, 0.05)' : 
-                                          'rgba(108, 117, 125, 0.05)'
-                        }}
-                        className={`summary-row ${question.isCorrect ? 'correct-row' : question.userAnswer ? 'incorrect-row' : 'unanswered-row'}`}
-                      >
-                        <td className="text-center">
-                          <strong>{index + 1}</strong>
-                        </td>
-                        <td>
-                          <div dangerouslySetInnerHTML={{ 
-                            __html: question.text.length > 100 ? 
-                              question.text.substring(0, 100) + '...' : 
-                              question.text 
-                          }} />
-                        </td>
-                        <td className="text-center">
-                          {question.userAnswer ? (
-                            <span className={question.isCorrect ? 'text-success fw-bold' : 'text-danger'}>
-                              {selectedOption?.label || '-'}
+            {result.questions && result.questions.length > 0 ? (
+              <div className="table-responsive">
+                <Table striped bordered hover variant={theme === 'dark' ? 'dark' : 'light'}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '8%' }} className="text-center">Câu</th>
+                      <th style={{ width: '45%' }}>Nội dung</th>
+                      <th style={{ width: '17%' }} className="text-center">Đáp án của bạn</th>
+                      <th style={{ width: '17%' }} className="text-center">Đáp án đúng</th>
+                      <th style={{ width: '13%' }} className="text-center">Kết quả</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.questions.map((question, index) => {
+                      const selectedOption = question.options.find(o => o.id === question.userAnswer);
+                      const correctOption = question.options.find(o => o.id === question.correctAnswerId);
+                      
+                      return (
+                        <tr 
+                          key={index} 
+                          onClick={() => {
+                            setViewMode('review');
+                            setTimeout(() => handleQuestionSelect(index), 100);
+                          }} 
+                          style={{ 
+                            cursor: 'pointer',
+                            backgroundColor: question.isCorrect ? 'rgba(40, 167, 69, 0.05)' : 
+                                            question.userAnswer ? 'rgba(220, 53, 69, 0.05)' : 
+                                            'rgba(108, 117, 125, 0.05)'
+                          }}
+                          className={`summary-row ${question.isCorrect ? 'correct-row' : question.userAnswer ? 'incorrect-row' : 'unanswered-row'}`}
+                        >
+                          <td className="text-center">
+                            <strong>{index + 1}</strong>
+                          </td>
+                          <td>
+                            <div dangerouslySetInnerHTML={{ 
+                              __html: question.text.length > 100 ? 
+                                question.text.substring(0, 100) + '...' : 
+                                question.text 
+                            }} />
+                          </td>
+                          <td className="text-center">
+                            {question.userAnswer ? (
+                              <span className={question.isCorrect ? 'text-success fw-bold' : 'text-danger'}>
+                                {selectedOption?.label || '-'}
+                              </span>
+                            ) : (
+                              <em className="text-muted">Không có</em>
+                            )}
+                          </td>
+                          <td className="text-center">
+                            <span className="text-success fw-bold">
+                              {correctOption?.label || '-'}
                             </span>
-                          ) : (
-                            <em className="text-muted">Không có</em>
-                          )}
-                        </td>
-                        <td className="text-center">
-                          <span className="text-success fw-bold">
-                            {correctOption?.label || '-'}
-                          </span>
-                        </td>
-                        <td className="text-center">
-                          {question.isCorrect ? (
-                            <Badge bg="success" pill>
-                              <FaCheck className="me-1" /> Đúng
-                            </Badge>
-                          ) : question.userAnswer ? (
-                            <Badge bg="danger" pill>
-                              <FaTimes className="me-1" /> Sai
-                            </Badge>
-                          ) : (
-                            <Badge bg="secondary" pill>
-                              <FaMinus className="me-1" /> Bỏ qua
-                            </Badge>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </div>
+                          </td>
+                          <td className="text-center">
+                            {question.isCorrect ? (
+                              <Badge bg="success" pill>
+                                <FaCheck className="me-1" /> Đúng
+                              </Badge>
+                            ) : question.userAnswer ? (
+                              <Badge bg="danger" pill>
+                                <FaTimes className="me-1" /> Sai
+                              </Badge>
+                            ) : (
+                              <Badge bg="secondary" pill>
+                                <FaMinus className="me-1" /> Bỏ qua
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              </div>
+            ) : (
+              <Alert variant="info">
+                <FaInfoCircle className="me-2" />
+                Không có dữ liệu chi tiết câu hỏi để hiển thị. Bạn vẫn có thể xem thông tin tổng quan về bài thi.
+              </Alert>
+            )}
             
-            <div className="mt-4 text-center">
-              <Button variant="primary" onClick={() => setViewMode('review')}>
-                <FaListOl className="me-2" /> Xem chi tiết từng câu hỏi
-              </Button>
-            </div>
+            {result.questions && result.questions.length > 0 && (
+              <div className="mt-4 text-center">
+                <Button variant="primary" onClick={() => setViewMode('review')}>
+                  <FaListOl className="me-2" /> Xem chi tiết từng câu hỏi
+                </Button>
+              </div>
+            )}
           </Card.Body>
         </Card>
       )}

@@ -183,14 +183,35 @@ const ErrorMessage = styled.p`
   font-size: 0.875rem;
   margin-top: 0.25rem;
 `;
+// Update the component with better examId handling
 const EditExam = () => {
-  const { examId } = useParams();
-  const dispatch = useDispatch();
+  const params = useParams();
+  const examId = params.examId || params.id; // Try both common parameter names
   const navigate = useNavigate();
-  
+  const dispatch = useDispatch();
   const { theme } = useSelector(state => state.ui);
-  const { items: reduxSubjects, loading: loadingSubjects } = useSelector(state => state.subjects);
-  const { currentExam, loading: loadingExam, error: examError } = useSelector(state => state.exams);
+  
+  console.log('URL parameters:', params);
+  console.log('Extracted exam ID:', examId);
+  
+  // Validate examId is present and valid
+  const isValidExamId = examId && !isNaN(parseInt(examId));
+  
+  useEffect(() => {
+    if (!isValidExamId) {
+      showErrorToast('Không tìm thấy ID đề thi hợp lệ trong URL');
+      console.error('Invalid or missing exam ID in URL parameters');
+      // Optional: Redirect after a short delay
+      /*
+      setTimeout(() => {
+        navigate('/admin/exams');
+      }, 3000);
+      */
+    }
+  }, [examId, isValidExamId, navigate]);
+  
+  const { items: reduxSubjects, loading: loadingSubjects } = useSelector(state => state.subjects,state => state.exams);
+
   
   // State cho form
   const [formData, setFormData] = useState({
@@ -233,129 +254,98 @@ const EditExam = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
   
-  // Tải dữ liệu đề thi cần chỉnh sửa
   useEffect(() => {
-    const loadExamData = async () => {
-      if (!examId) {
-        console.log('No examId provided');
-        setIsLoadingExamData(false);
-        return;
-      }
-      
-      console.log(`Loading exam data for ID: ${examId}`);
-      setIsLoadingExamData(true);
-      
-      try {
-        // First try direct API call to debug
-        console.log('Making direct API call to get exam data');
-        const response = getExamDetails(examId);
-        console.log('Direct API response:', response.data);
-        
-        const examData = response.data;
-        
-        if (examData) {
-          console.log('Setting form data with direct API response:', examData);
-          
-          // Format dates properly
-          const startTime = examData.startTime ? new Date(examData.startTime).toISOString().slice(0, 16) : '';
-          const endTime = examData.endTime ? new Date(examData.endTime).toISOString().slice(0, 16) : '';
-          
-          setFormData({
-            title: examData.title || '',
-            description: examData.description || '',
-            subjectId: String(examData.subjectId || ''),
-            examTypeId: examData.examTypeId || 2,
-            difficulty: examData.difficulty || 'medium',
-            duration: examData.duration || 60,
-            totalScore: examData.totalScore || 10,
-            passScore: examData.passScore || 5,
-            maxAttempts: examData.maxAttempts || 1,
-            startTime: startTime,
-            endTime: endTime,
-            isActive: examData.isActive !== false, // Default to true if undefined
-            showResult: examData.showResult !== false,
-            showAnswers: examData.showAnswers || false,
-            shuffleQuestions: examData.shuffleQuestions !== false,
-            shuffleOptions: examData.shuffleOptions !== false,
-            autoGradeShortAnswer: examData.autoGradeShortAnswer !== false,
-            allowPartialGrading: examData.allowPartialGrading !== false,
-            instructions: examData.instructions || '',
-            accessCode: examData.accessCode || '',
-            scoringConfig: examData.scoringConfig || JSON.stringify({
-              gradingMethod: "sum",
-              partialCreditMethod: "proportional",
-              penaltyForWrongAnswer: 0
-            })
-          });
-          
-          // Load questions if exam has an ID
-          if (examData.id) {
-            loadExamQuestions(examData.id);
-          }
-        }
-      } catch (directError) {
-        console.error('Direct API call failed:', directError);
-        
-        // Fallback to Redux
-        try {
-          console.log('Falling back to Redux action');
-          await dispatch(fetchExamDetails(examId));
-          
-          // After dispatching, we can use useSelector to get updated state
-          // But since we can't use hooks conditionally, we'll just use the current exam from redux
-          const examFromRedux = currentExam;
-          console.log('Exam from Redux after dispatch:', examFromRedux);
-          
-          if (examFromRedux) {
-            // Format dates properly
-            const startTime = examFromRedux.startTime ? new Date(examFromRedux.startTime).toISOString().slice(0, 16) : '';
-            const endTime = examFromRedux.endTime ? new Date(examFromRedux.endTime).toISOString().slice(0, 16) : '';
-            
-            setFormData({
-              title: examFromRedux.title || '',
-              description: examFromRedux.description || '',
-              subjectId: String(examFromRedux.subjectId || ''),
-              examTypeId: examFromRedux.examTypeId || 2,
-              difficulty: examFromRedux.difficulty || 'medium',
-              duration: examFromRedux.duration || 60,
-              totalScore: examFromRedux.totalScore || 10,
-              passScore: examFromRedux.passScore || 5,
-              maxAttempts: examFromRedux.maxAttempts || 1,
-              startTime: startTime,
-              endTime: endTime,
-              isActive: examFromRedux.isActive !== false,
-              showResult: examFromRedux.showResult !== false,
-              showAnswers: examFromRedux.showAnswers || false,
-              shuffleQuestions: examFromRedux.shuffleQuestions !== false,
-              shuffleOptions: examFromRedux.shuffleOptions !== false,
-              autoGradeShortAnswer: examFromRedux.autoGradeShortAnswer !== false,
-              allowPartialGrading: examFromRedux.allowPartialGrading !== false,
-              instructions: examFromRedux.instructions || '',
-              accessCode: examFromRedux.accessCode || '',
-              scoringConfig: examFromRedux.scoringConfig || JSON.stringify({
-                gradingMethod: "sum",
-                partialCreditMethod: "proportional",
-                penaltyForWrongAnswer: 0
-              })
-            });
-            
-            if (examFromRedux.id) {
-              loadExamQuestions(examFromRedux.id);
-            }
-          } else {
-            throw new Error('No data returned from Redux store');
-          }
-        } catch (error) {
-          console.error('Error loading exam with Redux:', error);
-          showErrorToast('Không thể tải dữ liệu đề thi: ' + error.message);
-        }
-      } finally {
-        setIsLoadingExamData(false);
-      }
-    };
+  const loadExamData = async () => {
+    if (!examId) {
+      console.log('No examId provided');
+      setIsLoadingExamData(false);
+      return;
+    }
     
-    loadExamData();
-  }, [examId, dispatch, currentExam]);
+    console.log(`Loading exam data for ID: ${examId}`);
+    setIsLoadingExamData(true);
+    
+    try {
+      console.log('Making API call to get exam data with questions');
+      // Use the WithQuestions endpoint to get exam with questions in one call
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5006/api/Exam/WithQuestions/${examId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load exam: ${response.status}`);
+      }
+      
+      const examData = await response.json();
+      console.log('Exam data with questions received:', examData);
+      
+      if (!examData || !examData.id) {
+        throw new Error('Invalid exam data received');
+      }
+      
+      // Format dates properly if they exist
+      const startTime = examData.startTime ? new Date(examData.startTime).toISOString().slice(0, 16) : '';
+      const endTime = examData.endTime ? new Date(examData.endTime).toISOString().slice(0, 16) : '';
+      
+      setFormData({
+        title: examData.title || '',
+        description: examData.description || '',
+        subjectId: examData.subject ? String(examData.subject.id) : '',
+        examTypeId: examData.type === 'Kiểm tra 1 tiết' ? 2 : 1,
+        difficulty: examData.difficulty || 'medium',
+        duration: examData.duration || 60,
+        totalScore: examData.totalScore || 10,
+        passScore: examData.passScore || 5,
+        maxAttempts: examData.maxAttempts || 1,
+        startTime: startTime,
+        endTime: endTime,
+        isActive: examData.isActive !== false,
+        showResult: examData.showResult !== false,
+        showAnswers: examData.showAnswers || false,
+        shuffleQuestions: examData.shuffleQuestions !== false,
+        shuffleOptions: examData.shuffleOptions !== false,
+        autoGradeShortAnswer: examData.autoGradeShortAnswer !== false,
+        allowPartialGrading: examData.allowPartialGrading !== false,
+        instructions: examData.instructions || '',
+        accessCode: examData.accessCode || '',
+        scoringConfig: examData.scoringConfig || JSON.stringify({
+          gradingMethod: "sum",
+          partialCreditMethod: "proportional",
+          penaltyForWrongAnswer: 0
+        })
+      });
+      
+      // Use the questions from the response directly
+      if (examData.questions && Array.isArray(examData.questions)) {
+        const formattedQuestions = examData.questions.map(q => ({
+          id: q.id,
+          questionId: q.id,
+          examQuestionId: q.examQuestionId,
+          content: q.content,
+          difficulty: q.difficulty || 'medium',
+          score: q.score || 1,
+          orderIndex: q.orderIndex || 0,
+          order: q.orderIndex || 0
+        }));
+        
+        setSelectedQuestions(formattedQuestions);
+      }
+      
+      showSuccessToast('Đã tải dữ liệu đề thi thành công');
+    } catch (error) {
+      console.error('Error loading exam data:', error);
+      showErrorToast('Không thể tải dữ liệu đề thi: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsLoadingExamData(false);
+    }
+  };
+  
+  loadExamData();
+}, [examId, dispatch]);
 
   console.log('Rendering EditExam with loading state:', isLoadingExamData);
   
@@ -474,43 +464,129 @@ const EditExam = () => {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Add this function to the EditExam component to properly format dates
+const formatDate = (dateString) => {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  } catch (e) {
+    console.error('Date formatting error:', e);
+    return null;
+  }
+};
+
+// Replace your current handleSubmit function with this version
+const handleSubmit = (e) => {
+  e.preventDefault();
+  
+  if (validateForm()) {
+    setIsSubmitting(true);
     
-    if (validateForm()) {
-      setIsSubmitting(true);
-      
-      // Xử lý câu hỏi đã chọn
-      const questionsToSubmit = selectedQuestions.map((q, index) => ({
-        questionId: q.id || q.questionId,
-        order: index + 1,
-        score: q.score || 1
-      }));
-      
-      const examData = {
-        ...formData,
-        id: examId, // Đảm bảo có ID của đề thi
-        subjectId: Number(formData.subjectId),
-        questions: questionsToSubmit
-      };
-      
-      dispatch(updateExam(examData))
-        .then((result) => {
-          if (result.meta.requestStatus === 'fulfilled') {
-            showSuccessToast('Cập nhật đề thi thành công!');
-            navigate('/admin/exams');
-          } else if (result.meta.requestStatus === 'rejected') {
-            showErrorToast(result.payload || 'Có lỗi xảy ra khi cập nhật đề thi');
-          }
-        })
-        .catch((error) => {
-          showErrorToast(error.message || 'Có lỗi xảy ra khi cập nhật đề thi');
-        })
-        .finally(() => {
-          setIsSubmitting(false);
-        });
+    // Format questions properly using the original questionId and score
+    const questionsToSubmit = selectedQuestions.map((q, index) => ({
+      questionId: parseInt(q.id || q.questionId),
+      order: index + 1,
+      score: parseFloat(q.score || 1)
+    }));
+    
+    // Validate that we have questions
+    if (questionsToSubmit.length === 0) {
+      setErrors(prev => ({...prev, questions: 'Vui lòng chọn ít nhất một câu hỏi cho đề thi'}));
+      setIsSubmitting(false);
+      return;
     }
-  };
+    
+    // Format dates properly for API
+    const formattedStartTime = formData.startTime ? formatDate(formData.startTime) : null;
+    const formattedEndTime = formData.endTime ? formatDate(formData.endTime) : null;
+
+    // Create a single update request with questions included
+    // Make sure the structure matches what the API expects
+    const examData = {
+      id: parseInt(examId),
+      title: formData.title.trim(),
+      description: formData.description?.trim() || '',
+      subjectId: parseInt(formData.subjectId),
+      examTypeId: parseInt(formData.examTypeId) || 2,
+      difficulty: formData.difficulty || 'medium',
+      duration: parseInt(formData.duration) || 60,
+      totalScore: parseFloat(formData.totalScore) || 10,
+      passScore: parseFloat(formData.passScore) || 5,
+      maxAttempts: parseInt(formData.maxAttempts) || 1,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
+      isActive: formData.isActive === true,
+      showResult: formData.showResult === true,
+      showAnswers: formData.showAnswers === true,
+      shuffleQuestions: formData.shuffleQuestions === true,
+      shuffleOptions: formData.shuffleOptions === true,
+      autoGradeShortAnswer: formData.autoGradeShortAnswer === true,
+      allowPartialGrading: formData.allowPartialGrading === true,
+      instructions: formData.instructions || '',
+      accessCode: formData.accessCode || '',
+      scoringConfig: formData.scoringConfig || JSON.stringify({
+        gradingMethod: "sum",
+        partialCreditMethod: "proportional",
+        penaltyForWrongAnswer: 0
+      }),
+      questions: questionsToSubmit
+    };
+    
+    console.log('Sending update data:', examData);
+    
+    // Make a single API request including questions
+    const token = localStorage.getItem('token');
+    fetch(`http://localhost:5006/api/Exam/${examId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(examData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        // Try to get detailed error information
+        return response.json().then(errorData => {
+          console.error('API Error response:', errorData);
+          
+          // Extract validation errors from the response
+          if (errorData.errors) {
+            const errorMessages = [];
+            for (const field in errorData.errors) {
+              errorMessages.push(`${field}: ${errorData.errors[field].join(', ')}`);
+            }
+            throw new Error(errorMessages.join(' | '));
+          }
+          
+          throw new Error(`Failed to update exam: ${response.status}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Exam update successful:', data);
+      showSuccessToast('Cập nhật đề thi thành công!');
+      navigate('/admin/exams');
+    })
+    .catch(error => {
+      console.error('Update error details:', error);
+      
+      if (error.name === 'SyntaxError') {
+        // Handle case where the server response isn't valid JSON
+        showErrorToast('Server returned an invalid response');
+      } else {
+        showErrorToast(error.message || 'Không thể cập nhật đề thi');
+      }
+    })
+    .finally(() => {
+      setIsSubmitting(false);
+    });
+  }
+};
   
   const handleCancel = () => {
     navigate('/admin/exams');

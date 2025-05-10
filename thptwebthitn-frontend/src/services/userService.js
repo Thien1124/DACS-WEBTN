@@ -1,3 +1,4 @@
+import axios from 'axios';
 import apiClient from './apiClient';
 import { updateUserProfile } from '../services/authService'; // Import từ authService
 
@@ -130,23 +131,90 @@ export const getUserProfile = async () => {
  * Update user profile
  */
 export { updateUserProfile };
-  export const uploadAvatar = async (formData) => {
-    try {
-      const response = await apiClient.post('/api/User/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Tải lên ảnh đại diện thất bại.' };
+
+/**
+ * Upload avatar
+ */
+export const uploadAvatar = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('No authentication token found');
+      return { success: false, message: 'Bạn cần đăng nhập lại để thực hiện chức năng này' };
     }
-  };
-  export const getUserActivity = async () => {
-    try {
-      const response = await apiClient.get('/api/User/activity');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Không thể lấy nhật ký hoạt động.' };
+    
+    // Log the form data for debugging
+    console.log('Form data file:', file.name, file.type, file.size);
+    
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5006';
+    
+    // Use apiClient instead of direct axios for better token handling
+    const response = await axios.post(`${API_URL}/api/User/avatar`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    console.log('Avatar upload response:', response.data);
+    
+    return {
+      success: true,
+      avatarUrl: response.data.avatarUrl,
+      message: response.data.message
+    };
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    console.error('Response details:', error.response?.data);
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Lỗi khi tải lên ảnh đại diện'
+    };
+  }
+};
+
+/**
+ * Upload avatar using base64
+ */
+export const uploadAvatarBase64 = async (base64Image, fileName, fileType) => {
+  try {
+    // Chuyển đổi base64 string thành Blob
+    const base64Content = base64Image.split(',')[1];
+    const byteCharacters = atob(base64Content);
+    const byteArrays = [];
+    
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteArrays.push(byteCharacters.charCodeAt(i));
     }
-  };
+    
+    const byteArray = new Uint8Array(byteArrays);
+    const blob = new Blob([byteArray], { type: fileType });
+    const file = new File([blob], fileName, { type: fileType });
+    
+    // Sử dụng phương thức upload file thông thường
+    return await uploadAvatar(file);
+  } catch (error) {
+    console.error('Error in base64 upload:', error);
+    return {
+      success: false,
+      message: 'Không thể tải lên ảnh đại diện từ dữ liệu base64'
+    };
+  }
+};
+
+/**
+ * Get user activity
+ */
+export const getUserActivity = async () => {
+  try {
+    const response = await apiClient.get('/api/User/activity');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Không thể lấy nhật ký hoạt động.' };
+  }
+};

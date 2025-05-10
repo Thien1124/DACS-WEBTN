@@ -11,7 +11,7 @@ import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
 // Import thêm icons
-import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments } from 'react-icons/fa';
+import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments, FaFlag } from 'react-icons/fa';
 import NotificationBadge from '../notifications/NotificationBadge';
 
 // Styled components hiện tại...
@@ -170,6 +170,13 @@ const UserAvatar = styled.div`
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  overflow: hidden; /* Add this to contain the image */
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const UserDropdown = styled(motion.div)`
@@ -460,6 +467,54 @@ function Header() {
     return path !== '/' && currentPath.startsWith(path);
   };
 
+  // Add this function before the return statement
+  useEffect(() => {
+    const fetchAndUpdateUserData = async () => {
+      // Only execute if user is logged in but missing avatar
+      if (isAuthenticated && user?.id && !user.avatarUrl) {
+        try {
+          console.log('Fetching fresh user data for avatar');
+          // You'll need to import this from your authService
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/user/${user.id}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            console.log('Fresh user data:', userData);
+            
+            if (userData.avatarUrl) {
+              // Update Redux with complete user data
+              dispatch(updateUser({
+                ...user,
+                avatarUrl: userData.avatarUrl
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+    
+    fetchAndUpdateUserData();
+  }, [isAuthenticated, user?.id]);
+
+  // Add this useEffect
+  useEffect(() => {
+    // Check if we have avatar info in localStorage
+    const userData = JSON.parse(localStorage.getItem('user_data'));
+    if (userData && userData.avatarUrl && (!user.avatarUrl || user.avatarUrl !== userData.avatarUrl)) {
+      console.log('Updating user avatar from localStorage:', userData.avatarUrl);
+      dispatch(updateUser({
+        ...user,
+        avatarUrl: userData.avatarUrl
+      }));
+    }
+  }, []);
+
   return (
     <>
       <HeaderContainer theme={theme}>
@@ -501,7 +556,19 @@ function Header() {
               <UserProfile className="user-dropdown-container">
                 <UserButton theme={theme} onClick={handleToggleUserDropdown}>
                   <UserAvatar>
-                    {getInitials(user?.fullName || user?.username)}
+                    {user?.avatar || user?.avatarUrl ? (
+                      <img 
+                        src={`${process.env.REACT_APP_API_URL || 'http://localhost:5006'}${(user.avatar || user.avatarUrl)?.startsWith('/') ? '' : '/'}${user.avatar || user.avatarUrl}`} 
+                        alt={user.fullName || 'Avatar'} 
+                        onError={(e) => {
+                          console.error('Avatar load failed:', e.target.src);
+                          e.target.style.display = 'none';
+                          e.target.parentNode.innerText = getInitials(user?.fullName || user?.username);
+                        }}
+                      />
+                    ) : (
+                      getInitials(user?.fullName || user?.username)
+                    )}
                   </UserAvatar>
                   <span>{getDisplayName()}</span>
                 </UserButton>
@@ -589,6 +656,10 @@ function Header() {
                           </DropdownItem>
                           <DropdownItem to="/admin/notifications" className={({ isActive }) => isActive ? "active" : ""}>
                             <FaBell /> Quản lý thông báo
+                          </DropdownItem>
+                          <DropdownItem to="/admin/feedbacks" theme={theme}>
+                            <FaFlag />
+                            Phản hồi học sinh
                           </DropdownItem>
                           <DropdownItem to={`/student/analytics/${user.id}`} theme={theme}>
                             <FaChartBar />

@@ -2,12 +2,10 @@ import apiClient from './apiClient';
 import { getAllTests, getTeacherTests } from './testService';
 
 import { 
-  mockGetExams, 
   mockGetExamById, 
   mockCreateExam, 
   mockUpdateExam,
-  mockDeleteExam,
-  mockApproveExam
+  mockDeleteExam
 } from '../data/mockExamService';
 
 import axios from 'axios';
@@ -184,24 +182,14 @@ export const getExamWithQuestions = async (examId) => {
   }
 };
 
-
 export const getExamDetails = async (examId) => {
   try {
-    console.log(`Fetching exam ${examId} details from API`);
-    // Try both endpoints because you might have different API paths
-    let response;
-    
-    try {
-      response = await apiClient.get(`/api/Exam/${examId}`);
-    } catch (e) {
-      console.log('First endpoint failed, trying alternative');
-      response = await apiClient.get(`/api/Exams/${examId}`);
-    }
-    
-    console.log('API response for exam details:', response);
-    return response.data;
+    console.log(`Fetching exam details for ID: ${examId}`);
+    const response = await apiClient.get(`/api/Exam/${examId}`);
+    console.log('Raw API response:', response);
+    return response.data; // Return the data directly, not wrapped in success/data structure
   } catch (error) {
-    console.error(`Failed to get exam ${examId} details:`, error);
+    console.error(`Error fetching exam details for ID ${examId}:`, error);
     throw error;
   }
 };

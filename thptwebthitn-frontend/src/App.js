@@ -140,6 +140,12 @@ import EditOfficialExam from './components/admin/EditOfficialExam';
 // Add this import at the top
 import OfficialExamResults from './components/admin/OfficialExamResults';
 
+// First, import the MaterialDetails component at the top of your file with the other imports
+import MaterialDetails from './pages/teacher/MaterialDetails';
+
+// Import the FeedbackManagement component at the top
+import FeedbackManagement from './pages/admin/FeedbackManagement';
+
 const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme === 'dark' ? '#121212' : '#f7f7f7'};
@@ -662,6 +668,20 @@ function App() {
                   <AdminRoute>
                     <OfficialExamResults />
                   </AdminRoute>
+                } />
+                
+                {/* Add this new route */}
+                <Route path="/teacher/materials/:id" element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
+                    <MaterialDetails />
+                  </ProtectedRoute>
+                } />
+
+                {/* Then add this route in your Routes section */}
+                <Route path="/admin/feedbacks" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <FeedbackManagement />
+                  </ProtectedRoute>
                 } />
                 
                 </Route>

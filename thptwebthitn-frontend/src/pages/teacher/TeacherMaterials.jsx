@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { API_URL } from '../../config/constants';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   FaFileUpload, 
   FaVideo, 
@@ -908,6 +909,11 @@ const TeacherMaterials = () => {
   
   const fileInputRef = useRef(null);
   
+  // Add these state variables after your existing state declarations (around line 884)
+  const [chapters, setChapters] = useState([]);
+  const [loadingChapters, setLoadingChapters] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState('0');
+
   // Fetch subjects from API
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -941,6 +947,44 @@ const TeacherMaterials = () => {
     
     fetchSubjects();
   }, []);
+  
+  // Add this useEffect hook to fetch chapters when subject changes
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (!materialSubject) {
+        setChapters([]);
+        return;
+      }
+      
+      setLoadingChapters(true);
+      try {
+        // Use API endpoint to fetch chapters by subject
+        const response = await axios.get(`${API_URL}/api/Chapter`, {
+          params: {
+            subjectId: materialSubject,
+            page: 1,
+            pageSize: 50,
+            includeInactive: false
+          }
+        });
+        
+        console.log('Chapters response:', response.data);
+        
+        if (response.data && response.data.data) {
+          setChapters(response.data.data);
+        } else {
+          setChapters([]);
+        }
+      } catch (error) {
+        console.error('Error fetching chapters:', error);
+        setChapters([]);
+      } finally {
+        setLoadingChapters(false);
+      }
+    };
+    
+    fetchChapters();
+  }, [materialSubject]);
   
   // Handle file upload
   const handleFileUpload = (e) => {
@@ -995,11 +1039,12 @@ const TeacherMaterials = () => {
       setLoading(true);
       
       try {
-        // Prepare query parameters
+        // Prepare query parameters - use actual API params
         const params = {
-          type: activeTab === 'documents' ? 'document' : 'video',
-          search: searchTerm || undefined,
           subjectId: selectedSubject || undefined,
+          chapterId: undefined, // Add this if you want to filter by chapter
+          documentType: undefined, // Add this if you want to filter by document type
+          search: searchTerm || undefined,
           page: currentPage,
           pageSize: 12
         };
@@ -1007,90 +1052,15 @@ const TeacherMaterials = () => {
         // Call the API
         const response = await getMaterials(params);
         
-        // Update the state with the response
+        // Update the state with the response data
         setMaterials(response.items || []);
         
-        // Update pagination if needed
-        if (response.totalPages) {
-          // You might need to add pagination state if not already present
-        }
+        // You can add pagination state update here if needed
+        // setTotalPages(response.totalPages);
       } catch (error) {
         console.error('Error fetching materials:', error);
-        // Fallback to mock data if API fails
-        const mockData = [
-          {
-            id: 1,
-            type: 'pdf',
-            title: 'Tài liệu ôn tập Toán học - Đại số và Giải tích',
-            subject: 'math',
-            description: 'Tài liệu tổng hợp các công thức và bài tập ôn tập trước kỳ thi',
-            date: '2025-04-25',
-            size: 2500000,
-            url: '#',
-            thumbnail: null,
-            tags: ['đại số', 'giải tích', 'luyện thi']
-          },
-          {
-            id: 2,
-            type: 'youtube',
-            title: 'Hướng dẫn giải các dạng bài tập Vật lý THPT Quốc gia',
-            subject: 'physics',
-            description: 'Video hướng dẫn chi tiết cách giải các dạng bài tập thường gặp',
-            date: '2025-04-23',
-            url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-            thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
-            tags: ['vật lý', 'bài tập', 'luyện thi']
-          },
-          {
-            id: 3,
-            type: 'docx',
-            title: 'Tài liệu tổng hợp câu hỏi trắc nghiệm Hóa học',
-            subject: 'chemistry',
-            description: 'Bộ câu hỏi trắc nghiệm theo từng chuyên đề hóa học',
-            date: '2025-04-21',
-            size: 1850000,
-            url: '#',
-            thumbnail: null,
-            tags: ['hóa học', 'trắc nghiệm', 'chuyên đề']
-          },
-          {
-            id: 4,
-            type: 'youtube',
-            title: 'Phương pháp làm bài thi Tiếng Anh hiệu quả',
-            subject: 'english',
-            description: 'Giải mã các chiến thuật làm bài thi tiếng Anh đạt điểm cao',
-            date: '2025-04-20',
-            url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-            thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
-            tags: ['tiếng anh', 'kỹ năng', 'phương pháp']
-          },
-          {
-            id: 5,
-            type: 'pdf',
-            title: 'Đề cương ôn tập Văn học',
-            subject: 'literature',
-            description: 'Tổng hợp kiến thức trọng tâm và đề cương các tác phẩm văn học',
-            date: '2025-04-18',
-            size: 3200000,
-            url: '#',
-            thumbnail: null,
-            tags: ['văn học', 'đề cương', 'ôn tập']
-          },
-          {
-            id: 6,
-            type: 'xlsx',
-            title: 'Bảng tổng hợp công thức Hóa học THPT',
-            subject: 'chemistry',
-            description: 'File Excel tổng hợp công thức hóa học cần nhớ',
-            date: '2025-04-15',
-            size: 980000,
-            url: '#',
-            thumbnail: null,
-            tags: ['hóa học', 'công thức', 'tổng hợp']
-          }
-        ];
-        // Filter logic remains the same
-        setMaterials(mockData);
+        showErrorToast('Không thể tải danh sách tài liệu');
+        setMaterials([]);
       } finally {
         setLoading(false);
       }
@@ -1108,76 +1078,83 @@ const TeacherMaterials = () => {
     try {
       setIsSubmitting(true);
       
-      // Create form data for upload
+      // Create form data for upload - this needs to match API specifications
       const formData = new FormData();
       
-      // Add common fields
-      formData.append('title', materialTitle);
-      formData.append('description', materialDescription);
-      formData.append('subjectId', materialSubject);
-      formData.append('tags', JSON.stringify(tags));
-      
-      let response;
-      
       if (materialType === 'document') {
-        // Upload documents
+        // Document upload
         if (selectedFiles.length === 0) {
           showErrorToast('Vui lòng chọn ít nhất một tệp tài liệu');
           setIsSubmitting(false);
           return;
         }
         
-        // Append each file to the form data
-        selectedFiles.forEach(fileData => {
-          formData.append('files', fileData.file);
-        });
+        // IMPORTANT: API requires 'file' field
+        formData.append('file', selectedFiles[0].file);
         
-        response = await uploadMaterial(formData);
+        // Required field: title
+        formData.append('title', materialTitle);
+        
+        // Optional fields
+        if (materialDescription) {
+          formData.append('description', materialDescription);
+        }
+        
+        if (materialSubject) {
+          formData.append('subjectId', parseInt(materialSubject)); // Ensure it's an integer
+        }
+        
+        // Add chapterId (optional field required by API)
+        formData.append('chapterId', parseInt(selectedChapter || 0)); // You can set a default value or add UI to select chapter
+        
+        // Add documentType - Get file extension instead of MIME type
+        const fileExt = selectedFiles[0].name.split('.').pop().toLowerCase();
+        formData.append('documentType', fileExt);
+        
+        // Tags as a comma-separated string
+        if (tags.length > 0) {
+          formData.append('tags', tags.join(','));
+        }
+        
+        // Debug what's being sent
+        console.log('Uploading with FormData:');
+        for (let pair of formData.entries()) {
+          console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
+        }
+        
+        // Send the API request
+        const response = await uploadMaterial(formData);
+        
+        // Handle successful upload
+        if (response) {
+          showSuccessToast('Tài liệu đã được tải lên thành công');
+          // Reset form and close modal
+          setSelectedFiles([]);
+          setMaterialTitle('');
+          setMaterialDescription('');
+          setMaterialSubject('');
+          setTags([]);
+          setShowAddModal(false);
+          setSelectedChapter('0');
+        }
       } else {
-        // Upload video (YouTube URL)
+        // YouTube video upload code remains the same
         if (!youtubeUrl) {
           showErrorToast('Vui lòng nhập URL YouTube');
           setIsSubmitting(false);
           return;
         }
         
+        formData.append('title', materialTitle);
+        formData.append('description', materialDescription);
+        formData.append('subjectId', materialSubject);
+        formData.append('tags', JSON.stringify(tags));
         formData.append('youtubeUrl', youtubeUrl);
-        response = await uploadVideo(formData);
+        const response = await uploadVideo(formData);
       }
-      
-      showSuccessToast(`${materialType === 'document' ? 'Tài liệu' : 'Video'} đã được tải lên thành công`);
-      
-      // Add the new material to the list
-      setMaterials(prev => [
-        {
-          id: response.id,
-          type: materialType === 'document' ? selectedFiles[0]?.type || 'pdf' : 'youtube',
-          title: materialTitle,
-          subject: materialSubject,
-          description: materialDescription,
-          date: new Date().toISOString().split('T')[0],
-          size: selectedFiles[0]?.size || 0,
-          url: response.url || '#',
-          thumbnail: materialType === 'youtube' ? response.thumbnail : null,
-          tags: tags
-        },
-        ...prev
-      ]);
-      
-      // Reset form
-      setMaterialType('document');
-      setSelectedFiles([]);
-      setYoutubeUrl('');
-      setMaterialTitle('');
-      setMaterialDescription('');
-      setMaterialSubject('');
-      setTags([]);
-      
-      // Close modal
-      setShowAddModal(false);
     } catch (error) {
       console.error('Error uploading material:', error);
-      showErrorToast(`Không thể tải lên ${materialType === 'document' ? 'tài liệu' : 'video'}. Vui lòng thử lại.`);
+      showErrorToast(`Không thể tải lên tài liệu. Vui lòng thử lại.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -1309,10 +1286,13 @@ const TeacherMaterials = () => {
             {materials.map(material => (
               <MaterialCard key={material.id} theme={theme}>
                 <CardPreview theme={theme}>
-                  {material.type === 'youtube' ? (
-                    <img src={material.thumbnail} alt={material.title} />
+                  {material.thumbnailUrl ? (
+                    <img 
+                      src={`${API_URL}${material.thumbnailUrl}`} 
+                      alt={material.title} 
+                    />
                   ) : (
-                    getFileIcon(material.type)
+                    getFileIcon(material.fileType || material.documentType)
                   )}
                 </CardPreview>
                 <CardContent>
@@ -1320,26 +1300,35 @@ const TeacherMaterials = () => {
                   <CardMeta>
                     <CardMetaItem theme={theme}>
                       <FaLayerGroup />
-                      {subjects.find(s => s.id === material.subject)?.name}
+                      {material.subjectName}
                     </CardMetaItem>
                     <CardMetaItem theme={theme}>
-                      {material.type !== 'youtube' ? (
-                        formatBytes(material.size)
-                      ) : (
-                        <FaYoutube />
-                      )}
+                      {formatBytes(material.fileSize)}
                     </CardMetaItem>
                   </CardMeta>
+                  
+                  {material.chapterName && (
+                    <CardMetaItem theme={theme} style={{marginBottom: '0.5rem'}}>
+                      <FaBook />
+                      {material.chapterName}
+                    </CardMetaItem>
+                  )}
+                  
                   <CardTags>
-                    {material.tags.map((tag, index) => (
+                    {material.tags && material.tags.split(',').map((tag, index) => (
                       <Tag key={index} theme={theme}>
                         <FaTag />
-                        {tag}
+                        {tag.trim()}
                       </Tag>
                     ))}
                   </CardTags>
                   <CardActions>
-                    <ActionButton theme={theme} action="view">
+                    <ActionButton 
+                      theme={theme} 
+                      action="view"
+                      as={Link}
+                      to={`/teacher/materials/${material.id}`}
+                    >
                       <FaEye />
                       Xem
                     </ActionButton>
@@ -1543,6 +1532,28 @@ const TeacherMaterials = () => {
                       </FormSelect>
                     </FormGroup>
                     
+                    {/* Add this FormGroup after the subject selection in your form (around line 1139) */}
+                    <FormGroup>
+                      <FormLabel theme={theme}>Chương/Chuyên đề</FormLabel>
+                      <FormSelect 
+                        theme={theme} 
+                        value={selectedChapter}
+                        onChange={(e) => setSelectedChapter(e.target.value)}
+                        disabled={loadingChapters || !materialSubject}
+                      >
+                        <option value="0">Không thuộc chương cụ thể</option>
+                        {loadingChapters ? (
+                          <option value="" disabled>Đang tải chương...</option>
+                        ) : (
+                          chapters.map(chapter => (
+                            <option key={chapter.id} value={chapter.id}>
+                              {chapter.name}
+                            </option>
+                          ))
+                        )}
+                      </FormSelect>
+                    </FormGroup>
+
                     <FormGroup>
                       <FormLabel theme={theme}>Thẻ gắn</FormLabel>
                       <TagInput theme={theme}>

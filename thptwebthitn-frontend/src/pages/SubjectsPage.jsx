@@ -501,11 +501,11 @@ const SubjectsPage = () => {
   const themeFromStore = useSelector((state) => state.ui?.theme);
   const [theme, setTheme] = useState(themeFromStore || "light");
   // Cập nhật thời gian và user
-  const currentTime = "2025-04-13 16:20:29";
-  const currentUser = "vinhsonvlog";
+  const currentTime = new Date().toLocaleTimeString("vi-VN");
+  const user = useSelector(state => state.auth.user);
+  const currentUser = user?.username;
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const { user } = useSelector(state => state.auth);
   const formatRole = (role) => {
     if (!role) return 'Học sinh';
     
@@ -848,15 +848,7 @@ const SubjectsPage = () => {
           />
         )}
         
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Danh sách môn học</h2>
-          <div>
-            <Button as={Link} to="/leaderboard/subjects" variant="outline-warning" className="me-2">
-              <FaTrophy className="me-1" /> Bảng xếp hạng học sinh
-            </Button>
-            {/* Other existing buttons */}
-          </div>
-        </div>
+       
         <PageTitle theme={theme}>Danh sách môn học</PageTitle>
         <UserInfo theme={theme}>
         <span>{formatRole(user?.role)}</span>
@@ -865,18 +857,9 @@ const SubjectsPage = () => {
         </span>
         </UserInfo>
 
-        {/* API connection status */}
-        <EndpointStatus connected={apiConnected}>
-          {apiConnected
-            ? "API kết nối thành công"
-            : "Không thể kết nối đến API"}
-        </EndpointStatus>
-
-        {/* Navigation and filters... */}
         <SubjectNavigation theme={theme} showOnlyCreateButton={hasEditAccess()} />
 
         <FiltersContainer theme={theme}>
-          <FiltersTitle theme={theme}>Tìm kiếm môn học phù hợp</FiltersTitle>
           <FiltersGrid>
             <FilterGroup>
               <FilterLabel theme={theme}>Tìm kiếm theo tên</FilterLabel>

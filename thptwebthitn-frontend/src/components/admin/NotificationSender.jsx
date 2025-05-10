@@ -191,6 +191,7 @@ const NotificationSender = () => {
       // Chuyển đổi userIds từ chuỗi sang mảng số
       const processedData = {
         ...formData,
+        type: parseInt(formData.type),
         userIds: formData.userIds
           ? formData.userIds
               .split(',')

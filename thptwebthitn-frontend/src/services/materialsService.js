@@ -8,7 +8,16 @@ import apiClient from './apiClient';
 export const getMaterials = async (params = {}) => {
   try {
     const response = await apiClient.get('/api/materials/documents', { params });
-    return response.data;
+    
+    console.log('Materials API response:', response.data);
+    
+    // Return formatted data to match component expectations
+    return {
+      items: response.data.data || [],
+      totalItems: response.data.totalCount || 0,
+      totalPages: response.data.pageCount || 0,
+      currentPage: response.data.currentPage || 1
+    };
   } catch (error) {
     console.error('Error fetching materials:', error);
     throw error;
@@ -25,7 +34,7 @@ export const getMaterialById = async (id) => {
     const response = await apiClient.get(`/api/materials/documents/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching material ${id}:`, error);
+    console.error('Error fetching material details:', error);
     throw error;
   }
 };
@@ -37,14 +46,26 @@ export const getMaterialById = async (id) => {
  */
 export const uploadMaterial = async (formData) => {
   try {
+    // Log FormData for debugging
+    console.log('Uploading with form data:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
+    }
+    
+    // CRITICAL: The API endpoint is /api/materials/documents/upload
     const response = await apiClient.post('/api/materials/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    
     return response.data;
   } catch (error) {
     console.error('Error uploading material:', error);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Status code:', error.response.status);
+    }
     throw error;
   }
 };

@@ -55,6 +55,7 @@ const authSlice = createSlice({
     updateAvatar: (state, action) => {
       if (state.user) {
         state.user.avatar = action.payload;
+        state.user.avatarUrl = action.payload;
       }
     },
     updateUser: (state, action) => {
