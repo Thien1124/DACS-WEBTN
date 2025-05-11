@@ -965,6 +965,55 @@
             <response code="200">Trả về thông tin thống kê theo môn học thành công</response>
             <response code="401">Không có quyền truy cập</response>
         </member>
+        <member name="T:webthitn_backend.Controllers.StudentExamController">
+            <summary>
+            API để học sinh truy cập và làm bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.Extensions.Logging.ILogger{webthitn_backend.Controllers.StudentExamController})">
+            <summary>
+            Khởi tạo controller với các dependency
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.GetAssignedExams(System.String,System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách kỳ thi chính thức mà học sinh được phân công
+            </summary>
+            <param name="status">Trạng thái kỳ thi (all, active, upcoming, completed)</param>
+            <param name="page">Số trang</param>
+            <param name="pageSize">Số bản ghi mỗi trang</param>
+            <returns>Danh sách kỳ thi được phân công</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.TakeExam(System.Int32)">
+            <summary>
+            Lấy thông tin chi tiết kỳ thi để làm bài
+            </summary>
+            <param name="officialExamId">ID của kỳ thi chính thức</param>
+            <returns>Thông tin chi tiết kỳ thi và đề thi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.SubmitExam(System.Int32,webthitn_backend.Controllers.StudentSubmitExamDTO)">
+            <summary>
+            Nộp bài thi
+            </summary>
+            <param name="officialExamId">ID của kỳ thi chính thức</param>
+            <param name="model">Dữ liệu bài làm</param>
+            <returns>Kết quả bài thi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.GetExamResult(System.Int32)">
+            <summary>
+            Lấy kết quả bài thi
+            </summary>
+            <param name="officialExamId">ID của kỳ thi chính thức</param>
+            <returns>Kết quả bài thi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.GetExamResults(System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách kết quả thi của học sinh
+            </summary>
+            <param name="page">Số trang</param>
+            <param name="pageSize">Số bản ghi mỗi trang</param>
+            <returns>Danh sách kết quả thi</returns>
+        </member>
         <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjects(System.Int32,System.Int32,System.Boolean,System.String)">
             <summary>
             Lấy danh sách môn học có phân trang
@@ -3810,25 +3859,25 @@
             <summary>
             ID của bài thi
             </summary>
-            <example>15</example>
+            <example>14</example>
         </member>
         <member name="P:webthitn_backend.DTOs.SubmitExamDTO.StartTime">
             <summary>
             Thời gian bắt đầu làm bài
             </summary>
-            <example>2025-04-12T06:30:00Z</example>
+            <example>2025-04-28T08:35:05Z</example>
         </member>
         <member name="P:webthitn_backend.DTOs.SubmitExamDTO.EndTime">
             <summary>
             Thời gian kết thúc làm bài
             </summary>
-            <example>2025-04-12T07:15:00Z</example>
+            <example>2025-04-28T08:50:05</example>
         </member>
         <member name="P:webthitn_backend.DTOs.SubmitExamDTO.Notes">
             <summary>
             Ghi chú của học sinh
             </summary>
-            <example>Tôi gặp khó khăn với câu hỏi số 5</example>
+            <example>Bài làm kiểm tra địa lý 15 phút</example>
         </member>
         <member name="P:webthitn_backend.DTOs.SubmitExamDTO.SessionId">
             <summary>
@@ -3862,45 +3911,45 @@
             <summary>
             ID của câu hỏi
             </summary>
-            <example>42</example>
+            <example>27</example>
         </member>
         <member name="P:webthitn_backend.DTOs.AnswerSubmissionDTO.StartTime">
             <summary>
             Thời gian bắt đầu trả lời câu hỏi
             </summary>
-            <example>2025-04-12T06:35:20Z</example>
+            <example>2025-04-28T08:35:05Z</example>
         </member>
         <member name="P:webthitn_backend.DTOs.AnswerSubmissionDTO.EndTime">
             <summary>
             Thời gian kết thúc trả lời câu hỏi
             </summary>
-            <example>2025-04-12T06:36:05Z</example>
+            <example>2025-04-28T08:50:05</example>
         </member>
         <member name="P:webthitn_backend.DTOs.AnswerSubmissionDTO.SelectedOptionId">
             <summary>
             ID của đáp án được chọn (cho câu hỏi một đáp án)
             </summary>
-            <example>15</example>
+            <example>39</example>
         </member>
         <member name="P:webthitn_backend.DTOs.AnswerSubmissionDTO.TextAnswer">
             <summary>
             Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
             </summary>
-            <example>1</example>
+            <example></example>
         </member>
         <member name="P:webthitn_backend.DTOs.AnswerSubmissionDTO.TrueFalseAnswers">
             <summary>
             Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)
             Ví dụ: {"1":true,"2":false,"3":true,"4":true}
             </summary>
-            <example>{"1":true,"2":false,"3":true,"4":true}</example>
+            <example>{}</example>
         </member>
         <member name="P:webthitn_backend.DTOs.AnswerSubmissionDTO.MatchingAnswers">
             <summary>
             Câu trả lời ghép đôi (cho câu hỏi ghép đôi)
             Ví dụ: {"1":3,"2":1,"3":4,"4":2} - ghép item bên trái với item bên phải
             </summary>
-            <example>{"1":3,"2":1,"3":4,"4":2}</example>
+            <example>{}</example>
         </member>
         <member name="T:webthitn_backend.DTOs.CreateStructuredTestDTO">
             <summary>

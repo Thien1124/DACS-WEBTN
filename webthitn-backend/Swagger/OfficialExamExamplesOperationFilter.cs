@@ -24,7 +24,7 @@ namespace webthitn_backend.Swagger
                     ["examId"] = new OpenApiInteger(1),
                     ["startTime"] = new OpenApiString("2025-06-15T08:00:00"),
                     ["endTime"] = new OpenApiString("2025-06-15T10:00:00"),
-                    ["classroomId"] = new OpenApiInteger(1),
+                    ["classroomName"] = new OpenApiString("12A1"),
                     ["studentIds"] = new OpenApiArray
                     {
                         new OpenApiInteger(5),

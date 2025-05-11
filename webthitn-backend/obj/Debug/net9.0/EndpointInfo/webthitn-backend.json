@@ -2920,7 +2920,7 @@
                     "examId": 1,
                     "startTime": "2025-06-15T08:00:00",
                     "endTime": "2025-06-15T10:00:00",
-                    "classroomId": 1,
+                    "classroomName": "12A1",
                     "studentIds": [
                       5,
                       6,
@@ -4923,6 +4923,320 @@
         }
       }
     },
+    "/api/student/exams/assigned": {
+      "get": {
+        "tags": [
+          "StudentExam"
+        ],
+        "summary": "Lấy danh sách kỳ thi chính thức mà học sinh được phân công",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Trạng thái kỳ thi (all, active, upcoming, completed)",
+            "schema": {
+              "type": "string",
+              "default": "all"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số bản ghi mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/student/exams/{officialExamId}/take": {
+      "get": {
+        "tags": [
+          "StudentExam"
+        ],
+        "summary": "Lấy thông tin chi tiết kỳ thi để làm bài",
+        "parameters": [
+          {
+            "name": "officialExamId",
+            "in": "path",
+            "description": "ID của kỳ thi chính thức",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/student/exams/{officialExamId}/submit": {
+      "post": {
+        "tags": [
+          "StudentExam"
+        ],
+        "summary": "Nộp bài thi",
+        "parameters": [
+          {
+            "name": "officialExamId",
+            "in": "path",
+            "description": "ID của kỳ thi chính thức",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Dữ liệu bài làm",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentSubmitExamDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentSubmitExamDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentSubmitExamDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/student/exams/{officialExamId}/result": {
+      "get": {
+        "tags": [
+          "StudentExam"
+        ],
+        "summary": "Lấy kết quả bài thi",
+        "parameters": [
+          {
+            "name": "officialExamId",
+            "in": "path",
+            "description": "ID của kỳ thi chính thức",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/student/exams/results": {
+      "get": {
+        "tags": [
+          "StudentExam"
+        ],
+        "summary": "Lấy danh sách kết quả thi của học sinh",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Số trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Số bản ghi mỗi trang",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Subject": {
       "get": {
         "tags": [
@@ -5942,44 +6256,44 @@
             "type": "integer",
             "description": "ID của câu hỏi",
             "format": "int32",
-            "example": 42
+            "example": 27
           },
           "startTime": {
             "type": "string",
             "description": "Thời gian bắt đầu trả lời câu hỏi",
             "format": "date-time",
-            "example": "2025-04-12T06:35:20Z"
+            "example": "2025-04-28T08:35:05Z"
           },
           "endTime": {
             "type": "string",
             "description": "Thời gian kết thúc trả lời câu hỏi",
             "format": "date-time",
-            "example": "2025-04-12T06:36:05Z"
+            "example": "2025-04-28T08:50:05"
           },
           "selectedOptionId": {
             "type": "integer",
             "description": "ID của đáp án được chọn (cho câu hỏi một đáp án)",
             "format": "int32",
             "nullable": true,
-            "example": 15
+            "example": 39
           },
           "textAnswer": {
             "type": "string",
             "description": "Văn bản câu trả lời (cho câu hỏi trả lời ngắn)",
             "nullable": true,
-            "example": "1"
+            "example": ""
           },
           "trueFalseAnswers": {
             "type": "string",
             "description": "Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)\r\nVí dụ: {\"1\":true,\"2\":false,\"3\":true,\"4\":true}",
             "nullable": true,
-            "example": "{\"1\":true,\"2\":false,\"3\":true,\"4\":true}"
+            "example": "{}"
           },
           "matchingAnswers": {
             "type": "string",
             "description": "Câu trả lời ghép đôi (cho câu hỏi ghép đôi)\r\nVí dụ: {\"1\":3,\"2\":1,\"3\":4,\"4\":2} - ghép item bên trái với item bên phải",
             "nullable": true,
-            "example": "{\"1\":3,\"2\":1,\"3\":4,\"4\":2}"
+            "example": "{}"
           }
         },
         "additionalProperties": false,
@@ -6406,7 +6720,7 @@
           },
           "defaultScore": {
             "maximum": 10,
-            "minimum": 0.1,
+            "minimum": 0,1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",
@@ -6689,7 +7003,7 @@
             "type": "number",
             "description": "Điểm số cho câu hỏi trong bài thi",
             "format": "double",
-            "example": 1.5
+            "example": 1,5
           }
         },
         "additionalProperties": false,
@@ -7126,6 +7440,38 @@
         "additionalProperties": false,
         "description": "DTO đơn giản cho API tạo đề ôn tập khi API chính gặp vấn đề"
       },
+      "StudentSubmitAnswerDTO": {
+        "type": "object",
+        "properties": {
+          "examQuestionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "selectedOptionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "textAnswer": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentSubmitExamDTO": {
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSubmitAnswerDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SubmitExamDTO": {
         "type": "object",
         "properties": {
@@ -7133,25 +7479,25 @@
             "type": "integer",
             "description": "ID của bài thi",
             "format": "int32",
-            "example": 15
+            "example": 14
           },
           "startTime": {
             "type": "string",
             "description": "Thời gian bắt đầu làm bài",
             "format": "date-time",
-            "example": "2025-04-12T06:30:00Z"
+            "example": "2025-04-28T08:35:05Z"
           },
           "endTime": {
             "type": "string",
             "description": "Thời gian kết thúc làm bài",
             "format": "date-time",
-            "example": "2025-04-12T07:15:00Z"
+            "example": "2025-04-28T08:50:05"
           },
           "notes": {
             "type": "string",
             "description": "Ghi chú của học sinh",
             "nullable": true,
-            "example": "Tôi gặp khó khăn với câu hỏi số 5"
+            "example": "Bài làm kiểm tra địa lý 15 phút"
           },
           "sessionId": {
             "type": "string",
@@ -7213,7 +7559,7 @@
           },
           "score": {
             "maximum": 100,
-            "minimum": 0.1,
+            "minimum": 0,1,
             "type": "number",
             "format": "double"
           }
@@ -7245,7 +7591,7 @@
             "type": "number",
             "description": "Điểm cập nhật",
             "format": "double",
-            "example": 0.75
+            "example": 0,75
           },
           "comment": {
             "type": "string",
@@ -7387,7 +7733,7 @@
           },
           "defaultScore": {
             "maximum": 10,
-            "minimum": 0.1,
+            "minimum": 0,1,
             "type": "number",
             "description": "Điểm mặc định",
             "format": "double",
