@@ -25,6 +25,7 @@ namespace webthitn_backend.Swagger
                     ["startTime"] = new OpenApiString("2025-06-15T08:00:00"),
                     ["endTime"] = new OpenApiString("2025-06-15T10:00:00"),
                     ["classroomName"] = new OpenApiString("12A1"),
+                    ["grade"] = new OpenApiString("12"),
                     ["studentIds"] = new OpenApiArray
                     {
                         new OpenApiInteger(5),
@@ -38,7 +39,8 @@ namespace webthitn_backend.Swagger
                     ["Default"] = new OpenApiExample
                     {
                         Value = example,
-                        Summary = "Kỳ thi mới"
+                        Summary = "Kỳ thi mới",
+                        Description = "Khi chọn lớp (classroomName), tất cả học sinh thuộc lớp đó sẽ tự động được thêm vào kỳ thi. Ngoài ra, bạn có thể thêm các học sinh bổ sung thông qua studentIds. Grade (khối) là trường bắt buộc."
                     }
                 };
             }

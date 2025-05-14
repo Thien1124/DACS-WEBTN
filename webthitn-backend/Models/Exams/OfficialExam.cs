@@ -28,6 +28,9 @@ namespace webthitn_backend.Models
 
         // Bỏ tham chiếu đến Classroom
         public string ClassroomName { get; set; }
+        
+        // Add Grade property
+        public string Grade { get; set; }
 
         public int CreatorId { get; set; }
 

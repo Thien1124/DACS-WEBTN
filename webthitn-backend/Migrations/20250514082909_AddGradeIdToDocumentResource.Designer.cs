@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webthitn_backend.Models;
 
@@ -11,9 +12,11 @@ using webthitn_backend.Models;
 namespace webthitn_backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250514082909_AddGradeIdToDocumentResource")]
+    partial class AddGradeIdToDocumentResource
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -622,10 +625,6 @@ namespace webthitn_backend.Migrations
 
                     b.Property<int>("ExamId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Grade")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -1451,9 +1450,6 @@ namespace webthitn_backend.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("Classroom")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1539,7 +1535,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$ps24in1m.Ey/Q3cy89gckeEPxxH.uCYO1pxev8PIYyMdYARkY7.na",
+                            Password = "$2a$11$V4o2oMSiNB8ypOkB0GZGe.0SwrZ3.PAxaKL2/e6MktcPej/Oalx2e",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1548,14 +1544,13 @@ namespace webthitn_backend.Migrations
                         new
                         {
                             Id = 2,
-                            Classroom = "N/A",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
                             Email = "thien1124@example.com",
                             FullName = "Thien Nguyen",
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$4Su8MNuNOft2lWvKo6MjTuCaRdDuPHIJZRtPiVL5QvdJaoaR.zzwO",
+                            Password = "$2a$11$slOkQRnhXQpiJ.ORXALq3.6bOxFDyB5tCYmxEbITzUBRz0zhg5Huq",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1564,13 +1559,12 @@ namespace webthitn_backend.Migrations
                         new
                         {
                             Id = 3,
-                            Classroom = "N/A",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
                             Email = "student1@example.com",
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$RP5snFKSexYBamc.3ISxn.RElyBNcFpDUuSBkq28odwQnoQUlNGji",
+                            Password = "$2a$11$Y7G/pzHSpVjXQ0GhjaLgvePIxwF5GJneoH0fjE2Jdntd/qSJe1T4G",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",

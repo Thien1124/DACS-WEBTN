@@ -82,6 +82,11 @@ namespace webthitn_backend.Models.Users
         public string Grade { get; set; }
 
         /// <summary>
+        /// Lớp học của người dùng (học sinh)
+        /// </summary>
+        public string? Classroom { get; set; }
+
+        /// <summary>
         /// Trạng thái kích hoạt
         /// </summary>
         public bool IsActive { get; set; } = true;

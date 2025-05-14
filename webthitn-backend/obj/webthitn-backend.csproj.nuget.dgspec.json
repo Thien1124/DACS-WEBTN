@@ -63,6 +63,14 @@
               "target": "Package",
               "version": "[5.8.14, )"
             },
+            "ExcelDataReader": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "ExcelDataReader.DataSet": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
             "MailKit": {
               "target": "Package",
               "version": "[4.11.0, )"

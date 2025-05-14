@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "2WD8Dchukf8=",
+  "dgSpecHash": "8S2xFvSdmLs=",
   "success": true,
   "projectFilePath": "C:\\Users\\Thien\\DACS-WEBTN\\webthitn-backend\\webthitn-backend.csproj",
   "expectedPackageFiles": [
@@ -10,6 +10,8 @@
     "C:\\Users\\Thien\\.nuget\\packages\\bouncycastle.cryptography\\2.5.1\\bouncycastle.cryptography.2.5.1.nupkg.sha512",
     "C:\\Users\\Thien\\.nuget\\packages\\csvhelper\\33.0.1\\csvhelper.33.0.1.nupkg.sha512",
     "C:\\Users\\Thien\\.nuget\\packages\\epplus\\5.8.14\\epplus.5.8.14.nupkg.sha512",
+    "C:\\Users\\Thien\\.nuget\\packages\\exceldatareader\\3.7.0\\exceldatareader.3.7.0.nupkg.sha512",
+    "C:\\Users\\Thien\\.nuget\\packages\\exceldatareader.dataset\\3.7.0\\exceldatareader.dataset.3.7.0.nupkg.sha512",
     "C:\\Users\\Thien\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Thien\\.nuget\\packages\\mailkit\\4.11.0\\mailkit.4.11.0.nupkg.sha512",
     "C:\\Users\\Thien\\.nuget\\packages\\microsoft.aspnetcore.authentication.abstractions\\2.3.0\\microsoft.aspnetcore.authentication.abstractions.2.3.0.nupkg.sha512",

@@ -153,6 +153,12 @@ namespace webthitn_backend.Models
                 .WithMany()
                 .HasForeignKey(oes => oes.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Make sure Classroom is optional
+            modelBuilder.Entity<User>()
+                .Property(u => u.Classroom)
+                .IsRequired(false);
+
             // Seed data
             SeedData(modelBuilder);
         }
@@ -176,7 +182,8 @@ namespace webthitn_backend.Models
                     PhoneNumber = "N/A", // Thêm giá trị cho thuộc tính bắt buộc
                     Grade = "N/A", // Thêm giá trị cho thuộc tính bắt buộc
                     School = "N/A", // Thêm giá trị cho thuộc tính bắt buộc
-                    CreatedAt = fixedDate1 // Sử dụng giá trị cố định
+                    CreatedAt = fixedDate1, // Sử dụng giá trị cố định
+                    Classroom = null // or a default value like "N/A"
                 },
                 new User
                 {
@@ -190,7 +197,8 @@ namespace webthitn_backend.Models
                     Grade = "Teacher", // Thêm giá trị cho thuộc tính bắt buộc
                     PhoneNumber = "0123456789", // Thêm giá trị cho thuộc tính bắt buộc
                     CreatedAt = fixedDate1,
-                    LastLogin = fixedDate2
+                    LastLogin = fixedDate2,
+                    Classroom = "N/A" // Add a default value
                 },
                 new User
                 {
@@ -203,7 +211,8 @@ namespace webthitn_backend.Models
                     School = "Trường THPT Chu Văn An",
                     Grade = "12",
                     PhoneNumber = "0987654321", // Thêm giá trị cho thuộc tính bắt buộc
-                    CreatedAt = fixedDate1
+                    CreatedAt = fixedDate1,
+                    Classroom = "N/A" // Add a default value
                 }
             );
 

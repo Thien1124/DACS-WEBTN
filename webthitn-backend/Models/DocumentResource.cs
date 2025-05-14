@@ -25,8 +25,11 @@ namespace webthitn_backend.Models
         [MaxLength(20)]
         public string FileType { get; set; }
 
-        public int SubjectId { get; set; }
+        [MaxLength(50)]
+        public string DocumentType { get; set; } // PDF, Slide, Word, etc.
 
+        public int SubjectId { get; set; }
+        
         [ForeignKey("SubjectId")]
         public Subject Subject { get; set; }
 
@@ -34,6 +37,8 @@ namespace webthitn_backend.Models
 
         [ForeignKey("ChapterId")]
         public Chapter Chapter { get; set; }
+
+        public int? GradeId { get; set; } // Add this property
 
         [MaxLength(500)]
         public string Tags { get; set; }
@@ -47,8 +52,5 @@ namespace webthitn_backend.Models
         public DateTime UpdatedAt { get; set; }
 
         public int DownloadCount { get; set; }
-
-        [MaxLength(50)]
-        public string DocumentType { get; set; } // PDF, Slide, Word, etc.
     }
 }

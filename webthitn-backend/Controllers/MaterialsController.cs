@@ -39,6 +39,7 @@ namespace webthitn_backend.Controllers
         /// </remarks>
         /// <param name="subjectId">ID của môn học (tùy chọn)</param>
         /// <param name="chapterId">ID của chương học (tùy chọn)</param>
+        /// <param name="gradeId">ID của khối lớp (tùy chọn)</param>
         /// <param name="documentType">Loại tài liệu (PDF, Slide, etc.) (tùy chọn)</param>
         /// <param name="search">Từ khóa tìm kiếm (tùy chọn)</param>
         /// <param name="page">Số trang, mặc định là 1</param>
@@ -51,6 +52,7 @@ namespace webthitn_backend.Controllers
         public async Task<IActionResult> GetDocuments(
             [FromQuery] int? subjectId = null,
             [FromQuery] int? chapterId = null,
+            [FromQuery] int? gradeId = null,
             [FromQuery] string documentType = null,
             [FromQuery] string search = null,
             [FromQuery] int page = 1,
@@ -81,6 +83,11 @@ namespace webthitn_backend.Controllers
                 if (chapterId.HasValue)
                 {
                     query = query.Where(d => d.ChapterId == chapterId.Value);
+                }
+
+                if (gradeId.HasValue)
+                {
+                    query = query.Where(d => d.GradeId == gradeId.Value);
                 }
 
                 if (!string.IsNullOrEmpty(documentType))
@@ -125,6 +132,7 @@ namespace webthitn_backend.Controllers
                     SubjectName = d.Subject?.Name,
                     ChapterId = d.ChapterId,
                     ChapterName = d.Chapter?.Name,
+                    GradeId = d.GradeId,
                     Tags = d.Tags,
                     CreatedAt = d.CreatedAt,
                     DownloadCount = d.DownloadCount
@@ -193,6 +201,7 @@ namespace webthitn_backend.Controllers
                     SubjectName = document.Subject?.Name,
                     ChapterId = document.ChapterId,
                     ChapterName = document.Chapter?.Name,
+                    GradeId = document.GradeId,
                     Tags = document.Tags,
                     CreatedAt = document.CreatedAt,
                     DownloadCount = document.DownloadCount
@@ -228,6 +237,7 @@ namespace webthitn_backend.Controllers
             [FromForm] string description = null,
             [FromForm] int subjectId = 0,
             [FromForm] int? chapterId = null,
+            [FromForm] int? gradeId = null,
             [FromForm] string documentType = null,
             [FromForm] string tags = null)
         {
@@ -337,6 +347,7 @@ namespace webthitn_backend.Controllers
                     DocumentType = documentType,
                     SubjectId = subjectId,
                     ChapterId = chapterId,
+                    GradeId = gradeId,
                     Tags = tags ?? "",
                     UploadedById = currentUserId,
                     IsActive = true,
@@ -364,6 +375,7 @@ namespace webthitn_backend.Controllers
                         DocumentType = document.DocumentType,
                         SubjectId = document.SubjectId,
                         ChapterId = document.ChapterId,
+                        GradeId = document.GradeId,
                         Tags = document.Tags,
                         CreatedAt = document.CreatedAt
                     }

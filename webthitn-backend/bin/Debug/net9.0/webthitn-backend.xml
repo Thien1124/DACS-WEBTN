@@ -144,6 +144,21 @@
             </summary>
             <returns>Danh sách tin nhắn chưa đọc</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.ImportStudents(Microsoft.AspNetCore.Http.IFormFile,System.String)">
+            <summary>
+            Nhập danh sách học sinh từ file Excel
+            </summary>
+            <param name="file">File Excel chứa danh sách học sinh</param>
+            <param name="classroom">Tên lớp</param>
+            <returns>Kết quả nhập danh sách</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.GetClassroomStudents(System.String)">
+            <summary>
+            Lấy danh sách học sinh trong lớp
+            </summary>
+            <param name="classroom">Tên lớp</param>
+            <returns>Danh sách học sinh</returns>
+        </member>
         <member name="T:webthitn_backend.Controllers.ExamController">
             <summary>
             API để quản lý và truy xuất thông tin bài thi
@@ -641,7 +656,7 @@
             <response code="404">Không tìm thấy đề thi với ID đã cho</response>
             <response code="401">Không có quyền truy cập</response>
         </member>
-        <member name="M:webthitn_backend.Controllers.MaterialsController.GetDocuments(System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String,System.Int32,System.Int32)">
+        <member name="M:webthitn_backend.Controllers.MaterialsController.GetDocuments(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String,System.Int32,System.Int32)">
             <summary>
             Lấy danh sách tài liệu ôn tập
             </summary>
@@ -650,6 +665,7 @@
             </remarks>
             <param name="subjectId">ID của môn học (tùy chọn)</param>
             <param name="chapterId">ID của chương học (tùy chọn)</param>
+            <param name="gradeId">ID của khối lớp (tùy chọn)</param>
             <param name="documentType">Loại tài liệu (PDF, Slide, etc.) (tùy chọn)</param>
             <param name="search">Từ khóa tìm kiếm (tùy chọn)</param>
             <param name="page">Số trang, mặc định là 1</param>
@@ -765,6 +781,27 @@
             <param name="id">ID của kỳ thi chính thức</param>
             <param name="model">Thông tin công bố kết quả</param>
             <returns>Kết quả công bố</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.GetClassrooms">
+            <summary>
+            Lấy danh sách các lớp học có trong hệ thống
+            </summary>
+            <returns>Danh sách lớp học</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.GetClassroomsByGrade(System.String)">
+            <summary>
+            Lấy danh sách lớp học theo khối
+            </summary>
+            <param name="grade">Khối (ví dụ: 10, 11, 12)</param>
+            <returns>Danh sách lớp học của khối được chọn</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.OfficialExamController.AssignClassStudents(System.Int32,webthitn_backend.Controllers.AssignClassDTO)">
+            <summary>
+            Phân công tất cả học sinh của một lớp vào kỳ thi chính thức
+            </summary>
+            <param name="id">ID của kỳ thi chính thức</param>
+            <param name="model">Thông tin lớp học</param>
+            <returns>Kết quả phân công</returns>
         </member>
         <member name="M:webthitn_backend.Controllers.OfficialExamController.DeleteOfficialExam(System.Int32)">
             <summary>
@@ -4592,6 +4629,30 @@
         <member name="M:webthitn_backend.Migrations.AddOfficialExams.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:webthitn_backend.Migrations.AddGradeIdToDocumentResource">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradeIdToDocumentResource.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradeIdToDocumentResource.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradeIdToDocumentResource.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddGradeToOfficialExam">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradeToOfficialExam.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradeToOfficialExam.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddGradeToOfficialExam.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:webthitn_backend.Models.Subject">
             <summary>
             Model đại diện cho môn học trong hệ thống
@@ -5832,6 +5893,11 @@
         <member name="P:webthitn_backend.Models.Users.User.Grade">
             <summary>
             Lớp hoặc khối
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.Users.User.Classroom">
+            <summary>
+            Lớp học của người dùng (học sinh)
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.Users.User.IsActive">
