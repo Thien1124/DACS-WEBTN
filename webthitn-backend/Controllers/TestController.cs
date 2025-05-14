@@ -29,13 +29,43 @@ namespace webthitn_backend.Controllers
         }
 
         /// <summary>
-        /// Phương thức helper để lấy userId từ claims - phiên bản sửa lỗi
+        /// Phương thức helper để lấy userId từ claims 
         /// </summary>
         /// <returns>User ID hoặc giá trị mặc định nếu không tìm thấy</returns>
         private int GetUserIdFromClaims()
         {
             try
             {
+                // Thêm logic kiểm tra header Authorization
+                Request.Headers.TryGetValue("Authorization", out var authHeaderValue);
+                _logger.LogInformation($"Authorization header: {authHeaderValue}");
+
+                // Nếu có header nhưng không có format Bearer, thử xử lý token trực tiếp
+                if (!string.IsNullOrEmpty(authHeaderValue) &&
+                    !authHeaderValue.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    string rawToken = authHeaderValue.ToString().Trim();
+                    try
+                    {
+                        // Xử lý token thủ công
+                        var handler = new JwtSecurityTokenHandler();
+                        if (handler.CanReadToken(rawToken))
+                        {
+                            var token = handler.ReadJwtToken(rawToken);
+                            var rawUserIdClaim = token.Claims.FirstOrDefault(c => c.Type.ToLower() == "userid");
+                            if (rawUserIdClaim != null && int.TryParse(rawUserIdClaim.Value, out int rawUserId))
+                            {
+                                _logger.LogInformation($"✅ Trích xuất userId từ token raw: {rawUserId}");
+                                return rawUserId;
+                            }
+                        }
+                    }
+                    catch (Exception tokenEx)
+                    {
+                        _logger.LogWarning($"Không thể xử lý token thủ công: {tokenEx.Message}");
+                    }
+                }
+
                 // In ra tất cả claims để debug
                 _logger.LogInformation("Claims hiện có trong token:");
                 foreach (var claim in User.Claims)
@@ -53,28 +83,28 @@ namespace webthitn_backend.Controllers
 
                 // Các cách khác để tìm userId từ claim
                 var possibleClaims = new[] {
-                    "UserId", "userid", "id", "Id",
-                    ClaimTypes.NameIdentifier,
-                    "sub",
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-                };
+            "UserId", "userid", "id", "Id",
+            ClaimTypes.NameIdentifier,
+            "sub",
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        };
 
                 foreach (var claimType in possibleClaims)
                 {
-                    userIdClaim = User.Claims.FirstOrDefault(c => string.Equals(c.Type, claimType, StringComparison.OrdinalIgnoreCase));
-                    if (userIdClaim != null)
+                    var alternativeUserIdClaim = User.Claims.FirstOrDefault(c => string.Equals(c.Type, claimType, StringComparison.OrdinalIgnoreCase));
+                    if (alternativeUserIdClaim != null)
                     {
-                        _logger.LogInformation($"Đang thử claim {claimType}: {userIdClaim.Value}");
+                        _logger.LogInformation($"Đang thử claim {claimType}: {alternativeUserIdClaim.Value}");
 
                         // Nếu là nameidentifier và chứa chữ cái, đó có thể là username, không phải ID
                         if ((claimType.Contains("nameidentifier") || claimType == "sub") &&
-                            !int.TryParse(userIdClaim.Value, out _))
+                            !int.TryParse(alternativeUserIdClaim.Value, out _))
                         {
-                            _logger.LogInformation($"nameidentifier không phải là ID số nguyên, bỏ qua: {userIdClaim.Value}");
+                            _logger.LogInformation($"nameidentifier không phải là ID số nguyên, bỏ qua: {alternativeUserIdClaim.Value}");
                             continue;
                         }
 
-                        if (int.TryParse(userIdClaim.Value, out int parsedUserId))
+                        if (int.TryParse(alternativeUserIdClaim.Value, out int parsedUserId))
                         {
                             _logger.LogInformation($"✅ Tìm thấy userId từ claim {claimType}: {parsedUserId}");
                             return parsedUserId;
@@ -269,7 +299,7 @@ namespace webthitn_backend.Controllers
                     });
                 }
 
-                // Lấy user id từ token sử dụng phương thức helper đã được sửa
+                // Lấy user id từ token sử dụng phương thức helper 
                 int userId = GetUserIdFromClaims();
 
                 // Kiểm tra môn học tồn tại không

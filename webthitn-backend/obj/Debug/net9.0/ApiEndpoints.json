@@ -1080,7 +1080,7 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "csvFile",
+        "Name": "file",
         "Type": "Microsoft.AspNetCore.Http.IFormFile",
         "IsRequired": false
       },
@@ -1092,6 +1092,11 @@
       {
         "Name": "delimiter",
         "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "batchSize",
+        "Type": "System.Int32",
         "IsRequired": false
       }
     ],
@@ -1133,8 +1138,20 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
+    "Parameters": [
+      {
+        "Name": "format",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "webthitn_backend.Controllers.LeaderboardController",
@@ -2715,6 +2732,11 @@
           "text/json"
         ],
         "StatusCode": 404
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 500
       }
     ]
   },

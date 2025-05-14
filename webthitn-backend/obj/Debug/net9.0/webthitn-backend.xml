@@ -476,54 +476,95 @@
              <response code="404">Không tìm thấy người dùng</response>
              <response code="500">Lỗi máy chủ</response>
         </member>
-        <member name="M:webthitn_backend.Controllers.ExamsImportController.#ctor(webthitn_backend.Models.ApplicationDbContext,Microsoft.Extensions.Logging.ILogger{webthitn_backend.Controllers.ExamsImportController})">
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ReadFromCsvFile(Microsoft.AspNetCore.Http.IFormFile,System.String,System.Boolean)">
             <summary>
-            Khởi tạo controller với các dependency
-            </summary>
-            <param name="context">Database context</param>
-            <param name="logger">Logger service</param>
-        </member>
-        <member name="M:webthitn_backend.Controllers.ExamsImportController.ImportExams(Microsoft.AspNetCore.Http.IFormFile,System.Boolean,System.String)">
-             <summary>
-             Import đề thi từ file CSV
-             </summary>
-             <remarks>
-             API này cho phép import đề thi từ file CSV với định dạng sau:
-             
-             - Dòng đầu tiên là tiêu đề cột: Title,Description,SubjectId,ExamTypeId,Duration,TotalScore,PassScore,MaxAttempts,StartTime,EndTime,...
-             - Các dòng tiếp theo là thông tin của đề thi
-             
-             Yêu cầu tối thiểu: Title (tiêu đề), SubjectId (ID môn học), ExamTypeId (ID loại đề thi), Duration (thời gian làm bài)
-             
-             Định dạng thời gian: yyyy-MM-dd HH:mm:ss
-             
-             Sample request:
-             
-                 POST /api/exams/import
-                 Form-Data:
-                     csvFile: [file CSV]
-                     skipHeader: true
-            
-             </remarks>
-             <param name="csvFile">File CSV chứa thông tin đề thi</param>
-             <param name="skipHeader">Bỏ qua dòng tiêu đề (mặc định: true)</param>
-             <param name="delimiter">Ký tự phân cách (mặc định: dấu phẩy)</param>
-             <returns>Thông tin về các đề thi đã import thành công</returns>
-             <response code="200">Import thành công</response>
-             <response code="400">Dữ liệu không hợp lệ</response>
-             <response code="401">Không có quyền truy cập</response>
-             <response code="500">Lỗi máy chủ</response>
-        </member>
-        <member name="M:webthitn_backend.Controllers.ExamsImportController.TryGetValue(System.Object,System.String,System.String@)">
-            <summary>
-            Phương thức hỗ trợ để lấy giá trị từ dynamic object
+            Đọc dữ liệu từ file CSV với bảo vệ lỗi tối đa
             </summary>
         </member>
-        <member name="M:webthitn_backend.Controllers.ExamsImportController.GetImportTemplate">
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ReadCsvRecordWithErrorProtection(CsvHelper.CsvReader)">
             <summary>
-            Tải mẫu file CSV để import đề thi
+            Helper để đọc CSV record với bảo vệ lỗi
             </summary>
-            <returns>File CSV mẫu</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ReadFromExcelFile(Microsoft.AspNetCore.Http.IFormFile,System.Boolean)">
+            <summary>
+            Đọc dữ liệu từ file Excel với bảo vệ lỗi tối đa
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ReadExcelRowWithErrorProtection(OfficeOpenXml.ExcelWorksheet,System.Int32)">
+            <summary>
+            Helper để đọc Excel row với bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ProcessExams(System.Collections.Generic.List{webthitn_backend.Controllers.ExamImportModel},System.Int32,System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.HashSet{System.Int32},System.Int32)">
+            <summary>
+            Xử lý và import đề thi - với bảo vệ lỗi toàn diện
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ParseQuestionData(webthitn_backend.Controllers.ExamImportModel)">
+            <summary>
+            Phân tích dữ liệu câu hỏi từ model với bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.SaveExamBatchSafely(System.Collections.Generic.List{webthitn_backend.Models.Exam},System.Collections.Generic.Dictionary{System.Int32,webthitn_backend.Controllers.QuestionImportData},System.Collections.Generic.List{webthitn_backend.Models.ExamQuestion},System.Collections.Generic.List{System.Object})">
+            <summary>
+            Lưu batch đề thi với xử lý lỗi an toàn
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.CleanJsonString(System.String)">
+            <summary>
+            Làm sạch chuỗi JSON - LUÔN TRẢ VỀ DEFAULT
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ValidateExamModel(webthitn_backend.Controllers.ExamImportModel,System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.HashSet{System.Int32})">
+            <summary>
+            Validate exam import model - BỎ QUA HẦU HẾT CÁC VALIDATION
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.CreateExamFromModel(webthitn_backend.Controllers.ExamImportModel,System.Int32)">
+            <summary>
+            Tạo đối tượng Exam từ model import - CƯỠNG CHẾ ĐẢM BẢO KHÔNG FAIL
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.GetCurrentUserId">
+            <summary>
+            Lấy ID người dùng hiện tại từ token - CƯỠNG CHẾ TRẢ VỀ 1 NẾU KHÔNG TÌM THẤY
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.GetExcelCellValue(OfficeOpenXml.ExcelWorksheet,System.Int32,System.Int32)">
+            <summary>
+            Lấy giá trị từ cell Excel với bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ParseInt(System.String,System.Int32)">
+            <summary>
+            Parse int value with bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ParseDecimal(System.String,System.Decimal)">
+            <summary>
+            Parse decimal value with bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ParseDateTime(System.String)">
+            <summary>
+            Parse DateTime value with bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.ParseBool(System.String,System.Boolean)">
+            <summary>
+            Parse bool value with bảo vệ lỗi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.GenerateCsvTemplate">
+            <summary>
+            Tạo file mẫu CSV
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ExamsImportController.GenerateExcelTemplate">
+            <summary>
+            Tạo file mẫu Excel
+            </summary>
         </member>
         <member name="M:webthitn_backend.Controllers.ExportController.ExportStudentsList(webthitn_backend.Controllers.ExportStudentsRequest)">
             <summary>
@@ -796,7 +837,6 @@
             <param name="id">ID của câu hỏi cần xóa</param>
             <returns>Thông báo kết quả xóa</returns>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:webthitn_backend.Controllers.QuestionController.ImportQuestions(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Boolean)" -->
         <member name="M:webthitn_backend.Controllers.QuestionController.ExportQuestions(webthitn_backend.DTOs.ExportQuestionsDTO)">
             <summary>
             Xuất câu hỏi ra file Excel
@@ -995,9 +1035,6 @@
             <summary>
             Nộp bài thi
             </summary>
-            <param name="officialExamId">ID của kỳ thi chính thức</param>
-            <param name="model">Dữ liệu bài làm</param>
-            <returns>Kết quả bài thi</returns>
         </member>
         <member name="M:webthitn_backend.Controllers.StudentExamController.GetExamResult(System.Int32)">
             <summary>
@@ -1068,7 +1105,7 @@
         </member>
         <member name="M:webthitn_backend.Controllers.TestController.GetUserIdFromClaims">
             <summary>
-            Phương thức helper để lấy userId từ claims - phiên bản sửa lỗi
+            Phương thức helper để lấy userId từ claims 
             </summary>
             <returns>User ID hoặc giá trị mặc định nếu không tìm thấy</returns>
         </member>

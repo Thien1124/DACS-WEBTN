@@ -11,6 +11,7 @@ using webthitn_backend.DTOs;
 using webthitn_backend.Models;
 using webthitn_backend.Models.Users;
 using WEBTHITN_Backend.Helpers;
+using Newtonsoft.Json;
 
 namespace webthitn_backend.Controllers
 {
@@ -371,18 +372,15 @@ namespace webthitn_backend.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy đề thi" });
             }
         }
-
         /// <summary>
         /// Nộp bài thi
         /// </summary>
-        /// <param name="officialExamId">ID của kỳ thi chính thức</param>
-        /// <param name="model">Dữ liệu bài làm</param>
-        /// <returns>Kết quả bài thi</returns>
         [HttpPost("{officialExamId}/submit")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> SubmitExam(int officialExamId, [FromBody] StudentSubmitExamDTO model)
         {
             try
@@ -443,12 +441,57 @@ namespace webthitn_backend.Controllers
                     int totalQuestions = examQuestions.Count;
                     int answeredQuestions = 0;
 
+                    // Tạo thống kê về loại câu hỏi
+                    var questionTypeStats = new Dictionary<int, int>();
+
+                    // Kiểm tra và ghi log tất cả các câu trả lời để gỡ lỗi
+                    _logger.LogInformation($"Đang xử lý {model.Answers.Count} câu trả lời cho bài thi {officialExamId}");
+                    foreach (var answer in model.Answers)
+                    {
+                        _logger.LogInformation($"Xử lý câu trả lời: ExamQuestionId={answer.ExamQuestionId}, SelectedOptionId={answer.SelectedOptionId}, TextAnswer={answer.TextAnswer ?? "null"}");
+                    }
+
+                    // Kiểm tra và ghi log tất cả các câu hỏi trong đề thi để gỡ lỗi
+                    _logger.LogInformation($"Đề thi có {examQuestions.Count} câu hỏi");
+                    foreach (var eq in examQuestions)
+                    {
+                        _logger.LogInformation($"Câu hỏi trong đề: Id={eq.Id}, QuestionId={eq.QuestionId}, ExamId={eq.ExamId}");
+
+                        // Thêm thống kê về loại câu hỏi
+                        if (eq.Question != null)
+                        {
+                            int questionType = eq.Question.QuestionType;
+                            if (questionTypeStats.ContainsKey(questionType))
+                            {
+                                questionTypeStats[questionType]++;
+                            }
+                            else
+                            {
+                                questionTypeStats[questionType] = 1;
+                            }
+                        }
+                    }
+
+                    // Chuyển đổi thống kê thành JSON
+                    string questionTypeStatistics = Newtonsoft.Json.JsonConvert.SerializeObject(questionTypeStats);
+                    _logger.LogInformation($"Thống kê loại câu hỏi: {questionTypeStatistics}");
+
                     // Kiểm tra các câu trả lời để tính điểm
                     foreach (var answer in model.Answers)
                     {
                         // Tìm câu hỏi tương ứng
                         var examQuestion = examQuestions.FirstOrDefault(eq => eq.Id == answer.ExamQuestionId);
-                        if (examQuestion == null || examQuestion.Question == null) continue;
+                        if (examQuestion == null)
+                        {
+                            _logger.LogWarning($"Không tìm thấy câu hỏi với Id={answer.ExamQuestionId} trong đề thi");
+                            continue;
+                        }
+
+                        if (examQuestion.Question == null)
+                        {
+                            _logger.LogWarning($"Câu hỏi Id={answer.ExamQuestionId} không có dữ liệu Question");
+                            continue;
+                        }
 
                         // Đánh dấu đã trả lời câu hỏi
                         answeredQuestions++;
@@ -460,7 +503,7 @@ namespace webthitn_backend.Controllers
                         switch (examQuestion.Question.QuestionType)
                         {
                             case 1: // Multiple choice
-                                // Kiểm tra đáp án đúng
+                                    // Kiểm tra đáp án đúng
                                 var correctOption = examQuestion.Question.Options?.FirstOrDefault(o => o.IsCorrect);
                                 if (correctOption != null && answer.SelectedOptionId == correctOption.Id)
                                 {
@@ -471,12 +514,12 @@ namespace webthitn_backend.Controllers
                                 break;
 
                             case 3: // Short answer
-                                // Đối với câu trả lời ngắn, cần chấm bằng tay hoặc dùng auto-grade nếu có
-                                // Tạm thời không tính điểm
+                                    // Đối với câu trả lời ngắn, cần chấm bằng tay hoặc dùng auto-grade nếu có
+                                    // Tạm thời không tính điểm
                                 break;
 
                             case 5: // True/False
-                                // Kiểm tra đáp án đúng (tương tự multiple choice)
+                                    // Kiểm tra đáp án đúng (tương tự multiple choice)
                                 var correctTFOption = examQuestion.Question.Options?.FirstOrDefault(o => o.IsCorrect);
                                 if (correctTFOption != null && answer.SelectedOptionId == correctTFOption.Id)
                                 {
@@ -486,6 +529,9 @@ namespace webthitn_backend.Controllers
                                 }
                                 break;
                         }
+
+                        // Ghi log kết quả kiểm tra câu trả lời
+                        _logger.LogInformation($"Kết quả câu {answer.ExamQuestionId}: isCorrect={isCorrect}, score={score}");
 
                         // Cộng điểm
                         totalScore += score;
@@ -500,6 +546,9 @@ namespace webthitn_backend.Controllers
                     // Tính thời gian làm bài (giả sử bắt đầu làm bài từ exam.Duration phút trước)
                     var startedAt = now.AddMinutes(-exam.Duration);
                     int duration = (int)Math.Round((now - startedAt).TotalMinutes);
+
+                    // Ghi log thông tin kết quả
+                    _logger.LogInformation($"Thông tin kết quả: Score={totalScore}, PercentageScore={percentageScore}, IsPassed={isPassed}, AnsweredQuestions={answeredQuestions}, CorrectAnswers={correctAnswers}");
 
                     // Tạo kết quả bài thi mới
                     var examResult = new ExamResult
@@ -519,12 +568,19 @@ namespace webthitn_backend.Controllers
                         StartedAt = startedAt,
                         CorrectAnswers = correctAnswers,
                         Duration = duration,
-                        TotalQuestions = totalQuestions
+                        TotalQuestions = totalQuestions,
+                        QuestionTypeStatistics = questionTypeStatistics // Thêm trường này để tránh lỗi NULL
                     };
+
+                    // Ghi log trước khi lưu đối tượng
+                    _logger.LogInformation($"Chuẩn bị lưu kết quả bài thi cho học sinh {studentId}, kỳ thi {officialExamId}");
 
                     // Lưu kết quả bài thi
                     _context.ExamResults.Add(examResult);
                     await _context.SaveChangesAsync();
+
+                    // Ghi log sau khi lưu đối tượng
+                    _logger.LogInformation($"Đã lưu kết quả bài thi với Id={examResult.Id}");
 
                     // Cập nhật thông tin học sinh đã làm bài
                     officialExamStudent.HasTaken = true;
@@ -534,6 +590,7 @@ namespace webthitn_backend.Controllers
 
                     // Commit transaction
                     await transaction.CommitAsync();
+                    _logger.LogInformation($"Transaction đã được commit thành công");
 
                     // Trả về kết quả
                     return Ok(new
@@ -562,13 +619,53 @@ namespace webthitn_backend.Controllers
                     // Rollback transaction nếu có lỗi
                     await transaction.RollbackAsync();
                     _logger.LogError($"Error processing exam submission: {ex.Message}");
-                    throw;
+                    _logger.LogError($"Stack trace: {ex.StackTrace}");
+
+                    // Ghi log inner exception nếu có
+                    if (ex.InnerException != null)
+                    {
+                        _logger.LogError($"Inner exception: {ex.InnerException.Message}");
+                        _logger.LogError($"Inner exception stack trace: {ex.InnerException.StackTrace}");
+                    }
+
+                    // Ở môi trường development, trả về thông tin chi tiết về lỗi
+#if DEBUG
+                    return StatusCode(500, new
+                    {
+                        message = "Đã xảy ra lỗi khi xử lý bài thi",
+                        error = ex.Message,
+                        innerError = ex.InnerException?.Message,
+                        stackTrace = ex.StackTrace
+                    });
+#else
+            throw;
+#endif
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error submitting exam: {ex.Message}");
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi nộp bài thi" });
+                _logger.LogError($"Stack trace: {ex.StackTrace}");
+
+                // Ghi log inner exception nếu có
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError($"Inner exception: {ex.InnerException.Message}");
+                    _logger.LogError($"Inner exception stack trace: {ex.InnerException.StackTrace}");
+                }
+
+                // Ở môi trường development, trả về thông tin chi tiết về lỗi
+#if DEBUG
+                return StatusCode(500, new
+                {
+                    message = "Đã xảy ra lỗi khi nộp bài thi",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+#else
+        return StatusCode(500, new { message = "Đã xảy ra lỗi khi nộp bài thi" });
+#endif
             }
         }
 

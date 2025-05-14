@@ -1768,19 +1768,15 @@
         "tags": [
           "ExamsImport"
         ],
-        "summary": "Import đề thi từ file CSV",
-        "description": "API này cho phép import đề thi từ file CSV với định dạng sau:\r\n\r\n- Dòng đầu tiên là tiêu đề cột: Title,Description,SubjectId,ExamTypeId,Duration,TotalScore,PassScore,MaxAttempts,StartTime,EndTime,...\r\n- Các dòng tiếp theo là thông tin của đề thi\r\n\r\nYêu cầu tối thiểu: Title (tiêu đề), SubjectId (ID môn học), ExamTypeId (ID loại đề thi), Duration (thời gian làm bài)\r\n\r\nĐịnh dạng thời gian: yyyy-MM-dd HH:mm:ss\r\n\r\nSample request:\r\n\r\n    POST /api/exams/import\r\n    Form-Data:\r\n        csvFile: [file CSV]\r\n        skipHeader: true",
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
-                "required": [
-                  "csvFile"
-                ],
                 "type": "object",
                 "properties": {
-                  "csvFile": {
+                  "file": {
                     "type": "string",
+                    "description": "file",
                     "format": "binary"
                   },
                   "skipHeader": {
@@ -1788,30 +1784,22 @@
                   },
                   "delimiter": {
                     "type": "string"
+                  },
+                  "batchSize": {
+                    "type": "integer",
+                    "format": "int32"
                   }
-                }
-              },
-              "encoding": {
-                "csvFile": {
-                  "style": "form"
-                },
-                "skipHeader": {
-                  "style": "form"
-                },
-                "delimiter": {
-                  "style": "form"
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Import thành công"
+            "description": "OK"
           },
           "400": {
-            "description": "Dữ liệu không hợp lệ",
+            "description": "Bad Request",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1831,7 +1819,7 @@
             }
           },
           "401": {
-            "description": "Không có quyền truy cập",
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1851,7 +1839,7 @@
             }
           },
           "500": {
-            "description": "Lỗi máy chủ"
+            "description": "Internal Server Error"
           }
         }
       }
@@ -1861,7 +1849,16 @@
         "tags": [
           "ExamsImport"
         ],
-        "summary": "Tải mẫu file CSV để import đề thi",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "csv"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -2548,14 +2545,11 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "required": [
-                  "file",
-                  "title"
-                ],
                 "type": "object",
                 "properties": {
                   "file": {
                     "type": "string",
+                    "description": "file",
                     "format": "binary"
                   },
                   "title": {
@@ -2579,33 +2573,9 @@
                     "type": "string"
                   }
                 }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
-                },
-                "title": {
-                  "style": "form"
-                },
-                "description": {
-                  "style": "form"
-                },
-                "subjectId": {
-                  "style": "form"
-                },
-                "chapterId": {
-                  "style": "form"
-                },
-                "documentType": {
-                  "style": "form"
-                },
-                "tags": {
-                  "style": "form"
-                }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -5062,7 +5032,6 @@
           {
             "name": "officialExamId",
             "in": "path",
-            "description": "ID của kỳ thi chính thức",
             "required": true,
             "schema": {
               "type": "integer",
@@ -5071,7 +5040,6 @@
           }
         ],
         "requestBody": {
-          "description": "Dữ liệu bài làm",
           "content": {
             "application/json": {
               "schema": {
@@ -5153,6 +5121,9 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -5927,25 +5898,17 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "required": [
-                  "file"
-                ],
                 "type": "object",
                 "properties": {
                   "file": {
                     "type": "string",
+                    "description": "file",
                     "format": "binary"
                   }
                 }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
-                }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -6123,14 +6086,11 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "required": [
-                  "file",
-                  "title"
-                ],
                 "type": "object",
                 "properties": {
                   "file": {
                     "type": "string",
+                    "description": "file",
                     "format": "binary"
                   },
                   "title": {
@@ -6151,30 +6111,9 @@
                     "type": "string"
                   }
                 }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
-                },
-                "title": {
-                  "style": "form"
-                },
-                "description": {
-                  "style": "form"
-                },
-                "subjectId": {
-                  "style": "form"
-                },
-                "chapterId": {
-                  "style": "form"
-                },
-                "tags": {
-                  "style": "form"
-                }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
