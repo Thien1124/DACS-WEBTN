@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Card, Badge, Button, ProgressBar, Row, Col, Alert, Nav, Table } from 'react-bootstrap';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaCheckCircle, FaTimesCircle, FaArrowLeft, FaArrowRight, FaListOl, FaInfoCircle, FaCheck, FaTimes, FaTrophy, FaClock, FaMinus } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaArrowLeft, FaArrowRight, FaListOl, FaInfoCircle, FaCheck, FaTimes, FaTrophy, FaClock, FaMinus, FaExclamationTriangle } from 'react-icons/fa';
 import axios from 'axios';
 import { API_URL } from '../../config/constants';
 import { useSelector } from 'react-redux';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import styled from 'styled-components';
-import { formatDuration } from '../../utils/formatters';
 
 const QuestionCard = styled(Card)`
   margin-bottom: 1.5rem;
@@ -139,6 +138,47 @@ const QuestionNavigator = styled.div`
   }
 `;
 
+// Add a new styled component for the empty questions state
+const EmptyQuestionsAlert = styled(Alert)`
+  margin-top: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-left: 5px solid #17a2b8;
+  
+  .alert-heading {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    
+    svg {
+      margin-right: 0.75rem;
+      font-size: 1.5rem;
+    }
+  }
+  
+  ul {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+`;
+
+// Helper function to format duration (move this to utils if not already there)
+const formatDuration = (minutes) => {
+  if (!minutes && minutes !== 0) return 'N/A';
+  
+  if (typeof minutes === 'string' && minutes.includes(':')) {
+    // Already formatted as HH:MM
+    return minutes;
+  }
+  
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.floor(minutes % 60);
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  }
+  return `${mins.toString().padStart(2, '0')}:00`;
+};
+
 const ExamResults = () => {
   const { resultId } = useParams();
   const [result, setResult] = useState(null);
@@ -156,21 +196,17 @@ const ExamResults = () => {
         setLoading(true);
         
         // Check multiple possible token storage locations
-        let token = localStorage.getItem('auth_token');
-        
-        // If not found with 'auth_token', try other common token key names
-        if (!token) {
-          token = localStorage.getItem('token') || 
+        let token = localStorage.getItem('token') || 
+                  localStorage.getItem('auth_token') || 
                   localStorage.getItem('accessToken') || 
                   localStorage.getItem('jwt') ||
                   localStorage.getItem('userToken');
-          
-          // Also check sessionStorage in case token is stored there
-          if (!token) {
-            token = sessionStorage.getItem('token') || 
-                   sessionStorage.getItem('auth_token') || 
-                   sessionStorage.getItem('accessToken');
-          }
+        
+        // Also check sessionStorage in case token is stored there
+        if (!token) {
+          token = sessionStorage.getItem('token') || 
+                 sessionStorage.getItem('auth_token') || 
+                 sessionStorage.getItem('accessToken');
         }
         
         console.log('Token found?', !!token);
@@ -181,7 +217,7 @@ const ExamResults = () => {
           return;
         }
         
-        // Validate resultId - THIS IS THE KEY FIX
+        // Validate resultId
         if (!resultId) {
           setError('ID kết quả bài thi không hợp lệ.');
           setLoading(false);
@@ -197,12 +233,12 @@ const ExamResults = () => {
         console.log(`Making request to: ${baseUrl}/api/Results/${resultId}`);
         
         const response = await axios.get(`${baseUrl}/api/Results/${resultId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        });
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
         
         console.log('API response status:', response.status);
         console.log('API response data:', response.data);
@@ -211,8 +247,8 @@ const ExamResults = () => {
         const data = response.data || {};
         
         // Check if questions data exists and log it
-        console.log('Student answers array:', data.studentAnswers);
-        console.log('Student answers length:', Array.isArray(data.studentAnswers) ? data.studentAnswers.length : 'Not an array');
+        const hasStudentAnswers = Array.isArray(data.studentAnswers) && data.studentAnswers.length > 0;
+        console.log('Has student answers:', hasStudentAnswers);
         
         // Check if essential data exists
         if (!data.exam) {
@@ -222,23 +258,30 @@ const ExamResults = () => {
           return;
         }
         
-        // Log if studentAnswers array is empty
-        if (!Array.isArray(data.studentAnswers) || data.studentAnswers.length === 0) {
-          console.warn('studentAnswers array is empty in API response. Questions cannot be displayed.');
-        }
-        
         const mappedData = {
+          id: data.id,
           examTitle: data.exam?.title || 'Không có tiêu đề',
+          examType: data.exam?.type || '',
           isPassed: Boolean(data.isPassed),
           duration: data.duration || 0,
+          durationFormatted: data.durationFormatted || formatDuration(data.duration),
           passingScore: data.passScore || 0,
           subjectName: data.exam?.subject?.name || 'Không có môn học',
+          subjectCode: data.exam?.subject?.code || '',
           score: Number(data.score) || 0,
           totalScore: Number(data.totalScore) || 10,
+          percentageScore: Number(data.percentageScore) || 0,
           examId: data.exam?.id,
-          hasQuestionData: Array.isArray(data.studentAnswers) && data.studentAnswers.length > 0,
+          correctAnswers: Number(data.correctAnswers) || 0,
+          totalQuestions: Number(data.totalQuestions) || 0,
+          answeredQuestions: Number(data.answeredQuestions) || 0,
+          startedAt: data.startedAt || null,
+          completedAt: data.completedAt || null,
+          hasQuestionData: hasStudentAnswers,
+          studentName: data.student?.fullName || '',
+          
           // Map student answers to questions with proper error handling
-          questions: Array.isArray(data.studentAnswers) ? data.studentAnswers.map(answer => ({
+          questions: hasStudentAnswers ? data.studentAnswers.map(answer => ({
             id: answer.questionId,
             text: answer.questionContent || 'Không có nội dung câu hỏi',
             userAnswer: answer.selectedOptionId,
@@ -256,8 +299,11 @@ const ExamResults = () => {
         console.log('Mapped data:', mappedData);
         setResult(mappedData);
         
-        // Initialize refs array for question navigation
-        questionRefs.current = mappedData.questions.map(() => React.createRef());
+        // Initialize refs array for question navigation if we have questions
+        if (hasStudentAnswers) {
+          questionRefs.current = new Array(mappedData.questions.length).fill(null)
+            .map(() => React.createRef());
+        }
       } catch (err) {
         console.error('Error fetching exam result:', err);
         
@@ -289,40 +335,54 @@ const ExamResults = () => {
     fetchExamResult();
   }, [resultId]);
 
+  // Calculate statistics even if we don't have detailed question data
+  const calculateStats = () => {
+    if (!result) return { correct: 0, incorrect: 0, unanswered: 0 };
+    
+    if (result.hasQuestionData) {
+      // If we have detailed question data, calculate from that
+      return result.questions.reduce((stats, question) => {
+        if (!question.userAnswer) {
+          stats.unanswered++;
+        } else if (question.isCorrect) {
+          stats.correct++;
+        } else {
+          stats.incorrect++;
+        }
+        return stats;
+      }, { correct: 0, incorrect: 0, unanswered: 0 });
+    } else {
+      // If we don't have detailed question data, use the summary stats
+      return {
+        correct: result.correctAnswers || 0,
+        incorrect: (result.answeredQuestions || 0) - (result.correctAnswers || 0),
+        unanswered: (result.totalQuestions || 0) - (result.answeredQuestions || 0)
+      };
+    }
+  };
+
+  const stats = calculateStats();
+
+  // The rest of your existing functions...
   const handleQuestionSelect = (index) => {
+    if (!result?.hasQuestionData) return;
     setCurrentQuestion(index);
-    questionRefs.current[index].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    questionRefs.current[index]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleNext = () => {
+    if (!result?.hasQuestionData) return;
     if (currentQuestion < result.questions.length - 1) {
       handleQuestionSelect(currentQuestion + 1);
     }
   };
 
   const handlePrevious = () => {
+    if (!result?.hasQuestionData) return;
     if (currentQuestion > 0) {
       handleQuestionSelect(currentQuestion - 1);
     }
   };
-
-  // Calculate statistics
-  const calculateStats = () => {
-    if (!result) return { correct: 0, incorrect: 0, unanswered: 0 };
-    
-    return result.questions.reduce((stats, question) => {
-      if (!question.userAnswer) {
-        stats.unanswered++;
-      } else if (question.isCorrect) {
-        stats.correct++;
-      } else {
-        stats.incorrect++;
-      }
-      return stats;
-    }, { correct: 0, incorrect: 0, unanswered: 0 });
-  };
-
-  const stats = calculateStats();
 
   if (loading) return <LoadingSpinner />;
   if (error) return <Alert variant="danger">{error}</Alert>;
@@ -344,17 +404,17 @@ const ExamResults = () => {
         <Card.Body>
           <Row>
             <Col md={6}>
-              <p><strong>Thời gian làm bài:</strong> {formatDuration(result.duration)}</p>
+              <p><strong>Thời gian làm bài:</strong> {result.durationFormatted}</p>
               <p><strong>Điểm đạt:</strong> {result.passingScore}</p>
               <p><strong>Môn học:</strong> {result.subjectName}</p>
             </Col>
             <Col md={6}>
               <div className="d-flex justify-content-between mb-1">
                 <span>Điểm số của bạn:</span>
-                <strong>{result.score.toFixed(2)}/10</strong>
+                <strong>{result.score.toFixed(2)}/{result.totalScore}</strong>
               </div>
               <ProgressBar 
-                now={result.score * 10} 
+                now={(result.score / result.totalScore) * 100} 
                 variant={result.isPassed ? 'success' : 'danger'} 
                 className="mb-3" 
               />
@@ -372,17 +432,19 @@ const ExamResults = () => {
                   <small>Chưa trả lời</small>
                 </div>
               </div>
-              <div className="d-flex mt-3">
-                <Button 
-                  as={Link} 
-                  to={`/leaderboard/exams/${result.examId}`} 
-                  variant="outline-warning"
-                  className="d-flex align-items-center"
-                  size="sm"
-                >
-                  <FaTrophy className="me-2" /> Xem bảng xếp hạng
-                </Button>
-              </div>
+              {result.examId && (
+                <div className="d-flex mt-3">
+                  <Button 
+                    as={Link} 
+                    to={`/leaderboard/exams/${result.examId}`} 
+                    variant="outline-warning"
+                    className="d-flex align-items-center"
+                    size="sm"
+                  >
+                    <FaTrophy className="me-2" /> Xem bảng xếp hạng
+                  </Button>
+                </div>
+              )}
             </Col>
           </Row>
         </Card.Body>
@@ -411,7 +473,8 @@ const ExamResults = () => {
 
       {viewMode === 'review' && (
         <>
-          {result.questions && result.questions.length > 0 ? (
+          {result.hasQuestionData ? (
+            // If we have question data, show detailed question review
             <>
               <div className="mb-4">
                 <Card bg={theme === 'dark' ? 'dark' : 'light'} className="shadow-sm">
@@ -610,17 +673,34 @@ const ExamResults = () => {
               })}
             </>
           ) : (
-            <Alert variant="warning">
-              <FaInfoCircle className="me-2" />
-              <strong>Không có câu hỏi để hiển thị</strong>
-              <p className="mt-2 mb-0">Dữ liệu câu hỏi không có sẵn cho bài thi này. Điều này có thể do một trong các nguyên nhân sau:</p>
-              <ul className="mt-2">
-                <li>API không trả về dữ liệu câu hỏi (mảng studentAnswers trống)</li>
-                <li>Bài thi đã được tính điểm nhưng không lưu chi tiết câu trả lời</li>
-                <li>Hết thời gian lưu trữ chi tiết câu hỏi</li>
+            // If we don't have question data, show an informative message
+            <EmptyQuestionsAlert variant="info">
+              <h4 className="alert-heading">
+                <FaExclamationTriangle /> Không có chi tiết câu hỏi
+              </h4>
+              <p>
+                Chi tiết câu hỏi không khả dụng cho bài thi này. Bạn chỉ có thể xem thông tin tổng quan về kết quả.
+              </p>
+              <hr />
+              <p className="mb-0">Các lý do có thể:</p>
+              <ul>
+                <li>Câu hỏi và đáp án chi tiết không được hệ thống lưu trữ cho bài thi này</li>
+                <li>Giáo viên đã chọn ẩn chi tiết câu hỏi sau khi hoàn thành bài thi</li>
+                <li>Hạn chế hiển thị đáp án để đảm bảo tính bảo mật của ngân hàng câu hỏi</li>
               </ul>
-              <p>Vui lòng liên hệ với quản trị viên hệ thống nếu bạn cần xem chi tiết bài làm.</p>
-            </Alert>
+              <p>
+                Bạn vẫn có thể xem thông tin tổng quan về kết quả bài làm của mình trong tab "Tổng quan".
+              </p>
+              <div className="mt-3">
+                <Button 
+                  variant="primary" 
+                  onClick={() => setViewMode('summary')}
+                  className="d-flex align-items-center mx-auto"
+                >
+                  <FaListOl className="me-2" /> Xem tổng quan kết quả
+                </Button>
+              </div>
+            </EmptyQuestionsAlert>
           )}
           
           <div className="d-flex justify-content-between mt-4">
@@ -636,7 +716,7 @@ const ExamResults = () => {
           <Card.Body>
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h5 className="mb-0">Bảng tổng kết</h5>
-              <Badge bg={result.isPassed ? 'success' : 'danger'} pill className="px-3 py-2 fs-6">
+              <Badge bg={result.isPassed ? 'success' : 'danger'} pill className="px-3 py-2">
                 {result.isPassed ? 'Đã đạt' : 'Chưa đạt'}
               </Badge>
             </div>
@@ -682,7 +762,7 @@ const ExamResults = () => {
                       <div className="text-primary mb-2">
                         <FaClock size={30} />
                       </div>
-                      <h3>{formatDuration(result.duration)}</h3>
+                      <h3>{result.durationFormatted}</h3>
                       <Card.Text>Thời gian làm bài</Card.Text>
                     </Card.Body>
                   </Card>
@@ -690,7 +770,8 @@ const ExamResults = () => {
               </Row>
             </div>
             
-            {result.questions && result.questions.length > 0 ? (
+            {/* Show table only if we have question data */}
+            {result.hasQuestionData ? (
               <div className="table-responsive">
                 <Table striped bordered hover variant={theme === 'dark' ? 'dark' : 'light'}>
                   <thead>
@@ -768,13 +849,18 @@ const ExamResults = () => {
                 </Table>
               </div>
             ) : (
-              <Alert variant="info">
-                <FaInfoCircle className="me-2" />
-                Không có dữ liệu chi tiết câu hỏi để hiển thị. Bạn vẫn có thể xem thông tin tổng quan về bài thi.
+              <Alert variant="info" className="d-flex align-items-center">
+                <FaInfoCircle size={20} className="me-3" />
+                <div>
+                  <p className="mb-0 fw-bold">Không có dữ liệu chi tiết câu hỏi</p>
+                  <p className="mb-0 mt-1">
+                    Hệ thống chỉ lưu trữ thông tin tổng quan của bài thi này. Chi tiết từng câu hỏi không được hiển thị.
+                  </p>
+                </div>
               </Alert>
             )}
             
-            {result.questions && result.questions.length > 0 && (
+            {result.hasQuestionData && (
               <div className="mt-4 text-center">
                 <Button variant="primary" onClick={() => setViewMode('review')}>
                   <FaListOl className="me-2" /> Xem chi tiết từng câu hỏi

@@ -1,5 +1,5 @@
 // Kiểm tra môi trường và sử dụng URL phù hợp
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5006'; // Cập nhật port phù hợp với backend của bạn
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5006'; 
 export const USE_MOCK_DATA = false; // Set false khi backend đã sẵn sàng
 
 // Các endpoints

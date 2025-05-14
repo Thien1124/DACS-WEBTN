@@ -15,7 +15,7 @@ import TeacherImportExam from './pages/teacher/TeacherImportExam';
 
 // Layout
 import AppLayout from './components/layout/AppLayout';
-
+import StudentExamResult from './pages/student/StudentExamResult';
 // Add these new imports
 import AdminStatistics from './pages/admin/AdminStatistics';
 import TeacherStatistics from './pages/teacher/TeacherStatistics';
@@ -110,6 +110,7 @@ import TeacherExamStatistics from './pages/teacher/TeacherExamStatistics';
 
 // Thêm import cho component mới
 import TeacherResultAnalytics from './pages/teacher/TeacherResultAnalytics';
+import StudentTakeExam from './pages/student/StudentTakeExam';
 
 import NotificationBadge from './components/notifications/NotificationBadge';
 import NotificationSender from './components/admin/NotificationSender';
@@ -142,6 +143,7 @@ import OfficialExamResults from './components/admin/OfficialExamResults';
 
 // First, import the MaterialDetails component at the top of your file with the other imports
 import MaterialDetails from './pages/teacher/MaterialDetails';
+import StudentAssignedExams from './pages/student/StudentAssignedExams';
 
 // Import the FeedbackManagement component at the top
 import FeedbackManagement from './pages/admin/FeedbackManagement';
@@ -162,7 +164,7 @@ function App() {
   const { theme, currentAnimation } = useSelector(state => state.ui);
   const { user, isAuthenticated } = useSelector(state => state.auth);
   const dispatch = useDispatch();
-  const currentUser = 'vinhsonvlog'; // hoặc lấy từ state/localStorage
+  const currentUser = user?.username;
 
   // Sử dụng hook đồng bộ hóa
   useRoleSynchronizer();
@@ -308,7 +310,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/exams/by-subject/:subjectId" element={<ExamsBySubject />} />
-                
+                <Route path="/student/exams/:officialExamId/result" element={<StudentExamResult />} />
                 {/* User Routes */}
                 <Route path="/profile" element={
                   <ProtectedRoute>
@@ -463,6 +465,11 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                <Route path="/student/assigned-exams" element={
+                  <ProtectedRoute>
+                    <StudentAssignedExams />
+                  </ProtectedRoute>
+                } />
                 
 
                 {/* Add this new route for Chapter Management */}
@@ -557,7 +564,7 @@ function App() {
                 <Route path="/teacher/statistics" element={
                   <ProtectedRoute allowedRoles={['teacher', 'admin']}>
                     <TeacherRoute>
-                    <TeacherExamStatisticsMockData />
+                    <TeacherExamStatistics />
                     </TeacherRoute>
                   </ProtectedRoute>
                 } />
@@ -642,7 +649,7 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
-
+                <Route path="/student/exams/:officialExamId/take" element={<StudentTakeExam />} />
                 {/* Then add this route in your Routes component */}
                 <Route 
                   path="/analytics/charts" 

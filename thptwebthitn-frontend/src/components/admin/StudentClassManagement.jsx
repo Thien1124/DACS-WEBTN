@@ -12,12 +12,11 @@ import {
   FaChartLine, FaExclamationTriangle
 } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
-import { fetchUsers } from '../../redux/userSlice';
-import { fetchExams, fetchExamResults } from '../../redux/examSlice'; 
-import { fetchClasses } from '../../redux/classSlice';
+import { fetchUsersList } from '../../redux/userSlice';
+import { fetchExams, fetchExamResult } from '../../redux/examSlice'; 
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-
+import { exportStudentsByClassroom,exportScoresByExam } from '../../services/export';
 // Animation keyframes
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -492,13 +491,12 @@ const Table = styled.table`
   
   /* Column widths */
   th:nth-child(1), td:nth-child(1) { width: 5%; }  /* Checkbox */
-  th:nth-child(2), td:nth-child(2) { width: 10%; } /* Mã HS */
-  th:nth-child(3), td:nth-child(3) { width: 20%; } /* Họ và tên */
-  th:nth-child(4), td:nth-child(4) { width: 12%; } /* Lớp */
-  th:nth-child(5), td:nth-child(5) { width: 8%; }  /* Khối */
-  th:nth-child(6), td:nth-child(6) { width: 10%; } /* Điểm TB */
-  th:nth-child(7), td:nth-child(7) { width: 15%; } /* Trạng thái */
-  th:nth-child(8), td:nth-child(8) { width: 20%; } /* Thao tác */
+  th:nth-child(2), td:nth-child(2) { width: 15%; } /* Mã HS */
+  th:nth-child(3), td:nth-child(3) { width: 30%; } /* Họ và tên */
+  th:nth-child(4), td:nth-child(4) { width: 10%; } /* Khối */
+  th:nth-child(5), td:nth-child(5) { width: 15%; } /* Điểm TB */
+  th:nth-child(6), td:nth-child(6) { width: 10%; } /* Trạng thái */
+  th:nth-child(7), td:nth-child(7) { width: 15%; } /* Thao tác */
 `;
 
 
@@ -578,8 +576,9 @@ const Badge = styled.span`
 // Improved action buttons container
 const ActionIcons = styled.div`
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem; /* Reduced gap from 0.75rem */
   justify-content: flex-start;
+  flex-wrap: wrap; /* Added to allow wrapping if needed */
 `;
 
 // Enhanced action buttons
@@ -588,7 +587,7 @@ const ActionButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: ${props => props.showText ? '0.5rem 0.85rem' : '0.5rem'};
+  padding: ${props => props.showText ? '0.4rem 0.7rem' : '0.5rem'};
   width: ${props => props.showText ? 'auto' : '2.5rem'};
   height: ${props => props.showText ? 'auto' : '2.5rem'};
   border-radius: 0.5rem;
@@ -596,7 +595,7 @@ const ActionButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
-  font-size: 0.8125rem;
+  font-size: ${props => props.showText ? '0.75rem' : '0.8125rem'};
   background-color: ${props => 
     props.view 
       ? props.theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'
@@ -864,6 +863,7 @@ const StudentClassManagement = () => {
     pendingGrades: 0,
     failedGrades: 0
   });
+  const [selectedExam, setSelectedExam] = useState('');
   
   // Fetch data on component mount
   useEffect(() => {
@@ -871,15 +871,16 @@ const StudentClassManagement = () => {
       try {
         setLoading(true);
         
-        // Fetch students, classes, and exams in parallel
-        const [usersResponse, classesResponse, examsResponse] = await Promise.all([
-          dispatch(fetchUsers({ role: 'Student' })).unwrap(),
-          dispatch(fetchClasses()).unwrap(),
+        const [usersResponse, examsResponse] = await Promise.all([
+          dispatch(fetchUsersList({ 
+            role: 'Student', 
+            pageSize: 100,
+            grade: selectedGrade || undefined
+          })).unwrap(),
           dispatch(fetchExams()).unwrap(),
         ]);
         
         console.log('API Response - Users:', usersResponse);
-        console.log('API Response - Classes:', classesResponse);
         
         // Xử lý dữ liệu học sinh từ API
         let studentData = [];
@@ -901,16 +902,101 @@ const StudentClassManagement = () => {
           }
         }
         
-        // Xử lý dữ liệu - đảm bảo các trường cần thiết có giá trị
-        const processedStudents = studentData.map(student => ({
-          ...student,
-          grade: student.grade || (student.class?.name ? student.class.name.substring(0, 2) : ''),
-          gradesStatus: student.gradesStatus || 'pending',
-          averageGrade: student.averageGrade || 0
+        // Filter to only include students by role, completely removing any 'Admin' or 'Teacher' users
+        studentData = studentData.filter(user => {
+          // First, explicitly exclude users with Admin or Teacher role
+          if (user.role === 'Admin' || user.role === 'Teacher') {
+            return false;
+          }
+          
+          // Explicitly exclude users with 'Admin' or 'Teacher' in the grade field
+          if (user.grade === 'Admin' || user.grade === 'Teacher') {
+            return false;
+          }
+          
+          // Keep only users with Student role or those that have a valid grade (10, 11, 12)
+          return user.role === 'Student' || 
+                 (typeof user.grade === 'string' && ['10', '11', '12'].includes(user.grade));
+        });
+        
+        // Process the student data
+        const processedStudents = await Promise.all(studentData.map(async student => {
+          // Fetch student's exam results to calculate average grade
+          let averageGrade = 0;
+          try {
+            // Make sure student.id is a primitive value, not an object
+            const studentId = typeof student.id === 'object' ? JSON.stringify(student.id) : student.id;
+            
+            // Fetch student's exam results with proper parameters
+            const examResults = await dispatch(fetchExamResult({
+              studentId: studentId,
+              includeScores: true
+            })).unwrap();
+            
+            console.log(`Exam results for student ${student.id}:`, examResults);
+            
+            // Handle different response formats
+            let scores = [];
+            if (examResults) {
+              if (Array.isArray(examResults)) {
+                scores = examResults;
+              } else if (examResults.items && Array.isArray(examResults.items)) {
+                scores = examResults.items;
+              } else if (examResults.results && Array.isArray(examResults.results)) {
+                scores = examResults.results;
+              } else if (typeof examResults === 'object') {
+                // Try to extract scores from the response
+                for (const key in examResults) {
+                  if (Array.isArray(examResults[key])) {
+                    scores = examResults[key];
+                    break;
+                  }
+                }
+              }
+            }
+            
+            // Find score values in the response objects
+            const validScores = scores
+              .map(result => {
+                // Try different possible property names for the score
+                const scoreValue = 
+                  result.score !== undefined ? result.score :
+                  result.value !== undefined ? result.value :
+                  result.points !== undefined ? result.points :
+                  result.result !== undefined ? result.result :
+                  null;
+                  
+                return scoreValue;
+              })
+              .filter(score => score !== null && !isNaN(parseFloat(score)));
+            
+            if (validScores.length > 0) {
+              const sum = validScores.reduce((total, score) => total + parseFloat(score), 0);
+              averageGrade = (sum / validScores.length).toFixed(1);
+              console.log(`Calculated average for student ${student.id}: ${averageGrade} from ${validScores.length} scores`);
+            }
+          } catch (error) {
+            console.error(`Error fetching exam results for student ${student.id}:`, error);
+          }
+          
+          return {
+            ...student,
+            studentId: student.studentId || student.id, // Use ID as studentId if not available
+            grade: student.grade || (student.class?.name ? student.class.name.substring(0, 2) : ''),
+            gradesStatus: student.gradesStatus || 'pending',
+            // Convert the string average back to a number for proper display
+            averageGrade: parseFloat(averageGrade) || 0
+          };
         }));
         
         setStudents(processedStudents);
-        setClasses(Array.isArray(classesResponse) ? classesResponse : []);
+        
+        // Extract unique classes from the student data
+        const uniqueClasses = [...new Set(processedStudents
+          .filter(s => s.class?.name)
+          .map(s => s.class.name))];
+        setClasses(uniqueClasses);
+        
         setExams(Array.isArray(examsResponse) ? examsResponse : []);
         setFilteredStudents(processedStudents);
         
@@ -922,7 +1008,6 @@ const StudentClassManagement = () => {
         console.error('Error fetching data:', error);
         showErrorToast('Có lỗi xảy ra khi tải dữ liệu');
         
-        // Không sử dụng mock data nữa, hiển thị mảng rỗng khi có lỗi
         setStudents([]);
         setFilteredStudents([]);
         setClasses([]);
@@ -934,7 +1019,7 @@ const StudentClassManagement = () => {
     };
     
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, selectedGrade]);
   
   
   // Update filtered students when filters change
@@ -1097,51 +1182,81 @@ const StudentClassManagement = () => {
   
   // Export student data to Excel
   // Sửa phần handleExportToExcel, thay đổi cách tạo tên file
-const handleExportToExcel = () => {
+const handleExportToExcel = async () => {
   try {
-    // Determine which students to export
-    const studentsToExport = selectedStudents.length > 0
-      ? filteredStudents.filter(student => selectedStudents.includes(student.id))
-      : filteredStudents;
-    
-    if (studentsToExport.length === 0) {
+    if (filteredStudents.length === 0) {
       showErrorToast('Không có dữ liệu học sinh để xuất');
       return;
     }
     
-    // Prepare data for export
-    const exportData = studentsToExport.map(student => ({
-      'Mã học sinh': student.studentId || '',
-      'Họ và tên': student.fullName || '',
-      'Khối': student.grade || '',
-      'Email': student.email || '',
-      'Số điện thoại': student.phone || '',
-      'Địa chỉ': student.address || '',
-      'Ngày sinh': student.birthDate || '',
-      'Điểm trung bình': student.averageGrade || '',
-      'Trạng thái': student.gradesStatus || '',
-    }));
+    setLoading(true);
     
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách học sinh');
-    
-    // Generate file name based on grade if selected
-    let fileName = 'danh_sach_hoc_sinh.xlsx';
-    if (selectedGrade) {
-      fileName = `danh_sach_hs_khoi_${selectedGrade}.xlsx`;
+    // If we have a selectedClass, use the API to export that class
+    if (selectedClass) {
+      // Call the API endpoint
+      const response = await dispatch(exportStudentsByClassroom(selectedClass)).unwrap();
+      
+      // API should return a blob or file URL
+      if (response.fileUrl) {
+        // If API returns a URL, open it
+        window.open(response.fileUrl, '_blank');
+      } else if (response.data) {
+        // If API returns data, process it with XLSX
+        const worksheet = XLSX.utils.json_to_sheet(response.data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách học sinh');
+        
+        let fileName = selectedClass 
+          ? `danh_sach_hs_lop_${selectedClass}.xlsx` 
+          : 'danh_sach_hoc_sinh.xlsx';
+          
+        XLSX.writeFile(workbook, fileName);
+      }
+      
+      showSuccessToast('Đã xuất danh sách học sinh thành công');
+    } else {
+      // Client-side export if no class is selected
+      // Determine which students to export
+      const studentsToExport = selectedStudents.length > 0
+        ? filteredStudents.filter(student => selectedStudents.includes(student.id))
+        : filteredStudents;
+      
+      // Prepare data for export - REMOVE EMPTY COLUMNS
+      const exportData = studentsToExport.map(student => ({
+        'Mã học sinh': student.studentId || '',
+        'Họ và tên': student.fullName || '',
+        'Khối': student.grade || '',
+        'Email': student.email || '',
+        // Removed: 'Số điện thoại', 'Địa chỉ', 'Ngày sinh'
+        'Điểm trung bình': student.averageGrade ? student.averageGrade.toFixed(1) : '0.0',
+        'Trạng thái': student.gradesStatus === 'approved' ? 'Đã duyệt' : 
+                      student.gradesStatus === 'pending' ? 'Chưa duyệt' : 
+                      student.gradesStatus === 'failed' ? 'Không đạt' : 'N/A',
+      }));
+      
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách học sinh');
+      
+      // Generate file name based on grade if selected
+      let fileName = 'danh_sach_hoc_sinh.xlsx';
+      if (selectedGrade) {
+        fileName = `danh_sach_hs_khoi_${selectedGrade}.xlsx`;
+      }
+      
+      // Export to file
+      XLSX.writeFile(workbook, fileName);
+      
+      showSuccessToast(`Đã xuất ${exportData.length} học sinh ra file Excel`);
     }
-    
-    // Export to file
-    XLSX.writeFile(workbook, fileName);
-    
-    showSuccessToast(`Đã xuất ${exportData.length} học sinh ra file Excel`);
   } catch (error) {
     console.error('Error exporting to Excel:', error);
     showErrorToast('Có lỗi xảy ra khi xuất file Excel');
+  } finally {
+    setLoading(false);
   }
 };
   
@@ -1166,6 +1281,45 @@ const handleExportToExcel = () => {
   const handleEditStudent = (studentId) => {
     navigate(`/admin/students/${studentId}/edit`);
   };
+
+  // Add this new function to export scores by exam
+
+const handleExportScores = async () => {
+  try {
+    // Check if we have an exam selected
+    if (!selectedExam) {
+      showErrorToast('Vui lòng chọn kỳ thi để xuất điểm');
+      return;
+    }
+    
+    setLoading(true);
+    
+    // Call the API endpoint
+    const response = await dispatch(exportScoresByExam(selectedExam)).unwrap();
+    
+    // Handle the response similar to the student export
+    if (response.fileUrl) {
+      window.open(response.fileUrl, '_blank');
+    } else if (response.data) {
+      const worksheet = XLSX.utils.json_to_sheet(response.data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Bảng điểm');
+      
+      // Find the exam name
+      const exam = exams.find(e => e.id === selectedExam);
+      const examName = exam ? exam.name.replace(/\s+/g, '_') : 'ky_thi';
+      
+      XLSX.writeFile(workbook, `bang_diem_${examName}.xlsx`);
+    }
+    
+    showSuccessToast('Đã xuất bảng điểm thành công');
+  } catch (error) {
+    console.error('Error exporting scores:', error);
+    showErrorToast('Có lỗi xảy ra khi xuất bảng điểm');
+  } finally {
+    setLoading(false);
+  }
+};
   
   if (loading) {
     return (
@@ -1193,7 +1347,15 @@ const handleExportToExcel = () => {
             theme={theme}
             disabled={filteredStudents.length === 0}
           >
-            <FaFileExport /> Xuất Excel
+            <FaFileExport /> Xuất DS học sinh
+          </Button>
+          
+          <Button 
+            onClick={handleExportScores} 
+            theme={theme}
+            disabled={!selectedExam}
+          >
+            <FaFileExport /> Xuất bảng điểm
           </Button>
           
           <Button 
@@ -1242,6 +1404,21 @@ const handleExportToExcel = () => {
                 <option value="10">Khối 10</option>
                 <option value="11">Khối 11</option>
                 <option value="12">Khối 12</option>
+              </Select>
+            </FilterGroup>
+            <FilterGroup>
+              <Label theme={theme}>Kỳ thi</Label>
+              <Select 
+                value={selectedExam}
+                onChange={(e) => setSelectedExam(e.target.value)}
+                theme={theme}
+              >
+                <option value="">Chọn kỳ thi...</option>
+                {exams.map(exam => (
+                  <option key={exam.id} value={exam.id}>
+                    {exam.name}
+                  </option>
+                ))}
               </Select>
             </FilterGroup>
           </FiltersContainer>
@@ -1406,7 +1583,7 @@ const handleExportToExcel = () => {
                           />
                         </CheckboxContainer>
                       </td>
-                      <td style={{ fontWeight: '500' }}>{student.studentId || 'N/A'}</td>
+                      <td style={{ fontWeight: '500' }}>{student.studentId || student.id || 'N/A'}</td>
                       <td style={{ fontWeight: '500' }}>{student.fullName || student.username}</td>
                       {/* Xóa cột lớp */}
                       <td style={{ textAlign: 'center' }}>{student.grade || 'N/A'}</td>
@@ -1436,7 +1613,7 @@ const handleExportToExcel = () => {
                               title="Xem chi tiết học sinh"
                               onClick={() => handleViewStudent(student.id)}
                             >
-                              <FaEye /> Xem chi tiết
+                              <FaEye />
                             </ActionButton>
                             <ActionButton 
                               edit
@@ -1445,7 +1622,7 @@ const handleExportToExcel = () => {
                               title="Chỉnh sửa thông tin học sinh"
                               onClick={() => handleEditStudent(student.id)}
                             >
-                              <FaEdit /> Chỉnh sửa
+                              <FaEdit />
                             </ActionButton>
                           </ActionIcons>
                         </td>

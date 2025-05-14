@@ -470,37 +470,26 @@ function Header() {
   // Add this function before the return statement
   useEffect(() => {
     const fetchAndUpdateUserData = async () => {
-      // Only execute if user is logged in but missing avatar
-      if (isAuthenticated && user?.id && !user.avatarUrl) {
-        try {
-          console.log('Fetching fresh user data for avatar');
-          // You'll need to import this from your authService
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/user/${user.id}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            console.log('Fresh user data:', userData);
-            
-            if (userData.avatarUrl) {
-              // Update Redux with complete user data
-              dispatch(updateUser({
-                ...user,
-                avatarUrl: userData.avatarUrl
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+    if (isAuthenticated && user?.id && !user.avatarUrl) {
+      try {
+        // Just use the existing data from localStorage instead of making the API call
+        const userData = JSON.parse(localStorage.getItem('user_data'));
+        if (userData && userData.avatarUrl) {
+          dispatch(updateUser({
+            ...user,
+            avatarUrl: userData.avatarUrl
+          }));
         }
+        // If you still need to fetch user data, use a different endpoint that supports GET
+        // For example: '/api/users/profile' or '/api/users/me'
+      } catch (error) {
+        console.error('Error updating user avatar:', error);
       }
-    };
-    
-    fetchAndUpdateUserData();
-  }, [isAuthenticated, user?.id]);
+    }
+  };
+  
+  fetchAndUpdateUserData();
+}, [isAuthenticated, user?.id, dispatch]);
 
   // Add this useEffect
   useEffect(() => {
@@ -603,7 +592,12 @@ function Header() {
                           Lịch sử bài thi
                         </DropdownItem>
                       )}
-                      
+                      {user.role === 'Student' && (
+                        <DropdownItem to="/student/assigned-exams" theme={theme}>
+                          <FaClipboardList />
+                          Kỳ thi chính thức
+                        </DropdownItem>
+                      )}
                       {user.role === 'Student' && (
                         <DropdownItem to="/chat" theme={theme}>
                           <FaCommentDots />
@@ -638,10 +632,7 @@ function Header() {
                             <FaTrophy />
                             Kỳ thi chính thức
                           </DropdownItem>
-                          <DropdownItem to="/admin/subjects" theme={theme}>
-                            <FaBook />
-                            Quản lý môn học
-                          </DropdownItem>
+                          
                           <DropdownItem to="/admin/questions" theme={theme}>
                             <FaQuestion />
                             Quản lý câu hỏi

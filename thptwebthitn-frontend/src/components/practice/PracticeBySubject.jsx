@@ -7,7 +7,8 @@ import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import Header from '../layout/Header';
 import Footer from '../layout/Footer';
-
+import { toast } from 'react-toastify';
+import apiClient from '../../services/apiClient';
 const GradeCard = styled(Card)`
   transition: all 0.3s;
   cursor: pointer;
@@ -65,6 +66,10 @@ const PracticeBySubject = () => {
   const [difficulty, setDifficulty] = useState('medium');
   const [isLoading, setIsLoading] = useState(false);
   const [subjects, setSubjects] = useState([]);
+  const [questionTypes, setQuestionTypes] = useState([0]); // Default to all types
+  const [chapters, setChapters] = useState([]); // Will hold available chapters
+  const [selectedChapters, setSelectedChapters] = useState([]); // Will hold selected chapter IDs
+  const [topic, setTopic] = useState(''); // For topic field
   
   // Cập nhật dữ liệu môn học trong component
   const grades = [
@@ -166,54 +171,214 @@ const PracticeBySubject = () => {
   // Handle subject selection
   const handleSubjectSelect = (subject) => {
     setSelectedSubject(subject);
+    setSelectedChapters([]); // Reset selected chapters
+    fetchChapters(subject.id);
   };
   
-  // Handle practice exam creation
-  const handleCreatePractice = async () => {
-    if (!selectedGrade || !selectedSubject) {
-      alert('Vui lòng chọn lớp và môn học');
+  // Add function to fetch chapters for a subject
+  const fetchChapters = async (subjectId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await apiClient.get(`/api/Chapter`, {
+        params: { 
+          subjectId,
+          page: 1,
+          pageSize: 100,
+          includeInactive: false
+        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      
+      console.log('Chapter API response:', response.data);
+      
+      // Check if the response has the data array (matching API documentation)
+      if (response.data && Array.isArray(response.data.data)) {
+        setChapters(response.data.data);
+        console.log(`Found ${response.data.data.length} chapters for subject ${subjectId}`);
+      } else if (Array.isArray(response.data.items)) {
+        // Fallback to items if that's the format your API uses
+        setChapters(response.data.items);
+      } else if (Array.isArray(response.data)) {
+        // Last fallback - direct array
+        setChapters(response.data);
+      } else {
+        console.error('Unexpected API response format:', response.data);
+        setChapters([]);
+      }
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+      toast.error('Không thể tải danh sách chương');
+      setChapters([]);
+    }
+  };
+
+  // Thêm hàm fetchRandomQuestions để lấy câu hỏi ngẫu nhiên
+const fetchRandomQuestions = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Tạo params cho API lấy câu hỏi ngẫu nhiên
+    const params = {
+      subjectId: parseInt(selectedSubject.id),
+      count: parseInt(questionCount),
+      levelId: difficultyToLevelId[difficulty] || 0
+    };
+    
+    // Thêm chapterIds nếu có
+    if (selectedChapters.length > 0) {
+      params.chapterId = selectedChapters[0]; // API chỉ hỗ trợ 1 chapterId trong params
+    }
+    
+    // Thêm questionType nếu có
+    if (!questionTypes.includes(0) && questionTypes.length > 0) {
+      params.questionType = questionTypes[0]; // API chỉ hỗ trợ 1 questionType trong params
+    }
+    
+    // Thêm topic nếu có
+    if (topic) {
+      params.topic = topic;
+    }
+    
+    console.log('Fetching random questions with params:', params);
+    
+    const response = await apiClient.get('/api/Question/random', {
+      params: params,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    
+    console.log('Random questions response:', response.data);
+    
+    if (Array.isArray(response.data)) {
+      return response.data.map(q => q.id);
+    } else if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(q => q.id);
+    } else if (response.data && Array.isArray(response.data.items)) {
+      return response.data.items.map(q => q.id);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching random questions:', error);
+    toast.error('Không thể lấy câu hỏi ngẫu nhiên');
+    return [];
+  }
+};
+
+  // Cập nhật hàm handleCreatePractice để sử dụng câu hỏi ngẫu nhiên
+const handleCreatePractice = async () => {
+  if (!selectedSubject) {
+    toast.warning('Vui lòng chọn môn học');
+    return;
+  }
+  
+  if (selectedChapters.length === 0) {
+    toast.warning('Vui lòng chọn ít nhất một chương');
+    return;
+  }
+  
+  setIsLoading(true);
+  
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Bạn cần đăng nhập để tạo đề luyện tập');
+      navigate('/login');
       return;
     }
     
-    setIsLoading(true);
+    // Step 1: Fetch random questions first
+    const randomQuestionIds = await fetchRandomQuestions();
     
-    try {
-      // You would replace this with actual API call to create practice test
-      // For now, we'll simulate a delay and then navigate to a mock practice exam
-      
-      const practiceParams = {
-        subjectId: selectedSubject.id,
-        questionCount: questionCount,
-        difficulty: difficulty,
-        gradeLevel: selectedGrade.id
-      };
-      
-      console.log('Creating practice test with params:', practiceParams);
-      
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-        // Navigate to practice exam with these parameters
-        navigate('/practice-exam?params=' + btoa(JSON.stringify(practiceParams)));
-      }, 1500);
-      
-      // Actual API call would look something like:
-      /*
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Practice/create`,
-        practiceParams
-      );
-      
-      if (response.data && response.data.id) {
-        navigate(`/practice-exam/${response.data.id}`);
-      }
-      */
-      
-    } catch (error) {
-      console.error('Error creating practice test:', error);
+    if (randomQuestionIds.length === 0) {
+      toast.error('Không tìm thấy câu hỏi phù hợp với các tiêu chí đã chọn');
       setIsLoading(false);
-      alert('Có lỗi xảy ra khi tạo đề luyện tập. Vui lòng thử lại sau.');
+      return;
     }
+    
+    console.log(`Fetched ${randomQuestionIds.length} random questions`);
+    
+    // Step 2: Create practice test with the random questions
+    const payload = {
+      subjectId: parseInt(selectedSubject.id),
+      questionCount: randomQuestionIds.length,
+      levelId: difficultyToLevelId[difficulty] || 0,
+      questionTypes: questionTypes.includes(0) ? [0] : questionTypes.map(t => parseInt(t)),
+      chapterIds: selectedChapters.map(id => parseInt(id)),
+      topic: topic || selectedSubject.name || "Practice Test",
+      // Add the random question IDs to the payload
+      questionIds: randomQuestionIds
+    };
+    
+    console.log('Creating practice test with payload:', JSON.stringify(payload, null, 2));
+    
+    // Try with /api prefix
+    const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/tests/practice`;
+    console.log('Calling API at:', apiUrl);
+    
+    const response = await axios.post(
+      apiUrl,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    console.log('API response:', response.data);
+    handleSuccessResponse(response);
+  } catch (error) {
+    console.error('Error creating practice test:', error);
+    
+    // Better error reporting
+    let errorMessage = 'Không thể tạo đề luyện tập';
+    
+    if (error.response && error.response.data) {
+      console.error('Error details:', error.response.data);
+      
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response.data.Message) {
+        errorMessage = error.response.data.Message;
+      } else if (error.response.data.title) {
+        errorMessage = error.response.data.title;
+      }
+    }
+    
+    toast.error(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  // Helper function to handle successful response
+  const handleSuccessResponse = (response) => {
+    if (response.data?.Success === true || response.status === 200) {
+      toast.success('Đã tạo đề luyện tập thành công!');
+      
+      if (response.data?.PracticeId || response.data?.id || 
+          (response.data?.Data && response.data.Data.PracticeId)) {
+        const examId = response.data.PracticeId || 
+                       response.data.id || 
+                       response.data.Data.PracticeId;
+        navigate(`/practice-exam/${examId}`);
+      } else {
+        // Generic navigation if we can't find an ID
+        navigate('/practice-exam');
+      }
+    } else {
+      toast.warning('Đề thi đã được tạo nhưng không thể chuyển hướng tự động');
+      navigate('/practice');
+    }
+  };
+
+  // Map difficulty string to levelId
+  const difficultyToLevelId = {
+    'easy': 1,
+    'medium': 2,
+    'hard': 3,
+    'mixed': 0
   };
   
   return (
@@ -300,6 +465,89 @@ const PracticeBySubject = () => {
                             <option value="hard">Khó</option>
                             <option value="mixed">Siêu Khó</option>
                           </Form.Select>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                          <Form.Label>Chương</Form.Label>
+                          <Form.Select 
+                            multiple
+                            value={selectedChapters}
+                            onChange={(e) => setSelectedChapters(
+                              Array.from(e.target.selectedOptions, option => option.value)
+                            )}
+                            style={{ height: '120px' }}
+                          >
+                            {chapters.map(chapter => (
+                              <option key={chapter.id} value={chapter.id}>
+                                {chapter.name}
+                              </option>
+                            ))}
+                          </Form.Select>
+                          <Form.Text className="text-muted">
+                            Giữ Ctrl (Windows) hoặc Command (Mac) để chọn nhiều chương
+                          </Form.Text>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                          <Form.Label>Chủ đề</Form.Label>
+                          <Form.Control
+                            type="text"
+                            value={topic}
+                            onChange={(e) => setTopic(e.target.value)}
+                            placeholder="Nhập chủ đề (không bắt buộc)"
+                          />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                          <Form.Label>Loại câu hỏi</Form.Label>
+                          <div>
+                            <Form.Check
+                              type="checkbox"
+                              id="questionType-0"
+                              label="Tất cả"
+                              checked={questionTypes.includes(0)}
+                              onChange={() => setQuestionTypes([0])}
+                            />
+                            <Form.Check
+                              type="checkbox"
+                              id="questionType-1"
+                              label="Trắc nghiệm"
+                              checked={questionTypes.includes(1) && !questionTypes.includes(0)}
+                              onChange={() => {
+                                if (questionTypes.includes(1)) {
+                                  setQuestionTypes(questionTypes.filter(t => t !== 1));
+                                } else {
+                                  setQuestionTypes([...questionTypes.filter(t => t !== 0), 1]);
+                                }
+                              }}
+                            />
+                            <Form.Check
+                              type="checkbox"
+                              id="questionType-2"
+                              label="Đúng/Sai"
+                              checked={questionTypes.includes(2) && !questionTypes.includes(0)}
+                              onChange={() => {
+                                if (questionTypes.includes(2)) {
+                                  setQuestionTypes(questionTypes.filter(t => t !== 2));
+                                } else {
+                                  setQuestionTypes([...questionTypes.filter(t => t !== 0), 2]);
+                                }
+                              }}
+                            />
+                            <Form.Check
+                              type="checkbox"
+                              id="questionType-3"
+                              label="Tự luận"
+                              checked={questionTypes.includes(3) && !questionTypes.includes(0)}
+                              onChange={() => {
+                                if (questionTypes.includes(3)) {
+                                  setQuestionTypes(questionTypes.filter(t => t !== 3));
+                                } else {
+                                  setQuestionTypes([...questionTypes.filter(t => t !== 0), 3]);
+                                }
+                              }}
+                            />
+                          </div>
                         </Form.Group>
                         
                         <Button 

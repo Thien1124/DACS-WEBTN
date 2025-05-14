@@ -93,20 +93,106 @@ const TeacherResultAnalytics = () => {
       
       console.log(`Fetching analytics for exam: ${targetExamId}`);
       const response = await getTestAnalytics(targetExamId);
-      
+      const processLeaderboardResults = (data) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    console.warn('No results to process');
+    setResults([]);
+    return;
+  }
+  
+  console.log('Processing results data:', data);
+  
+  // Format the data to match what the table expects
+  const formattedResults = data.map(item => {
+    // Check for actual data structure
+    console.log('Processing item:', item);
+    
+    return {
+      studentName: item.studentName || item.fullName || item.student?.fullName || 'N/A',
+      score: typeof item.score === 'number' ? item.score : 0,
+      duration: item.duration || item.timeSpent || 0,
+      completedDate: item.completedDate || item.completedAt || item.submittedAt || new Date().toISOString(),
+      startTime: item.startTime || item.startedAt || new Date().toISOString(),
+    };
+  });
+  
+  console.log('Formatted results:', formattedResults);
+  setResults(formattedResults);
+};
       // Also fetch leaderboard data
       try {
+        console.log('Fetching leaderboard data for exam:', targetExamId);
         const leaderboardResponse = await getExamLeaderboard(targetExamId);
+        
+        // Log the response to see what's coming back
+        console.log('Leaderboard API response:', leaderboardResponse);
+        
         if (leaderboardResponse && leaderboardResponse.success && leaderboardResponse.data) {
+          console.log('Setting leaderboard data, length:', leaderboardResponse.data.length);
           setLeaderboardData(leaderboardResponse.data);
-          // Also use this data for results to display in the table
-          setResults(leaderboardResponse.data);
+          
+          // Make sure data is in the expected format for the table
+          const formattedResults = leaderboardResponse.data.map(item => ({
+            studentName: item.studentName || item.fullName || 'N/A',
+            score: typeof item.score === 'number' ? item.score : 0,
+            duration: item.duration || item.timeSpent || 0,
+            completedDate: item.completedDate || item.completedAt || item.submittedAt || new Date().toISOString(),
+            startTime: item.startTime || item.startedAt || new Date().toISOString(),
+            // Add any other necessary fields
+          }));
+          
+          console.log('Formatted results:', formattedResults);
+          setResults(formattedResults);
         } else {
+          // Try to recover by checking different response formats
           console.warn('Leaderboard data structure is not as expected');
+          
+          // Try alternative property paths that might exist in the response
+          if (leaderboardResponse && typeof leaderboardResponse === 'object') {
+            // Check if the data is directly in the response
+            if (Array.isArray(leaderboardResponse)) {
+              console.log('Leaderboard data is direct array, length:', leaderboardResponse.length);
+              processLeaderboardResults(leaderboardResponse);
+            } 
+            // Check if the data is in a 'results' property
+            else if (leaderboardResponse.results && Array.isArray(leaderboardResponse.results)) {
+              console.log('Found results array, length:', leaderboardResponse.results.length);
+              processLeaderboardResults(leaderboardResponse.results);
+            }
+            // Check if response has an items array
+            else if (leaderboardResponse.items && Array.isArray(leaderboardResponse.items)) {
+              console.log('Found items array, length:', leaderboardResponse.items.length);
+              processLeaderboardResults(leaderboardResponse.items);
+            }
+            // Last resort - check if there's any array property
+            else {
+              const arrayProps = Object.keys(leaderboardResponse).filter(key => 
+                Array.isArray(leaderboardResponse[key]) && leaderboardResponse[key].length > 0
+              );
+              
+              if (arrayProps.length > 0) {
+                console.log(`Found array in property ${arrayProps[0]}, length:`, leaderboardResponse[arrayProps[0]].length);
+                processLeaderboardResults(leaderboardResponse[arrayProps[0]]);
+              } else {
+                console.warn('No usable array data found in leaderboard response');
+                setResults([]);
+              }
+            }
+          } else {
+            console.warn('Leaderboard response is not a valid object');
+            setResults([]);
+          }
         }
       } catch (leaderboardError) {
         console.error('Failed to fetch leaderboard data:', leaderboardError);
-        // We'll continue with analytics data even if leaderboard fails
+        
+        // Fallback: try to get exam results data from analyticsData if it contains student results
+        if (analyticsData && analyticsData.studentResults && Array.isArray(analyticsData.studentResults)) {
+          console.log('Using student results from analytics data instead');
+          processLeaderboardResults(analyticsData.studentResults);
+        } else {
+          setResults([]);
+        }
       }
       
       // Process analytics data as before

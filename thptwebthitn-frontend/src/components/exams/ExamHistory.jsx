@@ -426,12 +426,10 @@ const formatTime = (minutes, seconds = 0) => {
                     </MetaItem>
                     <MetaItem theme={theme}>
                       <strong>Đúng:</strong> {
-                        // Special case for Kiểm Tra Cuối Kỳ II Toán 10
-                        result.examTitle?.includes("Kiểm Tra Cuối Kỳ II Toán 10")
-                          ? "3/5 câu"  // Use the known values for this exam
-                          : (result.correctAnswers > 0 || result.totalQuestions > 0) 
-                            ? `${result.correctAnswers}/${result.totalQuestions} câu`
-                            : "0/0 câu"
+                        // Make sure both values are defined before using them
+                        result.correctAnswers !== undefined && result.totalQuestions !== undefined
+                          ? `${result.correctAnswers}/${result.totalQuestions} câu`
+                          : "N/A"
                       }
                     </MetaItem>
                   </ResultMeta>

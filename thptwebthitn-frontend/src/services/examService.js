@@ -199,15 +199,24 @@ export const getExamDetails = async (examId) => {
  * @param {Object} params - Request parameters
  * @returns {Promise} - Promise resolving to exams data
  */
-export const getExamsForStudents = async (subjectId, params = {}) => {
+export const getExamsForStudents = async (params = {}) => {
   try {
-    // Make sure subjectId is converted to string if needed
-    const id = subjectId;
+    // Extract subjectId from params to ensure it's a primitive value
+    const { subjectId, ...otherParams } = params;
+    if (!subjectId) {
+      throw new Error('subjectId is required');
+    }
+    // Pass params as query parameters, not in the URL path
+    const response = await apiClient.get(`/api/Exam/ForStudents`, { 
+      params: {
+        subjectId: parseInt(subjectId) || undefined,
+        ...otherParams
+      } 
+    });
     
-    const response = await apiClient.get(`/api/Exam/ForStudents/${id}`, { params });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching student exams for subject ${subjectId}:`, error);
+    console.error(`Error fetching student exams for subject ${params.subjectId}:`, error);
     throw error;
   }
 };
@@ -451,12 +460,20 @@ export const getExamHistory = async (filters = {}) => {
 /**
  * Get exam result details
  */
-export const getExamResult = async (resultId) => {
+export const getExamResult = async (studentId, includeScores = false) => {
   try {
-    const response = await apiClient.get(`/api/Results/${resultId}`);
+    // Check if studentId is an object with a studentId property
+    const id = typeof studentId === 'object' ? 
+      (studentId.studentId || 'invalid-id') : 
+      studentId;
+      
+    const response = await apiClient.get(`/api/Results/${id}`, {
+      params: { includeScores }
+    });
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Không thể lấy kết quả bài thi.' };
+    console.error(`Error fetching exam result for student ${JSON.stringify(studentId)}:`, error);
+    throw error;
   }
 };
 

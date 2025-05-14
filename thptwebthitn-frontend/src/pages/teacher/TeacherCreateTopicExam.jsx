@@ -5,8 +5,8 @@ import axios from 'axios';
 import { API_URL } from '../../config/constants';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useSelector } from 'react-redux';
-import { FaInfoCircle, FaSave, FaArrowLeft, FaPlus } from 'react-icons/fa';
-import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+import { FaInfoCircle, FaSave, FaArrowLeft, FaPlus, FaCheck } from 'react-icons/fa';
+import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toastUtils';
 
 const TeacherCreateTopicExam = () => {
   const navigate = useNavigate();
@@ -17,25 +17,42 @@ const TeacherCreateTopicExam = () => {
   const [subjects, setSubjects] = useState([]);
   const [topics, setTopics] = useState([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
-  const [createMode, setCreateMode] = useState('auto');
   const [availableQuestions, setAvailableQuestions] = useState([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
+  const createMode = 'manual'; // Replace useState with constant
+
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
     subjectId: '',
-    topicIds: [],
-    duration: 45,
     questionCount: 40,
-    passingScore: 5,
-    isPublic: true,
-    shuffleQuestions: true,
-    showResult: true,
-    showAnswers: false
+    levelId: 0, // Default level (add this new field)
+    questionTypes: [], // Array of question types (add this new field)
+    chapterIds: [], // Renamed from topicIds
+    topic: '', // Renamed from topicName
   });
   
+  // Add this function to handle question type selection
+const handleQuestionTypesChange = (typeId) => {
+  setFormData(prev => {
+    const types = [...prev.questionTypes];
+    
+    if (types.includes(typeId)) {
+      // Remove type if already selected
+      return {
+        ...prev,
+        questionTypes: types.filter(id => id !== typeId)
+      };
+    } else {
+      // Add type if not selected
+      return {
+        ...prev,
+        questionTypes: [...types, typeId]
+      };
+    }
+  });
+};
+
   // Lấy danh sách môn học khi component khởi tạo
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -157,6 +174,83 @@ const TeacherCreateTopicExam = () => {
     }
   }, [formData.subjectId]);
   
+  // Add this useEffect after the topic loading useEffect
+
+// Fix the useEffect for fetching questions
+useEffect(() => {
+  const fetchQuestionsForTopics = async () => {
+    // Change from formData.topicIds to formData.chapterIds
+    if (formData.chapterIds.length === 0 || formData.subjectId === '') {
+      setAvailableQuestions([]);
+      return;
+    }
+    
+    try {
+      setLoadingQuestions(true);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showErrorToast('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn');
+        return;
+      }
+      
+      // Change from formData.topicIds to formData.chapterIds
+      const chapterIds = formData.chapterIds.join(',');
+      
+      // Try to fetch questions from the API based on chapters
+      const response = await axios.get(`${API_URL}/api/Question`, {
+        params: {
+          chapterIds: chapterIds,
+          subjectId: formData.subjectId,
+          pageSize: 100 // Get a reasonable number of questions
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Questions API response:', response.data);
+      
+      // Process the response to extract questions
+      let questions = [];
+      
+      if (response.data.items && Array.isArray(response.data.items)) {
+        questions = response.data.items;
+      } else if (Array.isArray(response.data)) {
+        questions = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        // Look for an array property that might contain questions
+        for (const key in response.data) {
+          if (Array.isArray(response.data[key])) {
+            questions = response.data[key];
+            break;
+          }
+        }
+      }
+      
+      console.log(`Found ${questions.length} questions for the selected chapters`);
+      setAvailableQuestions(questions);
+      
+      // If we've just loaded questions and are in manual mode, pre-select up to the question count
+      if (questions.length > 0) {
+        const initialSelection = questions
+          .slice(0, Math.min(questions.length, formData.questionCount))
+          .map(q => q.id);
+        setSelectedQuestions(initialSelection);
+      }
+      
+    } catch (err) {
+      console.error('Error fetching questions:', err);
+      showErrorToast('Không thể tải danh sách câu hỏi. Vui lòng thử lại sau.');
+      setAvailableQuestions([]);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+  
+  fetchQuestionsForTopics();
+}, [formData.chapterIds, formData.subjectId]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -165,13 +259,14 @@ const TeacherCreateTopicExam = () => {
     });
   };
   
-  const handleTopicChange = (e) => {
-    const value = Array.from(e.target.selectedOptions, option => option.value);
-    setFormData({
-      ...formData,
-      topicIds: value
-    });
-  };
+  // Update the topic selection handler for chapterIds
+const handleTopicChange = (e) => {
+  const value = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+  setFormData({
+    ...formData,
+    chapterIds: value // Changed from topicIds
+  });
+};
   
   const handleQuestionSelection = (questionId) => {
     setSelectedQuestions(prevSelected => {
@@ -188,13 +283,8 @@ const TeacherCreateTopicExam = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   
-  if (formData.topicIds.length === 0) {
-    showErrorToast('Vui lòng chọn ít nhất một chương/chủ đề');
-    return;
-  }
-  
-  if (createMode === 'manual' && selectedQuestions.length === 0) {
-    showErrorToast('Vui lòng chọn ít nhất một câu hỏi');
+  if (formData.chapterIds.length === 0) {
+    showErrorToast('Vui lòng chọn ít nhất một chương');
     return;
   }
   
@@ -202,7 +292,6 @@ const handleSubmit = async (e) => {
     setSubmitting(true);
     setError(null);
     
-    // Lấy token xác thực từ localStorage
     const token = localStorage.getItem('token');
     if (!token) {
       showErrorToast('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn');
@@ -210,154 +299,55 @@ const handleSubmit = async (e) => {
       return;
     }
     
-    // Chuẩn bị dữ liệu để gửi đi
-    const examData = {
-      title: formData.title,
-      description: formData.description,
+    // Remove /api/ from the URL path
+    const apiEndpoint = `${API_URL}/api/tests/practice`;
+    
+    // Format payload to exactly match API expectations
+    const payload = {
       subjectId: parseInt(formData.subjectId),
       questionCount: parseInt(formData.questionCount),
-      duration: parseInt(formData.duration),
-      passScore: parseFloat(formData.passingScore),
-      isPublic: formData.isPublic,
-      isActive: formData.isPublic, // Thêm trường isActive
-      shuffleQuestions: formData.shuffleQuestions,
-      showResult: formData.showResult,
-      showAnswers: formData.showAnswers,
-      chapters: formData.topicIds.map(id => parseInt(id)),
-      chapterIds: formData.topicIds.map(id => parseInt(id)),
-      questionIds: createMode === 'manual' ? selectedQuestions : [], // Thêm mảng rỗng để API biết là tạo đề thi mới
-      
-      // Thêm các thông tin khác có thể cần thiết
-      testType: createMode === 'auto' ? 'ChapterBased' : 'Manual',
-      generationStrategy: createMode === 'auto' ? 'ByChapter' : 'Manual',
-      gradingMethod: 'sum'
+      levelId: parseInt(formData.levelId || 0),
+      questionTypes: formData.questionTypes.length > 0 ? formData.questionTypes : [0],
+      chapterIds: formData.chapterIds.map(id => parseInt(id)),
+      topic: formData.topic || ''
     };
     
-    console.log('Sending exam data:', examData);
+    console.log('Sending API payload:', payload);
+    console.log('API endpoint:', apiEndpoint);
     
-    // Các header cho API request
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     };
     
-    // Replace the API call section with this fixed version:
-    try {
-      console.log('Creating exam with proper validation payload');
-      
-      // Fix #1: Format all fields to match API expectations
-      const payload = {
-        title: formData.title.trim(), // Ensure title isn't empty
-        description: formData.description || '',
-        subjectId: parseInt(formData.subjectId),
-        duration: parseInt(formData.duration),
-        passScore: parseFloat(formData.passingScore) || 5,
-        totalScore: 10, // Add missing required field
-        maxAttempts: 1, // Add missing required field
-        
-        // Fix #2: Make sure boolean values are explicitly true/false
-        isActive: formData.isPublic === true,
-        shuffleQuestions: formData.shuffleQuestions === true,
-        shuffleOptions: formData.shuffleQuestions === true, // Use same as shuffle questions
-        showResult: formData.showResult === true,
-        showAnswers: formData.showAnswers === true,
-        
-        // Fix #3: Include all required fields for standard exam API
-        difficulty: "medium",
-        examTypeId: 1,
-        
-        // Fix #4: Properly format question-related fields
-        questionIds: [], // Empty array to indicate auto-generation
-        
-        // Add topic/chapter information
-        chapterIds: formData.topicIds.map(id => parseInt(id)),
-        questionCount: parseInt(formData.questionCount),
-        
-        // Add the missing required fields from the error message
-        questions: [], // Empty array to satisfy validation
-        accessCode: "", // Empty string for access code
-        scoringConfig: JSON.stringify({  // Add scoring configuration
-          gradingMethod: "sum",
-          partialCreditMethod: "proportional",
-          penaltyForWrongAnswer: 0
-        })
-      };
-      
-      console.log('Sending improved exam payload:', payload);
-      
-      // Fix #5: Properly handle authorization with token
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-      
-      // Use the standard exam creation endpoint
-      const response = await axios.post(`${API_URL}/api/Exam`, payload, { headers });
-      
-      console.log('API response:', response.data);
-      showSuccessToast('Đã tạo đề thi thành công!');
-      
-      // Navigate to the appropriate page
-      if (response.data && response.data.id) {
-        navigate(`/teacher/exams/${response.data.id}`);
-      } else {
-        navigate('/teacher/exams');
-      }
-    } catch (err) {
-      console.error('Error with exam creation:', err);
-      
-      // Extract detailed validation errors
-      let errorMessage = 'Không thể tạo đề thi: ';
-      
-      if (err.response?.data) {
-        console.log('Complete API Error Response:', JSON.stringify(err.response.data, null, 2));
-        
-        if (err.response.data.title) {
-          errorMessage += err.response.data.title;
-        } else if (err.response.data.errors) {
-          // Format and display each validation error
-          const errorDetails = [];
-          for (const field in err.response.data.errors) {
-            errorDetails.push(`${field}: ${err.response.data.errors[field]}`);
-          }
-          errorMessage += errorDetails.join('; ');
-        } else if (typeof err.response.data === 'string') {
-          errorMessage += err.response.data;
-        } else {
-          errorMessage += JSON.stringify(err.response.data);
-        }
-      } else if (err.message) {
-        errorMessage += err.message;
-      }
-      
-      console.error(errorMessage);
-      setError(errorMessage);
-      showErrorToast('Tạo đề thi thất bại. Chi tiết lỗi đã được hiển thị bên dưới.');
-    }
+    // Use the practice test creation endpoint without /api/ prefix
+    const response = await axios.post(apiEndpoint, payload, { headers });
+    
+    console.log('API response:', response.data);
+    showSuccessToast('Đã tạo đề thi thành công!');
+    
+    // Navigate to appropriate page
+    navigate('/teacher/exams');
     
   } catch (err) {
-    console.error('Lỗi khi tạo đề thi:', err);
+    console.error('Error creating practice test:', err);
     
-    let errorMessage = 'Không thể tạo đề thi. Vui lòng thử lại sau.';
+    // Better error reporting
+    let errorMessage = 'Không thể tạo đề thi';
     
-    // Xử lý message từ lỗi API
-    if (err.response?.data) {
-      if (err.response.data.Message) {
-        errorMessage = err.response.data.Message;
-      }
+    if (err.response) {
+      console.log('Complete API Error Response:', err.response.data);
       
-      // Hiển thị chi tiết lỗi validation
-      if (err.response.data.ValidationErrors) {
-        const validationErrors = Object.values(err.response.data.ValidationErrors);
-        if (validationErrors.length > 0) {
-          errorMessage += ': ' + validationErrors.join(', ');
-        }
+      if (typeof err.response.data === 'object') {
+        errorMessage += ': ' + JSON.stringify(err.response.data);
+      } else if (typeof err.response.data === 'string') {
+        errorMessage += ': ' + err.response.data;
       }
     }
     
     setError(errorMessage);
-    showErrorToast('Tạo đề thi thất bại: ' + errorMessage);
+    showErrorToast(errorMessage);
+    
   } finally {
     setSubmitting(false);
   }
@@ -392,8 +382,8 @@ const handleSubmit = async (e) => {
                   <Form.Label>Tiêu đề đề thi *</Form.Label>
                   <Form.Control
                     type="text"
-                    name="title"
-                    value={formData.title}
+                    name="title" // Keep for UI but won't send to API
+                    value={formData.title || ''}
                     onChange={handleChange}
                     placeholder="Nhập tiêu đề đề thi"
                     required
@@ -424,24 +414,11 @@ const handleSubmit = async (e) => {
             </Row>
             
             <Form.Group className="mb-3">
-              <Form.Label>Mô tả đề thi</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Nhập mô tả cho đề thi"
-                className={theme === 'dark' ? 'bg-dark text-white' : ''}
-              />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Chủ đề *</Form.Label>
+              <Form.Label>Chương *</Form.Label>
               <Form.Select
                 multiple
-                name="topicIds"
-                value={formData.topicIds}
+                name="chapterIds" // Changed from topicIds
+                value={formData.chapterIds} // Changed from topicIds
                 onChange={handleTopicChange}
                 required
                 className={theme === 'dark' ? 'bg-dark text-white' : ''}
@@ -449,7 +426,7 @@ const handleSubmit = async (e) => {
                 disabled={isLoadingTopics || topics.length === 0}
               >
                 {isLoadingTopics ? (
-                  <option>Đang tải danh sách chủ đề...</option>
+                  <option>Đang tải danh sách chương...</option>
                 ) : topics.length > 0 ? (
                   topics.map(topic => (
                     <option key={topic.id} value={topic.id}>
@@ -457,12 +434,76 @@ const handleSubmit = async (e) => {
                     </option>
                   ))
                 ) : (
-                  <option value="" disabled>Không có chủ đề nào hoặc chưa chọn môn học</option>
+                  <option value="" disabled>Không có chương nào hoặc chưa chọn môn học</option>
                 )}
               </Form.Select>
               <Form.Text className="text-muted">
-                Giữ phím Ctrl (Windows) hoặc Command (Mac) để chọn nhiều chủ đề
+                Giữ phím Ctrl (Windows) hoặc Command (Mac) để chọn nhiều chương
               </Form.Text>
+            </Form.Group>
+
+            {/* Thêm trường nhập Chủ đề */}
+            <Form.Group className="mb-3">
+              <Form.Label>Chủ đề</Form.Label>
+              <Form.Control
+                type="text"
+                name="topic" // Changed from topicName
+                value={formData.topic} // Changed from topicName
+                onChange={handleChange}
+                placeholder="Nhập tên chủ đề của đề thi (ví dụ: Toán Đại,Toán Hình...)"
+                className={theme === 'dark' ? 'bg-dark text-white' : ''}
+              />
+              <Form.Text className="text-muted">
+                Chủ đề giúp phân loại đề thi của bạn, ví dụ: "Toán Đại,Toán Hình"...
+              </Form.Text>
+            </Form.Group>
+
+            {/* Add new field for difficulty level */}
+            <Form.Group className="mb-3">
+              <Form.Label>Độ khó</Form.Label>
+              <Form.Select
+                name="levelId"
+                value={formData.levelId}
+                onChange={handleChange}
+                required
+                className={theme === 'dark' ? 'bg-dark text-white' : ''}
+              >
+                <option value="0">Tất cả</option>
+                <option value="1">Dễ</option>
+                <option value="2">Trung bình</option>
+                <option value="3">Khó</option>
+              </Form.Select>
+            </Form.Group>
+
+            {/* Add new field for question types */}
+            <Form.Group className="mb-3">
+              <Form.Label>Loại câu hỏi</Form.Label>
+              <div>
+                <Form.Check
+                  type="checkbox"
+                  id="questionType-1"
+                  label="Trắc nghiệm"
+                  checked={formData.questionTypes.includes(1)}
+                  onChange={() => handleQuestionTypesChange(1)}
+                  className={theme === 'dark' ? 'text-white' : ''}
+                />
+                <Form.Check
+                  type="checkbox"
+                  id="questionType-2"
+                  label="Đúng/Sai"
+                  checked={formData.questionTypes.includes(2)}
+                  onChange={() => handleQuestionTypesChange(2)}
+                  className={theme === 'dark' ? 'text-white' : ''}
+                />
+                <Form.Check
+                  type="checkbox"
+                  id="questionType-3"
+                  label="Tự luận"
+                  checked={formData.questionTypes.includes(3)}
+                  onChange={() => handleQuestionTypesChange(3)}
+                  className={theme === 'dark' ? 'text-white' : ''}
+                />
+              </div>
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -470,64 +511,91 @@ const handleSubmit = async (e) => {
               <div>
                 <Form.Check
                   type="radio"
-                  id="createMode-auto"
-                  name="createMode"
-                  label="Tự động tạo đề thi từ câu hỏi trong các chương được chọn"
-                  checked={createMode === 'auto'}
-                  onChange={() => setCreateMode('auto')}
-                  className={theme === 'dark' ? 'text-white' : ''}
-                />
-                <Form.Check
-                  type="radio"
                   id="createMode-manual"
                   name="createMode"
                   label="Chọn câu hỏi thủ công"
-                  checked={createMode === 'manual'}
-                  onChange={() => setCreateMode('manual')}
+                  checked={true}
+                  readOnly
                   className={theme === 'dark' ? 'text-white' : ''}
                 />
               </div>
             </Form.Group>
 
-            {createMode === 'manual' && (
-              <Form.Group className="mb-3">
-                <Form.Label>Chọn câu hỏi cho đề thi</Form.Label>
-                {loadingQuestions ? (
-                  <div className="text-center py-3">
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Đang tải danh sách câu hỏi...
-                  </div>
-                ) : availableQuestions.length > 0 ? (
-                  <Card>
-                    <Card.Body style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                      <div className="mb-2">
-                        <strong>Đã chọn: {selectedQuestions.length}</strong> / {formData.questionCount} câu hỏi
+            <Form.Group className="mb-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <Form.Label><strong>Chọn câu hỏi cho đề thi</strong></Form.Label>
+                <Button 
+                  variant="outline-primary" 
+                  size="sm"
+                  onClick={() => {
+                    // Update questionCount to match selection count
+                    setFormData(prev => ({
+                      ...prev,
+                      questionCount: selectedQuestions.length
+                    }));
+                    showSuccessToast(`Đã cập nhật số lượng câu hỏi thành ${selectedQuestions.length}`);
+                  }}
+                  disabled={selectedQuestions.length === 0}
+                >
+                  <FaCheck className="me-1" /> Cập nhật số lượng câu hỏi ({selectedQuestions.length})
+                </Button>
+              </div>
+              
+              {loadingQuestions ? (
+                <div className="text-center py-3">
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Đang tải danh sách câu hỏi...
+                </div>
+              ) : availableQuestions.length > 0 ? (
+                <Card bg={theme === 'dark' ? 'dark' : 'light'} border={selectedQuestions.length !== parseInt(formData.questionCount) ? 'warning' : 'success'}>
+                  <Card.Header>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span>
+                        <strong>Đã chọn: {selectedQuestions.length}</strong> / {formData.questionCount} câu hỏi yêu cầu
+                      </span>
+                      {selectedQuestions.length !== parseInt(formData.questionCount) && (
+                        <span className="text-warning">
+                          <FaInfoCircle className="me-1" /> 
+                          {selectedQuestions.length < parseInt(formData.questionCount) ? 
+                            `Bạn cần chọn thêm ${parseInt(formData.questionCount) - selectedQuestions.length} câu hỏi` :
+                            `Bạn đã chọn nhiều hơn ${selectedQuestions.length - parseInt(formData.questionCount)} câu hỏi so với yêu cầu`}
+                        </span>
+                      )}
+                    </div>
+                  </Card.Header>
+                  <Card.Body style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {availableQuestions.map(question => (
+                      <div 
+                        key={question.id} 
+                        className={`border-bottom py-2 ${selectedQuestions.includes(question.id) ? 'bg-light' : ''}`}
+                      >
+                        <Form.Check
+                          type="checkbox"
+                          id={`question-${question.id}`}
+                          label={
+                            <div dangerouslySetInnerHTML={{ __html: question.content }} />
+                          }
+                          checked={selectedQuestions.includes(question.id)}
+                          onChange={() => handleQuestionSelection(question.id)}
+                        />
+                        <small className="text-muted">
+                          ID: {question.id} | Loại: {
+                            question.questionType === 1 ? 'Trắc nghiệm' : 
+                            question.questionType === 2 ? 'Đúng/Sai' : 'Tự luận'
+                          }
+                        </small>
                       </div>
-                      {availableQuestions.map(question => (
-                        <div key={question.id} className="border-bottom py-2">
-                          <Form.Check
-                            type="checkbox"
-                            id={`question-${question.id}`}
-                            label={question.content}
-                            checked={selectedQuestions.includes(question.id)}
-                            onChange={() => handleQuestionSelection(question.id)}
-                          />
-                          <small className="text-muted">
-                            Loại: {question.questionType === 1 ? 'Trắc nghiệm' : 
-                                   question.questionType === 2 ? 'Đúng/Sai' : 'Tự luận'}
-                          </small>
-                        </div>
-                      ))}
-                    </Card.Body>
-                  </Card>
-                ) : (
-                  <Alert variant="warning">
-                    Không tìm thấy câu hỏi nào trong các chương đã chọn. 
-                    Vui lòng thêm câu hỏi vào chương hoặc sử dụng chế độ tạo tự động.
-                  </Alert>
-                )}
-              </Form.Group>
-            )}
+                    ))}
+                  </Card.Body>
+                </Card>
+              ) : (
+                <Alert variant="warning">
+                  <FaInfoCircle className="me-2" />
+                  Không tìm thấy câu hỏi nào trong các chương đã chọn. 
+                  Vui lòng thêm câu hỏi vào chương hoặc sử dụng chế độ tạo tự động.
+                </Alert>
+              )}
+            </Form.Group>
             
             <Row>
               <Col md={4}>

@@ -123,52 +123,52 @@ const TeacherExamStatistics = () => {
   // Fetch danh sách bài thi của giáo viên
   useEffect(() => {
     const fetchExams = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        
-        // Thay đổi API endpoint từ "/api/Exam/teacher" thành gọi theo userId
-        const response = await axios.get(`${API_URL}/api/Exam`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          params: {
-            teacherId: user?.id, // Dùng ID của giáo viên từ thông tin user
-            role: 'Teacher'      // Thêm tham số role
-          }
-        });
-        
-        console.log('Exam API response:', response);
-        
-        // Xử lý response data từ API
-        let examList = [];
-        if (Array.isArray(response.data)) {
-          examList = response.data;
-        } else if (response.data?.items && Array.isArray(response.data.items)) {
-          examList = response.data.items;
-        } else if (response.data?.data && Array.isArray(response.data.data)) {
-          examList = response.data.data;
-        } else if (response.data && typeof response.data === 'object') {
-          examList = [response.data];
-        }
-        
-        console.log('Processed exams:', examList);
-        setExams(examList);
-        
-        // Tự động chọn bài thi đầu tiên nếu có
-        if (examList.length > 0 && !selectedExam) {
-          setSelectedExam(examList[0].id);
-        }
-        
-        setError(null);
-      } catch (err) {
-        
-        setExams([]);
-      } finally {
-        setLoading(false);
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Sửa gọi API để phù hợp với cấu trúc API mới
+    const response = await axios.get(`${API_URL}/api/Exam`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      params: {
+        Page: 1,
+        PageSize: 10,
+        ActiveOnly: true,
+        // Không có teacherId trong API docs nhưng giữ lại nếu backend hỗ trợ
+        teacherId: user?.id
       }
-    };
+    });
+    
+    console.log('Exam API response:', response);
+    
+    // Xử lý response data theo cấu trúc API mới
+    let examList = [];
+    if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      examList = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      examList = response.data;
+    }
+    
+    console.log('Processed exams:', examList);
+    setExams(examList);
+    
+    // Tự động chọn bài thi đầu tiên nếu có
+    if (examList.length > 0 && !selectedExam) {
+      setSelectedExam(examList[0].id);
+    }
+    
+    setError(null);
+  } catch (err) {
+    console.error('Error fetching exams:', err);
+    setError(`Không thể tải danh sách bài thi: ${err.message}`);
+    setExams([]);
+  } finally {
+    setLoading(false);
+  }
+};
     
     fetchExams();
   }, []);
@@ -225,50 +225,75 @@ const TeacherExamStatistics = () => {
     }
   };
 
-  // Hàm lấy thống kê bài thi
-  const fetchExamStatistics = async (examId) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
+  // Sửa lại hàm lấy thống kê bài thi
+const fetchExamStatistics = async (examId) => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    
+    // Sử dụng API analytics/test để thống kê đề thi
+    const response = await axios.get(`${API_URL}/api/analytics/test/${examId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    console.log('Exam analytics response:', response.data);
+    
+    if (response.data && response.data.success && response.data.data) {
+      const analyticsData = response.data.data;
       
-      // Sửa API endpoint để lấy thống kê của một bài thi cụ thể
-      const response = await axios.get(`${API_URL}/api/Exam/${examId}/statistics`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      // Cấu trúc dữ liệu phù hợp với API mới
+      const statsData = {
+        id: analyticsData.examInfo?.id,
+        title: analyticsData.examInfo?.title,
+        subjectName: analyticsData.examInfo?.subjectName,
+        totalScore: analyticsData.examInfo?.totalScore || 10,
+        passScore: analyticsData.examInfo?.passScore || 5,
+        attemptCount: analyticsData.attemptCount,
+        averageScore: analyticsData.averageScore,
+        averageTime: analyticsData.averageTime,
+        passRate: analyticsData.passRate,
+        scoreDistribution: analyticsData.scoreDistribution || [],
+        mostMissedQuestions: analyticsData.mostMissedQuestions || [],
+        questionAnalytics: analyticsData.questionAnalytics || []
+      };
+      
+      setExamStats(statsData);
+      
+      // Cập nhật thống kê tổng hợp
+      setSummary({
+        totalStudents: statsData.attemptCount || 0,
+        averageScore: statsData.averageScore || 0,
+        passRate: statsData.passRate || 0,
+        averageTime: statsData.averageTime || 0,
+        highestScore: statsData.scoreDistribution?.length > 0 ? 
+          parseFloat(statsData.scoreDistribution[statsData.scoreDistribution.length - 1].range.split(' - ')[1]) : 0,
+        lowestScore: statsData.scoreDistribution?.length > 0 ? 
+          parseFloat(statsData.scoreDistribution[0].range.split(' - ')[0]) : 0
       });
       
-      console.log('Exam statistics API response:', response);
-      
-      // Lưu dữ liệu thống kê
-      setExamStats(response.data);
-      
-      // Tính toán các thống kê tổng hợp
-      const results = response.data?.results || [];
-      if (results.length > 0) {
-        const scores = results.map(r => r.score || 0);
-        const passThreshold = response.data.passScore || 5; // Mặc định là 5 nếu không có ngưỡng đỗ
-        
-        setSummary({
-          totalStudents: results.length,
-          averageScore: scores.reduce((a, b) => a + b, 0) / results.length,
-          passRate: (results.filter(r => (r.score || 0) >= passThreshold).length / results.length) * 100,
-          highestScore: Math.max(...scores),
-          lowestScore: Math.min(...scores)
-        });
-      }
-      
       setError(null);
-    } catch (err) {
-      console.error('Error fetching exam statistics:', err);
-      console.error('Error response:', err.response?.data);
-      setError(`Không thể tải thống kê bài thi: ${err.message}`);
-      setExamStats(null);
-    } finally {
-      setLoading(false);
+    } else {
+      throw new Error('Dữ liệu không hợp lệ hoặc không có thống kê');
     }
-  };
-
+  } catch (err) {
+    console.error('Error fetching exam statistics:', err);
+    
+    // Kiểm tra loại lỗi để đưa ra thông báo phù hợp
+    if (err.response?.status === 404) {
+      setError(`Không tìm thấy thống kê cho đề thi ID:${examId}`);
+    } else if (err.response?.status === 401) {
+      setError(`Bạn không có quyền xem thống kê đề thi này`);
+    } else {
+      setError(`Không thể tải thống kê đề thi: ${err.message}`);
+    }
+    
+    setExamStats(null);
+  } finally {
+    setLoading(false);
+  }
+};
   // Hàm xuất báo cáo PDF
   const exportToPDF = async () => {
     if (!examStats) return;
@@ -295,61 +320,49 @@ const TeacherExamStatistics = () => {
 
   // Dữ liệu và tùy chọn cho biểu đồ thanh (điểm số)
   const getBarChartData = () => {
-    if (!examStats?.results) return null;
-    
-    // Tạo nhóm điểm số (0-1, 1-2, ..., 9-10)
-    const scoreGroups = Array(10).fill(0);
-    
-    examStats.results.forEach(result => {
-      const score = result.score || 0;
-      const groupIndex = Math.min(Math.floor(score), 9);
-      scoreGroups[groupIndex]++;
-    });
-    
-    return {
-      labels: ['0-1', '1-2', '2-3', '3-4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10'],
-      datasets: [
-        {
-          label: 'Số học sinh',
-          data: scoreGroups,
-          backgroundColor: theme === 'dark' 
-            ? 'rgba(99, 179, 237, 0.7)' 
-            : 'rgba(54, 162, 235, 0.7)',
-          borderColor: theme === 'dark' 
-            ? 'rgba(99, 179, 237, 1)' 
-            : 'rgba(54, 162, 235, 1)',
-          borderWidth: 1,
-        }
-      ]
-    };
+  if (!examStats?.scoreDistribution) return null;
+  
+  return {
+    labels: examStats.scoreDistribution.map(item => item.range),
+    datasets: [
+      {
+        label: 'Số học sinh',
+        data: examStats.scoreDistribution.map(item => item.count),
+        backgroundColor: theme === 'dark' 
+          ? 'rgba(99, 179, 237, 0.7)' 
+          : 'rgba(54, 162, 235, 0.7)',
+        borderColor: theme === 'dark' 
+          ? 'rgba(99, 179, 237, 1)' 
+          : 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }
+    ]
   };
+};
 
   // Dữ liệu và tùy chọn cho biểu đồ tròn (tỷ lệ đỗ/trượt)
   const getPieChartData = () => {
-    if (!examStats?.results) return null;
-    
-    const passThreshold = examStats.passScore || 5;
-    
-    const passCount = examStats.results.filter(r => (r.score || 0) >= passThreshold).length;
-    const failCount = examStats.results.length - passCount;
-    
-    return {
-      labels: ['Đạt', 'Không đạt'],
-      datasets: [
-        {
-          data: [passCount, failCount],
-          backgroundColor: theme === 'dark' 
-            ? ['rgba(72, 187, 120, 0.7)', 'rgba(245, 101, 101, 0.7)'] 
-            : ['rgba(72, 187, 120, 0.8)', 'rgba(245, 101, 101, 0.8)'],
-          borderColor: theme === 'dark' 
-            ? ['rgba(72, 187, 120, 1)', 'rgba(245, 101, 101, 1)'] 
-            : ['rgba(72, 187, 120, 1)', 'rgba(245, 101, 101, 1)'],
-          borderWidth: 1,
-        }
-      ]
-    };
+  if (!examStats) return null;
+  
+  const passCount = Math.round((examStats.passRate / 100) * examStats.attemptCount);
+  const failCount = examStats.attemptCount - passCount;
+  
+  return {
+    labels: ['Đạt', 'Không đạt'],
+    datasets: [
+      {
+        data: [passCount, failCount],
+        backgroundColor: theme === 'dark' 
+          ? ['rgba(72, 187, 120, 0.7)', 'rgba(245, 101, 101, 0.7)'] 
+          : ['rgba(72, 187, 120, 0.8)', 'rgba(245, 101, 101, 0.8)'],
+        borderColor: theme === 'dark' 
+          ? ['rgba(72, 187, 120, 1)', 'rgba(245, 101, 101, 1)'] 
+          : ['rgba(72, 187, 120, 1)', 'rgba(245, 101, 101, 1)'],
+        borderWidth: 1,
+      }
+    ]
   };
-
+};
   const getSubjectBarChartData = () => {
     if (!subjectStats || subjectStats.length === 0) return null;
     
@@ -449,7 +462,7 @@ const TeacherExamStatistics = () => {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-4">Thống Kê Kết Quả Bài Thi</h2>
+      <h2 className="mb-4">Thống Kê Kết Quả Đề Thi</h2>
       
       {/* Tab Navigation */}
       <TabNav variant="pills" className="mb-4">
@@ -458,7 +471,7 @@ const TeacherExamStatistics = () => {
           onClick={() => setActiveTab('exams')}
           theme={theme}
         >
-          <FaChartBar /> Thống kê theo bài thi
+          <FaChartBar /> Thống kê theo đề thi
         </TabButton>
         <TabButton
           active={activeTab === 'subjects'}
@@ -484,7 +497,7 @@ const TeacherExamStatistics = () => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Chọn bài thi</Form.Label>
+                    <Form.Label>Chọn đề thi</Form.Label>
                     <Form.Select
                       value={selectedExam}
                       onChange={(e) => setSelectedExam(e.target.value)}
@@ -573,11 +586,11 @@ const TeacherExamStatistics = () => {
                       <StatsCard bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'}>
                         <Card.Body className="text-center">
                           <StatValue theme={theme}>{summary.totalStudents}</StatValue>
-                          <StatLabel theme={theme}>Tổng số thí sinh</StatLabel>
+                          <StatLabel theme={theme}>Tổng số lượt thi</StatLabel>
                         </Card.Body>
                       </StatsCard>
                     </Col>
-                    <Col md={3}>
+                    <Col md={2}>
                       <StatsCard bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'}>
                         <Card.Body className="text-center">
                           <StatValue theme={theme} color="#3182ce">{summary.averageScore.toFixed(2)}</StatValue>
@@ -585,11 +598,19 @@ const TeacherExamStatistics = () => {
                         </Card.Body>
                       </StatsCard>
                     </Col>
-                    <Col md={3}>
+                    <Col md={2}>
                       <StatsCard bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'}>
                         <Card.Body className="text-center">
                           <StatValue theme={theme} color="#48bb78">{summary.passRate.toFixed(1)}%</StatValue>
                           <StatLabel theme={theme}>Tỉ lệ đạt</StatLabel>
+                        </Card.Body>
+                      </StatsCard>
+                    </Col>
+                    <Col md={2}>
+                      <StatsCard bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'}>
+                        <Card.Body className="text-center">
+                          <StatValue theme={theme} color="#805ad5">{summary.averageTime} phút</StatValue>
+                          <StatLabel theme={theme}>Thời gian trung bình</StatLabel>
                         </Card.Body>
                       </StatsCard>
                     </Col>
@@ -628,6 +649,37 @@ const TeacherExamStatistics = () => {
                   </Row>
 
                   {/* Bảng chi tiết (có thể thêm nếu cần) */}
+                  {examStats?.mostMissedQuestions && examStats.mostMissedQuestions.length > 0 && (
+                    <Row className="mt-4">
+                      <Col md={12}>
+                        <Card bg={theme === 'dark' ? 'dark' : 'light'} text={theme === 'dark' ? 'white' : 'dark'}>
+                          <Card.Body>
+                            <h4 className="mb-3">Câu hỏi sai nhiều nhất</h4>
+                            <div className="table-responsive">
+                              <table className={`table ${theme === 'dark' ? 'table-dark' : ''}`}>
+                                <thead>
+                                  <tr>
+                                    <th>STT</th>
+                                    <th>Nội dung câu hỏi</th>
+                                    <th>Tỷ lệ sai (%)</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {examStats.mostMissedQuestions.map((question, index) => (
+                                    <tr key={index}>
+                                      <td>{index + 1}</td>
+                                      <td>{question.questionText || `Câu hỏi ID: ${question.questionId}`}</td>
+                                      <td>{question.incorrectPercentage.toFixed(1)}%</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+                  )}
                 </div>
               )}
               
@@ -700,7 +752,7 @@ const TeacherExamStatistics = () => {
                           <tbody>
                             {subjectStats.map((stat, index) => (
                               <tr key={index}>
-                                <td>{stat.subjectName || `Môn học ID: ${stat.subjectId}`}</td>
+                                <td>{stat.subject?.name || "Chưa phân loại"}</td>
                                 <td>{stat.examCount}</td>
                                 <td>{stat.attemptCount}</td>
                                 <td>{stat.averageScore ? stat.averageScore.toFixed(2) : 'N/A'}</td>

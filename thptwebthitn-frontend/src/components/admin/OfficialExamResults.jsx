@@ -14,7 +14,7 @@ import {
   ResponsiveContainer, Cell, PieChart, Pie, Legend 
 } from 'recharts';
 import apiClient from '../../services/apiClient';
-import { showErrorToast } from '../../utils/toastUtils';
+import { showErrorToast,showSuccessToast } from '../../utils/toastUtils';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 // Main container
@@ -517,18 +517,25 @@ const OfficialExamResults = () => {
   };
   
   const handleReleaseResults = async () => {
-    try {
-      await apiClient.patch(`/api/official-exams/${id}/release-results`, {
-        release: !stats.resultsReleased
-      });
-      
-      // Refresh data
-      fetchStatistics();
-    } catch (error) {
-      console.error('Error updating results release status:', error);
-      showErrorToast('Không thể cập nhật trạng thái công bố kết quả');
-    }
-  };
+  try {
+    await apiClient.post(`/api/official-exams/${id}/release-results`, {
+      release: !stats.resultsReleased,
+      notificationMessage: !stats.resultsReleased
+        ? "Kết quả kỳ thi đã được công bố cho học sinh"
+        : "Kết quả kỳ thi đã bị ẩn"
+    });
+    showSuccessToast(
+      !stats.resultsReleased 
+        ? "Đã công bố kết quả kỳ thi thành công" 
+        : "Đã ẩn kết quả kỳ thi thành công"
+    );
+    // Refresh data
+    fetchStatistics();
+  } catch (error) {
+    console.error('Error updating results release status:', error);
+    showErrorToast('Không thể cập nhật trạng thái công bố kết quả');
+  }
+};
   
   const prepareDistributionData = () => {
     if (!stats || !stats.statistics || !stats.statistics.scoreDistribution) {

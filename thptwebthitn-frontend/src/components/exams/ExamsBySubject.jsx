@@ -7,7 +7,7 @@ import ExamList from './ExamList';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { Alert, Button, Card, Container, Row, Col, Pagination, Badge, Form } from 'react-bootstrap';
 import { FaSync, FaTrophy, FaExclamationTriangle, FaArrowLeft, FaBug, FaFilter } from 'react-icons/fa';
-
+import apiClient from '../../services/apiClient';
 const ExamsBySubject = () => {
   const { subjectId } = useParams();
   const navigate = useNavigate();
@@ -21,10 +21,10 @@ const ExamsBySubject = () => {
   const [pageSize] = useState(10);
   // Thay đổi filter mặc định để có thể hiển thị tất cả đề thi
   const [filters, setFilters] = useState({
-    activeOnly: false, // Thay đổi thành false để hiển thị cả đề không hoạt động
+    activeOnly: true, // Mặc định hiển thị đề đang hoạt động
     examTypeId: null,
     searchTerm: '',
-    isApproved: null // Đặt thành null để không lọc theo trạng thái phê duyệt
+    isOpen: true // Thêm filter isOpen để lọc theo trạng thái mở/đóng
   });
 
   // Thêm state cho debug info
@@ -119,6 +119,69 @@ const ExamsBySubject = () => {
     return <Pagination>{items}</Pagination>;
   };
 
+  const renderFilterBar = () => {
+    return (
+      <Card className="mb-4">
+        <Card.Body>
+          <Row>
+            <Col md={6} lg={3} className="mb-2">
+              <Form.Group>
+                <Form.Label>Tìm kiếm</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Nhập từ khóa..."
+                  value={filters.searchTerm}
+                  onChange={(e) => handleFilterChange({ searchTerm: e.target.value })}
+                />
+              </Form.Group>
+            </Col>
+            
+            <Col md={6} lg={3} className="mb-2">
+              <Form.Group>
+                <Form.Label>Trạng thái</Form.Label>
+                <Form.Select
+                  value={filters.activeOnly ? "true" : "false"}
+                  onChange={(e) => handleFilterChange({ 
+                    activeOnly: e.target.value === "true" 
+                  })}
+                >
+                  <option value="true">Đang hoạt động</option>
+                  <option value="false">Tất cả đề thi</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
+            
+            <Col md={6} lg={3} className="mb-2">
+              <Form.Group>
+                <Form.Label>Trạng thái mở</Form.Label>
+                <Form.Select
+                  value={filters.isOpen === null ? "" : filters.isOpen.toString()}
+                  onChange={(e) => handleFilterChange({ 
+                    isOpen: e.target.value === "" ? null : e.target.value === "true" 
+                  })}
+                >
+                  <option value="">Tất cả</option>
+                  <option value="true">Đề thi đang mở</option>
+                  <option value="false">Đề thi đã đóng</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
+            
+            <Col md={6} lg={3} className="mb-2 d-flex align-items-end">
+              <Button 
+                variant="primary" 
+                className="w-100"
+                onClick={() => handleRetry()}
+              >
+                <FaFilter className="me-1" /> Lọc
+              </Button>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+    );
+  };
+
   if (loading && list.length === 0) {
     return (
       <Container className="py-5 text-center">
@@ -135,13 +198,7 @@ const ExamsBySubject = () => {
           <h2 className="mb-3">
             {currentSubject ? `Đề thi môn: ${currentSubject.name}` : `Đề thi môn học ${subjectId}`}
           </h2>
-          <Button 
-            variant="outline-success"
-            onClick={() => navigate(`/subjects/${subjectId}/top-students`)}
-            className="me-2 mb-2"
-          >
-            <FaTrophy className="me-1" /> Xem bảng xếp hạng
-          </Button>
+          
           
           {loading && list.length > 0 && (
             <Alert variant="info" className="mt-3 mb-3">
@@ -150,6 +207,8 @@ const ExamsBySubject = () => {
           )}
         </Col>
       </Row>
+      
+      {renderFilterBar()}
       
       {list && list.length > 0 ? (
         <>
@@ -160,7 +219,7 @@ const ExamsBySubject = () => {
           </div>
           
           <div className="text-center text-muted mt-2">
-            Hiển thị {list.length} đề thi
+            Hiển thị {list.length} đề thi trên tổng số {totalItems} đề thi
           </div>
         </>
       ) : (
@@ -175,7 +234,7 @@ const ExamsBySubject = () => {
                   <br />- Môn học này chưa có đề thi
                   <br />- Đề thi chưa được duyệt bởi giáo viên
                   <br />- Đề thi đang bị khóa hoặc chưa đến thời gian mở
-                 
+                  <br />- Lọc tìm kiếm không trả về kết quả nào
                 </p>
               </> 
             ) : (
