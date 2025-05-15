@@ -914,6 +914,15 @@ const TeacherMaterials = () => {
   const [loadingChapters, setLoadingChapters] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState('0');
 
+  // Thêm vào phần khai báo state (sau dòng 919)
+  const [grades, setGrades] = useState([
+    { id: 10, name: 'Khối 10' },
+    { id: 11, name: 'Khối 11' },
+    { id: 12, name: 'Khối 12' }
+  ]);
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [filteredSubjects, setFilteredSubjects] = useState([]);
+
   // Fetch subjects from API
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -985,6 +994,25 @@ const TeacherMaterials = () => {
     
     fetchChapters();
   }, [materialSubject]);
+
+  // Thêm useEffect để lọc môn học dựa trên khối được chọn
+  useEffect(() => {
+    if (!selectedGrade || !subjects.length) {
+      setFilteredSubjects(subjects);
+      return;
+    }
+    
+    // Lọc môn học dựa trên khối được chọn
+    // Giả sử tên môn học có dạng "Toán 10", "Vật Lý 10", v.v.
+    const filtered = subjects.filter(subject => {
+      const subjectName = subject.name.toLowerCase();
+      // Kiểm tra nếu tên môn học chứa số khối
+      return subjectName.includes(` ${selectedGrade}`) || 
+             subjectName.endsWith(` ${selectedGrade}`);
+    });
+    
+    setFilteredSubjects(filtered);
+  }, [selectedGrade, subjects]);
   
   // Handle file upload
   const handleFileUpload = (e) => {
@@ -1034,38 +1062,38 @@ const TeacherMaterials = () => {
   };
   
   // Mock data for materials
-  useEffect(() => {
-    const fetchMaterials = async () => {
-      setLoading(true);
-      
-      try {
-        // Prepare query parameters - use actual API params
-        const params = {
-          subjectId: selectedSubject || undefined,
-          chapterId: undefined, // Add this if you want to filter by chapter
-          documentType: undefined, // Add this if you want to filter by document type
-          search: searchTerm || undefined,
-          page: currentPage,
-          pageSize: 12
-        };
-        
-        // Call the API
-        const response = await getMaterials(params);
-        
-        // Update the state with the response data
-        setMaterials(response.items || []);
-        
-        // You can add pagination state update here if needed
-        // setTotalPages(response.totalPages);
-      } catch (error) {
-        console.error('Error fetching materials:', error);
-        showErrorToast('Không thể tải danh sách tài liệu');
-        setMaterials([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchMaterials = async () => {
+    setLoading(true);
     
+    try {
+      // Prepare query parameters - use actual API params
+      const params = {
+        subjectId: selectedSubject || undefined,
+        chapterId: undefined, // Add this if you want to filter by chapter
+        documentType: undefined, // Add this if you want to filter by document type
+        search: searchTerm || undefined,
+        page: currentPage,
+        pageSize: 12
+      };
+      
+      // Call the API
+      const response = await getMaterials(params);
+      
+      // Update the state with the response data
+      setMaterials(response.items || []);
+      
+      // You can add pagination state update here if needed
+      // setTotalPages(response.totalPages);
+    } catch (error) {
+      console.error('Error fetching materials:', error);
+      showErrorToast('Không thể tải danh sách tài liệu');
+      setMaterials([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchMaterials();
   }, [activeTab, searchTerm, selectedSubject, currentPage]);
   
@@ -1115,6 +1143,10 @@ const TeacherMaterials = () => {
         if (tags.length > 0) {
           formData.append('tags', tags.join(','));
         }
+
+        // Cập nhật hàm handleSubmit để thêm thông tin khối (nếu cần)
+        // Trong phần formData.append, thêm dòng sau nếu API của bạn hỗ trợ
+        // formData.append('grade', selectedGrade);
         
         // Debug what's being sent
         console.log('Uploading with FormData:');
@@ -1136,6 +1168,10 @@ const TeacherMaterials = () => {
           setTags([]);
           setShowAddModal(false);
           setSelectedChapter('0');
+          setSelectedGrade('');
+          
+          // Thêm dòng này để tải lại danh sách tài liệu sau khi thêm thành công
+          fetchMaterials();
         }
       } else {
         // YouTube video upload code remains the same
@@ -1511,7 +1547,25 @@ const TeacherMaterials = () => {
                         onChange={(e) => setMaterialDescription(e.target.value)}
                       />
                     </FormGroup>
-                    
+
+                    {/* Thêm vào form trong ModalBody trước phần chọn môn học (khoảng dòng 1137) */}
+                    <FormGroup>
+                      <FormLabel theme={theme}>Khối</FormLabel>
+                      <FormSelect 
+                        theme={theme} 
+                        value={selectedGrade}
+                        onChange={(e) => setSelectedGrade(e.target.value)}
+                      >
+                        <option value="">Tất cả khối</option>
+                        {grades.map(grade => (
+                          <option key={grade.id} value={grade.id}>
+                            {grade.name}
+                          </option>
+                        ))}
+                      </FormSelect>
+                    </FormGroup>
+
+                    {/* Sau đó điều chỉnh dropdown môn học để sử dụng filteredSubjects */}
                     <FormGroup>
                       <FormLabel theme={theme}>Môn học</FormLabel>
                       <FormSelect 
@@ -1522,14 +1576,25 @@ const TeacherMaterials = () => {
                         disabled={loadingSubjects}
                       >
                         <option value="">
-                          {loadingSubjects ? 'Đang tải môn học...' : 'Chọn môn học'}
+                          {loadingSubjects ? 'Đang tải môn học...' : 
+                          selectedGrade ? `Chọn môn học khối ${selectedGrade}` : 'Chọn môn học'}
                         </option>
-                        {subjects.map(subject => (
+                        {filteredSubjects.map(subject => (
                           <option key={subject.id} value={subject.id}>
                             {subject.name}
                           </option>
                         ))}
                       </FormSelect>
+                      
+                      {selectedGrade && filteredSubjects.length === 0 && !loadingSubjects && (
+                        <div style={{ 
+                          color: '#e53e3e', 
+                          marginTop: '0.5rem', 
+                          fontSize: '0.875rem' 
+                        }}>
+                          Không tìm thấy môn học cho khối {selectedGrade}
+                        </div>
+                      )}
                     </FormGroup>
                     
                     {/* Add this FormGroup after the subject selection in your form (around line 1139) */}

@@ -10,8 +10,7 @@ import AuthModal from "../Auth/AuthModal";
 import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
-// Import thêm icons
-import { FaUserCog, FaUsers,FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments, FaFlag } from 'react-icons/fa';
+import { FaUserCog, FaUsers, FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments, FaFlag, FaSchool } from 'react-icons/fa';
 import NotificationBadge from '../notifications/NotificationBadge';
 
 // Styled components hiện tại...
@@ -696,10 +695,7 @@ function Header() {
                             <FaChartBar />
                             Thống kê bài thi
                           </DropdownItem>
-                          <DropdownItem to="/teacher/analytics" theme={theme}>
-                            <FaChartBar className="icon" />
-                            <span className="label">Phân tích kết quả</span>
-                          </DropdownItem>
+                          
                           <DropdownItem to="/analytics/charts" theme={theme}>
                             <FaChartLine className="icon" />
                             <span className="label">Biểu đồ phân tích</span>

@@ -306,15 +306,19 @@ const CreateOfficialExam = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('');
   
-  // Form data
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    examId: '',
-    startTime: '',
-    endTime: '',
-    studentIds: []
-  });
+  // Add a new state for classroom selection
+  const [classrooms, setClassrooms] = useState([]);
+  const [selectedClassroom, setSelectedClassroom] = useState('');
+  
+  // Form data - add studentIds to the initialization
+const [formData, setFormData] = useState({
+  title: '',
+  description: '',
+  examId: '',
+  startTime: '',
+  endTime: '',
+  studentIds: [] // Add this line to fix the error
+});
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -328,6 +332,16 @@ const CreateOfficialExam = () => {
   useEffect(() => {
     fetchStudents();
   }, [studentPage, studentPageSize, searchTerm, selectedGrade]);
+  
+  // Add this in the useEffect section to fetch classrooms when grade changes
+  useEffect(() => {
+    if (selectedGrade) {
+      fetchClassrooms(selectedGrade);
+    } else {
+      setClassrooms([]);
+      setSelectedClassroom('');
+    }
+  }, [selectedGrade]);
   
   const fetchExams = async () => {
     setLoadingExams(true);
@@ -428,6 +442,29 @@ const CreateOfficialExam = () => {
     }
   };
   
+  // Add this function to fetch classrooms based on grade
+  const fetchClassrooms = async (grade) => {
+    try {
+      const response = await apiClient.get(`/api/classrooms?grade=${grade}`);
+      let classroomData = [];
+      
+      if (response && response.data) {
+        if (Array.isArray(response.data)) {
+          classroomData = response.data;
+        } else if (Array.isArray(response.data.data)) {
+          classroomData = response.data.data;
+        } else if (response.data.items && Array.isArray(response.data.items)) {
+          classroomData = response.data.items;
+        }
+      }
+      
+      setClassrooms(classroomData);
+    } catch (error) {
+      console.error('Error fetching classrooms:', error);
+      showErrorToast('Không thể tải danh sách lớp học');
+    }
+  };
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -444,6 +481,11 @@ const CreateOfficialExam = () => {
   const handleGradeChange = (e) => {
     setSelectedGrade(e.target.value);
     setStudentPage(1); // Reset to first page when grade filter changes
+  };
+  
+  // Add this handler for classroom selection
+  const handleClassroomChange = (e) => {
+    setSelectedClassroom(e.target.value);
   };
   
   const handlePageChange = (newPage) => {
@@ -466,99 +508,91 @@ const CreateOfficialExam = () => {
     });
   };
   
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.title.trim()) {
-      newErrors.title = 'Tiêu đề không được để trống';
-    }
-    
-    if (!formData.examId) {
-      newErrors.examId = 'Vui lòng chọn đề thi';
-    }
-    
-    if (formData.studentIds.length === 0) {
-      newErrors.studentIds = 'Vui lòng chọn ít nhất một học sinh';
-    }
-    
-    if (!formData.startTime) {
-      newErrors.startTime = 'Vui lòng chọn thời gian bắt đầu';
-    }
-    
-    if (!formData.endTime) {
-      newErrors.endTime = 'Vui lòng chọn thời gian kết thúc';
-    }
-    
-    // Check if end time is after start time
-    if (formData.startTime && formData.endTime) {
-      const start = new Date(formData.startTime);
-      const end = new Date(formData.endTime);
-      
-      if (end <= start) {
-        newErrors.endTime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  // Replace the existing validateForm function
+const validateForm = () => {
+  const newErrors = {};
   
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  if (!formData.title.trim()) {
+    newErrors.title = 'Tiêu đề không được để trống';
+  }
+  
+  if (!formData.examId) {
+    newErrors.examId = 'Vui lòng chọn đề thi';
+  }
+  
+  if (!selectedGrade) {
+    newErrors.grade = 'Vui lòng chọn khối';
+  }
+  
+  if (!selectedClassroom) {
+    newErrors.classroom = 'Vui lòng chọn lớp';
+  }
+  
+  if (!formData.startTime) {
+    newErrors.startTime = 'Vui lòng chọn thời gian bắt đầu';
+  }
+  
+  if (!formData.endTime) {
+    newErrors.endTime = 'Vui lòng chọn thời gian kết thúc';
+  }
+  
+  // Check if end time is after start time
+  if (formData.startTime && formData.endTime) {
+    const start = new Date(formData.startTime);
+    const end = new Date(formData.endTime);
     
-    if (validateForm()) {
-      setIsSubmitting(true);
-      
-      try {
-        // Get the classroom name based on selected grade
-        let classroomName = "";
-        if (selectedGrade && selectedGrade !== '') {
-          // Find the classroom name from gradeOptions
-          const selectedGradeOption = gradeOptions.find(option => option.id === selectedGrade);
-          classroomName = selectedGradeOption ? selectedGradeOption.name : `Khối ${selectedGrade}`;
-        }
-        
-        // Transform the data for the API format
-        const apiFormData = {
-          title: formData.title.trim(),
-          description: formData.description || "", 
-          examId: parseInt(formData.examId, 10), 
-          startTime: formData.startTime,
-          endTime: formData.endTime,
-          studentIds: formData.studentIds.map(id => parseInt(id, 10)),
-          // Add the required ClassroomName field
-          ClassroomName: classroomName
-        };
-        
-        // Include classroomId if a valid grade is selected
-        if (selectedGrade && selectedGrade !== '') {
-          apiFormData.classroomId = parseInt(selectedGrade, 10);
-        }
-        
-        console.log('Submitting data:', JSON.stringify(apiFormData, null, 2));
-        
-        const result = await apiClient.post('/api/official-exams', apiFormData);
-        showSuccessToast('Tạo kỳ thi chính thức thành công!');
-        navigate('/admin/official-exams');
-      } catch (error) {
-        console.error('API Error:', error?.response?.data);
-        
-        // Log detailed validation errors if available
-        if (error?.response?.data?.errors) {
-          console.error('Validation errors:', error.response.data.errors);
-        }
-        
-        showErrorToast(
-          error?.response?.data?.title || 
-          (error?.response?.data?.errors ? 'Lỗi dữ liệu: ' + JSON.stringify(error.response.data.errors) : null) ||
-          error?.message || 
-          'Có lỗi xảy ra khi tạo kỳ thi'
-        );
-      } finally {
-        setIsSubmitting(false);
-      }
+    if (end <= start) {
+      newErrors.endTime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
     }
-  };
+  }
+  
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+  
+  // Replace the handleSubmit function
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (validateForm()) {
+    setIsSubmitting(true);
+    
+    try {
+      // Transform the data for the API format
+      const apiFormData = {
+        title: formData.title.trim(),
+        description: formData.description || "", 
+        examId: parseInt(formData.examId, 10), 
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        classroomName: selectedClassroom,
+        grade: selectedGrade
+      };
+      
+      console.log('Submitting data:', JSON.stringify(apiFormData, null, 2));
+      
+      const result = await apiClient.post('/api/official-exams', apiFormData);
+      showSuccessToast('Tạo kỳ thi chính thức thành công!');
+      navigate('/admin/official-exams');
+    } catch (error) {
+      console.error('API Error:', error?.response?.data);
+      
+      // Log detailed validation errors if available
+      if (error?.response?.data?.errors) {
+        console.error('Validation errors:', error.response.data.errors);
+      }
+      
+      showErrorToast(
+        error?.response?.data?.title || 
+        (error?.response?.data?.errors ? 'Lỗi dữ liệu: ' + JSON.stringify(error.response.data.errors) : null) ||
+        error?.message || 
+        'Có lỗi xảy ra khi tạo kỳ thi'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+};
   
   const handleCancel = () => {
     navigate('/admin/official-exams');
@@ -665,98 +699,60 @@ const CreateOfficialExam = () => {
           </Grid>
           
           <SectionTitle theme={theme}>
-            <FaGraduationCap /> Chọn học sinh tham gia
+            <FaGraduationCap /> Chọn lớp tham gia
           </SectionTitle>
-          
+
           <FilterContainer>
             <FilterGroup>
-              <Label theme={theme}><FaSearch /> Tìm kiếm học sinh</Label>
-              <SearchInput
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Tìm theo tên, mã học sinh..."
-                theme={theme}
-              />
-            </FilterGroup>
-            <FilterGroup>
-              <Label theme={theme}><FaFilter /> Lọc theo khối</Label>
+              <Label theme={theme}><FaFilter /> Chọn khối *</Label>
               <Select
                 value={selectedGrade}
                 onChange={handleGradeChange}
                 theme={theme}
               >
-                {gradeOptions.map(grade => (
+                <option value="">-- Chọn khối --</option>
+                {gradeOptions.filter(g => g.id !== '').map(grade => (
                   <option key={grade.id} value={grade.id}>
                     {grade.name}
                   </option>
                 ))}
               </Select>
+              {errors.grade && <ErrorMessage>{errors.grade}</ErrorMessage>}
+            </FilterGroup>
+            
+            <FilterGroup>
+              <Label theme={theme}><FaFilter /> Chọn lớp *</Label>
+              <Select
+                value={selectedClassroom}
+                onChange={handleClassroomChange}
+                theme={theme}
+                disabled={!selectedGrade || classrooms.length === 0}
+              >
+                <option value="">
+                  {!selectedGrade ? "Vui lòng chọn khối trước" : 
+                  classrooms.length === 0 ? "Không có lớp nào" : "-- Chọn lớp --"}
+                </option>
+                {classrooms.map(classroom => (
+                  <option key={classroom.id || classroom.name} value={classroom.id || classroom.name}>
+                    {classroom.name}
+                  </option>
+                ))}
+              </Select>
+              {errors.classroom && <ErrorMessage>{errors.classroom}</ErrorMessage>}
             </FilterGroup>
           </FilterContainer>
-          
+
           <FormGroup>
-            <Label theme={theme}>Danh sách học sinh *</Label>
-            
-            <StudentList theme={theme}>
-              {loadingStudents ? (
-                <LoadingText theme={theme}>Đang tải danh sách học sinh...</LoadingText>
-              ) : students.length === 0 ? (
-                <NoResultsText theme={theme}>
-                  Không tìm thấy học sinh nào{searchTerm ? ` phù hợp với "${searchTerm}"` : ""}.
-                </NoResultsText>
+            <Label theme={theme}>Thông tin</Label>
+            <div style={{ padding: '10px', border: '1px solid #e2e8f0', borderRadius: '0.25rem', backgroundColor: theme === 'dark' ? '#2d3748' : '#f7fafc' }}>
+              {selectedGrade && selectedClassroom ? (
+                <>
+                  <p>Tất cả học sinh thuộc lớp <strong>{selectedClassroom}</strong> sẽ được tự động thêm vào kỳ thi này.</p>
+                </>
               ) : (
-                students.map(student => (
-                  <StudentItem 
-                    key={student.id} 
-                    theme={theme}
-                    selected={formData.studentIds.includes(student.id)}
-                  >
-                    <Checkbox 
-                      type="checkbox"
-                      checked={formData.studentIds.includes(student.id)}
-                      onChange={() => toggleStudentSelection(student.id)}
-                    />
-                    <StudentInfo>
-                      <StudentName theme={theme}>
-                        {student.fullName || student.username}
-                      </StudentName>
-                      <StudentDetail theme={theme}>
-                        {student.username} • Khối {student.grade}
-                      </StudentDetail>
-                    </StudentInfo>
-                  </StudentItem>
-                ))
+                <p>Vui lòng chọn khối và lớp để tiếp tục.</p>
               )}
-            </StudentList>
-            
-            <SelectionCount theme={theme}>
-              Đã chọn {formData.studentIds.length} học sinh
-            </SelectionCount>
-            
-            {errors.studentIds && <ErrorMessage>{errors.studentIds}</ErrorMessage>}
-            
-            <PaginationContainer>
-              <PageButton 
-                theme={theme} 
-                onClick={() => handlePageChange(studentPage - 1)}
-                disabled={studentPage === 1 || loadingStudents}
-              >
-                Trước
-              </PageButton>
-              
-              <PageInfo theme={theme}>
-                Trang {studentPage} / {totalPages}
-              </PageInfo>
-              
-              <PageButton 
-                theme={theme} 
-                onClick={() => handlePageChange(studentPage + 1)}
-                disabled={studentPage === totalPages || loadingStudents}
-              >
-                Sau
-              </PageButton>
-            </PaginationContainer>
+            </div>
           </FormGroup>
           
           <ButtonContainer>
