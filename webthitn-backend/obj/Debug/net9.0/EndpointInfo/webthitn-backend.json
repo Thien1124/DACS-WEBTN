@@ -706,6 +706,219 @@
         }
       }
     },
+    "/api/class-results/{classroom}": {
+      "get": {
+        "tags": [
+          "ClassResults"
+        ],
+        "summary": "Get exam results for a classroom",
+        "parameters": [
+          {
+            "name": "classroom",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "examId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-results/{classroom}/export/excel": {
+      "get": {
+        "tags": [
+          "ClassResults"
+        ],
+        "summary": "Export class results to Excel",
+        "parameters": [
+          {
+            "name": "classroom",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "examId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-results/{classroom}/export/pdf": {
+      "get": {
+        "tags": [
+          "ClassResults"
+        ],
+        "summary": "Export class results to PDF",
+        "parameters": [
+          {
+            "name": "classroom",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "examId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/classrooms/import-students": {
       "post": {
         "tags": [
@@ -737,6 +950,238 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classrooms": {
+      "get": {
+        "tags": [
+          "Classroom"
+        ],
+        "summary": "Lấy danh sách tất cả các lớp học",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Classroom"
+        ],
+        "summary": "Tạo lớp học mới",
+        "requestBody": {
+          "description": "Thông tin lớp học mới",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassroomDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassroomDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassroomDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classrooms/{classroom}": {
+      "get": {
+        "tags": [
+          "Classroom"
+        ],
+        "summary": "Lấy thông tin chi tiết của một lớp học",
+        "parameters": [
+          {
+            "name": "classroom",
+            "in": "path",
+            "description": "Tên lớp học",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Classroom"
+        ],
+        "summary": "Cập nhật thông tin lớp học",
+        "parameters": [
+          {
+            "name": "classroom",
+            "in": "path",
+            "description": "Tên lớp học cần cập nhật",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Thông tin cập nhật",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassroomDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassroomDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassroomDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Classroom"
+        ],
+        "summary": "Xóa lớp học và tất cả học sinh trong lớp",
+        "parameters": [
+          {
+            "name": "classroom",
+            "in": "path",
+            "description": "Tên lớp học cần xóa",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4254,6 +4699,117 @@
         }
       }
     },
+    "/api/Question/import": {
+      "post": {
+        "tags": [
+          "Question"
+        ],
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "levelId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "overrideExisting",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "continueOnError",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "batchSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "file",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/Question/export": {
       "post": {
         "tags": [
@@ -5074,6 +5630,161 @@
         }
       }
     },
+    "/api/score-verification/request": {
+      "post": {
+        "tags": [
+          "ScoreVerification"
+        ],
+        "summary": "Học sinh yêu cầu xác minh điểm số bài thi",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreVerificationRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreVerificationRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreVerificationRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/score-verification/respond/{id}": {
+      "post": {
+        "tags": [
+          "ScoreVerification"
+        ],
+        "summary": "Giáo viên phản hồi yêu cầu xác minh điểm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreVerificationResponseDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreVerificationResponseDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreVerificationResponseDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Statistics/overview": {
       "get": {
         "tags": [
@@ -5235,38 +5946,27 @@
         }
       }
     },
-    "/api/student/exams/{officialExamId}/submit": {
+    "/api/student/exams/submit": {
       "post": {
         "tags": [
           "StudentExam"
         ],
         "summary": "Nộp bài thi",
-        "parameters": [
-          {
-            "name": "officialExamId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StudentSubmitExamDTO"
+                "$ref": "#/components/schemas/ExamSubmissionDTO"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/StudentSubmitExamDTO"
+                "$ref": "#/components/schemas/ExamSubmissionDTO"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/StudentSubmitExamDTO"
+                "$ref": "#/components/schemas/ExamSubmissionDTO"
               }
             }
           }
@@ -5277,26 +5977,6 @@
           },
           "400": {
             "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
             "content": {
               "text/plain": {
                 "schema": {
@@ -5334,9 +6014,6 @@
                 }
               }
             }
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -5414,6 +6091,38 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/student/exams/tab-change": {
+      "post": {
+        "tags": [
+          "StudentExam"
+        ],
+        "summary": "Xử lý khi học sinh rời khỏi tab làm bài",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TabChangeDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TabChangeDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TabChangeDTO"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -5676,31 +6385,12 @@
         }
       }
     },
-    "/api/tests/verify-token": {
-      "post": {
+    "/api/tests/debug-token": {
+      "get": {
         "tags": [
           "Test"
         ],
         "summary": "Kiểm tra và xử lý token thủ công",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenVerificationRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenVerificationRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenVerificationRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -5715,6 +6405,16 @@
         ],
         "summary": "Tạo đề thi theo cấu trúc độ khó",
         "description": "API này cho phép tạo đề thi dựa trên cấu trúc độ khó, phân bổ câu hỏi theo tỷ lệ người dùng cung cấp",
+        "parameters": [
+          {
+            "name": "useFixedUserId",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5853,6 +6553,16 @@
         ],
         "summary": "Tạo đề ôn tập tùy chọn",
         "description": "API này cho phép tạo đề ôn tập theo các tùy chọn của người dùng",
+        "parameters": [
+          {
+            "name": "forceUserId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -6585,6 +7295,24 @@
         "additionalProperties": false,
         "description": "DTO để tạo chương mới"
       },
+      "CreateClassroomDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true
+          },
+          "school": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateExamDTO": {
         "type": "object",
         "properties": {
@@ -7150,6 +7878,25 @@
         "additionalProperties": false,
         "description": "DTO để gửi thông báo qua email"
       },
+      "ExamAnswerDTO": {
+        "type": "object",
+        "properties": {
+          "examQuestionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "selectedOptionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "textAnswer": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ExamQuestionCreateDTO": {
         "type": "object",
         "properties": {
@@ -7174,6 +7921,23 @@
         },
         "additionalProperties": false,
         "description": "DTO thêm câu hỏi vào bài thi"
+      },
+      "ExamSubmissionDTO": {
+        "type": "object",
+        "properties": {
+          "officialExamId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExamAnswerDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "ExportQuestionsDTO": {
         "type": "object",
@@ -7587,6 +8351,44 @@
         "additionalProperties": false,
         "description": "DTO cho việc xử lý phản hồi bài thi"
       },
+      "ScoreVerificationRequestDTO": {
+        "type": "object",
+        "properties": {
+          "examResultId": {
+            "type": "integer",
+            "description": "ID kết quả bài thi cần xác minh điểm",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Lý do yêu cầu xác minh điểm",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ScoreVerificationResponseDTO": {
+        "type": "object",
+        "properties": {
+          "verificationId": {
+            "type": "integer",
+            "description": "ID của yêu cầu xác minh điểm",
+            "format": "int32"
+          },
+          "newScore": {
+            "type": "number",
+            "description": "Điểm số mới sau khi xác minh (null nếu giữ nguyên)",
+            "format": "double",
+            "nullable": true
+          },
+          "response": {
+            "type": "string",
+            "description": "Phản hồi của giáo viên về yêu cầu xác minh",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SimplePracticeDTO": {
         "type": "object",
         "properties": {
@@ -7605,38 +8407,6 @@
         },
         "additionalProperties": false,
         "description": "DTO đơn giản cho API tạo đề ôn tập khi API chính gặp vấn đề"
-      },
-      "StudentSubmitAnswerDTO": {
-        "type": "object",
-        "properties": {
-          "examQuestionId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "selectedOptionId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "textAnswer": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "StudentSubmitExamDTO": {
-        "type": "object",
-        "properties": {
-          "answers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StudentSubmitAnswerDTO"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
       },
       "SubmitExamDTO": {
         "type": "object",
@@ -7694,6 +8464,28 @@
         "additionalProperties": false,
         "description": "DTO để nộp bài thi"
       },
+      "TabChangeDTO": {
+        "type": "object",
+        "properties": {
+          "officialExamId": {
+            "type": "integer",
+            "description": "ID kỳ thi",
+            "format": "int32"
+          },
+          "changeCount": {
+            "type": "integer",
+            "description": "Số lần chuyển tab",
+            "format": "int32"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Thời gian bắt đầu làm bài",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "TestCriterionDTO": {
         "required": [
           "count",
@@ -7702,19 +8494,29 @@
         "type": "object",
         "properties": {
           "levelId": {
+            "maximum": 2147483647,
+            "minimum": 0,
             "type": "integer",
+            "description": "ID cấp độ khó của câu hỏi (0 = không lọc theo cấp độ)",
             "format": "int32"
           },
           "questionType": {
+            "maximum": 3,
+            "minimum": 0,
             "type": "integer",
+            "description": "Loại câu hỏi: 1 = Trắc nghiệm, 2 = True/False, 3 = Tự luận (0 = không lọc theo loại)",
             "format": "int32"
           },
           "chapterId": {
+            "maximum": 2147483647,
+            "minimum": 0,
             "type": "integer",
+            "description": "ID chương (0 = không lọc theo chương)",
             "format": "int32"
           },
           "topic": {
             "type": "string",
+            "description": "Chủ đề để lọc câu hỏi (null hoặc rỗng = không lọc theo chủ đề)",
             "nullable": true
           },
           "count": {
@@ -7732,17 +8534,6 @@
         },
         "additionalProperties": false,
         "description": "DTO cho tiêu chí phân bổ câu hỏi"
-      },
-      "TokenVerificationRequest": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "DTO cho API kiểm tra token"
       },
       "UpdateAnswerScoreDTO": {
         "type": "object",
@@ -7812,6 +8603,24 @@
         },
         "additionalProperties": false,
         "description": "DTO để cập nhật chương"
+      },
+      "UpdateClassroomDTO": {
+        "type": "object",
+        "properties": {
+          "newName": {
+            "type": "string",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true
+          },
+          "school": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "UpdateExamStatusDTO": {
         "type": "object",

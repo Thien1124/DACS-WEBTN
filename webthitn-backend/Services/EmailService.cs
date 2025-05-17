@@ -101,5 +101,98 @@ namespace webthitn_backend.Services
 
             await SendEmailAsync(email, subject, htmlBody, textBody);
         }
+
+        public async Task SendScoreVerificationEmailAsync(string studentEmail, string studentName, 
+            int examResultId, string examTitle, decimal currentScore, string verificationReason)
+        {
+            string subject = "Yêu Cầu Xác Minh Điểm Số - ExamDG";
+
+            string htmlBody = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>
+                        <h2 style='color: #2a76d2; text-align: center;'>Yêu Cầu Xác Minh Điểm Số</h2>
+                        
+                        <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #2a76d2; margin: 20px 0;'>
+                            <p><strong>Học sinh:</strong> {studentName}</p>
+                            <p><strong>Bài thi:</strong> {examTitle}</p>
+                            <p><strong>Mã kết quả:</strong> #{examResultId}</p>
+                            <p><strong>Điểm hiện tại:</strong> {currentScore}</p>
+                        </div>
+                        
+                        <p><strong>Lý do yêu cầu xác minh:</strong></p>
+                        <p style='padding: 10px; background-color: #f8f9fa; border-radius: 5px;'>{verificationReason}</p>
+                        
+                        <p>Vui lòng kiểm tra điểm số của học sinh và phản hồi trong thời gian sớm nhất.</p>
+                        <p>Để xem chi tiết bài làm của học sinh, vui lòng đăng nhập vào hệ thống và truy cập kết quả bài thi.</p>
+                        
+                        <div style='margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;'>
+                            <p style='margin: 0;'>Trân trọng,<br>Hệ thống ExamDG</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            ";
+
+            string textBody = $"Yêu Cầu Xác Minh Điểm Số\n\n" +
+                            $"Học sinh: {studentName}\n" +
+                            $"Bài thi: {examTitle}\n" +
+                            $"Mã kết quả: #{examResultId}\n" +
+                            $"Điểm hiện tại: {currentScore}\n\n" +
+                            $"Lý do yêu cầu xác minh:\n{verificationReason}\n\n" +
+                            $"Vui lòng kiểm tra điểm số của học sinh và phản hồi trong thời gian sớm nhất.\n\n" +
+                            $"Trân trọng,\nHệ thống ExamDG";
+
+            await SendEmailAsync(studentEmail, subject, htmlBody, textBody);
+        }
+
+        public async Task SendScoreVerificationResponseEmailAsync(string studentEmail, string studentName, 
+            int examResultId, string examTitle, decimal oldScore, decimal newScore, string responseMessage)
+        {
+            string subject = "Kết Quả Xác Minh Điểm Số - ExamDG";
+            bool scoreChanged = oldScore != newScore;
+
+            string htmlBody = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>
+                        <h2 style='color: #2a76d2; text-align: center;'>Kết Quả Xác Minh Điểm Số</h2>
+                        
+                        <p>Xin chào {studentName},</p>
+                        <p>Chúng tôi đã hoàn thành việc xác minh điểm số cho bài thi của bạn.</p>
+                        
+                        <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #2a76d2; margin: 20px 0;'>
+                            <p><strong>Bài thi:</strong> {examTitle}</p>
+                            <p><strong>Mã kết quả:</strong> #{examResultId}</p>
+                            <p><strong>Điểm cũ:</strong> {oldScore}</p>
+                            <p><strong>Điểm mới:</strong> <span style='color: {(scoreChanged ? "#28a745" : "#333")};'>{newScore}</span></p>
+                        </div>
+                        
+                        <p><strong>Phản hồi từ giáo viên:</strong></p>
+                        <p style='padding: 10px; background-color: #f8f9fa; border-radius: 5px;'>{responseMessage}</p>
+                        
+                        <p>Nếu bạn có thắc mắc khác, vui lòng liên hệ với giáo viên của mình.</p>
+                        
+                        <div style='margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;'>
+                            <p style='margin: 0;'>Trân trọng,<br>Hệ thống ExamDG</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            ";
+
+            string textBody = $"Kết Quả Xác Minh Điểm Số\n\n" +
+                            $"Xin chào {studentName},\n\n" +
+                            $"Chúng tôi đã hoàn thành việc xác minh điểm số cho bài thi của bạn.\n\n" +
+                            $"Bài thi: {examTitle}\n" +
+                            $"Mã kết quả: #{examResultId}\n" +
+                            $"Điểm cũ: {oldScore}\n" +
+                            $"Điểm mới: {newScore}\n\n" +
+                            $"Phản hồi từ giáo viên:\n{responseMessage}\n\n" +
+                            $"Nếu bạn có thắc mắc khác, vui lòng liên hệ với giáo viên của mình.\n\n" +
+                            $"Trân trọng,\nHệ thống ExamDG";
+
+            await SendEmailAsync(studentEmail, subject, htmlBody, textBody);
+        }
     }
 }

@@ -381,6 +381,13 @@ namespace webthitn_backend.Migrations
                     b.Property<int>("ExamId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("ForcedSubmission")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ForcedSubmissionReason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("GradedAt")
                         .HasColumnType("datetime2");
 
@@ -603,6 +610,9 @@ namespace webthitn_backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AllowedTabChanges")
+                        .HasColumnType("int");
+
                     b.Property<string>("ClassroomName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -628,6 +638,9 @@ namespace webthitn_backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RequireAllQuestionsAnswered")
                         .HasColumnType("bit");
 
                     b.Property<bool>("ResultsReleased")
@@ -961,6 +974,66 @@ namespace webthitn_backend.Migrations
                     b.HasIndex("QuestionId");
 
                     b.ToTable("QuestionOptions");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.ScoreVerification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ExamResultId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("NewScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("OriginalScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("RequestReason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("ResponderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TeacherResponse")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamResultId");
+
+                    b.HasIndex("ResponderId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TeacherId");
+
+                    b.ToTable("ScoreVerifications");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.Setting", b =>
@@ -1539,7 +1612,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$ps24in1m.Ey/Q3cy89gckeEPxxH.uCYO1pxev8PIYyMdYARkY7.na",
+                            Password = "$2a$11$l3PeoT8qx8jnseQmtv5Ld.N6Spn95pBEqSNqMuS/6IvVJJpTV6saG",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1555,7 +1628,7 @@ namespace webthitn_backend.Migrations
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$4Su8MNuNOft2lWvKo6MjTuCaRdDuPHIJZRtPiVL5QvdJaoaR.zzwO",
+                            Password = "$2a$11$3v/THpoeFMr3pcONzHQ3IugX.QFbJJTFH6PNafR9d/7pCirrB9JgG",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1570,7 +1643,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$RP5snFKSexYBamc.3ISxn.RElyBNcFpDUuSBkq28odwQnoQUlNGji",
+                            Password = "$2a$11$ipQofpATh1HnrnSwjpQWwugT7VJ8dEs/dyeKBDQyFYyiNMxlvXVC.",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",
@@ -1958,6 +2031,40 @@ namespace webthitn_backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("webthitn_backend.Models.ScoreVerification", b =>
+                {
+                    b.HasOne("webthitn_backend.Models.ExamResult", "ExamResult")
+                        .WithMany()
+                        .HasForeignKey("ExamResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.Users.User", "Responder")
+                        .WithMany()
+                        .HasForeignKey("ResponderId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("webthitn_backend.Models.Users.User", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("webthitn_backend.Models.Users.User", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ExamResult");
+
+                    b.Navigation("Responder");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("webthitn_backend.Models.StudentAnswer", b =>

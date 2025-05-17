@@ -67,3 +67,23 @@ export const showInfoToast = (message, onCloseCallback) => {
     }
   });
 };
+// Toast cho các thông báo đang tải
+export const showLoadingToast = (message) => {
+  return toast.loading(message, {
+    position: "top-right",
+    closeOnClick: false,
+    pauseOnHover: true,
+    draggable: false
+  });
+};
+
+// Cập nhật toast (chuyển từ loading sang success/error)
+export const updateToast = (toastId, { content, type }) => {
+  toast.update(toastId, {
+    render: content,
+    type: type,
+    isLoading: false,
+    autoClose: 2000,
+    closeOnClick: true
+  });
+};

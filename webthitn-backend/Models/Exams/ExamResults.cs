@@ -155,6 +155,16 @@ namespace webthitn_backend.Models
         public required bool IsSubmittedManually { get; set; }
 
         /// <summary>
+        /// Đánh dấu bài thi bị nộp tự động do vi phạm quy định
+        /// </summary>
+        public bool ForcedSubmission { get; set; } = false;
+
+        /// <summary>
+        /// Lý do bị nộp tự động
+        /// </summary>
+        public string ForcedSubmissionReason { get; set; }
+
+        /// <summary>
         /// Thống kê chi tiết theo loại câu hỏi (JSON)
         /// </summary>
         public string QuestionTypeStatistics { get; set; }

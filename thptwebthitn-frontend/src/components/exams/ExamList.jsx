@@ -249,7 +249,7 @@ const ExamList = () => {
         }
       } catch (error) {
         console.error('Error loading exams:', error);
-        showErrorToast(`Không thể tải danh sách đề thi: ${error.message || 'Lỗi kết nối API'}`);
+        
       }
     };
     

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as userService from '../services/userService';
-
+import apiClient from '../services/apiClient';
 export const fetchUsers = createAsyncThunk(
   'users/fetchAll',
   async (params) => {
@@ -38,6 +38,27 @@ export const fetchSystemInfo = createAsyncThunk(
   async () => {
     const response = await userService.getSystemInfo();
     return response;
+  }
+);
+
+// Add this new action to your userSlice.js file
+
+export const fetchUsersList = createAsyncThunk(
+  'users/fetchUsersList',
+  async ({ page = 1, pageSize = 100, role = 'Student', grade = '' }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get('/api/User/list', {
+        params: {
+          page,
+          pageSize,
+          role,
+          grade: grade || undefined // Only include grade if it's not empty
+        }
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
   }
 );
 
@@ -95,6 +116,20 @@ const userSlice = createSlice({
       // Fetch system info
       .addCase(fetchSystemInfo.fulfilled, (state, action) => {
         state.systemInfo = action.payload;
+      })
+      
+      // Fetch users list
+      .addCase(fetchUsersList.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUsersList.fulfilled, (state, action) => {
+        state.loading = false;
+        state.list = action.payload.items;
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(fetchUsersList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
       });
   }
 });

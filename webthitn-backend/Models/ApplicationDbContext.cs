@@ -33,6 +33,8 @@ namespace webthitn_backend.Models
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<OfficialExam> OfficialExams { get; set; }
         public DbSet<OfficialExamStudent> OfficialExamStudents { get; set; }
+        // Add this to your ApplicationDbContext class
+        public DbSet<ScoreVerification> ScoreVerifications { get; set; }
 
 
 
@@ -158,6 +160,29 @@ namespace webthitn_backend.Models
             modelBuilder.Entity<User>()
                 .Property(u => u.Classroom)
                 .IsRequired(false);
+             modelBuilder.Entity<ScoreVerification>()
+            .HasOne(sv => sv.ExamResult)
+            .WithMany()
+            .HasForeignKey(sv => sv.ExamResultId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<ScoreVerification>()
+                .HasOne(sv => sv.Student)
+                .WithMany()
+                .HasForeignKey(sv => sv.StudentId)
+                .OnDelete(DeleteBehavior.NoAction);
+                
+            modelBuilder.Entity<ScoreVerification>()
+                .HasOne(sv => sv.Teacher)
+                .WithMany()
+                .HasForeignKey(sv => sv.TeacherId)
+                .OnDelete(DeleteBehavior.NoAction);
+                
+            modelBuilder.Entity<ScoreVerification>()
+                .HasOne(sv => sv.Responder)
+                .WithMany()
+                .HasForeignKey(sv => sv.ResponderId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Seed data
             SeedData(modelBuilder);

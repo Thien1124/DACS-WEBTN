@@ -399,10 +399,7 @@ const TeacherChatBox = () => {
     fetchMessages();
   }, [selectedStudent, user]);
   
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+ 
   
   // Poll for new messages from the selected student
   useEffect(() => {

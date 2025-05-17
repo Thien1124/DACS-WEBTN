@@ -12,7 +12,9 @@ using OfficeOpenXml;
 using Swashbuckle.AspNetCore.Filters;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -68,7 +70,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-            ClockSkew = TimeSpan.Zero // Để token hết hạn đúng thời điểm
+            ClockSkew = TimeSpan.Zero, // Để token hết hạn đúng thời điểm
+            NameClaimType = "sub" // Thêm dòng này
         };
 
         // Thêm event handlers để debug
@@ -82,6 +85,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             OnTokenValidated = context =>
             {
                 Console.WriteLine("Token validated successfully");
+                
+                // THÊM MỚI: Đảm bảo claim userId được thêm vào identity
+                var userIdClaim = context.Principal.Claims.FirstOrDefault(c => 
+                    c.Type == "userId" || c.Type == "sub");
+                
+                if (userIdClaim != null)
+                {
+                    var identity = context.Principal.Identity as ClaimsIdentity;
+                    if (identity != null)
+                    {
+                        // Đảm bảo claim userId tồn tại trong identity
+                        if (!context.Principal.HasClaim(c => c.Type == "userId"))
+                        {
+                            identity.AddClaim(new Claim("userId", userIdClaim.Value));
+                        }
+                    }
+                }
+                
                 return Task.CompletedTask;
             },
             OnMessageReceived = context =>
@@ -95,6 +116,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return Task.CompletedTask;
             }
         };
+        
+        // THÊM MỚI: Map các claim từ token
+        options.MapInboundClaims = true;
     });
 
 // Cấu hình CORS để cho phép frontend gọi API
@@ -258,12 +282,15 @@ else
 // Thêm middleware xử lý JSON token trước authentication
 app.UseMiddleware<JsonTokenAuthenticationMiddleware>();
 
+// Sử dụng Authentication và Authorization cho API
+app.UseAuthentication(); // Đảm bảo yêu cầu token hợp lệ
+
+// Di chuyển middleware này sau authentication nhưng trước authorization
+app.UseMiddleware<UserIdClaimMiddleware>();
+
 // Thêm middleware kiểm tra độ hợp lệ của đề thi
 app.UseMiddleware<ExamValidationMiddleware>();
 
-// Sử dụng Authentication và Authorization cho API
-app.UseAuthentication(); // Đảm bảo yêu cầu token hợp lệ
-app.UseMiddleware<UserIdClaimMiddleware>();
 app.UseAuthorization(); // Kiểm tra quyền truy cập
 
 // Thêm middleware bảo vệ endpoint admin
@@ -277,40 +304,44 @@ app.MapHub<ChatHub>("/chatHub");
 // Middleware xử lý lỗi toàn cầu
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-// Áp dụng migrations tự động khi khởi động ứng dụng
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var logger = services.GetRequiredService<ILogger<Program>>();
-
-        // Kiểm tra kết nối database
-        logger.LogInformation("Kiểm tra kết nối đến cơ sở dữ liệu...");
-
-        // Thử kết nối trước khi áp dụng migrations
-        if (context.Database.CanConnect())
-        {
-            logger.LogInformation("Kết nối cơ sở dữ liệu thành công. Áp dụng migrations...");
-
-            // Áp dụng tất cả các migrations đang chờ
-            context.Database.Migrate();
-
-            logger.LogInformation("Database migrations applied successfully");
-        }
-        else
-        {
-            logger.LogWarning("Không thể kết nối đến cơ sở dữ liệu. Bỏ qua việc áp dụng migrations.");
-        }
-    }
-    catch (Exception ex)
-    {
-        // Log lỗi
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while applying migrations to the database");
-    }
-}
+// Đoạn code hiện tại của bạn ở đầu file giữ nguyên
+// ...
 
 // Chạy ứng dụng
 app.Run();
+
+// Định nghĩa middleware để debug JWT - chuyển xuống ĐÂY sau app.Run()
+public class JwtDebugMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<JwtDebugMiddleware> _logger;
+
+    public JwtDebugMiddleware(RequestDelegate next, ILogger<JwtDebugMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        // Ghi log các claims của người dùng sau khi xác thực
+        if (context.User.Identity.IsAuthenticated)
+        {
+            _logger.LogInformation($"Request path: {context.Request.Path} - User authenticated as: {context.User.Identity.Name}");
+            foreach (var claim in context.User.Claims)
+            {
+                _logger.LogInformation($"Claim: {claim.Type} = {claim.Value}");
+            }
+        }
+        else
+        {
+            _logger.LogWarning($"Request path: {context.Request.Path} - User not authenticated");
+            if (context.Request.Headers.ContainsKey("Authorization"))
+            {
+                _logger.LogWarning("Authorization header is present but user is not authenticated");
+            }
+        }
+
+        await _next(context);
+    }
+}

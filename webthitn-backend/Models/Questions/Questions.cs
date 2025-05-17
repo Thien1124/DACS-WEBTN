@@ -89,7 +89,7 @@ namespace webthitn_backend.Models
         ///   "4_correct": 1.00
         /// }
         /// </summary>
-        public string ScoringConfig { get; set; }
+        public string ScoringConfig { get; set; } = "{\"1_correct\": 0.10, \"2_correct\": 0.25, \"3_correct\": 0.50, \"4_correct\": 1.00}";
 
         /// <summary>
         /// Cấu hình cho câu hỏi trả lời ngắn (JSON)
@@ -102,7 +102,7 @@ namespace webthitn_backend.Models
         ///   "similarity_threshold": 80
         /// }
         /// </summary>
-        public string ShortAnswerConfig { get; set; }
+        public string ShortAnswerConfig { get; set; } = "{\"case_sensitive\": false, \"exact_match\": false, \"partial_credit\": true, \"partial_credit_percent\": 50, \"allow_similar\": true, \"similarity_threshold\": 80}";
 
         /// <summary>
         /// ID người tạo

@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
 using webthitn_backend.Models.Users;
+using webthitn_backend.Helpers;
 
 namespace webthitn_backend.Controllers
 {
@@ -284,6 +285,301 @@ namespace webthitn_backend.Controllers
                     message = $"Đã xảy ra lỗi khi nhập danh sách học sinh: {ex.Message}",
                     innerError = ex.InnerException?.Message 
                 });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách tất cả các lớp học
+        /// </summary>
+        /// <returns>Danh sách tất cả các lớp học</returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllClassrooms()
+        {
+            try
+            {
+                // Group classrooms by grade
+                var classroomsByGrade = await _context.Users
+                    .Where(u => u.Role == "Student" && !string.IsNullOrEmpty(u.Classroom))
+                    .GroupBy(u => u.Grade)
+                    .Select(g => new
+                    {
+                        grade = g.Key,
+                        classrooms = g.Select(u => u.Classroom)
+                                      .Distinct()
+                                      .OrderBy(c => c)
+                                      .ToList()
+                    })
+                    .OrderBy(g => g.grade)
+                    .ToListAsync();
+
+                // Get student count per classroom
+                var studentCountsByClassroom = await _context.Users
+                    .Where(u => u.Role == "Student" && !string.IsNullOrEmpty(u.Classroom))
+                    .GroupBy(u => u.Classroom)
+                    .Select(g => new
+                    {
+                        classroom = g.Key,
+                        studentCount = g.Count()
+                    })
+                    .ToDictionaryAsync(x => x.classroom, x => x.studentCount);
+
+                // Create detailed result
+                var result = classroomsByGrade.Select(g => new
+                {
+                    grade = g.grade,
+                    classroomCount = g.classrooms.Count,
+                    classrooms = g.classrooms.Select(c => new
+                    {
+                        name = c,
+                        studentCount = studentCountsByClassroom.ContainsKey(c) ? studentCountsByClassroom[c] : 0
+                    }).ToList()
+                }).ToList();
+
+                return Ok(new
+                {
+                    totalGrades = result.Count,
+                    totalClassrooms = result.Sum(g => g.classroomCount),
+                    grades = result
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting all classrooms: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách lớp học" });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thông tin chi tiết của một lớp học
+        /// </summary>
+        /// <param name="classroom">Tên lớp học</param>
+        /// <returns>Thông tin chi tiết của lớp học</returns>
+        [HttpGet("{classroom}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetClassroomDetails(string classroom)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(classroom))
+                {
+                    return BadRequest(new { message = "Tên lớp không được để trống" });
+                }
+
+                // Get students in the classroom
+                var students = await _context.Users
+                    .Where(u => u.Role == "Student" && u.Classroom == classroom)
+                    .OrderBy(u => u.Username)
+                    .ToListAsync();
+
+                if (students.Count == 0)
+                {
+                    return NotFound(new { message = $"Không tìm thấy lớp học {classroom}" });
+                }
+
+                // Get grade from first student
+                string grade = students.First().Grade;
+
+                return Ok(new
+                {
+                    name = classroom,
+                    grade = grade,
+                    studentCount = students.Count,
+                    school = students.First().School
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting classroom details: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy thông tin chi tiết lớp học" });
+            }
+        }
+
+        /// <summary>
+        /// Tạo lớp học mới
+        /// </summary>
+        /// <param name="model">Thông tin lớp học mới</param>
+        /// <returns>Thông tin lớp học đã tạo</returns>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateClassroom([FromBody] CreateClassroomDTO model)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(model.Name))
+                {
+                    return BadRequest(new { message = "Tên lớp không được để trống" });
+                }
+
+                if (string.IsNullOrWhiteSpace(model.Grade))
+                {
+                    return BadRequest(new { message = "Khối lớp không được để trống" });
+                }
+
+                // Check if classroom exists
+                var existingStudents = await _context.Users
+                    .AnyAsync(u => u.Classroom == model.Name);
+
+                if (existingStudents)
+                {
+                    return BadRequest(new { message = $"Lớp học {model.Name} đã tồn tại" });
+                }
+
+                // Create a demo student to represent the classroom
+                // This is a temporary approach until we create a proper Classroom entity
+                var demoStudent = new User
+                {
+                    Username = $"demo_{model.Name.ToLower().Replace(" ", "_")}",
+                    FullName = $"Demo {model.Name}",
+                    Email = "",
+                    Classroom = model.Name,
+                    Grade = model.Grade,
+                    PhoneNumber = "Chưa cập nhật",
+                    School = model.School ?? "THPT WEBTN",
+                    Role = "Student",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    Password = BCrypt.Net.BCrypt.HashPassword("demo12345")
+                };
+
+                _context.Users.Add(demoStudent);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetClassroomDetails), new { classroom = model.Name }, new
+                {
+                    name = model.Name,
+                    grade = model.Grade,
+                    school = model.School ?? "THPT WEBTN",
+                    message = $"Đã tạo lớp học {model.Name} thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error creating classroom: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi tạo lớp học mới" });
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật thông tin lớp học
+        /// </summary>
+        /// <param name="classroom">Tên lớp học cần cập nhật</param>
+        /// <param name="model">Thông tin cập nhật</param>
+        /// <returns>Thông tin lớp học sau khi cập nhật</returns>
+        [HttpPut("{classroom}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateClassroom(string classroom, [FromBody] UpdateClassroomDTO model)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(classroom))
+                {
+                    return BadRequest(new { message = "Tên lớp không được để trống" });
+                }
+
+                // Find all students in the classroom
+                var students = await _context.Users
+                    .Where(u => u.Role == "Student" && u.Classroom == classroom)
+                    .ToListAsync();
+
+                if (!students.Any())
+                {
+                    return NotFound(new { message = $"Không tìm thấy lớp học {classroom}" });
+                }
+
+                // Update student information with new classroom details
+                foreach (var student in students)
+                {
+                    if (!string.IsNullOrEmpty(model.NewName))
+                    {
+                        student.Classroom = model.NewName;
+                    }
+
+                    if (!string.IsNullOrEmpty(model.Grade))
+                    {
+                        student.Grade = model.Grade;
+                    }
+
+                    if (!string.IsNullOrEmpty(model.School))
+                    {
+                        student.School = model.School;
+                    }
+                }
+
+                _context.Users.UpdateRange(students);
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = $"Đã cập nhật thông tin lớp học {classroom} thành công",
+                    originalName = classroom,
+                    newName = model.NewName ?? classroom,
+                    grade = model.Grade,
+                    school = model.School,
+                    studentCount = students.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error updating classroom: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật lớp học" });
+            }
+        }
+
+        /// <summary>
+        /// Xóa lớp học và tất cả học sinh trong lớp
+        /// </summary>
+        /// <param name="classroom">Tên lớp học cần xóa</param>
+        /// <returns>Kết quả xóa lớp học</returns>
+        [HttpDelete("{classroom}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize(Roles = "Admin")] // Only Admin can delete classrooms
+        public async Task<IActionResult> DeleteClassroom(string classroom)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(classroom))
+                {
+                    return BadRequest(new { message = "Tên lớp không được để trống" });
+                }
+
+                // Find all students in the classroom
+                var students = await _context.Users
+                    .Where(u => u.Role == "Student" && u.Classroom == classroom)
+                    .ToListAsync();
+
+                if (!students.Any())
+                {
+                    return NotFound(new { message = $"Không tìm thấy lớp học {classroom}" });
+                }
+
+                // Option 1: Delete all students in classroom
+                _context.Users.RemoveRange(students);
+
+                // Option 2: Set classroom to null (alternative approach)
+                // foreach (var student in students)
+                // {
+                //     student.Classroom = null;
+                // }
+                // _context.Users.UpdateRange(students);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = $"Đã xóa lớp học {classroom} thành công",
+                    deletedStudentCount = students.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting classroom: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi xóa lớp học" });
             }
         }
 

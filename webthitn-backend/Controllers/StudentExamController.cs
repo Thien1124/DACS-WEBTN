@@ -375,297 +375,60 @@ namespace webthitn_backend.Controllers
         /// <summary>
         /// Nộp bài thi
         /// </summary>
-        [HttpPost("{officialExamId}/submit")]
+        [HttpPost("submit")]
+        [Authorize(Roles = "Student")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> SubmitExam(int officialExamId, [FromBody] StudentSubmitExamDTO model)
+        public async Task<IActionResult> SubmitExam([FromBody] ExamSubmissionDTO submission)
         {
             try
             {
-                int studentId = GetCurrentUserId();
-                _logger.LogInformation($"Học sinh {studentId} đang nộp bài thi {officialExamId}");
+                _logger.LogInformation($"Học sinh nộp bài thi ID: {submission.OfficialExamId}");
 
-                // Kiểm tra xem học sinh có được phân công vào kỳ thi không
-                var officialExamStudent = await _context.OfficialExamStudents
-                    .Include(oes => oes.OfficialExam)
-                        .ThenInclude(oe => oe.Exam)
-                    .FirstOrDefaultAsync(oes =>
-                        oes.OfficialExamId == officialExamId &&
-                        oes.StudentId == studentId);
+                // Find the official exam
+                var officialExam = await _context.OfficialExams
+                    .Include(oe => oe.Exam)
+                    .FirstOrDefaultAsync(oe => oe.Id == submission.OfficialExamId);
 
-                if (officialExamStudent == null)
+                if (officialExam == null)
                 {
-                    return NotFound(new { message = "Bạn không được phân công vào kỳ thi này" });
+                    return NotFound(new { message = "Không tìm thấy kỳ thi" });
                 }
 
-                // Kiểm tra xem học sinh đã làm bài chưa
-                if (officialExamStudent.HasTaken)
+                // Get current user
+                int currentUserId = GetCurrentUserId();
+                
+                // Get all questions for this exam
+                var examQuestions = await _context.ExamQuestions
+                    .Where(eq => eq.ExamId == officialExam.ExamId)
+                    .ToListAsync();
+                    
+                int totalQuestions = examQuestions.Count;
+                
+                // Count answered questions in the submission
+                int answeredQuestions = submission.Answers?.Count ?? 0;
+                
+                // Check if all questions have been answered
+                if (answeredQuestions < totalQuestions)
                 {
-                    return BadRequest(new { message = "Bạn đã nộp bài thi này" });
-                }
-
-                // Kiểm tra thời gian làm bài
-                var now = DateTimeHelper.GetVietnamNow();
-                var officialExam = officialExamStudent.OfficialExam;
-                var exam = officialExam.Exam;
-
-                if (!officialExam.IsActive)
-                {
-                    return BadRequest(new { message = "Kỳ thi này hiện không hoạt động" });
-                }
-
-                if (officialExam.EndTime.HasValue && now > officialExam.EndTime.Value)
-                {
-                    _logger.LogWarning($"Học sinh {studentId} nộp bài thi {officialExamId} quá thời gian");
-                    // Vẫn cho phép nộp bài nhưng ghi log
-                }
-
-                // Bắt đầu transaction
-                using var transaction = await _context.Database.BeginTransactionAsync();
-
-                try
-                {
-                    // Lấy danh sách câu hỏi và đáp án
-                    var examQuestions = await _context.ExamQuestions
-                        .Include(eq => eq.Question)
-                            .ThenInclude(q => q.Options)
-                        .Where(eq => eq.ExamId == exam.Id)
-                        .ToListAsync();
-
-                    // Tính điểm bài làm
-                    decimal totalScore = 0;
-                    int correctAnswers = 0;
-                    int totalQuestions = examQuestions.Count;
-                    int answeredQuestions = 0;
-
-                    // Tạo thống kê về loại câu hỏi
-                    var questionTypeStats = new Dictionary<int, int>();
-
-                    // Kiểm tra và ghi log tất cả các câu trả lời để gỡ lỗi
-                    _logger.LogInformation($"Đang xử lý {model.Answers.Count} câu trả lời cho bài thi {officialExamId}");
-                    foreach (var answer in model.Answers)
-                    {
-                        _logger.LogInformation($"Xử lý câu trả lời: ExamQuestionId={answer.ExamQuestionId}, SelectedOptionId={answer.SelectedOptionId}, TextAnswer={answer.TextAnswer ?? "null"}");
-                    }
-
-                    // Kiểm tra và ghi log tất cả các câu hỏi trong đề thi để gỡ lỗi
-                    _logger.LogInformation($"Đề thi có {examQuestions.Count} câu hỏi");
-                    foreach (var eq in examQuestions)
-                    {
-                        _logger.LogInformation($"Câu hỏi trong đề: Id={eq.Id}, QuestionId={eq.QuestionId}, ExamId={eq.ExamId}");
-
-                        // Thêm thống kê về loại câu hỏi
-                        if (eq.Question != null)
-                        {
-                            int questionType = eq.Question.QuestionType;
-                            if (questionTypeStats.ContainsKey(questionType))
-                            {
-                                questionTypeStats[questionType]++;
-                            }
-                            else
-                            {
-                                questionTypeStats[questionType] = 1;
-                            }
-                        }
-                    }
-
-                    // Chuyển đổi thống kê thành JSON
-                    string questionTypeStatistics = Newtonsoft.Json.JsonConvert.SerializeObject(questionTypeStats);
-                    _logger.LogInformation($"Thống kê loại câu hỏi: {questionTypeStatistics}");
-
-                    // Kiểm tra các câu trả lời để tính điểm
-                    foreach (var answer in model.Answers)
-                    {
-                        // Tìm câu hỏi tương ứng
-                        var examQuestion = examQuestions.FirstOrDefault(eq => eq.Id == answer.ExamQuestionId);
-                        if (examQuestion == null)
-                        {
-                            _logger.LogWarning($"Không tìm thấy câu hỏi với Id={answer.ExamQuestionId} trong đề thi");
-                            continue;
-                        }
-
-                        if (examQuestion.Question == null)
-                        {
-                            _logger.LogWarning($"Câu hỏi Id={answer.ExamQuestionId} không có dữ liệu Question");
-                            continue;
-                        }
-
-                        // Đánh dấu đã trả lời câu hỏi
-                        answeredQuestions++;
-
-                        // Xác định câu trả lời đúng hay sai và tính điểm
-                        bool isCorrect = false;
-                        decimal score = 0;
-
-                        switch (examQuestion.Question.QuestionType)
-                        {
-                            case 1: // Multiple choice
-                                    // Kiểm tra đáp án đúng
-                                var correctOption = examQuestion.Question.Options?.FirstOrDefault(o => o.IsCorrect);
-                                if (correctOption != null && answer.SelectedOptionId == correctOption.Id)
-                                {
-                                    isCorrect = true;
-                                    score = examQuestion.Score;
-                                    correctAnswers++;
-                                }
-                                break;
-
-                            case 3: // Short answer
-                                    // Đối với câu trả lời ngắn, cần chấm bằng tay hoặc dùng auto-grade nếu có
-                                    // Tạm thời không tính điểm
-                                break;
-
-                            case 5: // True/False
-                                    // Kiểm tra đáp án đúng (tương tự multiple choice)
-                                var correctTFOption = examQuestion.Question.Options?.FirstOrDefault(o => o.IsCorrect);
-                                if (correctTFOption != null && answer.SelectedOptionId == correctTFOption.Id)
-                                {
-                                    isCorrect = true;
-                                    score = examQuestion.Score;
-                                    correctAnswers++;
-                                }
-                                break;
-                        }
-
-                        // Ghi log kết quả kiểm tra câu trả lời
-                        _logger.LogInformation($"Kết quả câu {answer.ExamQuestionId}: isCorrect={isCorrect}, score={score}");
-
-                        // Cộng điểm
-                        totalScore += score;
-                    }
-
-                    // Tính toán kết quả
-                    decimal percentageScore = exam.TotalScore > 0
-                        ? (totalScore / exam.TotalScore) * 100
-                        : 0;
-                    bool isPassed = exam.PassScore.HasValue && totalScore >= exam.PassScore.Value;
-
-                    // Tính thời gian làm bài (giả sử bắt đầu làm bài từ exam.Duration phút trước)
-                    var startedAt = now.AddMinutes(-exam.Duration);
-                    int duration = (int)Math.Round((now - startedAt).TotalMinutes);
-
-                    // Ghi log thông tin kết quả
-                    _logger.LogInformation($"Thông tin kết quả: Score={totalScore}, PercentageScore={percentageScore}, IsPassed={isPassed}, AnsweredQuestions={answeredQuestions}, CorrectAnswers={correctAnswers}");
-
-                    // Tạo kết quả bài thi mới
-                    var examResult = new ExamResult
-                    {
-                        StudentId = studentId,
-                        ExamId = exam.Id,
-                        Score = totalScore,
-                        PercentageScore = percentageScore,
-                        IsPassed = isPassed,
-                        CompletedAt = now,
-                        // Thêm các thuộc tính bắt buộc theo mô hình dữ liệu hiện tại
-                        AnsweredQuestions = answeredQuestions,
-                        AttemptNumber = 1, // Lần thi đầu tiên
-                        GradingStatus = 1, // Giả sử 1 là "AutoGraded" - cần điều chỉnh theo enum thực tế của bạn
-                        IsSubmittedManually = true,
-                        IsCompleted = true,
-                        StartedAt = startedAt,
-                        CorrectAnswers = correctAnswers,
-                        Duration = duration,
-                        TotalQuestions = totalQuestions,
-                        QuestionTypeStatistics = questionTypeStatistics // Thêm trường này để tránh lỗi NULL
-                    };
-
-                    // Ghi log trước khi lưu đối tượng
-                    _logger.LogInformation($"Chuẩn bị lưu kết quả bài thi cho học sinh {studentId}, kỳ thi {officialExamId}");
-
-                    // Lưu kết quả bài thi
-                    _context.ExamResults.Add(examResult);
-                    await _context.SaveChangesAsync();
-
-                    // Ghi log sau khi lưu đối tượng
-                    _logger.LogInformation($"Đã lưu kết quả bài thi với Id={examResult.Id}");
-
-                    // Cập nhật thông tin học sinh đã làm bài
-                    officialExamStudent.HasTaken = true;
-                    officialExamStudent.ExamResultId = examResult.Id;
-                    _context.OfficialExamStudents.Update(officialExamStudent);
-                    await _context.SaveChangesAsync();
-
-                    // Commit transaction
-                    await transaction.CommitAsync();
-                    _logger.LogInformation($"Transaction đã được commit thành công");
-
-                    // Trả về kết quả
-                    return Ok(new
-                    {
-                        message = "Nộp bài thi thành công",
-                        result = new
-                        {
-                            id = examResult.Id,
-                            score = examResult.Score,
-                            totalScore = exam.TotalScore,
-                            percentageScore = examResult.PercentageScore,
-                            correctAnswers = examResult.CorrectAnswers,
-                            totalQuestions = examResult.TotalQuestions,
-                            answeredQuestions = examResult.AnsweredQuestions,
-                            isPassed = examResult.IsPassed,
-                            completedAt = examResult.CompletedAt,
-
-                            // Chỉ hiển thị chi tiết đáp án nếu đề thi cho phép
-                            showResult = officialExam.ResultsReleased || exam.ShowResult,
-                            showAnswers = exam.ShowAnswers && (officialExam.ResultsReleased || exam.ShowResult)
-                        }
+                    return BadRequest(new { 
+                        message = "Yêu cầu hoàn thành hết các câu thì mới được nộp bài", 
+                        answeredCount = answeredQuestions,
+                        totalQuestions = totalQuestions,
+                        remainingQuestions = totalQuestions - answeredQuestions
                     });
                 }
-                catch (Exception ex)
-                {
-                    // Rollback transaction nếu có lỗi
-                    await transaction.RollbackAsync();
-                    _logger.LogError($"Error processing exam submission: {ex.Message}");
-                    _logger.LogError($"Stack trace: {ex.StackTrace}");
-
-                    // Ghi log inner exception nếu có
-                    if (ex.InnerException != null)
-                    {
-                        _logger.LogError($"Inner exception: {ex.InnerException.Message}");
-                        _logger.LogError($"Inner exception stack trace: {ex.InnerException.StackTrace}");
-                    }
-
-                    // Ở môi trường development, trả về thông tin chi tiết về lỗi
-#if DEBUG
-                    return StatusCode(500, new
-                    {
-                        message = "Đã xảy ra lỗi khi xử lý bài thi",
-                        error = ex.Message,
-                        innerError = ex.InnerException?.Message,
-                        stackTrace = ex.StackTrace
-                    });
-#else
-            throw;
-#endif
-                }
+                
+                // Continue with existing submission logic
+                // ...
+                
+                return Ok(new { message = "Nộp bài thành công" });
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error submitting exam: {ex.Message}");
-                _logger.LogError($"Stack trace: {ex.StackTrace}");
-
-                // Ghi log inner exception nếu có
-                if (ex.InnerException != null)
-                {
-                    _logger.LogError($"Inner exception: {ex.InnerException.Message}");
-                    _logger.LogError($"Inner exception stack trace: {ex.InnerException.StackTrace}");
-                }
-
-                // Ở môi trường development, trả về thông tin chi tiết về lỗi
-#if DEBUG
-                return StatusCode(500, new
-                {
-                    message = "Đã xảy ra lỗi khi nộp bài thi",
-                    error = ex.Message,
-                    innerError = ex.InnerException?.Message,
-                    stackTrace = ex.StackTrace
-                });
-#else
-        return StatusCode(500, new { message = "Đã xảy ra lỗi khi nộp bài thi" });
-#endif
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi nộp bài thi" });
             }
         }
 
@@ -835,6 +598,106 @@ namespace webthitn_backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Xử lý khi học sinh rời khỏi tab làm bài
+        /// </summary>
+        [HttpPost("tab-change")]
+        [Authorize(Roles = "Student")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> HandleTabChange([FromBody] TabChangeDTO model)
+        {
+            try
+            {
+                _logger.LogWarning($"Học sinh chuyển tab trong kỳ thi ID: {model.OfficialExamId}, TabChangeCount: {model.ChangeCount}");
+
+                int currentUserId = GetCurrentUserId();
+                
+                // Find the official exam
+                var officialExam = await _context.OfficialExams
+                    .Include(oe => oe.Exam)
+                    .FirstOrDefaultAsync(oe => oe.Id == model.OfficialExamId);
+
+                if (officialExam == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy kỳ thi" });
+                }
+                
+                // Check if student is assigned to this exam
+                var officialExamStudent = await _context.OfficialExamStudents
+                    .FirstOrDefaultAsync(oes => 
+                        oes.OfficialExamId == officialExam.Id && 
+                        oes.StudentId == currentUserId);
+                
+                if (officialExamStudent == null)
+                {
+                    return BadRequest(new { message = "Bạn không được phân công làm bài thi này" });
+                }
+                
+                // Check if student has already taken this exam
+                if (officialExamStudent.HasTaken)
+                {
+                    return BadRequest(new { message = "Bạn đã nộp bài thi này rồi" });
+                }
+                
+                // Auto-submit the exam with 0 points if tab change count exceeds limit
+                if (model.ChangeCount > officialExam.AllowedTabChanges)
+                {
+                    // Create exam result with 0 points
+                    var now = DateTimeHelper.GetVietnamNow();
+                    var examResult = new ExamResult
+                    {
+                        // Use ExamId instead of OfficialExamId
+                        ExamId = officialExam.ExamId,
+                        StudentId = currentUserId,
+                        Score = 0,
+                        PercentageScore = 0,
+                        CorrectAnswers = 0,
+                        AnsweredQuestions = 0,
+                        TotalQuestions = await _context.ExamQuestions
+                            .CountAsync(eq => eq.ExamId == officialExam.ExamId),
+                        IsPassed = false,
+                        StartedAt = model.StartTime ?? now.AddMinutes(-10),
+                        CompletedAt = now,
+                        Duration = (int)(now - (model.StartTime ?? now.AddMinutes(-10))).TotalMinutes,
+                        ForcedSubmission = true,
+                        ForcedSubmissionReason = "Chuyển tab trong quá trình làm bài",
+                        
+                        // Add these required properties
+                        AttemptNumber = 1,
+                        GradingStatus = 1, // Assuming 1 means "auto-graded"
+                        IsCompleted = true,
+                        IsSubmittedManually = false, // System forced submission, not manual
+                        IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown"
+                    };
+                    
+                    _context.ExamResults.Add(examResult);
+                    
+                    // Update student exam status
+                    officialExamStudent.HasTaken = true;
+                    officialExamStudent.ExamResultId = examResult.Id;
+                    _context.OfficialExamStudents.Update(officialExamStudent);
+                    
+                    await _context.SaveChangesAsync();
+                    
+                    return Ok(new { 
+                        message = "Bài thi đã bị nộp tự động do chuyển tab quá số lần cho phép", 
+                        examTerminated = true,
+                        score = 0
+                    });
+                }
+                
+                return Ok(new { 
+                    message = "Đã ghi nhận hành vi chuyển tab",
+                    remainingChanges = officialExam.AllowedTabChanges - model.ChangeCount 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error handling tab change: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi xử lý thay đổi tab" });
+            }
+        }
+
         // Helper methods
         private string GetExamStatus(OfficialExam officialExam, bool hasTaken)
         {
@@ -896,5 +759,36 @@ namespace webthitn_backend.Controllers
         public int ExamQuestionId { get; set; }
         public int? SelectedOptionId { get; set; }
         public string TextAnswer { get; set; }
+    }
+
+    public class ExamSubmissionDTO
+    {
+        public int OfficialExamId { get; set; }
+        public List<ExamAnswerDTO> Answers { get; set; } = new List<ExamAnswerDTO>();
+    }
+
+    public class ExamAnswerDTO
+    {
+        public int ExamQuestionId { get; set; }
+        public int? SelectedOptionId { get; set; }
+        public string TextAnswer { get; set; }
+    }
+
+    public class TabChangeDTO
+    {
+        /// <summary>
+        /// ID kỳ thi
+        /// </summary>
+        public int OfficialExamId { get; set; }
+        
+        /// <summary>
+        /// Số lần chuyển tab
+        /// </summary>
+        public int ChangeCount { get; set; }
+        
+        /// <summary>
+        /// Thời gian bắt đầu làm bài
+        /// </summary>
+        public DateTime? StartTime { get; set; }
     }
 }

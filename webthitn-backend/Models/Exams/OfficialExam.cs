@@ -32,6 +32,16 @@ namespace webthitn_backend.Models
         // Add Grade property
         public string Grade { get; set; }
 
+        /// <summary>
+        /// Yêu cầu học sinh phải hoàn thành tất cả các câu hỏi trước khi nộp bài
+        /// </summary>
+        public bool RequireAllQuestionsAnswered { get; set; } = true;
+
+        /// <summary>
+        /// Số lần được phép chuyển tab trong quá trình làm bài (mặc định: 0)
+        /// </summary>
+        public int AllowedTabChanges { get; set; } = 0;
+
         public int CreatorId { get; set; }
 
         [ForeignKey("CreatorId")]

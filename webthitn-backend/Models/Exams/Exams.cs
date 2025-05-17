@@ -163,6 +163,8 @@ namespace webthitn_backend.Models
         /// </summary>
         public virtual ICollection<ExamResult> ExamResults { get; set; }
 
+
+
         #region Additional properties and methods
 
         /// <summary>
@@ -280,6 +282,8 @@ namespace webthitn_backend.Models
         /// Phần trăm điểm trừ cho câu trả lời sai (0-100)
         /// </summary>
         public decimal PenaltyForWrongAnswer { get; set; } = 0;
+        
+        
     }
-
 }
+

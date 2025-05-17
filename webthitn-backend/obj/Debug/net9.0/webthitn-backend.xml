@@ -144,6 +144,21 @@
             </summary>
             <returns>Danh sách tin nhắn chưa đọc</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.ClassResultsController.GetClassResults(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Get exam results for a classroom
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassResultsController.ExportToExcel(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Export class results to Excel
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassResultsController.ExportToPdf(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Export class results to PDF
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.ClassroomController.ImportStudents(Microsoft.AspNetCore.Http.IFormFile,System.String)">
             <summary>
             Nhập danh sách học sinh từ file Excel
@@ -151,6 +166,41 @@
             <param name="file">File Excel chứa danh sách học sinh</param>
             <param name="classroom">Tên lớp</param>
             <returns>Kết quả nhập danh sách</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.GetAllClassrooms">
+            <summary>
+            Lấy danh sách tất cả các lớp học
+            </summary>
+            <returns>Danh sách tất cả các lớp học</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.GetClassroomDetails(System.String)">
+            <summary>
+            Lấy thông tin chi tiết của một lớp học
+            </summary>
+            <param name="classroom">Tên lớp học</param>
+            <returns>Thông tin chi tiết của lớp học</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.CreateClassroom(webthitn_backend.DTOs.CreateClassroomDTO)">
+            <summary>
+            Tạo lớp học mới
+            </summary>
+            <param name="model">Thông tin lớp học mới</param>
+            <returns>Thông tin lớp học đã tạo</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.UpdateClassroom(System.String,webthitn_backend.DTOs.UpdateClassroomDTO)">
+            <summary>
+            Cập nhật thông tin lớp học
+            </summary>
+            <param name="classroom">Tên lớp học cần cập nhật</param>
+            <param name="model">Thông tin cập nhật</param>
+            <returns>Thông tin lớp học sau khi cập nhật</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ClassroomController.DeleteClassroom(System.String)">
+            <summary>
+            Xóa lớp học và tất cả học sinh trong lớp
+            </summary>
+            <param name="classroom">Tên lớp học cần xóa</param>
+            <returns>Kết quả xóa lớp học</returns>
         </member>
         <member name="M:webthitn_backend.Controllers.ClassroomController.GetClassroomStudents(System.String)">
             <summary>
@@ -874,6 +924,7 @@
             <param name="id">ID của câu hỏi cần xóa</param>
             <returns>Thông báo kết quả xóa</returns>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:webthitn_backend.Controllers.QuestionController.ImportQuestions(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Boolean,System.Boolean,System.Int32)" -->
         <member name="M:webthitn_backend.Controllers.QuestionController.ExportQuestions(webthitn_backend.DTOs.ExportQuestionsDTO)">
             <summary>
             Xuất câu hỏi ra file Excel
@@ -1026,6 +1077,16 @@
             Lấy ID người dùng hiện tại từ token
             </summary>
         </member>
+        <member name="M:webthitn_backend.Controllers.ScoreVerificationController.RequestScoreVerification(webthitn_backend.DTOs.ScoreVerificationRequestDTO)">
+            <summary>
+            Học sinh yêu cầu xác minh điểm số bài thi
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ScoreVerificationController.RespondToVerification(System.Int32,webthitn_backend.DTOs.ScoreVerificationResponseDTO)">
+            <summary>
+            Giáo viên phản hồi yêu cầu xác minh điểm
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.StatisticsController.GetOverview">
             <summary>
             Lấy tổng quan số lượng người dùng, đề thi, bài thi
@@ -1068,7 +1129,7 @@
             <param name="officialExamId">ID của kỳ thi chính thức</param>
             <returns>Thông tin chi tiết kỳ thi và đề thi</returns>
         </member>
-        <member name="M:webthitn_backend.Controllers.StudentExamController.SubmitExam(System.Int32,webthitn_backend.Controllers.StudentSubmitExamDTO)">
+        <member name="M:webthitn_backend.Controllers.StudentExamController.SubmitExam(webthitn_backend.Controllers.ExamSubmissionDTO)">
             <summary>
             Nộp bài thi
             </summary>
@@ -1087,6 +1148,26 @@
             <param name="page">Số trang</param>
             <param name="pageSize">Số bản ghi mỗi trang</param>
             <returns>Danh sách kết quả thi</returns>
+        </member>
+        <member name="M:webthitn_backend.Controllers.StudentExamController.HandleTabChange(webthitn_backend.Controllers.TabChangeDTO)">
+            <summary>
+            Xử lý khi học sinh rời khỏi tab làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Controllers.TabChangeDTO.OfficialExamId">
+            <summary>
+            ID kỳ thi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Controllers.TabChangeDTO.ChangeCount">
+            <summary>
+            Số lần chuyển tab
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Controllers.TabChangeDTO.StartTime">
+            <summary>
+            Thời gian bắt đầu làm bài
+            </summary>
         </member>
         <member name="M:webthitn_backend.Controllers.SubjectController.GetSubjects(System.Int32,System.Int32,System.Boolean,System.String)">
             <summary>
@@ -1146,17 +1227,27 @@
             </summary>
             <returns>User ID hoặc giá trị mặc định nếu không tìm thấy</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.TestController.ImprovedUserIdExtraction">
+            <summary>
+            Phương thức cải tiến để trích xuất userId từ JWT token
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.TestController.GetTokenInfo">
             <summary>
             API để kiểm tra thông tin token hiện tại
             </summary>
         </member>
-        <member name="M:webthitn_backend.Controllers.TestController.VerifyToken(webthitn_backend.Controllers.TokenVerificationRequest)">
+        <member name="M:webthitn_backend.Controllers.TestController.DirectTokenParsing">
+            <summary>
+            Phương thức trích xuất trực tiếp không phụ thuộc ASP.NET Core Identity
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.DebugToken">
             <summary>
             Kiểm tra và xử lý token thủ công
             </summary>
         </member>
-        <member name="M:webthitn_backend.Controllers.TestController.CreateStructuredTest(webthitn_backend.DTOs.CreateStructuredTestDTO)">
+        <member name="M:webthitn_backend.Controllers.TestController.CreateStructuredTest(webthitn_backend.DTOs.CreateStructuredTestDTO,System.Boolean)">
             <summary>
             Tạo đề thi theo cấu trúc độ khó
             </summary>
@@ -1172,7 +1263,7 @@
             API này cho phép lấy các đề thi theo chủ đề cụ thể
             </remarks>
         </member>
-        <member name="M:webthitn_backend.Controllers.TestController.CreatePracticeTest(webthitn_backend.DTOs.CreatePracticeTestDTO)">
+        <member name="M:webthitn_backend.Controllers.TestController.CreatePracticeTest(webthitn_backend.DTOs.CreatePracticeTestDTO,System.Nullable{System.Int32})">
             <summary>
             Tạo đề ôn tập tùy chọn
             </summary>
@@ -1206,6 +1297,11 @@
         <member name="M:webthitn_backend.Controllers.TestController.GetQuestionTypeName(System.Int32)">
             <summary>
             Lấy tên loại câu hỏi từ mã số
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GenerateRandomAccessCode">
+            <summary>
+            Tạo mã truy cập ngẫu nhiên cho đề thi
             </summary>
         </member>
         <member name="T:webthitn_backend.Controllers.SimplePracticeDTO">
@@ -3894,6 +3990,31 @@
             Thống kê theo môn học
             </summary>
         </member>
+        <member name="P:webthitn_backend.DTOs.ScoreVerificationRequestDTO.ExamResultId">
+            <summary>
+            ID kết quả bài thi cần xác minh điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreVerificationRequestDTO.Reason">
+            <summary>
+            Lý do yêu cầu xác minh điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreVerificationResponseDTO.VerificationId">
+            <summary>
+            ID của yêu cầu xác minh điểm
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreVerificationResponseDTO.NewScore">
+            <summary>
+            Điểm số mới sau khi xác minh (null nếu giữ nguyên)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ScoreVerificationResponseDTO.Response">
+            <summary>
+            Phản hồi của giáo viên về yêu cầu xác minh
+            </summary>
+        </member>
         <member name="T:webthitn_backend.DTOs.SubjectListDTO">
             <summary>
             DTO hiển thị thông tin môn học trong danh sách
@@ -4033,6 +4154,26 @@
         <member name="T:webthitn_backend.DTOs.TestCriterionDTO">
             <summary>
             DTO cho tiêu chí phân bổ câu hỏi
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TestCriterionDTO.LevelId">
+            <summary>
+            ID cấp độ khó của câu hỏi (0 = không lọc theo cấp độ)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TestCriterionDTO.QuestionType">
+            <summary>
+            Loại câu hỏi: 1 = Trắc nghiệm, 2 = True/False, 3 = Tự luận (0 = không lọc theo loại)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TestCriterionDTO.ChapterId">
+            <summary>
+            ID chương (0 = không lọc theo chương)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.TestCriterionDTO.Topic">
+            <summary>
+            Chủ đề để lọc câu hỏi (null hoặc rỗng = không lọc theo chủ đề)
             </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.CreatePracticeTestDTO">
@@ -4653,6 +4794,42 @@
         <member name="M:webthitn_backend.Migrations.AddGradeToOfficialExam.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:webthitn_backend.Migrations.AddRequireAllQuestionsToOfficialExam">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddRequireAllQuestionsToOfficialExam.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddRequireAllQuestionsToOfficialExam.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddRequireAllQuestionsToOfficialExam.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddForcedSubmissionToExamResult">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddForcedSubmissionToExamResult.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddForcedSubmissionToExamResult.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddForcedSubmissionToExamResult.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:webthitn_backend.Migrations.AddScoreVerificationTable">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddScoreVerificationTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddScoreVerificationTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:webthitn_backend.Migrations.AddScoreVerificationTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:webthitn_backend.Models.Subject">
             <summary>
             Model đại diện cho môn học trong hệ thống
@@ -4883,6 +5060,16 @@
             True: Người dùng chủ động nộp bài
             False: Hết thời gian làm bài và hệ thống tự động nộp
             </remarks>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.ForcedSubmission">
+            <summary>
+            Đánh dấu bài thi bị nộp tự động do vi phạm quy định
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.ExamResult.ForcedSubmissionReason">
+            <summary>
+            Lý do bị nộp tự động
+            </summary>
         </member>
         <member name="P:webthitn_backend.Models.ExamResult.QuestionTypeStatistics">
             <summary>
@@ -5137,6 +5324,16 @@
         <member name="P:webthitn_backend.Models.ExamType.Exams">
             <summary>
             Danh sách bài thi thuộc loại này
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.OfficialExam.RequireAllQuestionsAnswered">
+            <summary>
+            Yêu cầu học sinh phải hoàn thành tất cả các câu hỏi trước khi nộp bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.Models.OfficialExam.AllowedTabChanges">
+            <summary>
+            Số lần được phép chuyển tab trong quá trình làm bài (mặc định: 0)
             </summary>
         </member>
         <member name="T:webthitn_backend.Models.StudentAnswerHistory">

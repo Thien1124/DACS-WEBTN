@@ -372,3 +372,12 @@ C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\ref\webthitn-backend
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\ExcelDataReader.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\ExcelDataReader.DataSet.dll
 C:\Users\Thien\DACS-WEBTN\webthitn-backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\ClosedXML.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\ClosedXML.Parser.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\DocumentFormat.OpenXml.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\ExcelNumberFormat.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\itextsharp.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\RBush.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\SixLabors.Fonts.dll
+C:\Users\Thien\DACS-WEBTN\webthitn-backend\bin\Debug\net9.0\System.IO.Packaging.dll
