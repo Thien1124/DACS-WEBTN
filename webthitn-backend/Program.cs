@@ -25,6 +25,7 @@ using webthitn_backend.Models;
 using webthitn_backend.Services;
 using webthitn_backend.Swagger;
 using System.IO;
+using webthitn_backend.Infrastructure.Swagger;
 var builder = WebApplication.CreateBuilder(args);
 
 // Đăng ký các dịch vụ
@@ -139,6 +140,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
     c.OperationFilter<OfficialExamExamplesOperationFilter>();
+    c.OperationFilter<SwaggerFileOperationFilter>();
     c.EnableAnnotations();
     // Thêm file XML Documentation
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -149,7 +151,7 @@ builder.Services.AddSwaggerGen(c =>
     }
 
     // Thêm file XML cho các model
-    c.OperationFilter<FormFileOperationFilter>();
+    c.OperationFilter<FileUploadOperationFilter>();
     c.OperationFilter<QuestionExamplesOperationFilter>();
 
     // Cấu hình Authorization

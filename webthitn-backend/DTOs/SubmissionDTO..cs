@@ -11,25 +11,25 @@ namespace webthitn_backend.DTOs
         /// <summary>
         /// ID của bài thi
         /// </summary>
-        /// <example>15</example>
+        /// <example>14</example>
         public int ExamId { get; set; }
 
         /// <summary>
         /// Thời gian bắt đầu làm bài
         /// </summary>
-        /// <example>2025-04-12T06:30:00Z</example>
+        /// <example>2025-04-28T08:35:05Z</example>
         public DateTime StartTime { get; set; }
 
         /// <summary>
         /// Thời gian kết thúc làm bài
         /// </summary>
-        /// <example>2025-04-12T07:15:00Z</example>
+        /// <example>2025-04-28T08:50:05</example>
         public DateTime EndTime { get; set; }
 
         /// <summary>
         /// Ghi chú của học sinh
         /// </summary>
-        /// <example>Tôi gặp khó khăn với câu hỏi số 5</example>
+        /// <example>Bài làm kiểm tra địa lý 15 phút</example>
         public string Notes { get; set; }
 
         /// <summary>
@@ -64,45 +64,45 @@ namespace webthitn_backend.DTOs
         /// <summary>
         /// ID của câu hỏi
         /// </summary>
-        /// <example>42</example>
+        /// <example>27</example>
         public int QuestionId { get; set; }
 
         /// <summary>
         /// Thời gian bắt đầu trả lời câu hỏi
         /// </summary>
-        /// <example>2025-04-12T06:35:20Z</example>
+        /// <example>2025-04-28T08:35:05Z</example>
         public DateTime StartTime { get; set; }
 
         /// <summary>
         /// Thời gian kết thúc trả lời câu hỏi
         /// </summary>
-        /// <example>2025-04-12T06:36:05Z</example>
+        /// <example>2025-04-28T08:50:05</example>
         public DateTime EndTime { get; set; }
 
         /// <summary>
         /// ID của đáp án được chọn (cho câu hỏi một đáp án)
         /// </summary>
-        /// <example>15</example>
+        /// <example>39</example>
         public int? SelectedOptionId { get; set; }
 
         /// <summary>
         /// Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
         /// </summary>
-        /// <example>1</example>
+        /// <example></example>
         public string TextAnswer { get; set; }
 
         /// <summary>
         /// Dữ liệu đáp án đúng-sai (JSON cho câu hỏi đúng-sai nhiều ý)
         /// Ví dụ: {"1":true,"2":false,"3":true,"4":true}
         /// </summary>
-        /// <example>{"1":true,"2":false,"3":true,"4":true}</example>
+        /// <example>{}</example>
         public string TrueFalseAnswers { get; set; }
 
         /// <summary>
         /// Câu trả lời ghép đôi (cho câu hỏi ghép đôi)
         /// Ví dụ: {"1":3,"2":1,"3":4,"4":2} - ghép item bên trái với item bên phải
         /// </summary>
-        /// <example>{"1":3,"2":1,"3":4,"4":2}</example>
+        /// <example>{}</example>
         public string MatchingAnswers { get; set; }
     }
 }

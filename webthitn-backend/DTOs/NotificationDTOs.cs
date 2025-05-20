@@ -14,7 +14,7 @@ namespace webthitn_backend.DTOs
         /// Danh sách địa chỉ email người nhận (ngăn cách bởi dấu phẩy nếu nhiều người)
         /// </summary>
         [Required(ErrorMessage = "Địa chỉ email người nhận không được để trống")]
-        [EmailAddress(ErrorMessage = "Địa chỉ email không hợp lệ")]
+        // Remove the EmailAddress validation attribute
         public string Recipients { get; set; }
 
         /// <summary>

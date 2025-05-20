@@ -729,3 +729,21 @@ namespace webthitn_backend.DTOs
         public decimal FourCorrect { get; set; } = 1.00m;
     }
 }
+public class OptionImportDTO
+{
+    public string Content { get; set; }
+    public bool IsCorrect { get; set; }
+    public string Label { get; set; }
+    public int? GroupId { get; set; }
+    public int? ScorePercentage { get; set; }
+    // Không có Explanation trong DTO hiện tại
+}
+
+public class OptionExportDTO
+{
+    public string Content { get; set; }
+    public bool IsCorrect { get; set; }
+    public string Label { get; set; }
+    public int GroupId { get; set; }
+    public int ScorePercentage { get; set; }
+}

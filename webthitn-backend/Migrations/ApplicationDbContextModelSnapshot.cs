@@ -132,6 +132,9 @@ namespace webthitn_backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("GradeId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -619,6 +622,10 @@ namespace webthitn_backend.Migrations
 
                     b.Property<int>("ExamId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Grade")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -1444,6 +1451,9 @@ namespace webthitn_backend.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("Classroom")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1529,7 +1539,7 @@ namespace webthitn_backend.Migrations
                             FullName = "Administrator",
                             Grade = "N/A",
                             IsActive = true,
-                            Password = "$2a$11$DSOVKYjggyzpqmXc5QlGa.cRE/lp.Er.edIWOZpZyLXbeXFYJbP4.",
+                            Password = "$2a$11$ps24in1m.Ey/Q3cy89gckeEPxxH.uCYO1pxev8PIYyMdYARkY7.na",
                             PhoneNumber = "N/A",
                             Role = "Admin",
                             School = "N/A",
@@ -1538,13 +1548,14 @@ namespace webthitn_backend.Migrations
                         new
                         {
                             Id = 2,
+                            Classroom = "N/A",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
                             Email = "thien1124@example.com",
                             FullName = "Thien Nguyen",
                             Grade = "Teacher",
                             IsActive = true,
                             LastLogin = new DateTime(2025, 4, 1, 15, 56, 40, 0, DateTimeKind.Unspecified),
-                            Password = "$2a$11$jPm5V.10Fr7Xr3Rhz24sxuLUKb.sugw9QCjX1HwQN.blz9bxfR5WC",
+                            Password = "$2a$11$4Su8MNuNOft2lWvKo6MjTuCaRdDuPHIJZRtPiVL5QvdJaoaR.zzwO",
                             PhoneNumber = "0123456789",
                             Role = "Teacher",
                             School = "Trường THPT Chu Văn An",
@@ -1553,12 +1564,13 @@ namespace webthitn_backend.Migrations
                         new
                         {
                             Id = 3,
+                            Classroom = "N/A",
                             CreatedAt = new DateTime(2025, 4, 1, 15, 56, 0, 0, DateTimeKind.Unspecified),
                             Email = "student1@example.com",
                             FullName = "Học sinh mẫu",
                             Grade = "12",
                             IsActive = true,
-                            Password = "$2a$11$3tpF.2tDQgCNOxWQRD8PyO.ksYHjtYU9lHFG5rHRQ7SIKBkFMiylS",
+                            Password = "$2a$11$RP5snFKSexYBamc.3ISxn.RElyBNcFpDUuSBkq28odwQnoQUlNGji",
                             PhoneNumber = "0987654321",
                             Role = "Student",
                             School = "Trường THPT Chu Văn An",

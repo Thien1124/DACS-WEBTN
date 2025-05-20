@@ -78,6 +78,7 @@ namespace webthitn_backend.Controllers
                     StartTime = model.StartTime,
                     EndTime = model.EndTime,
                     ClassroomName = model.ClassroomName?.Trim(),
+                    Grade = model.Grade?.Trim(),
                     CreatorId = currentUserId,
                     IsActive = true,
                     ResultsReleased = false,
@@ -87,12 +88,38 @@ namespace webthitn_backend.Controllers
                 _context.OfficialExams.Add(officialExam);
                 await _context.SaveChangesAsync();
 
-                // Assign students if provided
+                // Student list to be assigned
+                var studentsToAssign = new List<int>();
+                
+                // Automatically assign students if classroom is provided
+                if (!string.IsNullOrEmpty(model.ClassroomName))
+                {
+                    // Query for all students in this classroom
+                    var classroomStudents = await _context.Users
+                        .Where(u => u.Role == "Student" && u.Classroom == model.ClassroomName)
+                        .Select(u => u.Id)
+                        .ToListAsync();
+                        
+                    studentsToAssign.AddRange(classroomStudents);
+                    
+                    _logger.LogInformation($"Auto-assigned {classroomStudents.Count} students from classroom {model.ClassroomName} to exam {officialExam.Id}");
+                }
+                
+                // Add manually specified students
                 if (model.StudentIds != null && model.StudentIds.Any())
+                {
+                    studentsToAssign.AddRange(model.StudentIds);
+                }
+                
+                // Remove duplicates
+                studentsToAssign = studentsToAssign.Distinct().ToList();
+                
+                // Assign students if we have any
+                if (studentsToAssign.Any())
                 {
                     var officialExamStudents = new List<OfficialExamStudent>();
 
-                    foreach (var studentId in model.StudentIds.Distinct())
+                    foreach (var studentId in studentsToAssign)
                     {
                         // Check if student exists
                         var student = await _context.Users.FirstOrDefaultAsync(
@@ -473,6 +500,7 @@ namespace webthitn_backend.Controllers
                         StudentId = oes.StudentId,
                         StudentName = oes.Student.FullName,
                         StudentCode = oes.Student.Username,
+                        Email = oes.Student.Email,
                         HasTaken = oes.HasTaken,
                         ExamResultId = oes.ExamResultId,
                         Score = oes.ExamResult != null ? (double?)oes.ExamResult.Score : null,
@@ -572,6 +600,205 @@ namespace webthitn_backend.Controllers
             {
                 _logger.LogError($"Error releasing results: {ex.Message}");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi công bố kết quả kỳ thi" });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách các lớp học có trong hệ thống
+        /// </summary>
+        /// <returns>Danh sách lớp học</returns>
+        [HttpGet("classrooms")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetClassrooms()
+        {
+            try
+            {
+                // Get distinct classroom names from student users
+                var classrooms = await _context.Users
+                    .Where(u => u.Role == "Student" && !string.IsNullOrEmpty(u.Classroom))
+                    .Select(u => u.Classroom)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToListAsync();
+
+                // For each classroom, count the number of students
+                var result = new List<object>();
+                foreach (var classroom in classrooms)
+                {
+                    int studentCount = await _context.Users
+                        .CountAsync(u => u.Role == "Student" && u.Classroom == classroom);
+
+                    result.Add(new
+                    {
+                        name = classroom,
+                        studentCount = studentCount
+                    });
+                }
+
+                return Ok(new { classrooms = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting classrooms: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách lớp học" });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách lớp học theo khối
+        /// </summary>
+        /// <param name="grade">Khối (ví dụ: 10, 11, 12)</param>
+        /// <returns>Danh sách lớp học của khối được chọn</returns>
+        [HttpGet("grades/{grade}/classrooms")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetClassroomsByGrade(string grade)
+        {
+            try
+            {
+                _logger.LogInformation($"Getting classrooms for grade: {grade}");
+                
+                if (string.IsNullOrEmpty(grade))
+                {
+                    return BadRequest(new { message = "Khối học không được để trống" });
+                }
+
+                // Get classrooms that start with the specified grade
+                var classrooms = await _context.Users
+                    .Where(u => u.Role == "Student" && 
+                           !string.IsNullOrEmpty(u.Classroom) && 
+                           u.Classroom.StartsWith(grade))
+                    .Select(u => u.Classroom)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToListAsync();
+
+                // Get student counts for each classroom
+                var result = new List<object>();
+                foreach (var classroom in classrooms)
+                {
+                    int studentCount = await _context.Users
+                        .CountAsync(u => u.Role == "Student" && u.Classroom == classroom);
+                        
+                    result.Add(new
+                    {
+                        name = classroom,
+                        studentCount = studentCount
+                    });
+                }
+
+                return Ok(new { 
+                    grade = grade,
+                    classroomCount = result.Count,
+                    classrooms = result 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting classrooms by grade: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách lớp học theo khối" });
+            }
+        }
+
+        /// <summary>
+        /// Phân công tất cả học sinh của một lớp vào kỳ thi chính thức
+        /// </summary>
+        /// <param name="id">ID của kỳ thi chính thức</param>
+        /// <param name="model">Thông tin lớp học</param>
+        /// <returns>Kết quả phân công</returns>
+        [HttpPost("{id}/assign-class")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AssignClassStudents(int id, [FromBody] AssignClassDTO model)
+        {
+            try
+            {
+                _logger.LogInformation($"Phân công học sinh lớp {model.ClassroomName} cho kỳ thi ID: {id}");
+
+                // Validate input
+                if (string.IsNullOrWhiteSpace(model.ClassroomName))
+                {
+                    return BadRequest(new { message = "Tên lớp không được để trống" });
+                }
+
+                // Find official exam
+                var officialExam = await _context.OfficialExams.FindAsync(id);
+                if (officialExam == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy kỳ thi chính thức ID: {id}");
+                    return NotFound(new { message = "Không tìm thấy kỳ thi chính thức" });
+                }
+
+                // Check permissions
+                int currentUserId = GetCurrentUserId();
+                bool isAdmin = User.IsInRole("Admin");
+                bool isCreator = officialExam.CreatorId == currentUserId;
+
+                if (!isAdmin && !isCreator)
+                {
+                    _logger.LogWarning($"Người dùng {currentUserId} không có quyền phân công học sinh cho kỳ thi ID: {id}");
+                    return Forbid();
+                }
+
+                // Find all students from the specified class
+                var classStudents = await _context.Users
+                    .Where(u => u.Role == "Student" && u.Classroom == model.ClassroomName)
+                    .Select(u => u.Id)
+                    .ToListAsync();
+
+                if (!classStudents.Any())
+                {
+                    return BadRequest(new { message = $"Không tìm thấy học sinh nào trong lớp {model.ClassroomName}" });
+                }
+
+                // Get existing assigned student IDs
+                var existingStudentIds = await _context.OfficialExamStudents
+                    .Where(oes => oes.OfficialExamId == id)
+                    .Select(oes => oes.StudentId)
+                    .ToListAsync();
+
+                // Find new students to add (not yet assigned)
+                var newStudentIds = classStudents.Except(existingStudentIds).ToList();
+
+                // Create new assignments
+                var newStudentAssignments = newStudentIds.Select(studentId => new OfficialExamStudent
+                {
+                    OfficialExamId = id,
+                    StudentId = studentId,
+                    AssignedAt = DateTimeHelper.GetVietnamNow()
+                }).ToList();
+
+                if (newStudentAssignments.Any())
+                {
+                    _context.OfficialExamStudents.AddRange(newStudentAssignments);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Đã phân công {newStudentAssignments.Count} học sinh từ lớp {model.ClassroomName} vào kỳ thi ID: {id}");
+                }
+
+                // Update classroom name in official exam if not already set
+                if (string.IsNullOrEmpty(officialExam.ClassroomName))
+                {
+                    officialExam.ClassroomName = model.ClassroomName;
+                    officialExam.UpdatedAt = DateTimeHelper.GetVietnamNow();
+                    _context.OfficialExams.Update(officialExam);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Return results
+                return Ok(new
+                {
+                    message = $"Đã phân công {newStudentAssignments.Count} học sinh từ lớp {model.ClassroomName} vào kỳ thi",
+                    className = model.ClassroomName,
+                    totalStudentsInClass = classStudents.Count,
+                    newlyAssigned = newStudentAssignments.Count,
+                    alreadyAssigned = classStudents.Count - newStudentAssignments.Count,
+                    totalAssigned = existingStudentIds.Count + newStudentAssignments.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error assigning class students: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi phân công học sinh từ lớp học" });
             }
         }
 
@@ -856,7 +1083,7 @@ namespace webthitn_backend.Controllers
                 MaxAttempts = officialExam.Exam.MaxAttempts,
                 StartTime = officialExam.Exam.StartTime,
                 EndTime = officialExam.Exam.EndTime,
-                Status = GetExamStatus(officialExam.Exam),
+                Status = GetOfficialExamStatus(officialExam),
                 IsActive = officialExam.Exam.IsActive,
                 ShowResult = officialExam.Exam.ShowResult,
                 ShowAnswers = officialExam.Exam.ShowAnswers,
@@ -962,10 +1189,21 @@ namespace webthitn_backend.Controllers
 
             var now = DateTimeHelper.GetVietnamNow();
 
-            if (exam.StartTime.HasValue && now < exam.StartTime.Value)
+            // Chuyển đổi StartTime và EndTime thành múi giờ Việt Nam
+            var startTimeVN = exam.StartTime.HasValue ?
+                DateTime.SpecifyKind(exam.StartTime.Value, DateTimeKind.Utc).ToVietnamTime() :
+                DateTime.MinValue;
+
+            var endTimeVN = exam.EndTime.HasValue ?
+                DateTime.SpecifyKind(exam.EndTime.Value, DateTimeKind.Utc).ToVietnamTime() :
+                DateTime.MaxValue;
+
+            _logger.LogInformation($"After conversion - Current: {now}, Start VN: {startTimeVN}, End VN: {endTimeVN}");
+
+            if (now < startTimeVN)
                 return "Chưa mở";
 
-            if (exam.EndTime.HasValue && now > exam.EndTime.Value)
+            if (now > endTimeVN)
                 return "Đã đóng";
 
             return "Đang mở";
@@ -977,7 +1215,7 @@ namespace webthitn_backend.Controllers
                 return "Không hoạt động";
 
             var now = DateTimeHelper.GetVietnamNow();
-
+            _logger.LogInformation($"Vietnam time: {now}, StartTime: {exam.StartTime}, EndTime: {exam.EndTime}, Kind: {exam.StartTime?.Kind}");
             if (exam.StartTime.HasValue && now < exam.StartTime.Value)
                 return "Chưa mở";
 
@@ -1009,7 +1247,9 @@ namespace webthitn_backend.Controllers
         public int ExamId { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
+        public string Grade { get; set; } // Grade field
         public string ClassroomName { get; set; }
+        
         public List<int> StudentIds { get; set; } = new List<int>();
     }
 
@@ -1055,6 +1295,7 @@ namespace webthitn_backend.Controllers
         public int StudentId { get; set; }
         public string StudentName { get; set; }
         public string StudentCode { get; set; }
+        public string Email { get; set; }
         public bool HasTaken { get; set; }
         public int? ExamResultId { get; set; }
         public double? Score { get; set; }
@@ -1072,5 +1313,10 @@ namespace webthitn_backend.Controllers
     {
         public bool Release { get; set; } = true;
         public string NotificationMessage { get; set; }
+    }
+
+    public class AssignClassDTO
+    {
+        public string ClassroomName { get; set; }
     }
 }

@@ -3,19 +3,26 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using webthitn_backend.DTOs;
 using webthitn_backend.Models;
-
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Reflection;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace webthitn_backend.Controllers
 {
@@ -1058,30 +1065,35 @@ namespace webthitn_backend.Controllers
         // <summary>
         /// Nhập câu hỏi từ file Excel
         /// </summary>
-        /// <param name="file">File Excel chứa dữ liệu câu hỏi</param>
-        /// <param name="subjectId">ID của môn học</param>
-        /// <param name="categoryId">ID của danh mục/chương (không bắt buộc)</param>
-        /// <param name="levelId">ID của mức độ câu hỏi (không bắt buộc)</param>
-        /// <param name="overrideExisting">Ghi đè câu hỏi đã tồn tại</param>
-        /// <param name="validateOnly">Chỉ kiểm tra mà không lưu dữ liệu</param>
-        [ApiExplorerSettings(IgnoreApi = true)] 
+        /// <remarks>
+        /// API này cho phép nhập dữ liệu câu hỏi từ file Excel với các tùy chọn:
+        /// - SubjectId: ID của môn học (bắt buộc)
+        /// - CategoryId: ID của chương (tùy chọn)
+        /// - LevelId: ID của cấp độ câu hỏi (tùy chọn)
+        /// - OverrideExisting: Cập nhật câu hỏi đã tồn tại (mặc định: false)
+        /// - ValidateOnly: Chỉ kiểm tra dữ liệu mà không lưu (mặc định: false)
+        /// - ContinueOnError: Tiếp tục khi gặp lỗi (mặc định: true)
+        /// </remarks>
         [Authorize(Roles = "Admin,Teacher")]
         [HttpPost("import")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ImportQuestions(
-        [Required, FromForm] IFormFile file,
-        [Required, FromForm] int subjectId,
-        [FromForm] int? categoryId = null,
-        [FromForm] int? levelId = null,
-        [FromForm] bool overrideExisting = false,
-        [FromForm] bool validateOnly = false)
-            {
+            [Required] IFormFile file,
+            [Required] int subjectId,
+            int? chapterId = null,
+            int? levelId = null,
+            bool overrideExisting = true,
+            bool validateOnly = false,
+            bool continueOnError = true,
+            int batchSize = 50)
+        {
             try
             {
-                _logger.LogInformation("Bắt đầu nhập câu hỏi từ Excel");
+                _logger.LogInformation($"Bắt đầu nhập câu hỏi từ Excel: {file.FileName}, SubjectId={subjectId}");
+                var stopwatch = Stopwatch.StartNew(); // Theo dõi thời gian xử lý
 
                 // Kiểm tra file
                 if (file == null || file.Length == 0)
@@ -1096,43 +1108,67 @@ namespace webthitn_backend.Controllers
                 if (file.Length > 10 * 1024 * 1024)
                     return BadRequest(new { Success = false, Error = "Kích thước file không được vượt quá 10MB" });
 
-                // Kiểm tra subject có tồn tại không
+                // Pre-load tất cả dữ liệu tham chiếu để tránh nhiều truy vấn database
                 var subject = await _context.Subjects.FindAsync(subjectId);
                 if (subject == null)
                     return BadRequest(new { Success = false, Error = "Môn học không tồn tại" });
 
-                // Kiểm tra mức độ (level) nếu có
+                // Lấy danh sách mức độ câu hỏi
+                var allLevels = await _context.QuestionLevels.ToListAsync();
+                var defaultLevel = allLevels.FirstOrDefault();
+
+                QuestionLevel selectedLevel = null;
                 if (levelId.HasValue)
                 {
-                    var level = await _context.QuestionLevels.FindAsync(levelId.Value);
-                    if (level == null)
+                    selectedLevel = allLevels.FirstOrDefault(l => l.Id == levelId.Value);
+                    if (selectedLevel == null)
                         return BadRequest(new { Success = false, Error = "Mức độ câu hỏi không tồn tại" });
                 }
 
-                // Kiểm tra categoryId thực chất là chapterId trong hệ thống của bạn
-                if (categoryId.HasValue)
+                // Lấy danh sách chương
+                var chaptersList = await _context.Chapters.Where(c => c.SubjectId == subjectId).ToListAsync();
+                var defaultChapter = chaptersList.FirstOrDefault();
+
+                Chapter selectedChapter = null;
+                if (chapterId.HasValue)
                 {
-                    var chapter = await _context.Chapters.FindAsync(categoryId.Value);
-                    if (chapter == null)
-                        return BadRequest(new { Success = false, Error = "Danh mục/chương không tồn tại" });
+                    // First find the chapter
+                    selectedChapter = await _context.Chapters.FindAsync(chapterId.Value);
+
+                    if (selectedChapter == null)
+                    {
+                        return BadRequest(new { Success = false, Error = $"chương với ID {chapterId} không tồn tại" });
+                    }
+
+                    // Check if it belongs to the specified subject
+                    if (selectedChapter.SubjectId != subjectId)
+                    {
+                        return BadRequest(new { Success = false, Error = $"chương với ID {chapterId} không thuộc môn học với ID {subjectId}" });
+                    }
                 }
 
                 // Lấy userId từ token
                 int currentUserId;
-                var userIdClaim = User.FindFirst("userId");
-                if (userIdClaim == null)
-                {
-                    userIdClaim = User.FindFirst("UserId") ?? User.FindFirst("userid");
-                }
+                var userIdClaim = User.FindFirst("userId") ??
+                                  User.FindFirst("UserId") ??
+                                  User.FindFirst("userid");
 
                 if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out currentUserId))
                 {
                     return StatusCode(500, new { Success = false, Error = "Không xác định được người dùng" });
                 }
 
+                // Lấy thông tin người dùng hiện tại
+                var currentUser = await _context.Users.FindAsync(currentUserId);
+                if (currentUser == null)
+                {
+                    return StatusCode(500, new { Success = false, Error = "Không tìm thấy thông tin người dùng" });
+                }
+
                 // Đọc file Excel
                 using var stream = new MemoryStream();
                 await file.CopyToAsync(stream);
+
                 using var package = new ExcelPackage(stream);
                 var worksheet = package.Workbook.Worksheets[0]; // Lấy sheet đầu tiên
 
@@ -1144,7 +1180,20 @@ namespace webthitn_backend.Controllers
                 var updatedQuestions = 0;
                 var errors = new List<object>();
                 var warnings = new List<object>();
-                var questions = new List<Question>();
+                var questionsToAdd = new List<Question>(); // Danh sách câu hỏi cần thêm mới
+                var questionsToUpdate = new List<Question>(); // Danh sách câu hỏi cần cập nhật
+
+                // Sử dụng Dictionary để lưu options cho mỗi câu hỏi mới
+                var questionOptionsMap = new Dictionary<Question, List<QuestionOption>>();
+                var existingQuestionOptionsMap = new Dictionary<int, List<QuestionOption>>();
+
+                // Cache các câu hỏi đã tồn tại để tránh truy vấn lặp đi lặp lại
+                var existingQuestionContents = new HashSet<string>(
+                    await _context.Questions
+                        .Where(q => q.SubjectId == subjectId)
+                        .Select(q => q.Content)
+                        .ToListAsync()
+                );
 
                 // Lấy số dòng có dữ liệu
                 var rowCount = worksheet.Dimension?.Rows ?? 0;
@@ -1164,6 +1213,7 @@ namespace webthitn_backend.Controllers
 
                 // Bắt đầu transaction cho việc lưu dữ liệu nếu không chỉ validate
                 using var transaction = validateOnly ? null : await _context.Database.BeginTransactionAsync();
+                DateTime now = DateTime.UtcNow;
 
                 try
                 {
@@ -1191,16 +1241,17 @@ namespace webthitn_backend.Controllers
                                 failedCount++;
                                 continue;
                             }
-
+                            string scoringConfig = "{\"1_correct\": 0.10, \"2_correct\": 0.25, \"3_correct\": 0.50, \"4_correct\": 1.00}";
+                            string shortAnswerConfig = "{\"case_sensitive\": false, \"exact_match\": false, \"partial_credit\": true, \"partial_credit_percent\": 50, \"allow_similar\": true, \"similarity_threshold\": 80}";
                             // Đọc mức độ câu hỏi
                             var levelText = worksheet.Cells[row, levelCol].Text.Trim();
-                            int questionLevelId = levelId ?? 0;
+                            int questionLevelId = selectedLevel?.Id ?? 0;
 
-                            if (!string.IsNullOrEmpty(levelText))
+                            if (!string.IsNullOrEmpty(levelText) && questionLevelId == 0)
                             {
                                 if (int.TryParse(levelText, out int parsedLevelId))
                                 {
-                                    var level = await _context.QuestionLevels.FindAsync(parsedLevelId);
+                                    var level = allLevels.FirstOrDefault(l => l.Id == parsedLevelId);
                                     if (level != null)
                                     {
                                         questionLevelId = level.Id;
@@ -1209,8 +1260,8 @@ namespace webthitn_backend.Controllers
                                 else
                                 {
                                     // Tìm theo tên
-                                    var level = await _context.QuestionLevels
-                                        .FirstOrDefaultAsync(l => l.Name.ToLower() == levelText.ToLower());
+                                    var level = allLevels.FirstOrDefault(l =>
+                                        l.Name.Equals(levelText, StringComparison.OrdinalIgnoreCase));
                                     if (level != null)
                                     {
                                         questionLevelId = level.Id;
@@ -1221,8 +1272,6 @@ namespace webthitn_backend.Controllers
                             // Kiểm tra nếu không tìm thấy level
                             if (questionLevelId == 0)
                             {
-                                // Lấy level mặc định
-                                var defaultLevel = await _context.QuestionLevels.FirstOrDefaultAsync();
                                 if (defaultLevel != null)
                                 {
                                     questionLevelId = defaultLevel.Id;
@@ -1246,10 +1295,11 @@ namespace webthitn_backend.Controllers
                                     questionDifficulty = parsedDifficulty;
                                 }
                             }
+                            // Add these variables after reading the question type
 
                             // Đọc các lựa chọn
                             var optionsText = worksheet.Cells[row, optionsCol].Text.Trim();
-                            List<QuestionOption> options = new List<QuestionOption>();
+                            List<QuestionOption> rowOptions = new List<QuestionOption>();
 
                             if (string.IsNullOrEmpty(optionsText))
                             {
@@ -1260,9 +1310,24 @@ namespace webthitn_backend.Controllers
 
                             try
                             {
-                                var optionsData = JsonSerializer.Deserialize<List<OptionImportDTO>>(optionsText);
+                                var jsonOptions = new JsonSerializerOptions
+                                {
+                                    PropertyNameCaseInsensitive = true,
+                                    AllowTrailingCommas = true
+                                };
 
-                                // Kiểm tra lựa chọn theo loại câu hỏi
+                                var optionsData = JsonSerializer.Deserialize<List<OptionImportDTO>>(optionsText, jsonOptions);
+
+                                // Add debug logging to see what's being parsed
+                                _logger.LogDebug($"Row {row}: Parsed {optionsData.Count} options, correct answers: {optionsData.Count(o => o.IsCorrect)}");
+
+                                // Show the first few options for debugging
+                                foreach (var opt in optionsData.Take(2))
+                                {
+                                    _logger.LogDebug($"Option: {opt.Content}, IsCorrect: {opt.IsCorrect}, Label: {opt.Label}");
+                                }
+
+                                // Rest of your validation code
                                 // Kiểm tra lựa chọn theo loại câu hỏi
                                 if (questionType == 1) // Trắc nghiệm một đáp án
                                 {
@@ -1276,6 +1341,25 @@ namespace webthitn_backend.Controllers
                                     if (optionsData.Count(o => o.IsCorrect) != 1)
                                     {
                                         errors.Add(new { Row = row, Error = "Câu hỏi trắc nghiệm phải có đúng 1 đáp án đúng" });
+                                        failedCount++;
+                                        continue;
+                                    }
+                                }
+                                else if (questionType == 2) // Đúng/sai nhiều ý
+                                {
+                                    // Thêm validation cho câu hỏi loại 2
+                                    if (optionsData.Count < 1)
+                                    {
+                                        errors.Add(new { Row = row, Error = "Câu hỏi đúng/sai phải có ít nhất 1 ý" });
+                                        failedCount++;
+                                        continue;
+                                    }
+
+                                    // Đảm bảo mỗi option có groupId khác nhau
+                                    var groupIds = optionsData.Select(o => o.GroupId).Where(g => g.HasValue).Select(g => g.Value).ToList();
+                                    if (groupIds.Count > 0 && groupIds.Count != groupIds.Distinct().Count())
+                                    {
+                                        errors.Add(new { Row = row, Error = "Mỗi ý trong câu hỏi đúng/sai phải có GroupId riêng biệt" });
                                         failedCount++;
                                         continue;
                                     }
@@ -1294,14 +1378,14 @@ namespace webthitn_backend.Controllers
                                 for (int i = 0; i < optionsData.Count; i++)
                                 {
                                     var option = optionsData[i];
-                                    options.Add(new QuestionOption
+                                    rowOptions.Add(new QuestionOption
                                     {
                                         Content = option.Content,
                                         IsCorrect = option.IsCorrect,
                                         OrderIndex = i + 1,
                                         Label = option.Label ?? GenerateOptionLabel(i),
                                         ImagePath = "",
-                                        Explanation = "",
+                                        Explanation = "", // Không có property Explanation trong OptionImportDTO
                                         MatchingValue = "",
                                         IsPartOfTrueFalseGroup = questionType == 2,
                                         GroupId = option.GroupId ?? i + 1,
@@ -1309,9 +1393,9 @@ namespace webthitn_backend.Controllers
                                     });
                                 }
                             }
-                            catch (JsonException)
+                            catch (JsonException ex)
                             {
-                                errors.Add(new { Row = row, Error = "Định dạng JSON của Options không hợp lệ" });
+                                errors.Add(new { Row = row, Error = $"Định dạng JSON của Options không hợp lệ: {ex.Message}" });
                                 failedCount++;
                                 continue;
                             }
@@ -1322,30 +1406,37 @@ namespace webthitn_backend.Controllers
                             // Đọc chủ đề/tags
                             var topic = worksheet.Cells[row, topicCol].Text.Trim();
 
-                            // Kiểm tra nếu câu hỏi đã tồn tại (dựa vào nội dung)
-                            var existingQuestion = await _context.Questions
-                                .FirstOrDefaultAsync(q => q.Content.Equals(content) && q.SubjectId == subjectId);
+                            // Kiểm tra nếu câu hỏi đã tồn tại (sử dụng cached data)
+                            bool questionExists = existingQuestionContents.Contains(content);
+                            Question existingQuestion = null;
 
-                            if (existingQuestion != null && !overrideExisting)
+                            if (questionExists)
                             {
-                                warnings.Add(new { Row = row, Message = $"Câu hỏi tương tự đã tồn tại (ID: {existingQuestion.Id})" });
-                                if (validateOnly)
-                                    continue;
+                                if (!validateOnly && overrideExisting)
+                                {
+                                    // Chỉ query DB khi thực sự cần cập nhật
+                                    existingQuestion = await _context.Questions
+                                        .FirstOrDefaultAsync(q => q.Content.Equals(content) && q.SubjectId == subjectId);
+                                }
+                                else
+                                {
+                                    warnings.Add(new { Row = row, Message = $"Câu hỏi tương tự đã tồn tại" });
+                                    if (validateOnly || !overrideExisting)
+                                    {
+                                        successCount++; // Vẫn tính là thành công trong chế độ validate
+                                        continue;
+                                    }
+                                }
                             }
 
                             // Lấy chapter (category)
-                            int chapterId = categoryId ?? 0;
-                            if (chapterId == 0)
+                            int chapterIdValue = selectedChapter?.Id ?? chapterId ?? 0;
+                            if (chapterIdValue == 0 && defaultChapter != null)
                             {
-                                // Sử dụng chapter mặc định của môn học
-                                var defaultChapter = await _context.Chapters
-                                    .FirstOrDefaultAsync(c => c.SubjectId == subjectId);
-
-                                if (defaultChapter != null)
-                                {
-                                    chapterId = defaultChapter.Id;
-                                }
+                                chapterIdValue = defaultChapter.Id;
                             }
+
+                            Chapter chapter = selectedChapter ?? defaultChapter;
 
                             // Nếu chỉ validate thì không tạo đối tượng
                             if (validateOnly)
@@ -1355,37 +1446,34 @@ namespace webthitn_backend.Controllers
                             }
 
                             // Tạo câu hỏi mới hoặc cập nhật câu hỏi cũ
-                            Question question;
-                            DateTime now = DateTime.UtcNow;
-
                             if (existingQuestion != null && overrideExisting)
                             {
                                 // Cập nhật câu hỏi hiện có
-                                question = existingQuestion;
-                                question.Content = content;
-                                question.Explanation = explanation;
-                                question.QuestionType = questionType;
-                                question.QuestionLevelId = questionLevelId;
-                                question.Tags = topic;
-                                question.UpdatedAt = now;
+                                existingQuestion.Content = content;
+                                existingQuestion.Explanation = explanation;
+                                existingQuestion.QuestionType = questionType;
+                                existingQuestion.QuestionLevelId = questionLevelId;
+                                existingQuestion.Tags = topic;
+                                existingQuestion.UpdatedAt = now;
+                                existingQuestion.ScoringConfig = scoringConfig;
+                                existingQuestion.ShortAnswerConfig = shortAnswerConfig;
 
-                                // Xóa options cũ
-                                var oldOptions = await _context.QuestionOptions
-                                    .Where(o => o.QuestionId == existingQuestion.Id)
-                                    .ToListAsync();
-                                _context.QuestionOptions.RemoveRange(oldOptions);
-
+                                // Thêm vào danh sách cập nhật
+                                questionsToUpdate.Add(existingQuestion);
                                 updatedQuestions++;
+
+                                // Lưu options để xử lý sau
+                                existingQuestionOptionsMap[existingQuestion.Id] = rowOptions;
                             }
                             else
                             {
                                 // Tạo câu hỏi mới
-                                question = new Question
+                                var newQuestion = new Question
                                 {
                                     Content = content,
                                     Explanation = explanation ?? "",
                                     SubjectId = subjectId,
-                                    ChapterId = chapterId,
+                                    ChapterId = chapterIdValue,
                                     QuestionLevelId = questionLevelId,
                                     QuestionType = questionType,
                                     Tags = topic ?? "",
@@ -1396,29 +1484,85 @@ namespace webthitn_backend.Controllers
                                     CreatorId = currentUserId,
                                     CreatedAt = now,
                                     UpdatedAt = now,
-                                    // Khởi tạo các thành phần required
-                                    Subject = await _context.Subjects.FindAsync(subjectId),
-                                    Chapter = await _context.Chapters.FindAsync(chapterId),
-                                    Creator = await _context.Users.FindAsync(currentUserId),
-                                    Options = new List<QuestionOption>(),
-                                    ExamQuestions = new List<ExamQuestion>()
+                                    ScoringConfig = scoringConfig,
+                                    ShortAnswerConfig = shortAnswerConfig,
+                                    // Fix: Gán các required properties
+                                    Subject = subject,
+                                    Chapter = chapter,
+                                    Creator = currentUser,
+                                    Options = new List<QuestionOption>(), // Khởi tạo danh sách trống
+                                    ExamQuestions = new List<ExamQuestion>() // Khởi tạo danh sách trống
                                 };
 
-                                _context.Questions.Add(question);
+                                // Thêm vào danh sách để xử lý theo batch
+                                questionsToAdd.Add(newQuestion);
+                                questionOptionsMap[newQuestion] = rowOptions;
                                 newQuestions++;
                             }
 
-                            // Lưu câu hỏi để nhận ID
-                            await _context.SaveChangesAsync();
-
-                            // Cập nhật QuestionId cho options và thêm vào DB
-                            foreach (var option in options)
+                            // Xử lý theo batch nếu đạt đến số lượng
+                            if ((questionsToAdd.Count + questionsToUpdate.Count) >= batchSize)
                             {
-                                option.QuestionId = question.Id;
-                                _context.QuestionOptions.Add(option);
+                                // Lưu các câu hỏi mới
+                                if (questionsToAdd.Any())
+                                {
+                                    _context.Questions.AddRange(questionsToAdd);
+                                }
+
+                                // Cập nhật các câu hỏi
+                                if (questionsToUpdate.Any())
+                                {
+                                    _context.Questions.UpdateRange(questionsToUpdate);
+                                }
+
+                                await _context.SaveChangesAsync();
+
+                                // Xử lý options cho câu hỏi mới
+                                foreach (var pair in questionOptionsMap)
+                                {
+                                    var q = pair.Key;
+                                    var qOptions = pair.Value;
+
+                                    foreach (var option in qOptions)
+                                    {
+                                        option.QuestionId = q.Id;
+                                        _context.QuestionOptions.Add(option);
+                                    }
+                                }
+
+                                // Xử lý options cho câu hỏi cập nhật
+                                foreach (var pair in existingQuestionOptionsMap)
+                                {
+                                    var questionId = pair.Key;
+                                    var qOptions = pair.Value;
+
+                                    // Xóa options cũ
+                                    var oldOptions = await _context.QuestionOptions
+                                        .Where(o => o.QuestionId == questionId)
+                                        .ToListAsync();
+
+                                    if (oldOptions.Any())
+                                    {
+                                        _context.QuestionOptions.RemoveRange(oldOptions);
+                                    }
+
+                                    // Thêm options mới
+                                    foreach (var option in qOptions)
+                                    {
+                                        option.QuestionId = questionId;
+                                        _context.QuestionOptions.Add(option);
+                                    }
+                                }
+
+                                await _context.SaveChangesAsync();
+
+                                // Xóa dữ liệu batch đã xử lý
+                                questionsToAdd.Clear();
+                                questionsToUpdate.Clear();
+                                questionOptionsMap.Clear();
+                                existingQuestionOptionsMap.Clear();
                             }
 
-                            await _context.SaveChangesAsync();
                             successCount++;
                         }
                         catch (Exception ex)
@@ -1426,13 +1570,164 @@ namespace webthitn_backend.Controllers
                             _logger.LogError(ex, $"Lỗi khi xử lý dòng {row}");
                             errors.Add(new { Row = row, Error = $"Lỗi khi xử lý: {ex.Message}" });
                             failedCount++;
+
+                            if (!continueOnError)
+                            {
+                                // Dừng xử lý nếu không tiếp tục khi gặp lỗi
+                                throw;
+                            }
                         }
+                    }
+                    // Inside your batch processing code (around line 1562)
+                    if (questionsToAdd.Any())
+                    {
+                        // Before adding to the database, ensure ALL required fields have values
+                        foreach (var q in questionsToAdd)
+                        {
+                            // Check for null values in required fields
+                            if (string.IsNullOrEmpty(q.ScoringConfig))
+                                q.ScoringConfig = "{\"1_correct\": 0.10, \"2_correct\": 0.25, \"3_correct\": 0.50, \"4_correct\": 1.00}";
+
+                            if (string.IsNullOrEmpty(q.ShortAnswerConfig))
+                                q.ShortAnswerConfig = "{\"case_sensitive\": false, \"exact_match\": false, \"partial_credit\": true, \"partial_credit_percent\": 50, \"allow_similar\": true, \"similarity_threshold\": 80}";
+
+                            // Ensure navigation properties are correctly set
+                            if (q.Subject == null && q.SubjectId > 0)
+                                q.Subject = _context.Subjects.Find(q.SubjectId);
+
+                            if (q.Chapter == null && q.ChapterId > 0)
+                                q.Chapter = _context.Chapters.Find(q.ChapterId);
+
+                            if (q.Creator == null && q.CreatorId > 0)
+                                q.Creator = _context.Users.Find(q.CreatorId);
+
+                            // Initialize collections if null
+                            q.Options ??= new List<QuestionOption>();
+                            q.ExamQuestions ??= new List<ExamQuestion>();
+
+                            // Ensure dates are set
+                            if (q.CreatedAt == default)
+                                q.CreatedAt = DateTime.UtcNow;
+
+                            if (q.UpdatedAt == null)
+                                q.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+                    // Xử lý các câu hỏi còn lại trong batch cuối cùng
+                    if ((questionsToAdd.Count > 0 || questionsToUpdate.Count > 0) && !validateOnly)
+                    {
+                        // Lưu các câu hỏi mới
+                        // Inside your batch processing code
+                        if (questionsToAdd.Any())
+                        {
+                            // Before adding to the database, ensure none have null configuration
+                            foreach (var q in questionsToAdd)
+                            {
+                                // Ensure ScoringConfig is not null
+                                if (string.IsNullOrEmpty(q.ScoringConfig))
+                                {
+                                    q.ScoringConfig = "{\"1_correct\": 0.10, \"2_correct\": 0.25, \"3_correct\": 0.50, \"4_correct\": 1.00}";
+                                }
+
+                                // Ensure ShortAnswerConfig is not null
+                                if (string.IsNullOrEmpty(q.ShortAnswerConfig))
+                                {
+                                    q.ShortAnswerConfig = "{\"case_sensitive\": false, \"exact_match\": false, \"partial_credit\": true, \"partial_credit_percent\": 50, \"allow_similar\": true, \"similarity_threshold\": 80}";
+                                }
+                            }
+
+                            _context.Questions.AddRange(questionsToAdd);
+                        }
+
+                        if (questionsToUpdate.Any())
+                        {
+                            // Same check for updated questions
+                            foreach (var q in questionsToUpdate)
+                            {
+                                // Ensure ScoringConfig is not null
+                                if (string.IsNullOrEmpty(q.ScoringConfig))
+                                    q.ScoringConfig = "{\"1_correct\": 0.10, \"2_correct\": 0.25, \"3_correct\": 0.50, \"4_correct\": 1.00}";
+
+                                if (string.IsNullOrEmpty(q.ShortAnswerConfig))
+                                    q.ShortAnswerConfig = "{\"case_sensitive\": false, \"exact_match\": false, \"partial_credit\": true, \"partial_credit_percent\": 50, \"allow_similar\": true, \"similarity_threshold\": 80}";
+
+                                // Make sure UpdatedAt is set
+                                q.UpdatedAt = DateTime.UtcNow;
+                            }
+
+                            _context.Questions.UpdateRange(questionsToUpdate);
+                        }
+
+                        try
+                        {
+                            await _context.SaveChangesAsync();
+                        }
+                        catch (DbUpdateException ex)
+                        {
+                            var innerMsg = ex.InnerException?.Message ?? "Unknown inner exception";
+                            _logger.LogError($"Database error saving questions: {ex.Message}. Inner: {innerMsg}");
+
+                            // Check for specific values that might be causing issues
+                            foreach (var entry in _context.ChangeTracker.Entries<Question>())
+                            {
+                                if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+                                {
+                                    var entity = entry.Entity;
+                                    _logger.LogWarning($"Problem entity - ID: {entity.Id}, Content: {entity.Content?.Substring(0, 20)}..., " +
+                                    $"SubjectId: {entity.SubjectId}, ChapterId: {entity.ChapterId}, " +
+                                                    $"ScoringConfig: {entity.ScoringConfig?.Length ?? 0}, " +
+                                                    $"ShortAnswerConfig: {entity.ShortAnswerConfig?.Length ?? 0}");
+                                }
+                            }
+
+                            throw;
+                        }
+
+                        // Xử lý options cho câu hỏi mới
+                        foreach (var pair in questionOptionsMap)
+                        {
+                            var q = pair.Key;
+                            var qOptions = pair.Value;
+
+                            foreach (var option in qOptions)
+                            {
+                                option.QuestionId = q.Id;
+                                _context.QuestionOptions.Add(option);
+                            }
+                        }
+
+                        // Xử lý options cho câu hỏi cập nhật
+                        foreach (var pair in existingQuestionOptionsMap)
+                        {
+                            var questionId = pair.Key;
+                            var qOptions = pair.Value;
+
+                            // Xóa options cũ
+                            var oldOptions = await _context.QuestionOptions
+                                .Where(o => o.QuestionId == questionId)
+                                .ToListAsync();
+
+                            if (oldOptions.Any())
+                            {
+                                _context.QuestionOptions.RemoveRange(oldOptions);
+                            }
+
+                            // Thêm options mới
+                            foreach (var option in qOptions)
+                            {
+                                option.QuestionId = questionId;
+                                _context.QuestionOptions.Add(option);
+                            }
+                        }
+
+                        await _context.SaveChangesAsync();
                     }
 
                     // Commit transaction nếu không phải validate only mode
                     if (!validateOnly && transaction != null)
                     {
                         await transaction.CommitAsync();
+                        _logger.LogInformation($"Đã commit transaction, thời gian xử lý: {stopwatch.ElapsedMilliseconds}ms");
                     }
 
                     // Trả về kết quả
@@ -1442,6 +1737,7 @@ namespace webthitn_backend.Controllers
                         Message = validateOnly
                             ? $"Kiểm tra thành công {successCount}/{totalProcessed} câu hỏi"
                             : $"Nhập thành công {successCount}/{totalProcessed} câu hỏi",
+                        ProcessingTime = stopwatch.ElapsedMilliseconds,
                         Data = new
                         {
                             TotalProcessed = totalProcessed,
@@ -1449,8 +1745,10 @@ namespace webthitn_backend.Controllers
                             FailedCount = failedCount,
                             NewQuestions = newQuestions,
                             UpdatedQuestions = updatedQuestions,
-                            Errors = errors,
-                            Warnings = warnings
+                            Errors = errors.Take(100).ToList(), // Giới hạn số lỗi trả về
+                            ErrorCount = errors.Count,
+                            Warnings = warnings.Take(100).ToList(), // Giới hạn số cảnh báo trả về
+                            WarningCount = warnings.Count
                         }
                     });
                 }
@@ -1460,6 +1758,7 @@ namespace webthitn_backend.Controllers
                     if (!validateOnly && transaction != null)
                     {
                         await transaction.RollbackAsync();
+                        _logger.LogWarning("Transaction đã được rollback do lỗi");
                     }
 
                     _logger.LogError(ex, "Lỗi khi nhập câu hỏi từ Excel");
@@ -1468,6 +1767,7 @@ namespace webthitn_backend.Controllers
                         Success = false,
                         Error = "Lỗi khi nhập câu hỏi từ Excel",
                         Message = ex.Message,
+                        StackTrace = ex.StackTrace,
                         Code = "IMPORT_ERROR"
                     });
                 }
@@ -1484,6 +1784,83 @@ namespace webthitn_backend.Controllers
                 });
             }
         }
+        public class FileUploadOperationFilter : IOperationFilter
+        {
+            public void Apply(OpenApiOperation operation, OperationFilterContext context)
+            {
+                // Kiểm tra xem API này có tham số IFormFile không
+                var fileParameters = context.MethodInfo.GetParameters()
+                    .Where(p => p.ParameterType == typeof(IFormFile))
+                    .ToList();
+
+                if (!fileParameters.Any()) return;
+
+                // Đã có RequestBody schema, không cần thêm
+                if (operation.RequestBody?.Content?.ContainsKey("multipart/form-data") == true)
+                    return;
+
+                // Tạo mới RequestBody schema
+                operation.RequestBody = new OpenApiRequestBody
+                {
+                    Content = new Dictionary<string, OpenApiMediaType>
+                    {
+                        ["multipart/form-data"] = new OpenApiMediaType
+                        {
+                            Schema = new OpenApiSchema
+                            {
+                                Type = "object",
+                                Properties = new Dictionary<string, OpenApiSchema>()
+                            }
+                        }
+                    }
+                };
+
+                // Thêm các tham số từ API method vào schema
+                var properties = operation.RequestBody.Content["multipart/form-data"].Schema.Properties;
+
+                foreach (var parameter in context.MethodInfo.GetParameters())
+                {
+                    var fromFormAttribute = parameter.GetCustomAttribute<FromFormAttribute>();
+                    if (fromFormAttribute == null) continue;
+
+                    if (parameter.ParameterType == typeof(IFormFile))
+                    {
+                        properties[parameter.Name] = new OpenApiSchema
+                        {
+                            Type = "string",
+                            Format = "binary",
+                            Description = $"{parameter.Name} file"
+                        };
+                    }
+                    else
+                    {
+                        var schemaType = GetOpenApiSchemaType(parameter.ParameterType);
+                        properties[parameter.Name] = new OpenApiSchema
+                        {
+                            Type = schemaType.Item1,
+                            Format = schemaType.Item2,
+                            Description = parameter.Name,
+                            Nullable = parameter.ParameterType.IsGenericType &&
+                                      parameter.ParameterType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                        };
+                    }
+                }
+            }
+
+            private (string, string) GetOpenApiSchemaType(Type type)
+            {
+                var nullableType = Nullable.GetUnderlyingType(type);
+                type = nullableType ?? type;
+
+                if (type == typeof(int)) return ("integer", "int32");
+                if (type == typeof(long)) return ("integer", "int64");
+                if (type == typeof(bool)) return ("boolean", null);
+                if (type == typeof(double) || type == typeof(float) || type == typeof(decimal))
+                    return ("number", null);
+
+                return ("string", null);
+            }
+        }
         /// <summary>
         /// Xuất câu hỏi ra file Excel
         /// </summary>
@@ -1497,52 +1874,77 @@ namespace webthitn_backend.Controllers
             try
             {
                 _logger.LogInformation("Bắt đầu xuất câu hỏi ra Excel");
+                var stopwatch = Stopwatch.StartNew();
 
                 // Kiểm tra parameters
                 if (model == null)
                     return BadRequest(new { Success = false, Error = "Các tham số không hợp lệ" });
 
-                // Xây dựng query
-                var query = _context.Questions
-                    .Include(q => q.Subject)
-                    .Include(q => q.Chapter)
-                    .Include(q => q.Level)
-                    .Include(q => q.Options)
-                    .Include(q => q.Creator)
-                    .AsQueryable();
-
-                // Áp dụng các bộ lọc
-                if (model.SubjectId.HasValue)
-                    query = query.Where(q => q.SubjectId == model.SubjectId);
-
-                if (model.ChapterId.HasValue)
-                    query = query.Where(q => q.ChapterId == model.ChapterId);
-
-                if (model.LevelId.HasValue)
-                    query = query.Where(q => q.QuestionLevelId == model.LevelId);
-
-                if (model.QuestionType.HasValue)
-                    query = query.Where(q => q.QuestionType == model.QuestionType);
-
-                if (!string.IsNullOrEmpty(model.Topic))
-                    query = query.Where(q => q.Tags.Contains(model.Topic));
-
-                if (!string.IsNullOrEmpty(model.Search))
-                    query = query.Where(q => q.Content.Contains(model.Search));
-
-                if (model.QuestionIds != null && model.QuestionIds.Any())
-                    query = query.Where(q => model.QuestionIds.Contains(q.Id));
-
-                // Áp dụng giới hạn dòng
+                // Xác định số lượng câu hỏi tối đa
                 int limitRows = model.LimitRows ?? 1000;
                 if (limitRows > 5000)
                     limitRows = 5000;
 
+                // Tối ưu query bằng cách chỉ select các trường cần thiết
+                var queryBuilder = _context.Questions.AsNoTracking();
+
+                // Áp dụng các filter cơ bản trước
+                if (model.SubjectId.HasValue)
+                    queryBuilder = queryBuilder.Where(q => q.SubjectId == model.SubjectId);
+
+                if (model.ChapterId.HasValue)
+                    queryBuilder = queryBuilder.Where(q => q.ChapterId == model.ChapterId);
+
+                if (model.LevelId.HasValue)
+                    queryBuilder = queryBuilder.Where(q => q.QuestionLevelId == model.LevelId);
+
+                if (model.QuestionType.HasValue)
+                    queryBuilder = queryBuilder.Where(q => q.QuestionType == model.QuestionType);
+
+                // Filter theo topic và search query
+                if (!string.IsNullOrEmpty(model.Topic))
+                    queryBuilder = queryBuilder.Where(q => q.Tags.Contains(model.Topic));
+
+                if (!string.IsNullOrEmpty(model.Search))
+                    queryBuilder = queryBuilder.Where(q => q.Content.Contains(model.Search));
+
+                // Filter theo danh sách ID
+                if (model.QuestionIds != null && model.QuestionIds.Any())
+                    queryBuilder = queryBuilder.Where(q => model.QuestionIds.Contains(q.Id));
+
+                // Đếm tổng số câu hỏi phù hợp filter (chỉ đếm khi cần thiết)
+                int totalCount = await queryBuilder.CountAsync();
+
+                // Bao gồm các thông tin khác chỉ khi cần thiết để tối ưu hoá query
+                var query = queryBuilder.OrderByDescending(q => q.CreatedAt);
+
+                // Sử dụng Select để chỉ lấy những trường cần thiết
+                var questionsQuery = query
+                    .Select(q => new
+                    {
+                        q.Id,
+                        q.Content,
+                        q.QuestionType,
+                        Level = q.Level.Name,
+                        q.Explanation,
+                        q.Tags,
+                        q.CreatedAt,
+                        Creator = model.IncludeMetadata == true ? q.Creator.FullName : null,
+                        CreatorUsername = model.IncludeMetadata == true ? q.Creator.Username : null,
+                        Options = model.IncludeOptions != false ? q.Options.Select(o => new
+                        {
+                            o.Content,
+                            o.IsCorrect,
+                            o.Label,
+                            o.GroupId,
+                            o.ScorePercentage
+                        }) : null,
+                        UsageCount = model.IncludeMetadata == true ? q.ExamQuestions.Count : 0
+                    })
+                    .Take(limitRows);
+
                 // Lấy danh sách câu hỏi
-                var questions = await query
-                    .OrderByDescending(q => q.CreatedAt)
-                    .Take(limitRows)
-                    .ToListAsync();
+                var questions = await questionsQuery.ToListAsync();
 
                 if (!questions.Any())
                 {
@@ -1557,7 +1959,7 @@ namespace webthitn_backend.Controllers
                 using var package = new ExcelPackage();
                 var worksheet = package.Workbook.Worksheets.Add("Questions");
 
-                // Tạo tiêu đề
+                // Thêm tiêu đề
                 worksheet.Cells["A1"].Value = "STT";
                 worksheet.Cells["B1"].Value = "ID";
                 worksheet.Cells["C1"].Value = "Content";
@@ -1585,7 +1987,7 @@ namespace webthitn_backend.Controllers
                     range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
                 }
 
-                // Điền dữ liệu
+                // Điền dữ liệu - sử dụng LoadFromCollection để tối ưu hiệu suất với dữ liệu lớn
                 for (int i = 0; i < questions.Count; i++)
                 {
                     var question = questions[i];
@@ -1595,24 +1997,28 @@ namespace webthitn_backend.Controllers
                     worksheet.Cells[row, 2].Value = question.Id;
                     worksheet.Cells[row, 3].Value = question.Content;
                     worksheet.Cells[row, 4].Value = question.QuestionType;
-                    worksheet.Cells[row, 5].Value = question.Level?.Name;
+                    worksheet.Cells[row, 5].Value = question.Level;
                     worksheet.Cells[row, 6].Value = 1; // Default difficulty
 
                     // Xử lý options
-                    if (model.IncludeOptions != false)
+                    if (model.IncludeOptions != false && question.Options != null)
                     {
-                        var options = question.Options
-                            .Select(o => new OptionExportDTO
-                            {
-                                Content = o.Content,
-                                IsCorrect = o.IsCorrect,
-                                Label = o.Label,
-                                GroupId = (int)o.GroupId,
-                                ScorePercentage = o.ScorePercentage
-                            })
-                            .ToList();
+                        var options = question.Options.Select(o => new OptionExportDTO
+                        {
+                            Content = o.Content,
+                            IsCorrect = o.IsCorrect,
+                            Label = o.Label,
+                            GroupId = (int)o.GroupId,
+                            ScorePercentage = o.ScorePercentage
+                        }).ToList();
 
-                        worksheet.Cells[row, 7].Value = JsonSerializer.Serialize(options);
+                        var jsonOptions = new JsonSerializerOptions
+                        {
+                            WriteIndented = false,
+                            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        };
+
+                        worksheet.Cells[row, 7].Value = JsonSerializer.Serialize(options, jsonOptions);
                     }
 
                     // Giải thích
@@ -1628,19 +2034,50 @@ namespace webthitn_backend.Controllers
                     if (model.IncludeMetadata == true)
                     {
                         worksheet.Cells[row, 10].Value = question.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
-                        worksheet.Cells[row, 11].Value = question.Creator?.FullName ?? question.Creator?.Username;
-                        worksheet.Cells[row, 12].Value = question.ExamQuestions?.Count ?? 0;
+                        worksheet.Cells[row, 11].Value = !string.IsNullOrEmpty(question.Creator)
+                            ? question.Creator
+                            : question.CreatorUsername;
+                        worksheet.Cells[row, 12].Value = question.UsageCount;
                     }
                 }
 
-                // Điều chỉnh kích thước cột
+                // Điều chỉnh kích thước cột tự động
                 worksheet.Cells.AutoFitColumns();
+
+                // Thêm sheet thông tin (metadata)
+                var infoSheet = package.Workbook.Worksheets.Add("Info");
+                infoSheet.Cells["A1"].Value = "Thông tin xuất dữ liệu";
+                infoSheet.Cells["A1:B1"].Merge = true;
+                infoSheet.Cells["A1:B1"].Style.Font.Bold = true;
+
+                infoSheet.Cells["A2"].Value = "Ngày xuất:";
+                infoSheet.Cells["B2"].Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                infoSheet.Cells["A3"].Value = "Tổng số câu hỏi:";
+                infoSheet.Cells["B3"].Value = questions.Count;
+
+                infoSheet.Cells["A4"].Value = "Tổng số câu hỏi phù hợp:";
+                infoSheet.Cells["B4"].Value = totalCount;
+
+                infoSheet.Cells["A5"].Value = "Filter:";
+                infoSheet.Cells["B5"].Value = JsonSerializer.Serialize(new
+                {
+                    model.SubjectId,
+                    model.ChapterId,
+                    model.LevelId,
+                    model.QuestionType,
+                    model.Topic,
+                    model.Search,
+                    HasIds = model.QuestionIds != null && model.QuestionIds.Any()
+                });
+
+                infoSheet.Cells["A:B"].AutoFitColumns();
 
                 // Chuyển file thành byte array
                 var fileBytes = package.GetAsByteArray();
 
                 // Tạo tên file
-                string fileName = $"questions_export_{DateTime.UtcNow:yyyyMMdd}.{(model.Format?.ToLower() == "xls" ? "xls" : "xlsx")}";
+                string fileName = $"questions_export_{DateTime.UtcNow:yyyyMMddHHmmss}.{(model.Format?.ToLower() == "xls" ? "xls" : "xlsx")}";
 
                 // Trả về file Excel
                 return File(
@@ -1658,7 +2095,7 @@ namespace webthitn_backend.Controllers
                 {
                     Success = false,
                     Error = "Lỗi máy chủ",
-                    Message = "Đã xảy ra lỗi khi tạo file Excel",
+                    Message = "Đã xảy ra lỗi khi tạo file Excel: " + ex.Message,
                     Code = "EXPORT_ERROR"
                 });
             }

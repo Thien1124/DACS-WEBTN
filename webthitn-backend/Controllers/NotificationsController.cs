@@ -22,15 +22,18 @@ namespace webthitn_backend.Controllers
         private readonly ApplicationDbContext _context;
         private readonly EmailService _emailService;
         private readonly ILogger<NotificationsController> _logger;
+        private readonly IConfiguration _configuration;
 
         public NotificationsController(
             ApplicationDbContext context,
             EmailService emailService,
-            ILogger<NotificationsController> logger)
+            ILogger<NotificationsController> logger,
+            IConfiguration configuration)
         {
             _context = context;
             _emailService = emailService;
             _logger = logger;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -60,6 +63,20 @@ namespace webthitn_backend.Controllers
                     .Select(email => email.Trim())
                     .Where(email => !string.IsNullOrWhiteSpace(email))
                     .ToList();
+
+                // Validate each email individually
+                var invalidEmails = recipients
+                    .Where(email => !IsValidEmail(email))
+                    .ToList();
+
+                if (invalidEmails.Any())
+                {
+                    return BadRequest(new { 
+                        Success = false, 
+                        Message = "Có địa chỉ email không hợp lệ", 
+                        InvalidEmails = invalidEmails 
+                    });
+                }
 
                 if (!recipients.Any())
                 {
@@ -152,50 +169,46 @@ namespace webthitn_backend.Controllers
                     }
                 }
 
-                // Gửi email cho từng người nhận
-                foreach (var recipient in recipients)
+                try
                 {
-                    try
+                    // Send to all recipients at once (more efficient)
+                    await _emailService.SendBulkEmailAsync(recipients, notificationDto.Subject, htmlContent);
+                    successCount = recipients.Count;
+                    
+                    // If we need to save notifications in the system
+                    if (notificationDto.SaveNotification)
                     {
-                        await _emailService.SendEmailAsync(recipient, notificationDto.Subject, htmlContent);
-                        successCount++;
-
-                        // Nếu cần lưu thông báo trong hệ thống
-                        if (notificationDto.SaveNotification)
+                        var users = await _context.Users
+                            .Where(u => recipients.Contains(u.Email))
+                            .ToListAsync();
+                            
+                        foreach (var user in users)
                         {
-                            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == recipient);
-
-                            if (user != null)
+                            var notification = new Notification
                             {
-                                var notification = new Notification
-                                {
-                                    Title = notificationDto.Subject,
-                                    Content = htmlContent,
-                                    UserId = user.Id,
-                                    Type = notificationDto.Type,
-                                    IsRead = false,
-                                    Link = link, // Sử dụng link đã xử lý thay vì null
-                                    CreatedAt = DateTime.UtcNow,
-                                    RelatedEntityId = notificationDto.RelatedEntityId,
-                                    RelatedEntityType = notificationDto.RelatedEntityType,
-                                    SentViaEmail = true
-                                };
-
-                                _context.Notifications.Add(notification);
-                            }
+                                Title = notificationDto.Subject,
+                                Content = htmlContent,
+                                UserId = user.Id,
+                                Type = notificationDto.Type,
+                                IsRead = false,
+                                Link = link,
+                                CreatedAt = DateTime.UtcNow,
+                                RelatedEntityId = notificationDto.RelatedEntityId,
+                                RelatedEntityType = notificationDto.RelatedEntityType,
+                                SentViaEmail = true
+                            };
+                            
+                            _context.Notifications.Add(notification);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, $"Lỗi khi gửi email đến {recipient}");
-                        failedEmails.Add(recipient);
+                        
+                        await _context.SaveChangesAsync();
                     }
                 }
-
-                // Lưu các thông báo đã tạo vào database
-                if (notificationDto.SaveNotification)
+                catch (Exception ex)
                 {
-                    await _context.SaveChangesAsync();
+                    _logger.LogError(ex, "Error sending bulk email");
+                    failedEmails.AddRange(recipients);
+                    successCount = 0;
                 }
 
                 return Ok(new
@@ -311,6 +324,42 @@ namespace webthitn_backend.Controllers
                         {
                             _logger.LogError(ex, $"Lỗi khi gửi email đến {email}");
                             // Tiếp tục với email tiếp theo
+                        }
+                    }
+                }
+
+                // In the method that handles in-app notifications
+                if (notificationDto.SendEmail && notificationDto.RelatedEntityType == "OfficialExam")
+                {
+                    // For each user ID in the list
+                    foreach (var userId in userIds)
+                    {
+                        var student = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                        if (student != null && !string.IsNullOrEmpty(student.Email))
+                        {
+                            // Get the student's exam result - fix the query to use the correct relationship
+                            var examResult = await _context.ExamResults
+                                .Include(er => er.Exam)
+                                .FirstOrDefaultAsync(er => 
+                                    er.StudentId == userId && 
+                                    er.ExamId == notificationDto.RelatedEntityId); // Using ExamId instead of OfficialExamId
+                                
+                            if (examResult != null)
+                            {
+                                // Construct full result link (frontend URL + link path)
+                                string baseUrl = _configuration["FrontendUrl"] ?? "http://localhost:3000";
+                                string fullLink = $"{baseUrl}{notificationDto.Link}";
+                                
+                                await _emailService.SendExamResultNotificationEmailAsync(
+                                    student.Email,
+                                    student.FullName,
+                                    examResult.Exam.Title,
+                                    examResult.Score,
+                                    examResult.Exam.TotalScore,
+                                    examResult.IsPassed,
+                                    fullLink
+                                );
+                            }
                         }
                     }
                 }
@@ -573,9 +622,44 @@ namespace webthitn_backend.Controllers
                             </div>
                         </body>
                         </html>";
-
+                case "exam_result_announcement":
+                    return @"
+                        <html>
+                        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                            <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>
+                                <h2 style='color: #2b6cb0; text-align: center;'>Kết quả kỳ thi đã được công bố</h2>
+                                <p>Kính gửi học sinh,</p>
+                                <p>Kết quả kỳ thi <strong>{{examTitle}}</strong> đã được công bố.</p>
+                                <p>Vui lòng đăng nhập vào hệ thống để xem điểm số của bạn.</p>
+                                <div style='margin: 25px 0; text-align: center;'>
+                                    <a href='{{resultLink}}' 
+                                    style='background-color: #4299e1; color: white; padding: 10px 20px; 
+                                            text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;'>
+                                    Xem kết quả
+                                    </a>
+                                </div>
+                                <div style='margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;'>
+                                    <p style='margin: 0;'>Trân trọng,<br>Đội ngũ ExamDG</p>
+                                </div>
+                            </div>
+                        </body>
+                        </html>";
                 default:
                     return string.Empty;
+            }
+        }
+
+        // Add this helper method to the class
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

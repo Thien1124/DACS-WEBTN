@@ -22,7 +22,7 @@ namespace webthitn_backend.Controllers
         private readonly IConfiguration _configuration;
 
         public UserController(
-            ApplicationDbContext context, 
+            ApplicationDbContext context,
             ILogger<UserController> logger,
             IConfiguration configuration)
         {
@@ -143,8 +143,8 @@ namespace webthitn_backend.Controllers
                 }
 
                 // Improved user identification - try multiple claim types
-                var userId = User.FindFirst("userId")?.Value ?? 
-                            User.FindFirst("sub")?.Value ?? 
+                var userId = User.FindFirst("userId")?.Value ??
+                            User.FindFirst("sub")?.Value ??
                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 _logger.LogInformation($"Uploading avatar. User claims: {userId}");
@@ -185,11 +185,11 @@ namespace webthitn_backend.Controllers
 
                 // Tạo tên file duy nhất
                 var fileName = $"avatar_{userIdInt}_{Guid.NewGuid()}{fileExtension}";
-                
+
                 // Lấy đường dẫn từ cấu hình
                 string basePath = _configuration["FileStorage:BasePath"];
                 var avatarDirectory = Path.Combine(basePath, "uploads", "avatars");
-                
+
                 // Tạo thư mục nếu chưa tồn tại
                 Directory.CreateDirectory(avatarDirectory);
 
@@ -209,7 +209,7 @@ namespace webthitn_backend.Controllers
                         // Xử lý đường dẫn để lấy tên file
                         var oldAvatarFileName = Path.GetFileName(user.AvatarUrl.Replace("/uploads/avatars/", ""));
                         var oldAvatarPath = Path.Combine(avatarDirectory, oldAvatarFileName);
-                        
+
                         if (System.IO.File.Exists(oldAvatarPath))
                         {
                             System.IO.File.Delete(oldAvatarPath);
@@ -227,11 +227,13 @@ namespace webthitn_backend.Controllers
                 user.UpdatedAt = DateTime.UtcNow;
 
                 // More detailed logging for database update
-                try {
+                try
+                {
                     await _context.SaveChangesAsync();
                     _logger.LogInformation($"Avatar updated in database for user {userIdInt}: {avatarUrl}");
                 }
-                catch (Exception dbEx) {
+                catch (Exception dbEx)
+                {
                     _logger.LogError($"Database error: {dbEx.Message}, {dbEx.InnerException?.Message}");
                     return StatusCode(500, new { message = "Lỗi cập nhật database", error = dbEx.Message });
                 }
@@ -246,8 +248,9 @@ namespace webthitn_backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Avatar upload error: {ex.Message}, {ex.StackTrace}");
-                return StatusCode(500, new { 
-                    success = false, 
+                return StatusCode(500, new
+                {
+                    success = false,
                     message = "Đã xảy ra lỗi khi cập nhật ảnh đại diện",
                     error = ex.Message
                 });
@@ -256,7 +259,7 @@ namespace webthitn_backend.Controllers
         // 3. Admin: Lấy danh sách người dùng
         [Authorize(Roles = "Admin,Teacher,Student")]
         [HttpGet("list")]
-        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? grade=null)
+        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? grade = null)
         {
             var totalCount = await _context.Users.CountAsync();
 
@@ -307,7 +310,7 @@ namespace webthitn_backend.Controllers
             return Ok(new { message = "Cập nhật vai trò thành công." });
         }
 
-        
+
         // 5. Admin: Khóa/mở khóa tài khoản người dùng
         [Authorize(Roles = "Admin")]
         [HttpPut("status/{id}")]
@@ -353,5 +356,54 @@ namespace webthitn_backend.Controllers
                 currentUser = User.Identity.IsAuthenticated ? User.FindFirst(ClaimTypes.NameIdentifier)?.Value : null
             });
         }
+        // 7. Admin: Lấy danh sách email của người dùng
+        [Authorize(Roles = "Admin")]
+        [HttpPost("emails")]
+        public async Task<IActionResult> GetEmails([FromBody] GetEmailsDto model)
+        {
+            if (model.UserIds == null || model.UserIds.Count == 0)
+            {
+                return BadRequest(new { message = "Danh sách ID người dùng không hợp lệ." });
+            }
+
+            var emails = await _context.Users
+                .Where(u => model.UserIds.Contains(u.Id))
+                .Select(u => new { u.Email, u.FullName })
+                .ToListAsync();
+
+            return Ok(emails);
+        }
+
+        [HttpGet("details")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetUserDetails([FromQuery] string ids)
+        {
+            if (string.IsNullOrEmpty(ids))
+            {
+                return BadRequest(new { message = "Danh sách ID không được để trống" });
+            }
+
+            var idList = ids.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => int.TryParse(id, out int parsedId) ? parsedId : -1)
+                .Where(id => id > 0)
+                .ToList();
+
+            if (!idList.Any())
+            {
+                return BadRequest(new { message = "Không có ID hợp lệ trong danh sách" });
+            }
+
+            var users = await _context.Users
+                .Where(u => idList.Contains(u.Id))
+                .Select(u => new { u.Id, u.FullName, u.Email, u.Role })
+                .ToListAsync();
+
+            return Ok(users);
+        }
     }
+    public class GetEmailsDto
+        {
+            public List<int> UserIds { get; set; }
+        }
 }
