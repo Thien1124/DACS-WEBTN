@@ -159,6 +159,12 @@ namespace webthitn_backend.Models
             modelBuilder.Entity<User>()
                 .Property(u => u.Classroom)
                 .IsRequired(false);
+            
+            // Add unique constraint for ScoreVerification to prevent duplicates
+            modelBuilder.Entity<ScoreVerification>()
+                .HasIndex(sv => new { sv.ExamResultId, sv.StudentId })
+                .IsUnique()
+                .HasName("IX_ScoreVerifications_ExamResultId_StudentId");
 
             // Seed data
             SeedData(modelBuilder);

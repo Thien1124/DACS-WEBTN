@@ -5725,6 +5725,96 @@
         }
       }
     },
+    "/api/score-verification/pending": {
+      "get": {
+        "tags": [
+          "ScoreVerification"
+        ],
+        "summary": "Lấy danh sách yêu cầu xác minh điểm đang chờ giáo viên xử lý",
+        "parameters": [
+          {
+            "name": "teacherId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/score-verification": {
+      "get": {
+        "tags": [
+          "ScoreVerification"
+        ],
+        "summary": "Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "teacherId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/score-verification/stats": {
+      "get": {
+        "tags": [
+          "ScoreVerification"
+        ],
+        "summary": "Lấy thống kê tổng quan về các yêu cầu xác minh điểm",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/score-verification/respond/{id}": {
       "post": {
         "tags": [
@@ -8417,7 +8507,8 @@
           "examResultId": {
             "type": "integer",
             "description": "ID kết quả bài thi cần xác minh điểm",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "reason": {
             "type": "string",

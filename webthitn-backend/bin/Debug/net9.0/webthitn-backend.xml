@@ -1091,6 +1091,21 @@
             Học sinh yêu cầu xác minh điểm số bài thi
             </summary>
         </member>
+        <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetPendingVerifications(System.Nullable{System.Int32})">
+            <summary>
+            Lấy danh sách yêu cầu xác minh điểm đang chờ giáo viên xử lý
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetVerifications(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetVerificationStats">
+            <summary>
+            Lấy thống kê tổng quan về các yêu cầu xác minh điểm
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.ScoreVerificationController.RespondToVerification(System.Int32,webthitn_backend.DTOs.ScoreVerificationResponseDTO)">
             <summary>
             Giáo viên phản hồi yêu cầu xác minh điểm

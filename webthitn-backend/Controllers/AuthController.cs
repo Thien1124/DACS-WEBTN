@@ -232,20 +232,10 @@ namespace webthitn_backend.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Thời gian hết hạn phụ thuộc vào tùy chọn "ghi nhớ mật khẩu"
-            DateTime expiresTime;
-            if (rememberMe)
-            {
-                // Nếu chọn "ghi nhớ mật khẩu", token có hiệu lực trong 30 ngày
-                expiresTime = DateTime.Now.AddDays(30);
-                _logger.LogInformation($"Tạo token cho {user.Username} với thời hạn 30 ngày (RememberMe)");
-            }
-            else
-            {
-                // Nếu không, token có hiệu lực trong 1 ngày như cũ
-                expiresTime = DateTime.Now.AddDays(1);
-                _logger.LogInformation($"Tạo token cho {user.Username} với thời hạn 1 ngày (Session)");
-            }
+            // Thời gian hết hạn token luôn là 15 phút
+            DateTime expiresTime = DateTime.Now.AddSeconds(15);
+
+            _logger.LogInformation($"Tạo token cho {user.Username} với thời hạn 15 phút");
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],

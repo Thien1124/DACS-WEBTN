@@ -5,7 +5,7 @@ namespace webthitn_backend.DTOs
         /// <summary>
         /// ID kết quả bài thi cần xác minh điểm
         /// </summary>
-        public int ExamResultId { get; set; }
+        public int? ExamResultId { get; set; }
 
         /// <summary>
         /// Lý do yêu cầu xác minh điểm

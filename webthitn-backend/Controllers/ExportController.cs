@@ -52,7 +52,9 @@ namespace webthitn_backend.Controllers
 
                 // Lấy danh sách học sinh - Chỉ dùng các trường cơ bản chắc chắn tồn tại
                 var students = await _context.Users
-                    .Where(u => u.Role == "Student")
+                    .Where(u => u.Role == "Student"
+                        && !u.Username.Contains("CLASS")
+                        && u.Classroom == request.ClassroomName)
                     .OrderBy(u => u.Username)
                     .Select(u => new
                     {
@@ -178,7 +180,8 @@ namespace webthitn_backend.Controllers
                 var students = await _context.OfficialExamStudents
                     .Include(oes => oes.Student)
                     .Include(oes => oes.ExamResult)
-                    .Where(oes => oes.OfficialExamId == request.OfficialExamId)
+                    .Where(oes => oes.OfficialExamId == request.OfficialExamId
+                     && !oes.Student.Username.Contains("CLASS"))
                     .OrderBy(oes => oes.Student.Username)
                     .ToListAsync();
 
