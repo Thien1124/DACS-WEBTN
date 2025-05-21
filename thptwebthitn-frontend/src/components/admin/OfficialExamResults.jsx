@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { exportStudents, exportScores } from '../../services/studentService'
 import { 
-  FaArrowLeft, FaCalendarAlt, FaUserGraduate, FaClock, 
+  FaArrowLeft, FaFileExcel, FaUserGraduate, FaClock, 
   FaChartBar, FaGraduationCap, FaCheckCircle, FaTimesCircle,
   FaInfoCircle, FaStar, FaStopwatch, FaTrophy, FaPercent,
   FaMedal, FaChevronDown, FaChevronUp, FaChartLine
@@ -16,6 +17,8 @@ import {
 import apiClient from '../../services/apiClient';
 import { showErrorToast,showSuccessToast } from '../../utils/toastUtils';
 import LoadingSpinner from '../common/LoadingSpinner';
+import {toast} from 'react-toastify';
+import ConfirmModal from '../common/ConfirmModal';
 
 // Main container
 const Container = styled.div`
@@ -111,6 +114,38 @@ const CardTitle = styled.h3`
 
 const CardBody = styled.div`
   padding: 1.5rem;
+`;
+const Button = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  background-color: ${props => props.primary 
+    ? '#4299e1' 
+    : props.success
+      ? '#48bb78'
+      : props.theme === 'dark' ? '#2d3748' : '#e2e8f0'};
+  color: ${props => props.primary || props.success
+    ? 'white' 
+    : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  
+  &:hover {
+    background-color: ${props => props.primary 
+      ? '#3182ce' 
+      : props.success
+        ? '#38a169'
+        : props.theme === 'dark' ? '#4a5568' : '#cbd5e0'};
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 // Status badge
@@ -491,6 +526,12 @@ const OfficialExamResults = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [students, setStudents] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalData, setConfirmModalData] = useState({
+    title: '',
+    message: '',
+    confirmAction: null
+  });
   
   useEffect(() => {
     fetchStatistics();
@@ -506,7 +547,12 @@ const OfficialExamResults = () => {
       // Fetch students data
       const examResponse = await apiClient.get(`/api/official-exams/${id}`);
       if (examResponse.data.students) {
-        setStudents(examResponse.data.students);
+        // Filter out students with "CLASS" in their student code (Mã)
+        const filteredStudents = examResponse.data.students.filter(student => 
+          !(student.studentCode && student.studentCode.toUpperCase().includes("CLASS"))
+        );
+        console.log(`Filtered out ${examResponse.data.students.length - filteredStudents.length} students with CLASS in student code`);
+        setStudents(filteredStudents);
       }
     } catch (error) {
       console.error('Error fetching exam statistics:', error);
@@ -515,26 +561,243 @@ const OfficialExamResults = () => {
       setLoading(false);
     }
   };
-  
-  const handleReleaseResults = async () => {
+  const handleExportStudentsList = async () => {
   try {
-    await apiClient.post(`/api/official-exams/${id}/release-results`, {
-      release: !stats.resultsReleased,
-      notificationMessage: !stats.resultsReleased
-        ? "Kết quả kỳ thi đã được công bố cho học sinh"
-        : "Kết quả kỳ thi đã bị ẩn"
+    // Start loading indicator
+    const toastId = showSuccessToast("Đang xuất danh sách học sinh...", {
+      autoClose: false,
+      closeButton: false
     });
-    showSuccessToast(
-      !stats.resultsReleased 
-        ? "Đã công bố kết quả kỳ thi thành công" 
-        : "Đã ẩn kết quả kỳ thi thành công"
-    );
-    // Refresh data
-    fetchStatistics();
+    
+    // Get classroom name from stats if available, otherwise use a default
+    const classroomName = stats?.classroomName || "Lớp";
+    
+    // Call the export API
+    const response = await exportStudents({ classroomName });
+    
+    // Create a URL for the downloaded file
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Get a filename from headers if available or create a default one
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'danh_sach_hoc_sinh.xlsx';
+    
+    if (contentDisposition) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(contentDisposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Update toast message
+    toast.update(toastId, {
+      render: "Xuất danh sách học sinh thành công!",
+      type: "success",
+      autoClose: 3000
+    });
   } catch (error) {
-    console.error('Error updating results release status:', error);
-    showErrorToast('Không thể cập nhật trạng thái công bố kết quả');
+    console.error('Lỗi khi xuất danh sách học sinh:', error);
+    showErrorToast("Không thể xuất danh sách học sinh. Vui lòng thử lại sau.");
   }
+};
+
+const handleExportScores = async () => {
+  try {
+    // Make sure we have an exam ID
+    if (!id) {
+      showErrorToast("Không có ID kỳ thi để xuất điểm");
+      return;
+    }
+    
+    // Start loading indicator
+    const toastId = showSuccessToast("Đang xuất bảng điểm...", {
+      autoClose: false,
+      closeButton: false
+    });
+    
+    // Call the export API
+    const response = await exportScores({ officialExamId: parseInt(id, 10) });
+    
+    // Create a URL for the downloaded file
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Get a filename from headers if available or create a default one
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = `bang_diem_ky_thi_${id}.xlsx`;
+    
+    if (contentDisposition) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(contentDisposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Update toast message
+    toast.update(toastId, {
+      render: "Xuất bảng điểm thành công!",
+      type: "success",
+      autoClose: 3000
+    });
+  } catch (error) {
+    console.error('Lỗi khi xuất bảng điểm:', error);
+    showErrorToast("Không thể xuất bảng điểm. Vui lòng thử lại sau.");
+  }
+};
+  // Updated release results function to only send email notifications
+const handleReleaseResults = () => {
+  // Prepare the modal data based on whether we're publishing or hiding results
+  const title = !stats.resultsReleased
+    ? "Công bố kết quả kỳ thi"
+    : "Ẩn kết quả kỳ thi";
+    
+  const message = !stats.resultsReleased
+    ? "Bạn có chắc chắn muốn công bố kết quả kỳ thi và gửi thông báo email cho học sinh không?"
+    : "Bạn có chắc chắn muốn ẩn kết quả kỳ thi không?";
+  
+  // Set the confirmation action function
+  const confirmAction = async () => {
+    try {
+      // Start loading indicator
+      let toastId;
+      if (!stats.resultsReleased) {
+        toastId = showSuccessToast("Đang công bố kết quả và gửi email thông báo...", {
+          autoClose: false,
+          closeButton: false
+        });
+      }
+
+      // Call API to toggle results release status
+      await apiClient.post(`/api/official-exams/${id}/release-results`, {
+        release: !stats.resultsReleased,
+        notificationMessage: !stats.resultsReleased
+          ? "Kết quả kỳ thi đã được công bố. Vui lòng đăng nhập vào hệ thống để xem điểm số của bạn."
+          : "Kết quả kỳ thi đã bị ẩn tạm thời."
+      });
+
+      // If we're publishing results, send notifications to all students
+      if (!stats.resultsReleased && students.length > 0) {
+        try {
+          console.log("Fetching student data for notifications...");
+          
+          // Get complete student data directly from the API that includes emails
+          const studentResponse = await apiClient.get(`/api/official-exams/${id}/students`);
+          console.log("Student API response:", studentResponse.data);
+          
+          // Filter and extract emails - exclude placeholder students with CLASS in code
+          const realStudents = studentResponse.data.students.filter(student => 
+            student && 
+            student.studentCode && 
+            !student.studentCode.includes('CLASS')
+          );
+          
+          console.log(`Found ${realStudents.length} real students for notifications`);
+          
+          // Extract email addresses from real students
+          const studentEmails = realStudents
+            .filter(student => student.email && student.email.includes('@'))
+            .map(student => student.email);
+          
+          console.log(`Found ${studentEmails.length} valid student emails:`, studentEmails);
+          
+          if (studentEmails.length > 0) {
+            console.log("Sending email notifications to:", studentEmails);
+            
+            // Prepare HTML content with better formatting
+            const emailContent = `
+              <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                <h2 style="color: #2b6cb0;">Kết quả kỳ thi đã được công bố</h2>
+                <p>Kính gửi học sinh,</p>
+                <p>Kết quả kỳ thi <strong>${stats.title}</strong> đã được công bố.</p>
+                <p>Vui lòng đăng nhập vào hệ thống để xem điểm số của bạn.</p>
+                <div style="margin: 25px 0;">
+                  <a href="${window.location.origin}/student/exams/${id}/result" 
+                     style="background-color: #4299e1; color: white; padding: 10px 20px; 
+                            text-decoration: none; border-radius: 4px; font-weight: bold;">
+                    Xem kết quả
+                  </a>
+                </div>
+                <p>Trân trọng,<br>Ban Quản Trị.</p>
+              </div>
+            `;
+            
+            // Send the email notification
+            await apiClient.post(`/api/notifications/email`, {
+              recipients: studentEmails.join(';'),
+              subject: `Kết quả kỳ thi: ${stats.title}`,
+              content: emailContent,
+              template: "exam_result_announcement",
+              templateData: JSON.stringify({
+                examTitle: stats.title,
+                resultLink: `${window.location.origin}/student/exams/${id}/result`
+              }),
+              saveNotification: true,
+              type: 1,
+              relatedEntityId: parseInt(id, 10),
+              relatedEntityType: "OfficialExam",
+              link: `/student/exams/${id}/result`
+            });
+            
+            console.log("Email notifications sent successfully");
+            
+            // Update toast with success message
+            toast.update(toastId, {
+              render: "Đã công bố kết quả và gửi email thông báo thành công!",
+              type: "success",
+              isLoading: false,
+              autoClose: 5000
+            });
+          } else {
+            console.log("No valid student emails found for notifications");
+            showSuccessToast("Đã công bố kết quả thành công, nhưng không tìm thấy email học sinh nào để gửi thông báo.");
+          }
+        } catch (emailError) {
+          console.error("Error retrieving student emails or sending notifications:", emailError);
+          console.error("Error details:", emailError.response?.data || emailError.message);
+          toast.warning("Đã công bố kết quả thành công, nhưng có lỗi khi gửi email thông báo cho học sinh.", {
+            autoClose: 5000
+          });
+        }
+      } else if (!stats.resultsReleased) {
+        // No students or all results already published
+        showSuccessToast("Đã công bố kết quả kỳ thi thành công");
+      } else {
+        // Hiding results
+        showSuccessToast("Đã ẩn kết quả kỳ thi thành công");
+      }
+
+      // Refresh data
+      fetchStatistics();
+    } catch (error) {
+      console.error('Error updating results release status:', error);
+      showErrorToast('Không thể cập nhật trạng thái công bố kết quả');
+    }
+  };
+  
+  // Update the modal data state
+  setConfirmModalData({
+    title,
+    message,
+    confirmAction
+  });
+  
+  // Show the confirmation modal
+  setShowConfirmModal(true);
 };
   
   const prepareDistributionData = () => {
@@ -655,6 +918,26 @@ const OfficialExamResults = () => {
           {stats.resultsReleased ? 'Ẩn kết quả' : 'Công bố kết quả'}
         </ReleaseButton>
       </ResultsNotice>
+      
+      <div className="mb-4 d-flex gap-2">
+        <Button 
+          variant={theme === 'dark' ? 'outline-light' : 'outline-primary'} 
+          onClick={handleExportStudentsList}
+          disabled={!stats}
+        >
+          <FaFileExcel className="me-2" /> Xuất danh sách học sinh
+        </Button>
+        
+        <Button 
+          variant={theme === 'dark' ? 'outline-light' : 'outline-primary'} 
+          onClick={handleExportScores}
+          disabled={!stats}
+        >
+          <FaFileExcel className="me-2" /> Xuất bảng điểm
+        </Button>
+        
+        {/* Other existing buttons */}
+      </div>
       
       <Card 
         theme={theme}
@@ -1039,6 +1322,18 @@ const OfficialExamResults = () => {
           </CardBody>
         </Card>
       </GridLayout>
+      <ConfirmModal
+        show={showConfirmModal}
+        title={confirmModalData.title}
+        message={confirmModalData.message}
+        confirmLabel={!stats?.resultsReleased ? "Công bố và gửi email" : "Ẩn kết quả"}
+        cancelLabel="Hủy"
+        onConfirm={() => {
+          setShowConfirmModal(false);
+          confirmModalData.confirmAction();
+        }}
+        onCancel={() => setShowConfirmModal(false)}
+      />
     </Container>
   );
 };

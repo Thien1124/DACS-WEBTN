@@ -1,18 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
 import { 
   FaFileExcel, FaUpload, FaEye, FaCheck, 
   FaTimes, FaDownload, FaQuestionCircle, 
-  FaInfoCircle, FaSave, FaArrowLeft 
+  FaInfoCircle, FaSave, FaArrowLeft,
+  FaCog, FaExclamationTriangle, FaFilter
 } from 'react-icons/fa';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { fetchSubjects } from '../../redux/subjectSlice';
-import { bulkImportQuestions } from '../../redux/questionSlice';
 
+import apiClient from '../../services/apiClient';
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -403,13 +405,85 @@ const SummaryResult = styled.div`
   gap: 0.5rem;
 `;
 
+const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid ${props => props.theme === 'dark' ? '#4a5568' : '#e2e8f0'};
+  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#ffffff'};
+  color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  
+  &:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const FormCheckbox = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  
+  input {
+    margin-right: 0.5rem;
+  }
+  
+  label {
+    color: ${props => props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+    user-select: none;
+  }
+`;
+
+const OptionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
 const ImportQuestionsExcel = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { theme } = useSelector(state => state.ui);
   const fileInputRef = useRef(null);
   
-  // States
+  // States for API parameters
+  const [subjectId, setSubjectId] = useState('');
+  const [chapterId, setChapterId] = useState('');
+  const [levelId, setLevelId] = useState('');
+  const [overrideExisting, setOverrideExisting] = useState(true);
+  const [validateOnly, setValidateOnly] = useState(false);
+  const [continueOnError, setContinueOnError] = useState(true);
+  const [batchSize, setBatchSize] = useState(50);
+  
+  // Data states
+  const [subjects, setSubjects] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [levels, setLevels] = useState([
+    { id: 1, name: 'Nhận biết' },
+    { id: 2, name: 'Thông hiểu' },
+    { id: 3, name: 'Vận dụng' },
+    { id: 4, name: 'Vận dụng cao' }
+  ]);
+  
+  // Original states
   const [step, setStep] = useState(1);
   const [isDragActive, setIsDragActive] = useState(false);
   const [file, setFile] = useState(null);
@@ -425,7 +499,78 @@ const ImportQuestionsExcel = () => {
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState(null);
   
-  // Handle file selection
+  // Fetch subjects and chapters on mount
+  useEffect(() => {
+    fetchAllSubjects();
+  }, []);
+  
+  useEffect(() => {
+    if (subjectId) {
+      fetchChaptersBySubject(subjectId);
+    } else {
+      setChapters([]);
+      setChapterId('');
+    }
+  }, [subjectId]);
+  
+  // Fetch all subjects
+  const fetchAllSubjects = async () => {
+  try {
+    const response = await apiClient.get(`/api/Subject/all`);
+    // Fix: API returns subjects directly in the response.data array, not in response.data.data
+    setSubjects(response.data || []);
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    showErrorToast('Không thể tải danh sách môn học');
+  }
+};
+  
+  // Fetch chapters by subject
+  const fetchChaptersBySubject = async (subjectId) => {
+  try {
+    console.log('Fetching chapters for subject ID:', subjectId);
+    const response = await apiClient.get(`/api/Chapter`, {
+      params: {
+        subjectId: Number(subjectId), // Ensure subjectId is a number
+        page: 1,
+        pageSize: 100,
+        includeInactive: false
+      }
+    });
+    
+    console.log('Chapter API response:', response.data);
+    
+    // Check different possible response structures
+    let chaptersData = [];
+    if (response.data?.data?.items) {
+      // Standard nested response
+      chaptersData = response.data.data.items;
+    } else if (response.data?.items) {
+      // Alternative nested structure
+      chaptersData = response.data.items;
+    } else if (Array.isArray(response.data)) {
+      // Direct array response
+      chaptersData = response.data;
+    } else if (response.data?.data && Array.isArray(response.data.data)) {
+      // Array inside data property
+      chaptersData = response.data.data;
+    }
+    
+    console.log('Parsed chapters:', chaptersData);
+    setChapters(chaptersData || []);
+    
+    // If we got chapters but chapterId is empty, select the first one by default
+    if (chaptersData.length > 0 && !chapterId) {
+      setChapterId(chaptersData[0].id.toString());
+    }
+  } catch (error) {
+    console.error('Error fetching chapters:', error);
+    showErrorToast('Không thể tải danh sách chương');
+    setChapters([]);
+  }
+};
+  
+  // Handle file selection with better error handling
   const handleFileSelect = (selectedFile) => {
     if (!selectedFile) return;
     
@@ -438,12 +583,16 @@ const ImportQuestionsExcel = () => {
     
     setFile(selectedFile);
     
-    // Read the file
+    // Read the file with better error handling
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
+        
+        if (!workbook || workbook.SheetNames.length === 0) {
+          throw new Error('File Excel không hợp lệ hoặc không có dữ liệu');
+        }
         
         // Get the first worksheet
         const worksheetName = workbook.SheetNames[0];
@@ -452,12 +601,20 @@ const ImportQuestionsExcel = () => {
         // Convert to JSON
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         
+        if (!jsonData || jsonData.length <= 1) {
+          throw new Error('File Excel không chứa dữ liệu hoặc chỉ có tiêu đề');
+        }
+        
         setFileData(jsonData);
         parseExcelData(jsonData);
       } catch (error) {
         console.error('Error reading Excel file:', error);
-        showErrorToast('Có lỗi xảy ra khi đọc file Excel');
+        showErrorToast(error.message || 'Có lỗi xảy ra khi đọc file Excel');
       }
+    };
+    
+    reader.onerror = () => {
+      showErrorToast('Không thể đọc file. Vui lòng kiểm tra lại file của bạn.');
     };
     
     reader.readAsArrayBuffer(selectedFile);
@@ -469,19 +626,16 @@ const ImportQuestionsExcel = () => {
     const rows = data.filter((row, index) => index > 0 && row.length > 0);
     
     const parsedQuestions = rows.map((row, index) => {
-      // Expected columns: subject, questionText, difficulty, answerA, answerB, answerC, answerD, correctAnswer, explanation, chapter
       return {
         index: index + 1,
-        subject: row[0] || '',
-        content: row[1] || '',
-        difficulty: row[2] || 'medium',
-        optionA: row[3] || '',
-        optionB: row[4] || '',
-        optionC: row[5] || '',
-        optionD: row[6] || '',
-        correctAnswer: row[7] || '',
-        explanation: row[8] || '',
-        chapter: row[9] || '',
+        content: row[0] || '',
+        optionA: row[1] || '',
+        optionB: row[2] || '',
+        optionC: row[3] || '',
+        optionD: row[4] || '',
+        correctAnswer: row[5] || '',
+        explanation: row[6] || '',
+        level: row[7] || ''
       };
     });
     
@@ -500,7 +654,6 @@ const ImportQuestionsExcel = () => {
       const rowErrors = [];
       
       // Validate required fields
-      if (!question.subject) rowErrors.push('Thiếu môn học');
       if (!question.content) rowErrors.push('Thiếu nội dung câu hỏi');
       if (!question.optionA) rowErrors.push('Thiếu đáp án A');
       if (!question.optionB) rowErrors.push('Thiếu đáp án B');
@@ -547,9 +700,11 @@ const ImportQuestionsExcel = () => {
   
   const handleDrop = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      // Only process the first file if multiple are dropped
       handleFileSelect(e.dataTransfer.files[0]);
     }
   };
@@ -567,52 +722,127 @@ const ImportQuestionsExcel = () => {
   };
   
   // Download template
-  const handleDownloadTemplate = () => {
-    // Create a template worksheet
-    const template = [
-      ['Môn học (*)', 'Nội dung câu hỏi (*)', 'Độ khó', 'Đáp án A (*)', 'Đáp án B (*)', 'Đáp án C', 'Đáp án D', 'Đáp án đúng (*)', 'Giải thích', 'Chương/bài'],
-      ['Toán', 'Câu hỏi mẫu?', 'medium', 'Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D', 'A', 'Giải thích cho đáp án', 'Chương 1'],
-      ['Vật lý', 'Câu hỏi mẫu khác?', 'hard', 'Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D', 'B', 'Giải thích cho đáp án', 'Chương 2'],
-    ];
+  const handleDownloadTemplate = async () => {
+  try {
+    // Show loading toast
+    const loadingToastId = showSuccessToast('Đang tải mẫu...', { autoClose: false });
     
-    // Create a new workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(template);
+    // Fetch the template file from API as blob
+    const response = await apiClient.get('/api/Question/import-template', {
+      responseType: 'blob'
+    });
     
-    // Add the worksheet to the workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    // Create file download URL
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
     
-    // Generate file and download
-    XLSX.writeFile(wb, 'mau_nhap_cau_hoi.xlsx');
+    // Create temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'mau_nhap_cau_hoi.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    // Close loading toast and show success
+    showSuccessToast('Tải mẫu thành công');
+  } catch (error) {
+    console.error('Error downloading template:', error);
+    showErrorToast('Không thể tải mẫu. Vui lòng thử lại sau.');
+  }
+};
+  
+  // Handle validate
+  const handleValidate = async () => {
+    if (!subjectId) {
+      showErrorToast('Vui lòng chọn môn học');
+      return;
+    }
+    
+    if (!file) {
+      showErrorToast('Vui lòng chọn file để nhập');
+      return;
+    }
+    
+    setImporting(true);
+    setImportProgress(10);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await apiClient.post(`/api/Question/import`, formData, {
+        params: {
+          subjectId: Number(subjectId),
+          chapterId: chapterId ? Number(chapterId) : undefined,
+          levelId: levelId ? Number(levelId) : undefined,
+          validateOnly: true,
+          overrideExisting,
+          continueOnError,
+          batchSize: Number(batchSize)
+        },
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setImportProgress(100);
+      
+      // Update validation results based on API response
+      const data = response.data.data;
+      
+      setValidationResults({
+        isValid: data.errorCount === 0,
+        errors: data.errors.map(err => ({ row: err.row, errors: [err.message] })),
+        validCount: data.totalProcessed - data.errorCount,
+        invalidCount: data.errorCount,
+        warnings: data.warnings || []
+      });
+      
+      if (data.errorCount === 0) {
+        showSuccessToast('File hợp lệ, sẵn sàng để nhập');
+      } else {
+        showErrorToast(`Có ${data.errorCount} lỗi trong file. Vui lòng kiểm tra và sửa lại.`);
+      }
+    } catch (error) {
+      console.error('Error validating file:', error);
+      showErrorToast(error.response?.data?.message || 'Có lỗi xảy ra khi kiểm tra file');
+      
+      setValidationResults({
+        isValid: false,
+        errors: [{ row: 0, errors: [error.response?.data?.message || 'Lỗi không xác định'] }],
+        validCount: 0,
+        invalidCount: 1
+      });
+    } finally {
+      setImporting(false);
+    }
   };
   
   // Handle import
   const handleImport = async () => {
-    if (!validationResults.isValid) {
-      showErrorToast('Vui lòng sửa lỗi trước khi nhập câu hỏi');
+    if (!subjectId) {
+      showErrorToast('Vui lòng chọn môn học');
+      return;
+    }
+    
+    if (!file) {
+      showErrorToast('Vui lòng chọn file để nhập');
       return;
     }
     
     setImporting(true);
     setStep(3); // Move to import step
+    setImportProgress(0);
     
     try {
-      // Prepare questions data for API
-      const questionsToImport = questions.map(q => ({
-        subject: q.subject,
-        content: q.content,
-        difficulty: q.difficulty.toLowerCase(),
-        options: [
-          { text: q.optionA, isCorrect: q.correctAnswer.toUpperCase().trim() === 'A' },
-          { text: q.optionB, isCorrect: q.correctAnswer.toUpperCase().trim() === 'B' },
-          { text: q.optionC, isCorrect: q.correctAnswer.toUpperCase().trim() === 'C' },
-          { text: q.optionD, isCorrect: q.correctAnswer.toUpperCase().trim() === 'D' }
-        ].filter(option => option.text), // Remove empty options
-        explanation: q.explanation,
-        chapter: q.chapter
-      }));
+      const formData = new FormData();
+      formData.append('file', file);
       
-      // Mock progress updates
+      // Setup progress tracking
       const updateProgressInterval = setInterval(() => {
         setImportProgress(prev => {
           const newProgress = prev + 5;
@@ -620,37 +850,58 @@ const ImportQuestionsExcel = () => {
         });
       }, 300);
       
-      // In a real app, call your API to import questions
-      // const response = await dispatch(bulkImportQuestions(questionsToImport)).unwrap();
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const response = await apiClient.post(`/api/Question/import`, formData, {
+        params: {
+          subjectId: Number(subjectId),
+          chapterId: chapterId ? Number(chapterId) : undefined,
+          levelId: levelId ? Number(levelId) : undefined,
+          validateOnly: false,
+          overrideExisting,
+          continueOnError,
+          batchSize: Number(batchSize)
+        },
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       
       clearInterval(updateProgressInterval);
       setImportProgress(100);
       
+      const data = response.data;
+      
       // Set import results
       setImportResults({
-        success: true,
-        total: questions.length,
-        imported: questions.length,
-        failed: 0,
-        message: 'Nhập câu hỏi thành công'
+        success: data.success,
+        message: data.message,
+        processingTime: data.processingTime,
+        data: data.data
       });
       
-      showSuccessToast(`Đã nhập thành công ${questions.length} câu hỏi`);
+      if (data.success) {
+        showSuccessToast(data.message);
+      } else {
+        showErrorToast(data.message);
+      }
     } catch (error) {
       console.error('Error importing questions:', error);
       
       setImportResults({
         success: false,
-        total: questions.length,
-        imported: 0,
-        failed: questions.length,
-        message: error.message || 'Có lỗi xảy ra khi nhập câu hỏi'
+        message: error.response?.data?.message || 'Có lỗi xảy ra khi nhập câu hỏi',
+        data: {
+          totalProcessed: 0,
+          successCount: 0,
+          failedCount: 0,
+          errorCount: 1,
+          errors: [{
+            row: 0,
+            message: error.response?.data?.message || 'Lỗi không xác định'
+          }]
+        }
       });
       
-      showErrorToast('Có lỗi xảy ra khi nhập câu hỏi');
+      showErrorToast(error.response?.data?.message || 'Có lỗi xảy ra khi nhập câu hỏi');
     } finally {
       setImporting(false);
     }
@@ -693,265 +944,293 @@ const ImportQuestionsExcel = () => {
       </Header>
       
       <StepContainer theme={theme}>
-        <Step active={step === 1}>
-          <StepNumber active={step === 1} theme={theme}>1</StepNumber>
-          <StepTitle active={step === 1} theme={theme}>Tải lên file</StepTitle>
-        </Step>
-        <Step active={step === 2}>
-          <StepNumber active={step === 2} theme={theme}>2</StepNumber>
-          <StepTitle active={step === 2} theme={theme}>Xem trước và kiểm tra</StepTitle>
-        </Step>
-        <Step active={step === 3}>
-          <StepNumber active={step === 3} theme={theme}>3</StepNumber>
-          <StepTitle active={step === 3} theme={theme}>Nhập dữ liệu</StepTitle>
+        <Step active={true}>
+          <StepTitle active={true} theme={theme}>Tải lên và nhập dữ liệu</StepTitle>
         </Step>
       </StepContainer>
       
-      {step === 1 && (
-        <Card theme={theme}>
-          <CardHeader theme={theme}>
-            <CardTitle theme={theme}>
-              <FaUpload /> Tải lên file Excel
-            </CardTitle>
-          </CardHeader>
-          <CardBody>
-            <UploadZone 
-              theme={theme}
-              isDragActive={isDragActive}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={handleUploadClick}
-            >
-              <UploadIcon theme={theme} />
-              <UploadText theme={theme}>
-                Kéo và thả file Excel hoặc click để chọn file
-              </UploadText>
-              <UploadSubtext theme={theme}>
-                Hỗ trợ file .xlsx, .xls
-              </UploadSubtext>
-              
-              <FileInput 
-                type="file" 
-                ref={fileInputRef}
-                accept=".xlsx,.xls"
-                onChange={handleFileInputChange}
-              />
-            </UploadZone>
+      <Card theme={theme}>
+        <CardHeader theme={theme}>
+          <CardTitle theme={theme}>
+            <FaUpload /> Tải lên file Excel và cấu hình
+          </CardTitle>
+        </CardHeader>
+        <CardBody>
+          {/* Subject and Chapter Selection */}
+          <OptionsGrid>
+            <FormGroup>
+              <FormLabel theme={theme}>Môn học *</FormLabel>
+              <FormSelect 
+                theme={theme}
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                required
+              >
+                <option value="">-- Chọn môn học --</option>
+                {subjects.map(subject => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </FormSelect>
+            </FormGroup>
             
-            <InfoBox theme={theme}>
-              <InfoTitle theme={theme}>
-                <FaInfoCircle /> Hướng dẫn nhập câu hỏi
-              </InfoTitle>
-              <InfoList theme={theme}>
-                <li>File Excel phải theo định dạng mẫu, với các cột: Môn học, Nội dung câu hỏi, Độ khó, Đáp án A, Đáp án B, Đáp án C, Đáp án D, Đáp án đúng, Giải thích, Chương/bài</li>
-                <li>Các trường bắt buộc: Môn học, Nội dung câu hỏi, Đáp án A, Đáp án B, Đáp án đúng</li>
-                <li>Đáp án đúng phải là một trong các giá trị: A, B, C, D</li>
-                <li>Độ khó có thể là: easy, medium, hard (mặc định là medium)</li>
-              </InfoList>
-              <div style={{ marginTop: '1rem' }}>
-                <TemplateLink href="#" onClick={handleDownloadTemplate}>
-                  <FaDownload /> Tải file mẫu
-                </TemplateLink>
+            <FormGroup>
+              <FormLabel theme={theme}>Chương/bài</FormLabel>
+              <FormSelect 
+                theme={theme}
+                value={chapterId}
+                onChange={(e) => setChapterId(e.target.value)}
+                disabled={!subjectId || chapters.length === 0}
+              >
+                <option value="">-- Chọn chương --</option>
+                {chapters.map(chapter => (
+                  <option key={chapter.id} value={chapter.id}>
+                    {chapter.name}
+                  </option>
+                ))}
+              </FormSelect>
+            </FormGroup>
+            
+            <FormGroup>
+              <FormLabel theme={theme}>Mức độ mặc định</FormLabel>
+              <FormSelect 
+                theme={theme}
+                value={levelId}
+                onChange={(e) => setLevelId(e.target.value)}
+              >
+                <option value="">-- Chọn mức độ --</option>
+                {levels.map(level => (
+                  <option key={level.id} value={level.id}>
+                    {level.name}
+                  </option>
+                ))}
+              </FormSelect>
+            </FormGroup>
+          </OptionsGrid>
+          
+          {/* Advanced Options */}
+          <Card theme={theme} style={{ marginBottom: '1.5rem' }}>
+            <CardHeader theme={theme}>
+              <CardTitle theme={theme}>
+                <FaCog /> Tùy chọn nhập
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              <OptionsGrid>
+                <FormCheckbox theme={theme}>
+                  <input
+                    type="checkbox"
+                    id="overrideExisting"
+                    checked={overrideExisting}
+                    onChange={(e) => setOverrideExisting(e.target.checked)}
+                    aria-label="Ghi đè câu hỏi hiện có"
+                  />
+                  <label htmlFor="overrideExisting">Ghi đè câu hỏi hiện có</label>
+                </FormCheckbox>
+                
+                <FormCheckbox theme={theme}>
+                  <input
+                    type="checkbox"
+                    id="continueOnError"
+                    checked={continueOnError}
+                    onChange={(e) => setContinueOnError(e.target.checked)}
+                  />
+                  <label htmlFor="continueOnError">Tiếp tục khi gặp lỗi</label>
+                </FormCheckbox>
+                
+                <FormGroup>
+                  <FormLabel theme={theme}>Kích thước lô</FormLabel>
+                  <FormSelect 
+                    theme={theme}
+                    value={batchSize}
+                    onChange={(e) => setBatchSize(Number(e.target.value))}
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </FormSelect>
+                </FormGroup>
+              </OptionsGrid>
+            </CardBody>
+          </Card>
+          
+          {/* File Upload Zone */}
+          <UploadZone 
+            theme={theme}
+            isDragActive={isDragActive}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleUploadClick}
+          >
+            <UploadIcon theme={theme} />
+            {file ? (
+              <>
+                <UploadText theme={theme}>
+                  Đã chọn: {file.name}
+                </UploadText>
+                <UploadSubtext theme={theme}>
+                  Click để chọn file khác
+                </UploadSubtext>
+              </>
+            ) : (
+              <>
+                <UploadText theme={theme}>
+                  Kéo và thả file Excel hoặc click để chọn file
+                </UploadText>
+                <UploadSubtext theme={theme}>
+                  Hỗ trợ file .xlsx, .xls
+                </UploadSubtext>
+              </>
+            )}
+            
+            <FileInput 
+              type="file" 
+              ref={fileInputRef}
+              accept=".xlsx,.xls"
+              onChange={handleFileInputChange}
+            />
+          </UploadZone>
+          
+          {/* Import Results (shown after import) */}
+          {importResults && (
+            <Summary theme={theme} style={{ marginTop: '1.5rem' }}>
+              <SummaryTitle theme={theme}>Kết quả nhập câu hỏi</SummaryTitle>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Thời gian xử lý</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.processingTime}ms</SummaryValue>
+              </SummaryRow>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Tổng số câu hỏi</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.data?.totalProcessed || 0}</SummaryValue>
+              </SummaryRow>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Đã nhập thành công</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.data?.successCount || 0}</SummaryValue>
+              </SummaryRow>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Câu hỏi mới</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.data?.newQuestions || 0}</SummaryValue>
+              </SummaryRow>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Câu hỏi cập nhật</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.data?.updatedQuestions || 0}</SummaryValue>
+              </SummaryRow>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Không nhập được</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.data?.failedCount || 0}</SummaryValue>
+              </SummaryRow>
+              <SummaryRow theme={theme}>
+                <SummaryLabel theme={theme}>Cảnh báo</SummaryLabel>
+                <SummaryValue theme={theme}>{importResults.data?.warningCount || 0}</SummaryValue>
+              </SummaryRow>
+              
+              <SummaryResult success={importResults.success} theme={theme}>
+                {importResults.success 
+                  ? <><FaCheck /> {importResults.message}</> 
+                  : <><FaTimes /> {importResults.message}</>}
+              </SummaryResult>
+              
+              {importResults.data?.warnings && importResults.data.warnings.length > 0 && (
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: theme === 'dark' ? 'rgba(246, 173, 85, 0.1)' : 'rgba(246, 173, 85, 0.05)', borderRadius: '0.375rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <FaExclamationTriangle style={{ color: '#ed8936' }} />
+                    <span style={{ fontWeight: 500 }}>Cảnh báo:</span>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '1.5rem', maxHeight: '200px', overflowY: 'auto' }}>
+                    {importResults.data.warnings.slice(0, 10).map((warning, index) => (
+                      <li key={index} style={{ color: theme === 'dark' ? '#f6ad55' : '#dd6b20', marginBottom: '0.25rem' }}>
+                        Dòng {warning.row}: {warning.message}
+                      </li>
+                    ))}
+                    {importResults.data.warnings.length > 10 && (
+                      <li style={{ color: theme === 'dark' ? '#f6ad55' : '#dd6b20' }}>
+                        ...và {importResults.data.warnings.length - 10} cảnh báo khác
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+              
+              {importResults.data?.errors && importResults.data.errors.length > 0 && (
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: theme === 'dark' ? 'rgba(245, 101, 101, 0.1)' : 'rgba(245, 101, 101, 0.05)', borderRadius: '0.375rem', borderLeft: '4px solid #e53e3e' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <FaTimes style={{ color: '#e53e3e' }} />
+                    <span style={{ fontWeight: 500 }}>Lỗi:</span>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '1.5rem', maxHeight: '200px', overflowY: 'auto' }}>
+                    {importResults.data.errors.map((error, index) => (
+                      <li key={index} style={{ color: theme === 'dark' ? '#fc8181' : '#e53e3e', marginBottom: '0.25rem' }}>
+                        Dòng {error.row}: {error.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Summary>
+          )}
+          
+          {importing && (
+            <ImportProgress style={{ marginTop: '1.5rem' }}>
+              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <LoadingSpinner size={48} />
+                <p style={{ marginTop: '1rem' }}>Đang nhập câu hỏi vào hệ thống...</p>
               </div>
-            </InfoBox>
-          </CardBody>
-        </Card>
-      )}
-      
-      {step === 2 && (
-        <Card theme={theme}>
-          <CardHeader theme={theme}>
-            <CardTitle theme={theme}>
-              <FaEye /> Xem trước và kiểm tra dữ liệu
-            </CardTitle>
-            <div>
-              <ValidationBadge valid={validationResults.isValid} theme={theme}>
-                {validationResults.isValid 
-                  ? <><FaCheck /> Hợp lệ</> 
-                  : <><FaTimes /> Có lỗi</>}
-              </ValidationBadge>
+              <ProgressBar progress={importProgress} theme={theme} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+                <span>0%</span>
+                <span>{importProgress}%</span>
+                <span>100%</span>
+              </div>
+            </ImportProgress>
+          )}
+          
+          <InfoBox theme={theme}>
+            <InfoTitle theme={theme}>
+              <FaInfoCircle /> Hướng dẫn nhập câu hỏi
+            </InfoTitle>
+            <InfoList theme={theme}>
+              <li>File Excel phải theo định dạng mẫu, với các cột: Nội dung câu hỏi, Đáp án A, Đáp án B, Đáp án C, Đáp án D, Đáp án đúng, Giải thích</li>
+              <li>Các trường bắt buộc: Nội dung câu hỏi, Đáp án A, Đáp án B, Đáp án đúng</li>
+              <li>Đáp án đúng phải là một trong các giá trị: A, B, C, D</li>
+              <li>Chọn môn học bắt buộc, chương và mức độ có thể bỏ trống</li>
+            </InfoList>
+            <div style={{ marginTop: '1rem' }}>
+              <TemplateLink href="#" onClick={handleDownloadTemplate}>
+                <FaDownload /> Tải file mẫu
+              </TemplateLink>
             </div>
-          </CardHeader>
-          <CardBody>
-            {questions.length > 0 ? (
-              <>
-                <div>
-                  <strong>Tổng số câu hỏi:</strong> {questions.length}
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <span>
-                      <ValidationBadge valid={true} theme={theme}>
-                        <FaCheck /> {validationResults.validCount} hợp lệ
-                      </ValidationBadge>
-                    </span>
-                    <span>
-                      <ValidationBadge valid={false} theme={theme}>
-                        <FaTimes /> {validationResults.invalidCount} không hợp lệ
-                      </ValidationBadge>
-                    </span>
-                  </div>
-                </div>
-                
-                {validationResults.errors.length > 0 && (
-                  <div style={{ margin: '1rem 0' }}>
-                    <ValidationMessage error theme={theme}>
-                      Vui lòng sửa các lỗi sau trong file Excel và tải lên lại:
-                    </ValidationMessage>
-                    <ul>
-                      {validationResults.errors.slice(0, 5).map((error, index) => (
-                        <ValidationMessage key={index} error theme={theme}>
-                          Dòng {error.row}: {error.errors.join(', ')}
-                        </ValidationMessage>
-                      ))}
-                      {validationResults.errors.length > 5 && (
-                        <ValidationMessage error theme={theme}>
-                          ...và {validationResults.errors.length - 5} lỗi khác
-                        </ValidationMessage>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                
-                <PreviewTable>
-                  <Table theme={theme}>
-                    <thead>
-                      <tr>
-                        <th>STT</th>
-                        <th>Môn học</th>
-                        <th>Nội dung câu hỏi</th>
-                        <th>Độ khó</th>
-                        <th>Đáp án A</th>
-                        <th>Đáp án B</th>
-                        <th>Đáp án C</th>
-                        <th>Đáp án D</th>
-                        <th>Đáp án đúng</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {questions.slice(0, 10).map((question, index) => {
-                        const isRowValid = !validationResults.errors.some(err => err.row === question.index + 1);
-                        return (
-                          <tr key={index}>
-                            <td>{question.index}</td>
-                            <td>{question.subject || <span style={{ color: 'red' }}>Thiếu</span>}</td>
-                            <td>{question.content || <span style={{ color: 'red' }}>Thiếu</span>}</td>
-                            <td>{question.difficulty}</td>
-                            <td>{question.optionA || <span style={{ color: 'red' }}>Thiếu</span>}</td>
-                            <td>{question.optionB || <span style={{ color: 'red' }}>Thiếu</span>}</td>
-                            <td>{question.optionC}</td>
-                            <td>{question.optionD}</td>
-                            <td>
-                              {question.correctAnswer 
-                                ? ['A', 'B', 'C', 'D'].includes(question.correctAnswer.toUpperCase().trim())
-                                  ? question.correctAnswer.toUpperCase().trim()
-                                  : <span style={{ color: 'red' }}>Không hợp lệ</span>
-                                : <span style={{ color: 'red' }}>Thiếu</span>}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </PreviewTable>
-                
-                {questions.length > 10 && (
-                  <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.875rem', color: theme === 'dark' ? '#a0aec0' : '#718096' }}>
-                    Hiển thị 10/{questions.length} câu hỏi
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <FaQuestionCircle size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                <p>Không có dữ liệu câu hỏi nào được tìm thấy trong file.</p>
-                <Button 
-                  primary
-                  onClick={handleRestart}
-                  style={{ marginTop: '1rem', display: 'inline-flex' }}
-                >
-                  <FaUpload /> Tải lên file khác
-                </Button>
-              </div>
-            )}
-          </CardBody>
-          <CardFooter theme={theme}>
-            <Button theme={theme} onClick={handleRestart}>
-              <FaTimes /> Hủy
-            </Button>
-            <Button 
-              primary 
-              onClick={handleImport}
-              disabled={!validationResults.isValid || validationResults.validCount === 0}
-            >
-              <FaSave /> Nhập câu hỏi
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-      
-      {step === 3 && (
-        <Card theme={theme}>
-          <CardHeader theme={theme}>
-            <CardTitle theme={theme}>
-              <FaSave /> Đang nhập câu hỏi
-            </CardTitle>
-          </CardHeader>
-          <CardBody>
-            {importing ? (
-              <ImportProgress>
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                  <LoadingSpinner size={48} />
-                  <p style={{ marginTop: '1rem' }}>Đang nhập câu hỏi vào hệ thống...</p>
-                </div>
-                <ProgressBar progress={importProgress} theme={theme} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                  <span>0%</span>
-                  <span>{importProgress}%</span>
-                  <span>100%</span>
-                </div>
-              </ImportProgress>
-            ) : importResults && (
-              <Summary theme={theme}>
-                <SummaryTitle theme={theme}>Kết quả nhập câu hỏi</SummaryTitle>
-                <SummaryRow theme={theme}>
-                  <SummaryLabel theme={theme}>Tổng số câu hỏi</SummaryLabel>
-                  <SummaryValue theme={theme}>{importResults.total}</SummaryValue>
-                </SummaryRow>
-                <SummaryRow theme={theme}>
-                  <SummaryLabel theme={theme}>Đã nhập thành công</SummaryLabel>
-                  <SummaryValue theme={theme}>{importResults.imported}</SummaryValue>
-                </SummaryRow>
-                <SummaryRow theme={theme}>
-                  <SummaryLabel theme={theme}>Không nhập được</SummaryLabel>
-                  <SummaryValue theme={theme}>{importResults.failed}</SummaryValue>
-                </SummaryRow>
-                
-                <SummaryResult success={importResults.success} theme={theme}>
-                  {importResults.success 
-                    ? <><FaCheck /> {importResults.message}</> 
-                    : <><FaTimes /> {importResults.message}</>}
-                </SummaryResult>
-              </Summary>
-            )}
-          </CardBody>
-          <CardFooter theme={theme}>
-            {importResults && importResults.success ? (
-              <>
-                <Button theme={theme} onClick={handleRestart}>
-                  <FaUpload /> Nhập file khác
-                </Button>
-                <Button primary onClick={handleGoBack}>
-                  <FaCheck /> Xong
-                </Button>
-              </>
-            ) : (
-              <Button theme={theme} onClick={handleRestart} disabled={importing}>
+          </InfoBox>
+        </CardBody>
+        <CardFooter theme={theme}>
+          {!importResults ? (
+            <>
+              <Button theme={theme} onClick={handleGoBack}>
                 <FaTimes /> Hủy
               </Button>
-            )}
-          </CardFooter>
-        </Card>
-      )}
+              <Button 
+                primary 
+                onClick={handleImport}
+                disabled={!file || !subjectId || importing}
+              >
+                <FaSave /> Nhập dữ liệu
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button theme={theme} onClick={handleRestart}>
+                <FaUpload /> Nhập file khác
+              </Button>
+              <Button primary onClick={handleGoBack}>
+                <FaCheck /> Xong
+              </Button>
+            </>
+          )}
+        </CardFooter>
+      </Card>
     </Container>
   );
 };

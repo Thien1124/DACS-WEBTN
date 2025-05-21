@@ -65,22 +65,37 @@ const InfoItem = styled.div`
   svg {
     margin-right: 0.5rem;
   }
+  
+  &.time-info {
+    font-weight: bold;
+    
+    span.time-value {
+      color: #f44336;
+      font-size: 1.1rem;
+      margin-left: 0.25rem;
+    }
+  }
 `;
 
 const TimerContainer = styled.div`
   display: flex;
   align-items: center;
-  background-color: ${props => props.theme === 'dark' ? '#2d3748' : '#ffffff'};
+  background-color: ${props => props.isWarning 
+    ? props.theme === 'dark' ? '#4a1d1d' : '#ffeeee'
+    : props.theme === 'dark' ? '#2d3748' : '#ffffff'};
   padding: 0.5rem 1rem;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  color: ${props => props.isWarning ? '#e53e3e' : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
+  box-shadow: ${props => props.isWarning 
+    ? '0 2px 8px rgba(244, 67, 54, 0.3)' 
+    : '0 2px 8px rgba(0, 0, 0, 0.1)'};
+  color: ${props => props.isWarning ? '#f44336' : props.theme === 'dark' ? '#e2e8f0' : '#2d3748'};
   animation: ${props => props.isWarning ? 'pulse 1s infinite' : 'none'};
+  border: ${props => props.isWarning ? '2px solid #f44336' : 'none'};
   
   @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
   }
 `;
 
@@ -89,8 +104,10 @@ const TimerIcon = styled(FaClock)`
 `;
 
 const TimerText = styled.span`
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f44336; /* Bright red color */
+  text-shadow: ${props => props.theme === 'dark' ? '0 0 2px rgba(0,0,0,0.3)' : 'none'};
 `;
 
 const ContentContainer = styled.div`
@@ -169,12 +186,12 @@ const QuestionButton = styled.button`
   border: none;
   background-color: ${props => {
     if (props.isActive) return props.theme === 'dark' ? '#4285f4' : '#4285f4';
-    if (props.isAnswered) return props.theme === 'dark' ? 'rgba(52, 168, 83, 0.2)' : 'rgba(52, 168, 83, 0.1)';
+    if (props.isAnswered) return props.theme === 'dark' ? 'rgba(52, 168, 83, 0.5)' : 'rgba(52, 168, 83, 0.3)';
     return props.theme === 'dark' ? '#4a5568' : '#edf2f7';
   }};
   color: ${props => {
     if (props.isActive) return '#ffffff';
-    if (props.isAnswered) return props.theme === 'dark' ? '#e2e8f0' : '#2d3748';
+    if (props.isAnswered) return props.theme === 'dark' ? '#ffffff' : '#1e552b';
     return props.theme === 'dark' ? '#e2e8f0' : '#2d3748';
   }};
   font-weight: ${props => (props.isActive || props.isAnswered) ? 'bold' : 'normal'};
@@ -182,7 +199,11 @@ const QuestionButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: ${props => props.isActive ? '0 0 0 2px #4285f4' : 'none'};
+  box-shadow: ${props => {
+    if (props.isActive) return '0 0 0 2px #4285f4';
+    if (props.isAnswered) return '0 0 0 1px #34a853';
+    return 'none';
+  }};
   transition: all 0.2s ease;
   
   &:hover {
@@ -190,7 +211,7 @@ const QuestionButton = styled.button`
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     background-color: ${props => {
       if (props.isActive) return props.theme === 'dark' ? '#4285f4' : '#4285f4';
-      if (props.isAnswered) return props.theme === 'dark' ? 'rgba(52, 168, 83, 0.3)' : 'rgba(52, 168, 83, 0.2)';
+      if (props.isAnswered) return props.theme === 'dark' ? 'rgba(52, 168, 83, 0.7)' : 'rgba(52, 168, 83, 0.5)';
       return props.theme === 'dark' ? '#2d3748' : '#e2e8f0';
     }};
   }
@@ -377,6 +398,24 @@ const ActionButtonsContainer = styled.div`
   }
 `;
 
+// Add this styled component definition with the other styled components
+const WarningMessage = styled.div`
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: ${props => props.theme === 'dark' ? '#4a3523' : '#fff3e0'};
+  border-left: 4px solid #ff9800;
+  color: ${props => props.theme === 'dark' ? '#ffd180' : '#e65100'};
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+`;
+
 const StudentTakeExam = () => {
   const { officialExamId } = useParams();
   const navigate = useNavigate();
@@ -394,6 +433,10 @@ const StudentTakeExam = () => {
   const [isTimeWarning, setIsTimeWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [totalExamDuration, setTotalExamDuration] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [canSubmit, setCanSubmit] = useState(false);
+  const [cheatingAttempted, setCheatingAttempted] = useState(false);
   
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5006';
   const timerRef = useRef(null);
@@ -414,6 +457,7 @@ const StudentTakeExam = () => {
     };
   }, [isAuthenticated, officialExamId]);
   
+  // Update the fetchExamData function to correctly handle the exam timer
   const fetchExamData = async () => {
     try {
       setLoading(true);
@@ -438,22 +482,66 @@ const StudentTakeExam = () => {
         });
         setAnswers(initialAnswers);
         
-        // Set up timer
+        // Get times from response
+        const startTime = new Date(response.data.startTime).getTime();
         const endTime = new Date(response.data.endTime).getTime();
-        const updateTimer = () => {
-          const now = new Date().getTime();
-          const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        
+        // Debug time information
+        console.log("Raw time values from API:");
+        console.log("- Start time (ISO):", response.data.startTime);
+        console.log("- End time (ISO):", response.data.endTime);
+        console.log("- Local start time:", new Date(startTime).toLocaleString('vi-VN'));
+        console.log("- Local end time:", new Date(endTime).toLocaleString('vi-VN'));
+        
+        // SOLUTION #1: Always use the specified exam duration if available
+        let examDurationInSeconds;
+        
+        if (response.data.exam && response.data.exam.duration) {
+          // Get duration from the exam's specified duration (always correct)
+          examDurationInSeconds = response.data.exam.duration * 60; // Convert minutes to seconds
+          console.log(`Using exam defined duration: ${response.data.exam.duration} minutes`);
+        } else {
+          // SOLUTION #2: If calculating from timestamps, apply validation
+          const calculatedDuration = Math.floor((endTime - startTime) / 1000);
           
-          setTimeRemaining(remaining);
+          // Validate: If duration is unreasonable (> 3 hours or < 0), use a default 45 minutes
+          if (calculatedDuration <= 0 || calculatedDuration > 3 * 60 * 60) {
+            console.warn('Invalid calculated duration:', calculatedDuration, 'seconds');
+            examDurationInSeconds = 45 * 60; // Default to 45 minutes for typical exams
+            console.log('Using default 45 minutes duration instead');
+          } else {
+            examDurationInSeconds = calculatedDuration;
+            console.log(`Calculated duration: ${Math.floor(examDurationInSeconds/60)} minutes`);
+          }
+        }
+        
+        setTotalExamDuration(examDurationInSeconds);
+        
+        // Track when the student started the exam
+        const startedAt = Date.now();
+        
+        // Update timer function to check for 3/4 time requirement
+        const updateTimer = () => {
+          const currentTime = Date.now();
+          const elapsedSinceStart = Math.floor((currentTime - startedAt) / 1000); // Time since student started
+          const remainingTime = Math.max(0, examDurationInSeconds - elapsedSinceStart);
+          
+          setTimeRemaining(remainingTime);
+          setElapsedTime(elapsedSinceStart);
+          
+          // Check if 3/4 of total duration has passed
+          const quarterTimeThreshold = examDurationInSeconds * 0.75;
+          const hasPassedThreeQuarters = elapsedSinceStart >= quarterTimeThreshold;
+          setCanSubmit(hasPassedThreeQuarters);
           
           // Show warning when 5 minutes remaining
-          if (remaining <= 300 && remaining > 290 && !lowTimeWarningShown.current) {
+          if (remainingTime <= 300 && remainingTime > 290 && !lowTimeWarningShown.current) {
             showWarningToast('Chỉ còn 5 phút làm bài!');
             setIsTimeWarning(true);
             lowTimeWarningShown.current = true;
           }
           
-          if (remaining <= 0) {
+          if (remainingTime <= 0) {
             clearInterval(timerRef.current);
             handleTimeUp();
           }
@@ -476,13 +564,19 @@ const StudentTakeExam = () => {
   };
   
   const formatTime = (seconds) => {
-    if (seconds === null) return '--:--:--';
+    if (seconds === null) return '--:--';
     
+    // For typical exams (under 3 hours), show minutes:seconds format
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      // For shorter exams, just show minutes:seconds for better readability
+      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
   };
   
   const handleAnswerSelect = (examQuestionId, optionId) => {
@@ -606,6 +700,132 @@ const StudentTakeExam = () => {
     return Math.min(100, (getAnsweredCount() / examData.questions.length) * 100);
   };
   
+  // Add this check method to determine if all questions are answered
+  const areAllQuestionsAnswered = () => {
+    if (!examData || !examData.questions) return false;
+    return examData.questions.every(q => answers[q.examQuestionId] !== null);
+  };
+  
+  // Helper function to display time remaining until submission is allowed
+  const getTimeRemainingForSubmission = () => {
+    if (!canSubmit && totalExamDuration) {
+      const quarterTimeThreshold = Math.ceil(totalExamDuration * 0.75);
+      const timeNeeded = Math.max(0, quarterTimeThreshold - elapsedTime);
+      
+      // Convert to minutes and seconds for display
+      const minutes = Math.floor(timeNeeded / 60);
+      const seconds = timeNeeded % 60;
+      
+      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return null;
+  };
+  
+  useEffect(() => {
+    if (!examData) return;
+    
+    // Function to handle tab switching (document visibility change)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && !cheatingAttempted) {
+        setCheatingAttempted(true);
+        // Show warning toast that will be visible when they return
+        toast.error('Phát hiện chuyển tab! Bài thi sẽ bị nộp tự động với điểm 0.', {
+          position: "top-center",
+          autoClose: false,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: false,
+          draggable: false,
+        });
+        handleCheatingSubmit();
+      }
+    };
+    
+    // Function to handle page reload/close
+    const handleBeforeUnload = (e) => {
+      if (!cheatingAttempted) {
+        // Standard message for browser's native dialog
+        e.preventDefault();
+        e.returnValue = 'Nếu bạn rời khỏi trang này, bài thi sẽ bị nộp tự động với điểm 0.';
+        
+        // Set a flag and submit after a short delay
+        setCheatingAttempted(true);
+        setTimeout(() => {
+          handleCheatingSubmit();
+        }, 100);
+        
+        // This message may or may not show depending on the browser,
+        // but the auto-submit will still happen
+        return e.returnValue;
+      }
+    };
+    
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Clean up event listeners on component unmount
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [examData, cheatingAttempted]);
+  
+  const handleCheatingSubmit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      // Clear all answers to ensure 0 score
+      const clearedAnswers = {};
+      
+      // Create empty submission with no answers
+      const answerData = {
+        answers: [],
+        // Include cheating flag for the server to log
+        cheatingDetected: true
+      };
+      
+      console.log("Submitting due to cheating attempt:", JSON.stringify(answerData, null, 2));
+      
+      // Submit to the API
+      await axios.post(
+        `${API_URL}/api/student/exams/${officialExamId}/submit`, 
+        answerData, 
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log("Cheating submission complete");
+      
+      // Will navigate away after submission if the user returns to the tab
+      if (document.visibilityState === 'visible') {
+        navigate('/student/assigned-exams', { 
+          state: { 
+            message: 'Bài thi đã bị nộp tự động với điểm 0 do phát hiện hành vi gian lận.',
+            cheatingDetected: true
+          } 
+        });
+      }
+      
+    } catch (err) {
+      console.error('Error submitting exam due to cheating:', err);
+      // If there's an error, we'll still try to navigate away if they come back
+      if (document.visibilityState === 'visible') {
+        navigate('/student/assigned-exams', { 
+          state: { 
+            message: 'Bài thi đã kết thúc do phát hiện hành vi gian lận.',
+            cheatingDetected: true 
+          } 
+        });
+      }
+    }
+  };
+  
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorAlert message={error} />;
   if (!examData) return <ErrorAlert message="Không thể tải dữ liệu bài thi" />;
@@ -622,11 +842,7 @@ const StudentTakeExam = () => {
         </TimerContainer>
       </Header>
       
-      <ExamInfo>
-        <InfoItem theme={theme}>Môn: {examData.exam.subject.name}</InfoItem>
-        <InfoItem theme={theme}>Thời gian còn lại: {formatTime(timeRemaining)}</InfoItem>
-        <InfoItem theme={theme}>Tổng điểm: {examData.exam.totalScore}</InfoItem>
-      </ExamInfo>
+      
       
       <ContentContainer>
         <MainContent>
@@ -653,22 +869,28 @@ const StudentTakeExam = () => {
                 )}
                 
                 <OptionsContainer>
-                  {currentQuestion.question.options.map(option => (
-                    <OptionItem
-                      key={option.id}
-                      theme={theme}
-                      isSelected={answers[currentQuestion.examQuestionId] === option.id}
-                      onClick={() => handleAnswerSelect(currentQuestion.examQuestionId, option.id)}
-                    >
-                      <OptionLabel 
-                        theme={theme} 
+                  {currentQuestion.question.options.map((option, index) => {
+                    // Map index to fixed label regardless of the option's actual label
+                    const fixedLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                    const fixedLabel = fixedLabels[index] || option.label;
+                    
+                    return (
+                      <OptionItem
+                        key={option.id}
+                        theme={theme}
                         isSelected={answers[currentQuestion.examQuestionId] === option.id}
+                        onClick={() => handleAnswerSelect(currentQuestion.examQuestionId, option.id)}
                       >
-                        {option.label}
-                      </OptionLabel>
-                      <OptionContent theme={theme}>{option.content}</OptionContent>
-                    </OptionItem>
-                  ))}
+                        <OptionLabel 
+                          theme={theme} 
+                          isSelected={answers[currentQuestion.examQuestionId] === option.id}
+                        >
+                          {fixedLabel}
+                        </OptionLabel>
+                        <OptionContent theme={theme}>{option.content}</OptionContent>
+                      </OptionItem>
+                    );
+                  })}
                 </OptionsContainer>
               </QuestionCard>
             </motion.div>
@@ -686,7 +908,7 @@ const StudentTakeExam = () => {
             <SubmitButton 
               primary
               onClick={() => setShowSubmitModal(true)}
-              disabled={submitting}
+              disabled={submitting || !areAllQuestionsAnswered() || !canSubmit}
             >
               <FaPaperPlane /> Nộp bài
             </SubmitButton>
@@ -700,6 +922,24 @@ const StudentTakeExam = () => {
               Câu sau <FaArrowRight />
             </NavButton>
           </ButtonContainer>
+          
+          {/* Add a warning message if not all questions are answered */}
+          {!areAllQuestionsAnswered() && (
+            <WarningMessage theme={theme}>
+              <FaExclamationTriangle />
+              <span>Vui lòng trả lời tất cả các câu hỏi trước khi nộp bài.</span>
+            </WarningMessage>
+          )}
+          
+          {/* Add a warning message about the time requirement */}
+          {!canSubmit && (
+            <WarningMessage theme={theme}>
+              <FaExclamationTriangle />
+              <span>Bạn phải hoàn thành ít nhất 3/4 thời gian làm bài mới được nộp bài. 
+                {getTimeRemainingForSubmission() && ` Còn ${getTimeRemainingForSubmission()} nữa để đủ điều kiện nộp bài.`}
+              </span>
+            </WarningMessage>
+          )}
         </MainContent>
         
         <Sidebar>
@@ -737,16 +977,35 @@ const StudentTakeExam = () => {
         </Modal.Header>
         <Modal.Body>
           <div>
-            <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px', display: 'inline' }} />
-            <span>Bạn có chắc chắn muốn nộp bài?</span>
+            {!canSubmit ? (
+              <>
+                <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px', display: 'inline' }} />
+                <span>Bạn chưa hoàn thành 3/4 thời gian làm bài.</span>
+                <div className="alert alert-warning mt-3">
+                  <FaExclamationTriangle /> Vui lòng chờ thêm {getTimeRemainingForSubmission()} để đủ điều kiện nộp bài.
+                </div>
+              </>
+            ) : !areAllQuestionsAnswered() ? (
+              <>
+                <FaExclamationTriangle size={20} style={{ color: '#f59e0b', marginRight: '8px', display: 'inline' }} />
+                <span>Bạn chưa trả lời tất cả các câu hỏi.</span>
+                <div className="alert alert-warning mt-3">
+                  <FaExclamationTriangle /> Vui lòng trả lời tất cả {examData.questions.length - getAnsweredCount()} câu hỏi còn lại trước khi nộp bài.
+                </div>
+              </>
+            ) : (
+              <>
+                <FaCheckCircle size={20} style={{ color: '#34a853', marginRight: '8px', display: 'inline' }} />
+                <span>Bạn đã hoàn thành tất cả các câu hỏi và 3/4 thời gian làm bài. Bạn có chắc chắn muốn nộp bài?</span>
+              </>
+            )}
             <p style={{ marginTop: '10px' }}>
               Đã làm: <strong>{getAnsweredCount()}/{examData.questions.length}</strong> câu hỏi
             </p>
-            {getAnsweredCount() < examData.questions.length && (
-              <div className="alert alert-warning">
-                <FaExclamationTriangle /> Bạn vẫn còn {examData.questions.length - getAnsweredCount()} câu hỏi chưa trả lời.
-              </div>
-            )}
+            <p>
+              Thời gian đã làm: <strong>{Math.floor(elapsedTime / 60)} phút {elapsedTime % 60} giây</strong> 
+              {!canSubmit ? ` (cần ít nhất ${Math.ceil(totalExamDuration * 0.75 / 60)} phút)` : ' (đã đủ thời gian)'}
+            </p>
           </div>
         </Modal.Body>
         <Modal.Footer>
@@ -756,7 +1015,7 @@ const StudentTakeExam = () => {
           <Button 
             variant="primary" 
             onClick={handleSubmitExam} 
-            disabled={submitting}
+            disabled={submitting || !areAllQuestionsAnswered() || !canSubmit}
           >
             {submitting ? 'Đang nộp bài...' : 'Xác nhận nộp bài'}
           </Button>
@@ -825,6 +1084,33 @@ const StudentTakeExam = () => {
             )}
           </ActionButtonsContainer>
         </Modal.Body>
+      </Modal>
+      
+      {/* Cheating Detected Modal */}
+      <Modal 
+        show={cheatingAttempted && document.visibilityState === 'visible'} 
+        backdrop="static" 
+        keyboard={false} 
+        centered
+      >
+        <Modal.Header>
+          <Modal.Title className="text-danger">Phát hiện hành vi gian lận</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="alert alert-danger">
+            <FaExclamationTriangle /> Hệ thống đã phát hiện bạn chuyển sang tab/trang web khác hoặc cố gắng tải lại trang trong quá trình làm bài.
+          </div>
+          <p>Theo quy định, bài thi của bạn đã được nộp tự động với điểm 0.</p>
+          <p>Vui lòng liên hệ giáo viên nếu bạn cho rằng đây là sự cố ngoài ý muốn.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={() => navigate('/student/assigned-exams')}
+          >
+            Quay về danh sách bài thi
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );

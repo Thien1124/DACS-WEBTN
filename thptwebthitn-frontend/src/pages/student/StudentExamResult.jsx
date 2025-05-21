@@ -3,11 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import styled from 'styled-components';
-import { FaCheck, FaTimes, FaArrowLeft, FaTrophy, FaClock, FaBook, FaPercent, FaInfoCircle } from 'react-icons/fa';
-
+import { FaCheck, FaTimes,FaFlag, FaArrowLeft, FaExclamationTriangle, FaClock, FaBook, FaPercent, FaInfoCircle } from 'react-icons/fa';
+import { Modal, Button, Form, Spinner } from 'react-bootstrap';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorAlert from '../../components/common/ErrorAlert';
-
+import {toast} from 'react-toastify'
 // Styled Components
 const ResultContainer = styled.div`
   max-width: 1140px;
@@ -121,6 +121,37 @@ const StatLabel = styled.div`
 const StatValue = styled.div`
   font-size: 1.25rem;
   font-weight: 600;
+`;
+const ReportButton = styled(Button)`
+  margin-top: 1.5rem;
+  background-color: ${props => props.theme === 'dark' ? '#495057' : '#f8f9fa'};
+  color: ${props => props.theme === 'dark' ? '#f8f9fa' : '#495057'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#6c757d' : '#ced4da'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  
+  &:hover {
+    background-color: ${props => props.theme === 'dark' ? '#6c757d' : '#e9ecef'};
+    color: ${props => props.theme === 'dark' ? '#fff' : '#212529'};
+  }
+`;
+
+const ModalTitle = styled.h4`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  svg {
+    color: #f59f00;
+  }
+`;
+
+const ModalText = styled.p`
+  margin-bottom: 1rem;
+  color: ${props => props.theme === 'dark' ? '#dee2e6' : '#495057'};
 `;
 
 const BackToExamsButton = styled(Link)`
@@ -297,6 +328,13 @@ const StudentExamResult = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationReason, setVerificationReason] = useState('');
+  const [submittingVerification, setSubmittingVerification] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+
+
+
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5006';
   
   useEffect(() => {
@@ -439,7 +477,91 @@ const StudentExamResult = () => {
   
   // Check if results have been released
   const resultsReleased = resultData.showAnswers === true;
+  const handleOpenVerificationModal = () => {
+  setVerificationReason('');
+  setVerificationError('');
+  setShowVerificationModal(true);
+};
+
+const handleCloseVerificationModal = () => {
+  setShowVerificationModal(false);
+};
+
+const handleVerificationReasonChange = (e) => {
+  setVerificationReason(e.target.value);
+  if (e.target.value.trim()) {
+    setVerificationError('');
+  }
+};
+
+// Fixed handleSubmitVerification function
+const handleSubmitVerification = async () => {
+  // Validate input
+  if (!verificationReason.trim()) {
+    setVerificationError('Vui lòng nhập lý do phúc khảo');
+    return;
+  }
   
+  try {
+    setSubmittingVerification(true);
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Không tìm thấy token xác thực');
+    }
+    
+    // Find the correct ID from resultData - check all possible property names
+    const examResultId = resultData.id || resultData.resultId || resultData.examResultId || resultData.examResultID;
+    
+    if (!examResultId) {
+      console.error('Missing exam result ID:', resultData);
+      setVerificationError('Không tìm thấy mã kết quả bài thi. Vui lòng thử lại sau.');
+      return;
+    }
+    
+    console.log('Sending verification request with ID:', examResultId);
+    
+    // Make API call to request score verification - FIXED: using examResultId, not officialExamId
+    await axios.post(
+      `${API_URL}/api/score-verification/request`,
+      {
+        examResultId: examResultId, // FIXED: Changed from officialExamId to examResultId
+        reason: verificationReason.trim()
+      },
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+    
+    // Close modal and show success message
+    handleCloseVerificationModal();
+    toast.success('Yêu cầu phúc khảo đã được gửi thành công!');
+  } catch (error) {
+    console.error('Error submitting verification request:', error);
+    
+    // Handle different error cases with more details
+    if (error.response) {
+      console.log('Error response data:', error.response.data);
+      
+      if (error.response.status === 400 && error.response.data?.message) {
+        // Show the specific error message from the API if available
+        setVerificationError(error.response.data.message);
+      } else if (error.response.status === 400) {
+        setVerificationError('Yêu cầu không hợp lệ. Vui lòng kiểm tra thông tin và thử lại.');
+      } else if (error.response.status === 404) {
+        setVerificationError('Không tìm thấy kết quả bài thi để phúc khảo.');
+      } else if (error.response.status === 409) {
+        setVerificationError('Bạn đã gửi yêu cầu phúc khảo cho bài thi này trước đó.');
+      } else {
+        setVerificationError(`Đã xảy ra lỗi khi gửi yêu cầu (${error.response.status}). Vui lòng thử lại sau.`);
+      }
+    } else {
+      setVerificationError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+    }
+  } finally {
+    setSubmittingVerification(false);
+  }
+};
   return (
     <ResultContainer theme={theme}>
       <BackToExamsButton to="/student/assigned-exams" theme={theme}>
@@ -529,6 +651,13 @@ const StudentExamResult = () => {
                     : 'N/A'}</StatValue>
                 </StatItem>
               </ResultStats>
+              <ReportButton 
+                onClick={handleOpenVerificationModal} 
+                theme={theme}
+                variant="outline-secondary"
+              >
+                <FaFlag /> Yêu cầu phúc khảo
+              </ReportButton>
             </ResultSummary>
             
             {/* Question details section - only shown if questions data is available */}
@@ -620,6 +749,91 @@ const StudentExamResult = () => {
           </>
         )}
       </ResultCard>
+      
+      {/* Score Verification Request Modal */}
+      <Modal 
+        show={showVerificationModal} 
+        onHide={handleCloseVerificationModal}
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton style={{
+          backgroundColor: theme === 'dark' ? '#343a40' : '#f8f9fa',
+          borderBottom: `1px solid ${theme === 'dark' ? '#495057' : '#dee2e6'}`
+        }}>
+          <ModalTitle>
+            <FaExclamationTriangle /> Yêu cầu phúc khảo
+          </ModalTitle>
+        </Modal.Header>
+        
+        <Modal.Body style={{
+          backgroundColor: theme === 'dark' ? '#343a40' : '#fff',
+          color: theme === 'dark' ? '#e9ecef' : '#212529'
+        }}>
+          <ModalText theme={theme}>
+            Vui lòng cung cấp lý do chi tiết cho yêu cầu phúc khảo của bạn. Giáo viên sẽ xem xét yêu cầu và phản hồi trong thời gian sớm nhất.
+          </ModalText>
+          
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Lý do phúc khảo:</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                placeholder="Nhập lý do phúc khảo (ví dụ: Tôi nghĩ câu 3 đáp án của tôi là đúng vì...)"
+                value={verificationReason}
+                onChange={handleVerificationReasonChange}
+                isInvalid={!!verificationError}
+                style={{
+                  backgroundColor: theme === 'dark' ? '#212529' : '#fff',
+                  color: theme === 'dark' ? '#e9ecef' : '#212529',
+                  border: `1px solid ${theme === 'dark' ? '#495057' : '#ced4da'}`
+                }}
+              />
+              <Form.Control.Feedback type="invalid">
+                {verificationError}
+              </Form.Control.Feedback>
+              <Form.Text className="text-muted" style={{ color: theme === 'dark' ? '#adb5bd' : '#6c757d' }}>
+                Vui lòng mô tả rõ lý do và cung cấp các thông tin cần thiết để giáo viên có thể xem xét yêu cầu của bạn một cách nhanh chóng.
+              </Form.Text>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        
+        <Modal.Footer style={{
+          backgroundColor: theme === 'dark' ? '#343a40' : '#f8f9fa',
+          borderTop: `1px solid ${theme === 'dark' ? '#495057' : '#dee2e6'}`
+        }}>
+          <Button 
+            variant="secondary" 
+            onClick={handleCloseVerificationModal}
+            disabled={submittingVerification}
+          >
+            Hủy bỏ
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleSubmitVerification}
+            disabled={submittingVerification}
+          >
+            {submittingVerification ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                  className="me-2"
+                />
+                Đang gửi...
+              </>
+            ) : (
+              'Gửi yêu cầu'
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </ResultContainer>
   );
 };

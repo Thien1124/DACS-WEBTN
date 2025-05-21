@@ -10,7 +10,7 @@ import AuthModal from "../Auth/AuthModal";
 import * as authService from "../../services/authService";
 import { toast } from "react-toastify";
 import { updateUser } from '../../redux/authSlice';
-import { FaUserCog, FaUsers, FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments, FaFlag, FaSchool } from 'react-icons/fa';
+import { FaUserCog,FaClipboardCheck , FaUsers, FaBell, FaClipboardList, FaBook, FaQuestion, FaChartBar, FaCog, FaHistory, FaChartLine, FaPuzzlePiece, FaComment, FaTrophy, FaFileAlt, FaQuestionCircle, FaUserGraduate, FaCommentDots, FaFileUpload, FaComments, FaFlag, FaSchool } from 'react-icons/fa';
 import NotificationBadge from '../notifications/NotificationBadge';
 
 // Styled components hiện tại...
@@ -640,9 +640,17 @@ function Header() {
                             <FaChartBar />
                             Thống kê hệ thống
                           </DropdownItem>
+                          <DropdownItem to="/admin/reports" theme={theme}>
+                            <FaChartLine />
+                            Báo Cáo Hệ Thống
+                          </DropdownItem>
                           <DropdownItem to="/admin/chapters" theme={theme}>
                           <FaPuzzlePiece />
                             Quản lý chương học
+                          </DropdownItem>
+                          <DropdownItem to="/admin/classrooms" theme={theme}>
+                            <FaSchool />
+                            Quản lý lớp học
                           </DropdownItem>
                           <DropdownItem to="/admin/notifications" className={({ isActive }) => isActive ? "active" : ""}>
                             <FaBell /> Quản lý thông báo
@@ -683,9 +691,9 @@ function Header() {
                             <FaClipboardList />
                             Quản lý đề thi
                           </DropdownItem>
-                          <DropdownItem to="/teacher/results-to-grade" theme={theme}>
-                            <FaFileAlt />
-                            Chấm bài thi
+                          <DropdownItem to="/teacher/verification-requests" theme={theme}>
+                            <FaClipboardCheck />
+                            Phúc Khảo Điểm
                           </DropdownItem>
                           <DropdownItem to="/teacher/questions" theme={theme}>
                             <FaQuestionCircle />
@@ -695,7 +703,10 @@ function Header() {
                             <FaChartBar />
                             Thống kê bài thi
                           </DropdownItem>
-                          
+                          <DropdownItem to="/teacher/class-results" theme={theme}>
+                            <FaUserGraduate />
+                            Kết quả theo lớp
+                          </DropdownItem>
                           <DropdownItem to="/analytics/charts" theme={theme}>
                             <FaChartLine className="icon" />
                             <span className="label">Biểu đồ phân tích</span>
@@ -707,6 +718,10 @@ function Header() {
                           <DropdownItem to="/teacher/materials" theme={theme}>
                             <FaFileUpload />
                             Tài liệu ôn tập
+                          </DropdownItem>
+                          <DropdownItem to="/teacher/classrooms" theme={theme}>
+                            <FaSchool />
+                            Quản lý lớp học
                           </DropdownItem>
                           <DropdownItem to="/teacher/chat" theme={theme} className="position-relative">
                             <FaComments />

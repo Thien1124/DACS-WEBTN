@@ -6,12 +6,21 @@ import SubjectTopStudentsPage from './pages/leaderboard/SubjectTopStudentsPage';
 import ExamResultDetail from './components/results/ExamResultDetail';
 import OfficialExamsList from './components/admin/OfficialExamsList';
 import OfficialExamDetail from './components/admin/OfficialExamDetail';
-
+import ClassroomCreate from './components/classrooms/ClassroomCreate';
+import ClassroomDetail from './components/classrooms/ClassroomDetail';
+import ClassroomEdit from './components/classrooms/ClassroomEdit';
+import ClassroomsPage from './pages/ClassroomsPage';
 //Teacher
 import TeacherExamManagement from './pages/teacher/TeacherExamManagement';
 import TeacherCreateExam from './pages/teacher/TeacherCreateExam';
 import TeacherEditExam from './pages/teacher//TeacherEditExam';
 import TeacherImportExam from './pages/teacher/TeacherImportExam';
+import TeacherVerificationRequests from './pages/teacher/TeacherVerificationRequests';
+import VerificationRequestList from './pages/student/VerificationRequestList';
+
+//admin
+import ReportsDashboard from './pages/admin/ReportsDashboard';
+import ExamReportDetail from './pages/admin/ExamReportDetail';
 
 // Layout
 import AppLayout from './components/layout/AppLayout';
@@ -144,6 +153,7 @@ import OfficialExamResults from './components/admin/OfficialExamResults';
 // First, import the MaterialDetails component at the top of your file with the other imports
 import MaterialDetails from './pages/teacher/MaterialDetails';
 import StudentAssignedExams from './pages/student/StudentAssignedExams';
+import TeacherClassResults from './pages/teacher/TeacherClassResults';
 
 // Import the FeedbackManagement component at the top
 import FeedbackManagement from './pages/admin/FeedbackManagement';
@@ -389,7 +399,16 @@ function App() {
                     <UserManagement />
                   </AdminRoute>
                 } />
-                
+                <Route path="/admin/reports" element={
+                  <ProtectedRoute requiredRole="Admin">
+                    <ReportsDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/reports/exams/:id" element={
+                  <ProtectedRoute requiredRole="Admin">
+                    <ExamReportDetail />
+                  </ProtectedRoute>
+                } />
                 {/* Add this new route for Admin Statistics */}
                 <Route path="/admin/statistics" element={
                   <AdminRoute>
@@ -464,7 +483,7 @@ function App() {
                     <ExamLeaderboard />
                   </ProtectedRoute>
                 } />
-
+                <Route path="/teacher/class-results" element={<TeacherClassResults />} />
                 <Route path="/student/assigned-exams" element={
                   <ProtectedRoute>
                     <StudentAssignedExams />
@@ -569,6 +588,17 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                <Route path="/teacher/verification-requests" element={
+                  <TeacherRoute>
+                    <TeacherVerificationRequests />
+                  </TeacherRoute>
+                } />
+
+                <Route path="/student/verification-requests" element={
+                  <ProtectedRoute roles={['Student']}>
+                    <VerificationRequestList />
+                  </ProtectedRoute>
+                } />
                 {/* Thêm các routes sau vào phần TeacherRoute trong App.js */}
                 <Route path="/teacher/analytics" element={
                   <TeacherRoute>
@@ -689,6 +719,48 @@ function App() {
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <FeedbackManagement />
                   </ProtectedRoute>
+                } />
+                
+                {/* Add after the existing classroom routes */}
+                <Route path="/admin/classrooms/create" element={
+                  <AdminRoute>
+                    <ClassroomCreate />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/classrooms/:name" element={
+                  <AdminRoute>
+                    <ClassroomDetail />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/classrooms/:name/edit" element={
+                  <AdminRoute>
+                    <ClassroomEdit />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/classrooms" element={
+                  <AdminRoute>
+                    <ClassroomsPage />
+                  </AdminRoute>
+                } />
+                <Route path="/teacher/classrooms" element={
+                  <TeacherRoute>
+                    <ClassroomsPage />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/classrooms/create" element={
+                  <TeacherRoute>
+                    <ClassroomCreate />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/classrooms/:name" element={
+                  <TeacherRoute>
+                    <ClassroomDetail />
+                  </TeacherRoute>
+                } />
+                <Route path="/teacher/classrooms/:name/edit" element={
+                  <TeacherRoute>
+                    <ClassroomEdit />
+                  </TeacherRoute>
                 } />
                 
                 </Route>

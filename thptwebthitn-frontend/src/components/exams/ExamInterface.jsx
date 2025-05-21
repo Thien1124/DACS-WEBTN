@@ -212,7 +212,8 @@ const ExamInterface = () => {
   const [isTimeWarning, setIsTimeWarning] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [shuffledOptionMaps, setShuffledOptionMaps] = useState({});
+
   // Sử dụng theme mặc định là 'light' nếu không có redux
   const theme = 'light';
   
@@ -250,6 +251,22 @@ const ExamInterface = () => {
         
         setExam(examWithTiming);
         setQuestions(examData.questions || []);
+        
+        // Add this: Create shuffled options mapping for each question
+        const optionMaps = {};
+        examData.questions?.forEach(question => {
+          if (question.options && Array.isArray(question.options) && question.options.length > 1) {
+            // Create array of original indexes [0, 1, 2, 3] and shuffle it
+            const originalIndexes = question.options.map((_, index) => index);
+            const shuffledIndexes = shuffleArray(originalIndexes);
+            
+            // Create a mapping from original to shuffled position
+            optionMaps[question.id] = shuffledIndexes;
+          }
+        });
+        
+        setShuffledOptionMaps(optionMaps);
+        
         console.log("Đã tải đề thi:", examData.title);
         console.log("Số câu hỏi:", examData.questions ? examData.questions.length : 0);
         
@@ -467,8 +484,26 @@ console.log("Thông tin tiến độ:", {
 });
 
 // Đảm bảo currentQuestionData luôn có giá trị hợp lệ
-const currentQuestionData = questions && questions.length > 0 ? 
+let currentQuestionData = questions && questions.length > 0 ? 
   questions[currentQuestion - 1] || questions[0] : null;
+
+// Apply option shuffling if we have a valid question and shuffled mapping
+if (currentQuestionData && 
+    shuffledOptionMaps[currentQuestionData.id] && 
+    currentQuestionData.options && 
+    Array.isArray(currentQuestionData.options)) {
+  
+  // Create a deep copy of the current question
+  currentQuestionData = {
+    ...currentQuestionData,
+    // Rearrange the options according to our shuffled mapping
+    options: shuffledOptionMaps[currentQuestionData.id].map(
+      originalIndex => currentQuestionData.options[originalIndex]
+    ),
+    // Also add the mapping so we can track correct answers
+    _optionMapping: shuffledOptionMaps[currentQuestionData.id]
+  };
+}
   
   return (
     <>
@@ -599,6 +634,16 @@ const currentQuestionData = questions && questions.length > 0 ?
     )}
   </>
   );
+};
+
+// Add this helper function near the top of your component
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 };
 
 export default ExamInterface;
