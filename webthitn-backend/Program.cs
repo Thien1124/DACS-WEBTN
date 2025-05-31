@@ -31,6 +31,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Đăng ký các dịch vụ
 builder.Services.AddScoped<IExamGradingService, ExamGradingService>();
 builder.Services.AddSingleton<EmailService>();
+// Đảm bảo service được đăng ký
+
+// Services registration
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Cấu hình DbContext để kết nối với cơ sở dữ liệu
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

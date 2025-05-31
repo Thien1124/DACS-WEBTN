@@ -269,212 +269,202 @@ namespace webthitn_backend.Controllers
         }
 
         /// <summary>
-/// Lấy danh sách yêu cầu xác minh điểm đang chờ giáo viên xử lý
-/// </summary>
-[HttpGet("pending")]
-[Authorize(Roles = "Teacher,Admin")]
-[ProducesResponseType(StatusCodes.Status200OK)]
-public async Task<IActionResult> GetPendingVerifications([FromQuery] int? teacherId = null)
-{
-    try
-    {
-        int currentUserId = GetCurrentUserId();
-        bool isAdmin = User.IsInRole("Admin");
-        
-        // Build query
-        var query = _context.ScoreVerifications
-            .Include(v => v.ExamResult)
-                .ThenInclude(er => er.Exam)
-            .Include(v => v.Student)
-            .Where(v => v.Status == "Pending");
-        
-        // Filter by teacher if specified or if current user is a teacher (not admin)
-        if (teacherId.HasValue)
+        /// Lấy danh sách yêu cầu xác minh điểm đang chờ xử lý (Chỉ Admin)
+        /// </summary>
+        [HttpGet("pending")]
+        [Authorize(Roles = "Admin")] // CHỈ ADMIN
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetPendingVerifications([FromQuery] int? teacherId = null)
         {
-            query = query.Where(v => v.TeacherId == teacherId.Value);
-        }
-        else if (!isAdmin)
-        {
-            // If user is not admin and no specific teacher ID requested,
-            // show only requests assigned to current user
-            query = query.Where(v => v.TeacherId == currentUserId);
-        }
-        
-        // Execute query and transform results
-        var pendingRequests = await query
-            .OrderByDescending(v => v.CreatedAt)
-            .Select(v => new
+            try
             {
-                id = v.Id,
-                studentId = v.StudentId,
-                studentName = v.Student.FullName,
-                examId = v.ExamResult.ExamId,
-                examResultId = v.ExamResultId,
-                examTitle = v.ExamResult.Exam.Title,
-                originalScore = v.OriginalScore,
-                requestReason = v.RequestReason,
-                createdAt = v.CreatedAt,
-                teacherId = v.TeacherId,
-                daysPending = EF.Functions.DateDiffDay(v.CreatedAt, DateTime.UtcNow)
-            })
-            .ToListAsync();
-        
-        return Ok(pendingRequests);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError($"Error getting pending verifications: {ex.Message}");
-        return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách yêu cầu xác minh điểm đang chờ" });
-    }
-}
-
-/// <summary>
-/// Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc
-/// </summary>
-[HttpGet]
-[Authorize(Roles = "Teacher,Admin")]
-[ProducesResponseType(StatusCodes.Status200OK)]
-public async Task<IActionResult> GetVerifications(
-    [FromQuery] string status = null,
-    [FromQuery] int? teacherId = null,
-    [FromQuery] int? studentId = null,
-    [FromQuery] DateTime? fromDate = null,
-    [FromQuery] DateTime? toDate = null)
-{
-    try
-    {
-        int currentUserId = GetCurrentUserId();
-        bool isAdmin = User.IsInRole("Admin");
-        
-        // Start with base query
-        var query = _context.ScoreVerifications
-            .Include(v => v.ExamResult)
-                .ThenInclude(er => er.Exam)
-            .Include(v => v.Student)
-            .AsQueryable();
-        
-        // Teachers can only see their own assignments unless specified by admin
-        if (!isAdmin && teacherId == null)
-        {
-            query = query.Where(v => v.TeacherId == currentUserId);
-        }
-        else if (teacherId.HasValue)
-        {
-            query = query.Where(v => v.TeacherId == teacherId.Value);
-        }
-        
-        // Apply filters if provided
-        if (!string.IsNullOrEmpty(status))
-        {
-            query = query.Where(v => v.Status.ToLower() == status.ToLower());
-        }
-        
-        if (studentId.HasValue)
-        {
-            query = query.Where(v => v.StudentId == studentId.Value);
-        }
-        
-        if (fromDate.HasValue)
-        {
-            query = query.Where(v => v.CreatedAt >= fromDate.Value);
-        }
-        
-        if (toDate.HasValue)
-        {
-            query = query.Where(v => v.CreatedAt <= toDate.Value);
-        }
-        
-        // Execute query
-        var verifications = await query
-            .OrderByDescending(v => v.CreatedAt)
-            .Select(v => new
+                int currentUserId = GetCurrentUserId();
+                
+                // Build query - Admin có thể xem tất cả
+                var query = _context.ScoreVerifications
+                    .Include(v => v.ExamResult)
+                        .ThenInclude(er => er.Exam)
+                    .Include(v => v.Student)
+                    .Where(v => v.Status == "Pending");
+                
+                // Filter by teacher nếu được chỉ định
+                if (teacherId.HasValue)
+                {
+                    query = query.Where(v => v.TeacherId == teacherId.Value);
+                }
+                
+                // Execute query and transform results
+                var pendingRequests = await query
+                    .OrderByDescending(v => v.CreatedAt)
+                    .Select(v => new
+                    {
+                        id = v.Id,
+                        studentId = v.StudentId,
+                        studentName = v.Student.FullName,
+                        examId = v.ExamResult.ExamId,
+                        examResultId = v.ExamResultId,
+                        examTitle = v.ExamResult.Exam.Title,
+                        originalScore = v.OriginalScore,
+                        requestReason = v.RequestReason,
+                        createdAt = v.CreatedAt,
+                        teacherId = v.TeacherId,
+                        teacherName = _context.Users.Where(u => u.Id == v.TeacherId).Select(u => u.FullName).FirstOrDefault(),
+                        daysPending = EF.Functions.DateDiffDay(v.CreatedAt, DateTime.UtcNow)
+                    })
+                    .ToListAsync();
+                
+                return Ok(pendingRequests);
+            }
+            catch (Exception ex)
             {
-                id = v.Id,
-                studentId = v.StudentId,
-                studentName = v.Student.FullName,
-                examId = v.ExamResult.ExamId,
-                examResultId = v.ExamResultId,
-                examTitle = v.ExamResult.Exam.Title,
-                originalScore = v.OriginalScore,
-                newScore = v.NewScore,
-                requestReason = v.RequestReason,
-                teacherResponse = v.TeacherResponse,
-                status = v.Status,
-                createdAt = v.CreatedAt,
-                updatedAt = v.UpdatedAt
-            })
-            .ToListAsync();
-        
-        return Ok(verifications);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError($"Error getting verifications: {ex.Message}");
-        return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách yêu cầu xác minh điểm" });
-    }
-}
-
-/// <summary>
-/// Lấy thống kê tổng quan về các yêu cầu xác minh điểm
-/// </summary>
-[HttpGet("stats")]
-[Authorize(Roles = "Teacher,Admin")]
-[ProducesResponseType(StatusCodes.Status200OK)]
-public async Task<IActionResult> GetVerificationStats()
-{
-    try
-    {
-        int currentUserId = GetCurrentUserId();
-        bool isAdmin = User.IsInRole("Admin");
-        
-        var query = _context.ScoreVerifications.AsQueryable();
-        
-        // Filter by teacher if not admin
-        if (!isAdmin)
-        {
-            query = query.Where(v => v.TeacherId == currentUserId);
+                _logger.LogError($"Error getting pending verifications: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách yêu cầu xác minh điểm đang chờ" });
+            }
         }
-        
-        var pendingCount = await query.CountAsync(v => v.Status == "Pending");
-        var approvedCount = await query.CountAsync(v => v.Status == "Approved");
-        var rejectedCount = await query.CountAsync(v => v.Status == "Rejected");
-        var totalCount = await query.CountAsync();
-        
-        // Get recent pending requests for quick access
-        var recentPending = await query
-            .Where(v => v.Status == "Pending")
-            .OrderByDescending(v => v.CreatedAt)
-            .Take(5)
-            .Select(v => new
-            {
-                id = v.Id,
-                studentName = v.Student.FullName,
-                examTitle = v.ExamResult.Exam.Title,
-                createdAt = v.CreatedAt
-            })
-            .ToListAsync();
-        
-        return Ok(new
-        {
-            pendingCount,
-            approvedCount,
-            rejectedCount,
-            totalCount,
-            recentPending
-        });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError($"Error getting verification stats: {ex.Message}");
-        return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy thống kê yêu cầu xác minh điểm" });
-    }
-}
 
         /// <summary>
-        /// Giáo viên phản hồi yêu cầu xác minh điểm
+        /// Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc (Chỉ Admin)
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin")] // CHỈ ADMIN
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetVerifications(
+            [FromQuery] string status = null,
+            [FromQuery] int? teacherId = null,
+            [FromQuery] int? studentId = null,
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
+        {
+            try
+            {
+                int currentUserId = GetCurrentUserId();
+                
+                // Start with base query - Admin có thể xem tất cả
+                var query = _context.ScoreVerifications
+                    .Include(v => v.ExamResult)
+                        .ThenInclude(er => er.Exam)
+                    .Include(v => v.Student)
+                    .AsQueryable();
+                
+                // Apply filters if provided
+                if (teacherId.HasValue)
+                {
+                    query = query.Where(v => v.TeacherId == teacherId.Value);
+                }
+                
+                if (!string.IsNullOrEmpty(status))
+                {
+                    query = query.Where(v => v.Status.ToLower() == status.ToLower());
+                }
+                
+                if (studentId.HasValue)
+                {
+                    query = query.Where(v => v.StudentId == studentId.Value);
+                }
+                
+                if (fromDate.HasValue)
+                {
+                    query = query.Where(v => v.CreatedAt >= fromDate.Value);
+                }
+                
+                if (toDate.HasValue)
+                {
+                    query = query.Where(v => v.CreatedAt <= toDate.Value);
+                }
+                
+                // Execute query
+                var verifications = await query
+                    .OrderByDescending(v => v.CreatedAt)
+                    .Select(v => new
+                    {
+                        id = v.Id,
+                        studentId = v.StudentId,
+                        studentName = v.Student.FullName,
+                        examId = v.ExamResult.ExamId,
+                        examResultId = v.ExamResultId,
+                        examTitle = v.ExamResult.Exam.Title,
+                        originalScore = v.OriginalScore,
+                        newScore = v.NewScore,
+                        requestReason = v.RequestReason,
+                        teacherResponse = v.TeacherResponse,
+                        status = v.Status,
+                        createdAt = v.CreatedAt,
+                        updatedAt = v.UpdatedAt,
+                        teacherId = v.TeacherId,
+                        teacherName = _context.Users.Where(u => u.Id == v.TeacherId).Select(u => u.FullName).FirstOrDefault()
+                    })
+                    .ToListAsync();
+                
+                return Ok(verifications);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting verifications: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách yêu cầu xác minh điểm" });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thống kê tổng quan về các yêu cầu xác minh điểm
+        /// </summary>
+        [HttpGet("stats")]
+        [Authorize(Roles = "Teacher,Admin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetVerificationStats()
+        {
+            try
+            {
+                int currentUserId = GetCurrentUserId();
+                bool isAdmin = User.IsInRole("Admin");
+                
+                var query = _context.ScoreVerifications.AsQueryable();
+                
+                // Filter by teacher if not admin
+                if (!isAdmin)
+                {
+                    query = query.Where(v => v.TeacherId == currentUserId);
+                }
+                
+                var pendingCount = await query.CountAsync(v => v.Status == "Pending");
+                var approvedCount = await query.CountAsync(v => v.Status == "Approved");
+                var rejectedCount = await query.CountAsync(v => v.Status == "Rejected");
+                var totalCount = await query.CountAsync();
+                
+                // Get recent pending requests for quick access
+                var recentPending = await query
+                    .Where(v => v.Status == "Pending")
+                    .OrderByDescending(v => v.CreatedAt)
+                    .Take(5)
+                    .Select(v => new
+                    {
+                        id = v.Id,
+                        studentName = v.Student.FullName,
+                        examTitle = v.ExamResult.Exam.Title,
+                        createdAt = v.CreatedAt
+                    })
+                    .ToListAsync();
+                
+                return Ok(new
+                {
+                    pendingCount,
+                    approvedCount,
+                    rejectedCount,
+                    totalCount,
+                    recentPending
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting verification stats: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy thống kê yêu cầu xác minh điểm" });
+            }
+        }
+
+        /// <summary>
+        /// Admin phản hồi yêu cầu xác minh điểm (Chỉ Admin)
         /// </summary>
         [HttpPost("respond/{id}")]
-        [Authorize(Roles = "Teacher,Admin")]
+        [Authorize(Roles = "Admin")] // CHỈ ADMIN
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -497,9 +487,8 @@ public async Task<IActionResult> GetVerificationStats()
                     return NotFound(new { message = "Không tìm thấy yêu cầu xác minh điểm" });
                 }
 
-                // Check if user is allowed to respond (must be the assigned teacher or admin)
-                bool isAdmin = User.IsInRole("Admin");
-                if (!isAdmin && verification.TeacherId != currentUserId)
+                // Chỉ Admin mới có thể phản hồi
+                if (!User.IsInRole("Admin"))
                 {
                     return Forbid();
                 }
@@ -524,38 +513,154 @@ public async Task<IActionResult> GetVerificationStats()
                     decimal totalPossibleScore = 10; // Default scale
                     if (examResult.Exam != null && examResult.Exam.TotalScore > 0)
                     {
+                        totalPossibleScore = examResult.Exam.TotalScore;
+                        examResult.PercentageScore = (examResult.Score / totalPossibleScore) * 100;
+                    }
+                    else
+                    {
                         examResult.PercentageScore = (examResult.Score / totalPossibleScore) * 100;
                     }
                     
                     _context.ExamResults.Update(examResult);
+                    
+                    _logger.LogInformation($"Admin {currentUserId} updated score from {oldScore} to {response.NewScore.Value} for verification {id}");
                 }
 
                 _context.ScoreVerifications.Update(verification);
                 await _context.SaveChangesAsync();
 
-                // Send email to student
-                if (!string.IsNullOrEmpty(verification.Student.Email))
+                // Send email to student (if email service available)
+                try
                 {
-                    await _emailService.SendScoreVerificationResponseEmailAsync(
-                        verification.Student.Email,
-                        verification.Student.FullName,
-                        verification.ExamResult.Id,
-                        verification.ExamResult.Exam.Title,
-                        verification.OriginalScore,
-                        response.NewScore ?? verification.OriginalScore,
-                        response.Response);
+                    if (_emailService != null && !string.IsNullOrEmpty(verification.Student.Email))
+                    {
+                        await _emailService.SendScoreVerificationResponseEmailAsync(
+                            verification.Student.Email,
+                            verification.Student.FullName,
+                            verification.ExamResult.Id,
+                            verification.ExamResult.Exam.Title,
+                            verification.OriginalScore,
+                            response.NewScore ?? verification.OriginalScore,
+                            response.Response);
+                            
+                        _logger.LogInformation($"Score verification response email sent to student {verification.StudentId}");
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError($"Failed to send verification response email: {emailEx.Message}");
+                    // Don't fail the request if email fails
                 }
 
                 return Ok(new
                 {
                     message = "Đã phản hồi yêu cầu xác minh điểm",
-                    status = verification.Status
+                    status = verification.Status,
+                    verificationId = verification.Id,
+                    oldScore = verification.OriginalScore,
+                    newScore = response.NewScore ?? verification.OriginalScore
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error responding to score verification: {ex.Message}");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi phản hồi yêu cầu xác minh điểm" });
+            }
+        }
+
+        /// <summary>
+        /// Xem chi tiết một yêu cầu xác minh điểm
+        /// </summary>
+        [HttpGet("{id}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetVerificationDetail(int id)
+        {
+            try
+            {
+                int currentUserId = GetCurrentUserId();
+                bool isAdmin = User.IsInRole("Admin");
+                bool isTeacher = User.IsInRole("Teacher");
+                
+                // Find verification request with all needed related data
+                var verification = await _context.ScoreVerifications
+                    .Include(v => v.ExamResult)
+                        .ThenInclude(er => er.Exam)
+                    .Include(v => v.Student)
+                    .FirstOrDefaultAsync(v => v.Id == id);
+
+                if (verification == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy yêu cầu xác minh điểm" });
+                }
+
+                // Check permission - only Admin, responsible teacher, or the student who made the request can view
+                if (!isAdmin && 
+                    verification.TeacherId != currentUserId && 
+                    verification.StudentId != currentUserId)
+                {
+                    return Forbid();
+                }
+
+                // Get teacher information
+                var teacher = await _context.Users
+                    .Where(u => u.Id == verification.TeacherId)
+                    .Select(u => new { id = u.Id, name = u.FullName, email = u.Email })
+                    .FirstOrDefaultAsync();
+
+                // Get responder information if available
+                var responder = verification.ResponderId.HasValue ? 
+                    await _context.Users
+                        .Where(u => u.Id == verification.ResponderId)
+                        .Select(u => new { id = u.Id, name = u.FullName })
+                        .FirstOrDefaultAsync() : null;
+
+                // Return detailed view
+                var result = new
+                {
+                    id = verification.Id,
+                    examResultId = verification.ExamResultId,
+                    
+                    // Exam information
+                    examId = verification.ExamResult.ExamId,
+                    examTitle = verification.ExamResult.Exam.Title,
+                    
+                    // Student information
+                    studentId = verification.StudentId,
+                    studentName = verification.Student.FullName,
+                    studentEmail = verification.Student.Email,
+                    
+                    // Teacher information
+                    teacherId = verification.TeacherId,
+                    teacherName = teacher?.name,
+                    teacherEmail = teacher?.email,
+                    
+                    // Score information
+                    originalScore = verification.OriginalScore,
+                    newScore = verification.NewScore,
+                    
+                    // Request details
+                    requestReason = verification.RequestReason,
+                    teacherResponse = verification.TeacherResponse,
+                    status = verification.Status,
+                    
+                    // Timestamps
+                    createdAt = verification.CreatedAt,
+                    updatedAt = verification.UpdatedAt,
+                    
+                    // Responder information (if applicable)
+                    responderId = verification.ResponderId,
+                    responderName = responder?.name
+                };
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting verification detail: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy chi tiết yêu cầu xác minh điểm" });
             }
         }
 

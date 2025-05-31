@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using webthitn_backend.Models;
+using System.Security.Claims;
 
 namespace webthitn_backend.Middlewares
 {
@@ -19,6 +20,15 @@ namespace webthitn_backend.Middlewares
 
         public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext)
         {
+            var path = context.Request.Path.Value?.ToLower();
+            
+            // ✅ SỬA: Loại bỏ Dashboard khỏi danh sách bảo vệ hoàn toàn
+            if (path?.StartsWith("/api/dashboard") == true)
+            {
+                await _next(context);
+                return;
+            }
+
             // Kiểm tra xem đường dẫn có thuộc các endpoint cần bảo vệ không
             if (IsProtectedEndpoint(context.Request.Path))
             {
@@ -83,23 +93,21 @@ namespace webthitn_backend.Middlewares
         {
             string pathStr = path.ToString().ToLower();
 
-            // Danh sách các endpoint được bảo vệ
+            // ✅ SỬA: Loại bỏ dashboard khỏi danh sách
             return pathStr.Contains("/api/reports") ||
                    pathStr.Contains("/api/students/export") ||
                    pathStr.Contains("/api/scores/export") ||
                    pathStr.Contains("/api/official-exams") ||
                    pathStr.Contains("/api/exams/assign") ||
-                   pathStr.Contains("/api/admin/") ||
-                   pathStr.Contains("/api/dashboard");
+                   pathStr.Contains("/api/admin/");
         }
 
         private bool IsAdminOnlyEndpoint(PathString path)
         {
             string pathStr = path.ToString().ToLower();
 
-            // Danh sách các endpoint chỉ dành cho Admin
+            // ✅ SỬA: Loại bỏ dashboard/system
             return pathStr.Contains("/api/admin/") ||
-                   pathStr.Contains("/api/dashboard/system") ||
                    pathStr.Contains("/api/users/create-teacher");
         }
     }

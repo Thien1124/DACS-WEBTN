@@ -79,12 +79,12 @@ namespace webthitn_backend.Models
         public bool IsActive { get; set; } = true;
 
         /// <summary>
-        /// Cài đặt hiển thị kết quả sau khi làm bài
+        /// Hiển thị kết quả sau khi làm bài
         /// </summary>
         public bool ShowResult { get; set; } = true;
 
         /// <summary>
-        /// Cài đặt hiển thị đáp án đúng sau khi làm bài
+        /// Hiển thị đáp án sau khi làm bài
         /// </summary>
         public bool ShowAnswers { get; set; } = false;
 

@@ -218,6 +218,41 @@
             </summary>
             <returns>Kết quả tạo lớp</returns>
         </member>
+        <member name="T:webthitn_backend.Controllers.DashboardController">
+            <summary>
+            API cung cấp dữ liệu Dashboard CHỈ cho học sinh
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.DashboardController.GetDashboard">
+            <summary>
+            Lấy dữ liệu Dashboard CHỈ cho học sinh
+            </summary>
+            <returns>Dữ liệu Dashboard của học sinh</returns>
+            <response code="200">Trả về dữ liệu Dashboard thành công</response>
+            <response code="401">Người dùng chưa đăng nhập</response>
+            <response code="403">Chỉ học sinh mới có thể truy cập</response>
+            <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.DashboardController.GetQuickStats">
+            <summary>
+            Lấy thống kê nhanh CHỈ cho học sinh
+            </summary>
+            <returns>Thống kê tổng quan của học sinh</returns>
+            <response code="200">Trả về thống kê thành công</response>
+            <response code="401">Người dùng chưa đăng nhập</response>
+            <response code="403">Chỉ học sinh mới có thể truy cập</response>
+            <response code="500">Lỗi máy chủ</response>
+        </member>
+        <member name="M:webthitn_backend.Controllers.DashboardController.RefreshDashboard">
+            <summary>
+            Refresh dữ liệu Dashboard CHỈ cho học sinh
+            </summary>
+            <returns>Dữ liệu Dashboard mới nhất</returns>
+            <response code="200">Refresh thành công</response>
+            <response code="401">Người dùng chưa đăng nhập</response>
+            <response code="403">Chỉ học sinh mới có thể truy cập</response>
+            <response code="500">Lỗi máy chủ</response>
+        </member>
         <member name="T:webthitn_backend.Controllers.ExamController">
             <summary>
             API để quản lý và truy xuất thông tin bài thi
@@ -1093,12 +1128,12 @@
         </member>
         <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetPendingVerifications(System.Nullable{System.Int32})">
             <summary>
-            Lấy danh sách yêu cầu xác minh điểm đang chờ giáo viên xử lý
+            Lấy danh sách yêu cầu xác minh điểm đang chờ xử lý (Chỉ Admin)
             </summary>
         </member>
         <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetVerifications(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
             <summary>
-            Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc
+            Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc (Chỉ Admin)
             </summary>
         </member>
         <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetVerificationStats">
@@ -1108,7 +1143,12 @@
         </member>
         <member name="M:webthitn_backend.Controllers.ScoreVerificationController.RespondToVerification(System.Int32,webthitn_backend.DTOs.ScoreVerificationResponseDTO)">
             <summary>
-            Giáo viên phản hồi yêu cầu xác minh điểm
+            Admin phản hồi yêu cầu xác minh điểm (Chỉ Admin)
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.ScoreVerificationController.GetVerificationDetail(System.Int32)">
+            <summary>
+            Xem chi tiết một yêu cầu xác minh điểm
             </summary>
         </member>
         <member name="M:webthitn_backend.Controllers.StatisticsController.GetOverview">
@@ -1231,12 +1271,22 @@
             </summary>
             <returns>User ID hoặc giá trị mặc định nếu không tìm thấy</returns>
         </member>
+        <member name="M:webthitn_backend.Controllers.TestController.ImprovedUserIdExtraction">
+            <summary>
+            Phương thức cải tiến để trích xuất userId từ JWT token
+            </summary>
+        </member>
         <member name="M:webthitn_backend.Controllers.TestController.GetTokenInfo">
             <summary>
             API để kiểm tra thông tin token hiện tại
             </summary>
         </member>
-        <member name="M:webthitn_backend.Controllers.TestController.VerifyToken(webthitn_backend.Controllers.TokenVerificationRequest)">
+        <member name="M:webthitn_backend.Controllers.TestController.DirectTokenParsing">
+            <summary>
+            Phương thức trích xuất trực tiếp không phụ thuộc ASP.NET Core Identity
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.DebugToken">
             <summary>
             Kiểm tra và xử lý token thủ công
             </summary>
@@ -1253,7 +1303,7 @@
             <summary>
             Lấy đề thi theo chủ đề
             </summary>
-            <remarks>
+            <remarks>   
             API này cho phép lấy các đề thi theo chủ đề cụ thể
             </remarks>
         </member>
@@ -1291,6 +1341,11 @@
         <member name="M:webthitn_backend.Controllers.TestController.GetQuestionTypeName(System.Int32)">
             <summary>
             Lấy tên loại câu hỏi từ mã số
+            </summary>
+        </member>
+        <member name="M:webthitn_backend.Controllers.TestController.GenerateRandomAccessCode">
+            <summary>
+            Tạo mã truy cập ngẫu nhiên cho đề thi
             </summary>
         </member>
         <member name="T:webthitn_backend.Controllers.SimplePracticeDTO">
@@ -1922,6 +1977,36 @@
         <member name="P:webthitn_backend.DTOs.CreateClassroomDTO.Description">
             <summary>
             Mô tả về lớp (tùy chọn)
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.DashboardResponseDTO">
+            <summary>
+            DTO cho dữ liệu Dashboard của học sinh
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.UserStatsDTO">
+            <summary>
+            Thống kê tổng quan của người dùng
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.RecentExamDTO">
+            <summary>
+            Bài thi gần đây
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.CompletedExamDTO">
+            <summary>
+            Bài thi đã hoàn thành
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.ActivityDTO">
+            <summary>
+            Hoạt động của người dùng
+            </summary>
+        </member>
+        <member name="T:webthitn_backend.DTOs.EventDTO">
+            <summary>
+            Sự kiện hệ thống
             </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.DocumentDTO">
@@ -2707,6 +2792,16 @@
             Các đáp án đã chọn (chỉ hiển thị cho một đáp án)
             </summary>
         </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.Options">
+            <summary>
+            Tất cả các options của câu hỏi (để hiển thị trên frontend)
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.CorrectOptionId">
+            <summary>
+            ID của đáp án đúng
+            </summary>
+        </member>
         <member name="P:webthitn_backend.DTOs.StudentAnswerDTO.TextAnswer">
             <summary>
             Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
@@ -2981,6 +3076,16 @@
         <member name="P:webthitn_backend.DTOs.ExamBasicDTO.Subject">
             <summary>
             Môn học
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamBasicDTO.ShowResult">
+            <summary>
+            Hiển thị kết quả sau khi làm bài
+            </summary>
+        </member>
+        <member name="P:webthitn_backend.DTOs.ExamBasicDTO.ShowAnswers">
+            <summary>
+            Hiển thị đáp án sau khi làm bài
             </summary>
         </member>
         <member name="T:webthitn_backend.DTOs.CreateFeedbackDTO">
@@ -5182,12 +5287,12 @@
         </member>
         <member name="P:webthitn_backend.Models.Exam.ShowResult">
             <summary>
-            Cài đặt hiển thị kết quả sau khi làm bài
+            Hiển thị kết quả sau khi làm bài
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.Exam.ShowAnswers">
             <summary>
-            Cài đặt hiển thị đáp án đúng sau khi làm bài
+            Hiển thị đáp án sau khi làm bài
             </summary>
         </member>
         <member name="P:webthitn_backend.Models.Exam.ShuffleQuestions">

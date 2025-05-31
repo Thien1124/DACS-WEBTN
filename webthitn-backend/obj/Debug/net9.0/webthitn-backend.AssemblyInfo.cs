@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("webthitn-backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c6ea80b710806efb57bf3309817328600b354f1b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+175a8447951a9ff39627678f15a07c099917d028")]
 [assembly: System.Reflection.AssemblyProductAttribute("webthitn-backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("webthitn-backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

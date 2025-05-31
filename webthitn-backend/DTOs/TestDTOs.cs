@@ -70,19 +70,25 @@ namespace webthitn_backend.DTOs
     /// </summary>
     public class CreatePracticeTestDTO
     {
+        [StringLength(200, ErrorMessage = "Tiêu đề không được vượt quá 200 ký tự")]
+        public string? Title { get; set; }
+
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "ID môn học phải lớn hơn 0")]
         public int SubjectId { get; set; }
 
         [Required]
-        [Range(1, 100)]
+        [Range(1, 100, ErrorMessage = "Số lượng câu hỏi phải nằm trong khoảng 1-100")]
         public int QuestionCount { get; set; }
 
-        public int LevelId { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "ID cấp độ phải lớn hơn 0")]
+        public int? LevelId { get; set; }
 
-        public List<int> QuestionTypes { get; set; }
+        public List<int>? QuestionTypes { get; set; }
 
-        public List<int> ChapterIds { get; set; }
+        public List<int>? ChapterIds { get; set; }
 
-        public string Topic { get; set; }
+        [StringLength(500, ErrorMessage = "Chủ đề không được vượt quá 500 ký tự")]
+        public string? Topic { get; set; }
     }
 }

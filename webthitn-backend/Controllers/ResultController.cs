@@ -292,9 +292,9 @@ namespace webthitn_backend.Controllers
         {
             try
             {
-                _logger.LogInformation($"Lấy thông tin chi tiết kết quả bài thi ID: {resultId}");
+                _logger.LogInformation($"=== GET EXAM RESULT {resultId} ===");
 
-                // Lấy thông tin kết quả bài thi
+                // ✅ SỬA: Lấy thông tin kết quả bài thi với đầy đủ thông tin liên quan
                 var examResult = await _context.ExamResults
                     .Include(er => er.Exam)
                         .ThenInclude(e => e.Subject)
@@ -307,6 +307,11 @@ namespace webthitn_backend.Controllers
                     _logger.LogWarning($"Không tìm thấy kết quả bài thi ID: {resultId}");
                     return NotFound(new { message = "Không tìm thấy kết quả bài thi" });
                 }
+
+                // ✅ LOG: Debug thông tin exam settings
+                _logger.LogInformation($"Found exam result: Exam={examResult.ExamId}, Student={examResult.StudentId}");
+                _logger.LogInformation($"Exam ShowResult: {examResult.Exam.ShowResult}");
+                _logger.LogInformation($"Exam ShowAnswers: {examResult.Exam.ShowAnswers}");
 
                 // Kiểm tra quyền truy cập
                 int currentUserId = GetCurrentUserId();
@@ -323,14 +328,26 @@ namespace webthitn_backend.Controllers
                     return StatusCode(403, new { message = "Bạn không có quyền xem kết quả bài thi này" });
                 }
 
-                // Tạo đối tượng trả về từ service
+                _logger.LogInformation($"Current user: {currentUserId}, Role: {(isAdminOrTeacher ? "Admin/Teacher" : "Student")}, ShowAllDetails: {isAdminOrTeacher}");
+
+                // ✅ Tạo đối tượng trả về từ service
                 var resultDetail = await _gradingService.GetExamResultDetail(examResult, isAdminOrTeacher);
+
+                if (resultDetail == null)
+                {
+                    _logger.LogError("GradingService returned null result");
+                    return StatusCode(500, new { message = "Không thể lấy chi tiết kết quả bài thi" });
+                }
+
+                _logger.LogInformation($"Service returned {resultDetail.StudentAnswers?.Count() ?? 0} student answers");
+                _logger.LogInformation($"=== END GET EXAM RESULT ===");
 
                 return Ok(resultDetail);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Lỗi khi lấy chi tiết kết quả bài thi: {ex.Message}");
+                _logger.LogError($"StackTrace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy chi tiết kết quả bài thi" });
             }
         }

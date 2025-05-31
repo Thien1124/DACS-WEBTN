@@ -3,20 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\scoreverificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\scoreverificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\exportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:controllers\\exportcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\models\\practicemodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|solutionrelative:models\\practicemodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{AD4FE53F-DEE4-4F36-8F3A-5F38F32DCBF1}|webthitn-backend.csproj|c:\\users\\84949\\onedrive\\m\u00E1y t\u00EDnh\\dacs-webtn\\webthitn-backend\\controllers\\questioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -30,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 95,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -38,58 +34,44 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "ScoreVerificationController.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\ScoreVerificationController.cs",
-              "RelativeDocumentMoniker": "Controllers\\ScoreVerificationController.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\ScoreVerificationController.cs",
-              "RelativeToolTip": "Controllers\\ScoreVerificationController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAPwAAAAAAAAAAAAswAsBAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-21T08:00:55.263Z",
+              "WhenOpened": "2025-05-26T13:32:29.389Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "ExportController.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExportController.cs",
-              "RelativeDocumentMoniker": "Controllers\\ExportController.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\ExportController.cs",
-              "RelativeToolTip": "Controllers\\ExportController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Title": "PracticeModels.cs",
+              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\PracticeModels.cs",
+              "RelativeDocumentMoniker": "Models\\PracticeModels.cs",
+              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Models\\PracticeModels.cs",
+              "RelativeToolTip": "Models\\PracticeModels.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAAwBsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-20T16:12:13.882Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-25T14:56:06.75Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "AuthController.cs",
-              "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\AuthController.cs",
-              "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
-              "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\AuthController.cs",
-              "RelativeToolTip": "Controllers\\AuthController.cs",
-              "ViewState": "AgIAAN4AAAAAAAAAAAAYwPAAAAA1AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-20T15:22:42.898Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 1,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
               "ToolTip": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\appsettings.json",
               "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAiwBkAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
               "WhenOpened": "2025-05-20T13:44:17.742Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 3,
               "Title": "QuestionController.cs",
               "DocumentMoniker": "C:\\Users\\84949\\OneDrive\\M\u00E1y t\u00EDnh\\DACS-WEBTN\\webthitn-backend\\Controllers\\QuestionController.cs",
               "RelativeDocumentMoniker": "Controllers\\QuestionController.cs",

@@ -24,6 +24,7 @@ namespace webthitn_backend.Models
         public int? LevelId { get; set; } // Changed to nullable int
 
         public string Topic { get; set; }
+        public string Title { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; }

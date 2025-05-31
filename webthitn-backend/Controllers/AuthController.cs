@@ -233,7 +233,7 @@ namespace webthitn_backend.Controllers
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             // Thời gian hết hạn token luôn là 15 phút
-            DateTime expiresTime = DateTime.Now.AddSeconds(15);
+            DateTime expiresTime = DateTime.Now.AddMinutes(15);
 
             _logger.LogInformation($"Tạo token cho {user.Username} với thời hạn 15 phút");
 

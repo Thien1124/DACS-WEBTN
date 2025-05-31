@@ -277,7 +277,17 @@ namespace webthitn_backend.DTOs
         /// <summary>
         /// Các đáp án đã chọn (chỉ hiển thị cho một đáp án)
         /// </summary>
-        public List<SelectedOptionDTO> SelectedOptions { get; set; }
+        public List<SelectedOptionDTO> SelectedOptions { get; set; } = new List<SelectedOptionDTO>();
+        
+        /// <summary>
+        /// Tất cả các options của câu hỏi (để hiển thị trên frontend)
+        /// </summary>
+        public List<QuestionOptionDTO> Options { get; set; } = new List<QuestionOptionDTO>();
+        
+        /// <summary>
+        /// ID của đáp án đúng
+        /// </summary>
+        public int? CorrectOptionId { get; set; }
 
         /// <summary>
         /// Văn bản câu trả lời (cho câu hỏi trả lời ngắn)
@@ -561,5 +571,15 @@ namespace webthitn_backend.DTOs
         /// Môn học
         /// </summary>
         public required SubjectBasicDTO Subject { get; set; }
+        
+        /// <summary>
+        /// Hiển thị kết quả sau khi làm bài
+        /// </summary>
+        public bool ShowResult { get; set; }
+        
+        /// <summary>
+        /// Hiển thị đáp án sau khi làm bài
+        /// </summary>
+        public bool ShowAnswers { get; set; }
     }
 }

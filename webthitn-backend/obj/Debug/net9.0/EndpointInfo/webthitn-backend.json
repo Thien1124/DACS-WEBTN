@@ -1250,6 +1250,225 @@
         }
       }
     },
+    "/api/Dashboard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Lấy dữ liệu Dashboard CHỈ cho học sinh",
+        "responses": {
+          "200": {
+            "description": "Trả về dữ liệu Dashboard thành công",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Người dùng chưa đăng nhập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chỉ học sinh mới có thể truy cập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/quick-stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Lấy thống kê nhanh CHỈ cho học sinh",
+        "responses": {
+          "200": {
+            "description": "Trả về thống kê thành công",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatsDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatsDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Người dùng chưa đăng nhập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chỉ học sinh mới có thể truy cập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/refresh": {
+      "post": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Refresh dữ liệu Dashboard CHỈ cho học sinh",
+        "responses": {
+          "200": {
+            "description": "Refresh thành công",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Người dùng chưa đăng nhập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chỉ học sinh mới có thể truy cập",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
     "/api/Exam": {
       "get": {
         "tags": [
@@ -5730,7 +5949,7 @@
         "tags": [
           "ScoreVerification"
         ],
-        "summary": "Lấy danh sách yêu cầu xác minh điểm đang chờ giáo viên xử lý",
+        "summary": "Lấy danh sách yêu cầu xác minh điểm đang chờ xử lý (Chỉ Admin)",
         "parameters": [
           {
             "name": "teacherId",
@@ -5753,7 +5972,7 @@
         "tags": [
           "ScoreVerification"
         ],
-        "summary": "Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc",
+        "summary": "Lấy danh sách tất cả yêu cầu xác minh điểm với bộ lọc (Chỉ Admin)",
         "parameters": [
           {
             "name": "status",
@@ -5820,7 +6039,7 @@
         "tags": [
           "ScoreVerification"
         ],
-        "summary": "Giáo viên phản hồi yêu cầu xác minh điểm",
+        "summary": "Admin phản hồi yêu cầu xác minh điểm (Chỉ Admin)",
         "parameters": [
           {
             "name": "id",
@@ -5877,6 +6096,70 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/score-verification/{id}": {
+      "get": {
+        "tags": [
+          "ScoreVerification"
+        ],
+        "summary": "Xem chi tiết một yêu cầu xác minh điểm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "text/plain": {
                 "schema": {
@@ -6500,31 +6783,12 @@
         }
       }
     },
-    "/api/tests/verify-token": {
-      "post": {
+    "/api/tests/debug-token": {
+      "get": {
         "tags": [
           "Test"
         ],
         "summary": "Kiểm tra và xử lý token thủ công",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenVerificationRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenVerificationRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenVerificationRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -7277,6 +7541,37 @@
   },
   "components": {
     "schemas": {
+      "ActivityDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "time": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Hoạt động của người dùng"
+      },
       "AnswerSubmissionDTO": {
         "type": "object",
         "properties": {
@@ -7429,6 +7724,48 @@
           }
         },
         "additionalProperties": false
+      },
+      "CompletedExamDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "percentageScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Bài thi đã hoàn thành"
       },
       "CreateChapterDTO": {
         "type": "object",
@@ -7685,7 +8022,15 @@
         ],
         "type": "object",
         "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
           "subjectId": {
+            "maximum": 2147483647,
+            "minimum": 1,
             "type": "integer",
             "format": "int32"
           },
@@ -7696,8 +8041,11 @@
             "format": "int32"
           },
           "levelId": {
+            "maximum": 2147483647,
+            "minimum": 1,
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "questionTypes": {
             "type": "array",
@@ -7716,6 +8064,8 @@
             "nullable": true
           },
           "topic": {
+            "maxLength": 500,
+            "minLength": 0,
             "type": "string",
             "nullable": true
           }
@@ -7989,6 +8339,51 @@
         "additionalProperties": false,
         "description": "DTO dùng để tạo mới môn học"
       },
+      "DashboardResponseDTO": {
+        "required": [
+          "activities",
+          "completedExams",
+          "events",
+          "recentExams",
+          "stats"
+        ],
+        "type": "object",
+        "properties": {
+          "stats": {
+            "$ref": "#/components/schemas/UserStatsDTO"
+          },
+          "recentExams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentExamDTO"
+            },
+            "nullable": true
+          },
+          "completedExams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompletedExamDTO"
+            },
+            "nullable": true
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityDTO"
+            },
+            "nullable": true
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO cho dữ liệu Dashboard của học sinh"
+      },
       "EmailNotificationDTO": {
         "required": [
           "content",
@@ -8049,6 +8444,41 @@
         },
         "additionalProperties": false,
         "description": "DTO để gửi thông báo qua email"
+      },
+      "EventDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "isImportant": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Sự kiện hệ thống"
       },
       "ExamQuestionCreateDTO": {
         "type": "object",
@@ -8417,6 +8847,49 @@
         "additionalProperties": false,
         "description": "DTO định nghĩa một nguồn câu hỏi"
       },
+      "RecentExamDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "duration": {
+            "type": "string",
+            "nullable": true
+          },
+          "progress": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Bài thi gần đây"
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -8685,17 +9158,6 @@
         },
         "additionalProperties": false,
         "description": "DTO cho tiêu chí phân bổ câu hỏi"
-      },
-      "TokenVerificationRequest": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "DTO cho API kiểm tra token"
       },
       "UpdateAnswerScoreDTO": {
         "type": "object",
@@ -9082,6 +9544,49 @@
         },
         "additionalProperties": false,
         "description": "DTO dùng để kích hoạt hoặc vô hiệu hóa tài khoản người dùng"
+      },
+      "UserStatsDTO": {
+        "type": "object",
+        "properties": {
+          "testsCompleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "testsCompletedChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageScoreChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "studyTime": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studyTimeChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "strengths": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalQuestions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "correctAnswers": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Thống kê tổng quan của người dùng"
       }
     },
     "securitySchemes": {

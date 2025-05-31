@@ -82,7 +82,6 @@ namespace webthitn_backend.Middlewares
             // Gọi middleware tiếp theo
             await _next(context);
         }
-
         private bool ShouldValidateExam(HttpContext context)
         {
             var path = context.Request.Path.Value?.ToLower();
@@ -91,6 +90,8 @@ namespace webthitn_backend.Middlewares
             // Bỏ qua các API không yêu cầu validation đầy đủ
             if (path?.Contains("simple-practice") == true ||
                 path?.Contains("practice-fixed") == true ||
+                path?.Contains("practice") == true ||  // Exclude all practice endpoints
+                path?.Contains("structured") == true ||
                 path?.Contains("verify-token") == true ||
                 path?.Contains("ping") == true)
             {
@@ -285,26 +286,38 @@ namespace webthitn_backend.Middlewares
                 }
 
                 // 3. Kiểm tra quyền của người dùng - bỏ qua nếu là API practice đặc biệt
-                if (!path.Contains("practice-fixed") && !path.Contains("simple-practice"))
+                if (!path.Contains("practice-fixed") && 
+                    !path.Contains("simple-practice") &&
+                    !path.Contains("structured"))  // THÊM ĐIỀU KIỆN NÀY
                 {
                     var userIdClaim = context.User.FindFirst("userId") ??
                                       context.User.FindFirst("UserId") ??
                                       context.User.FindFirst("userid");
 
+                    _logger.LogInformation($"🔍 Middleware user validation - userIdClaim: {userIdClaim?.Value}");
+
                     if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                     {
+                        _logger.LogError("❌ Middleware: Không tìm thấy userId claim");
                         result.AddError("user", "Không xác định được người dùng");
                     }
                     else
                     {
+                        _logger.LogInformation($"🔍 Middleware: Checking user ID {userId} in database");
                         var user = await dbContext.Users.FindAsync(userId);
                         if (user == null)
                         {
+                            _logger.LogError($"❌ Middleware: User ID {userId} không tồn tại trong database");
                             result.AddError("user", "Người dùng không tồn tại");
                         }
                         else if (!context.User.IsInRole("Admin") && !context.User.IsInRole("Teacher"))
                         {
+                            _logger.LogError($"❌ Middleware: User {userId} không có quyền - Roles: {string.Join(", ", context.User.Claims.Where(c => c.Type.Contains("role")).Select(c => c.Value))}");
                             result.AddError("user", "Bạn không có quyền tạo hoặc cập nhật đề thi");
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"✅ Middleware: User {userId} ({user.Username}) validation passed");
                         }
                     }
                 }

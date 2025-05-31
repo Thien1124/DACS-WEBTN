@@ -276,27 +276,47 @@ namespace webthitn_backend.Services
         {
             try
             {
-                // Lấy danh sách câu trả lời
+                _logger.LogInformation($"=== DEBUG EXAM RESULT DETAIL ===");
+                _logger.LogInformation($"ExamResult ID: {examResult.Id}");
+                
+                // ✅ SỬA: Query StudentAnswers với ExamResultId = examResult.Id (chứ không phải 34)
                 var studentAnswers = await _context.StudentAnswers
                     .Include(sa => sa.Question)
-                    .Include(sa => sa.Question.Options)
+                        .ThenInclude(q => q.Options)
                     .Where(sa => sa.ExamResultId == examResult.Id)
                     .OrderBy(sa => sa.QuestionOrder)
                     .ToListAsync();
 
+                _logger.LogInformation($"Found {studentAnswers.Count} StudentAnswers for ExamResult {examResult.Id}");
+
+                // ✅ DEBUG: Log chi tiết
+                foreach (var answer in studentAnswers)
+                {
+                    _logger.LogInformation($"Answer ID: {answer.Id}, QuestionId: {answer.QuestionId}, SelectedOptionId: {answer.SelectedOptionId}");
+                }
+
                 // Tính thời gian làm bài định dạng
                 var durationFormatted = FormatDuration(examResult.Duration);
 
-                // Kiểm tra xem có thể hiển thị đáp án không
-                bool canShowAnswers = examResult.Exam.ShowResult;
-                bool canShowCorrectAnswers = examResult.Exam.ShowAnswers;
+                // ✅ LOGIC CHÍNH XÁC: KIỂM TRA QUYỀN HIỂN THỊ ĐÁP ÁN
+                bool canShowResult = examResult.Exam.ShowResult;
+                bool canShowAnswers = examResult.Exam.ShowAnswers;
 
                 // Nếu có quyền admin/teacher, luôn hiển thị đáp án
                 if (showAllDetails)
                 {
+                    canShowResult = true;
                     canShowAnswers = true;
-                    canShowCorrectAnswers = true;
                 }
+
+                _logger.LogInformation($"Exam ShowResult: {examResult.Exam.ShowResult}");
+                _logger.LogInformation($"Exam ShowAnswers: {examResult.Exam.ShowAnswers}");
+                _logger.LogInformation($"Can show result: {canShowResult}");
+                _logger.LogInformation($"Can show answers: {canShowAnswers}");
+
+                // ✅ Tạo StudentAnswerDTOs
+                var studentAnswerDTOs = GetStudentAnswerDTOs(studentAnswers, canShowAnswers);
+                _logger.LogInformation($"Created {studentAnswerDTOs.Count} StudentAnswerDTOs");
 
                 // Tạo DTO chi tiết kết quả
                 var resultDetail = new ExamResultDetailDTO
@@ -307,6 +327,8 @@ namespace webthitn_backend.Services
                         Id = examResult.ExamId,
                         Title = examResult.Exam.Title,
                         Type = examResult.Exam.ExamType?.Name ?? "Bài thi",
+                        ShowResult = examResult.Exam.ShowResult,
+                        ShowAnswers = examResult.Exam.ShowAnswers,
                         Subject = new SubjectBasicDTO
                         {
                             Id = examResult.Exam.Subject.Id,
@@ -338,22 +360,28 @@ namespace webthitn_backend.Services
                     CompletedAt = examResult.CompletedAt,
                     TeacherComment = examResult.TeacherComment,
                     IsSubmittedManually = examResult.IsSubmittedManually,
-                    StudentAnswers = GetStudentAnswerDTOs(studentAnswers, canShowCorrectAnswers),
+                    
+                    // ✅ TRẢ VỀ STUDENT ANSWERS
+                    StudentAnswers = studentAnswerDTOs,
                     LevelStats = GetQuestionLevelStats(studentAnswers)
                 };
 
-                // Thêm thống kê nếu được phép xem kết quả
-                if (canShowAnswers)
+                // Thêm thống kê
+                if (studentAnswers.Any())
                 {
                     resultDetail.QuestionTypeStats = GetQuestionTypeStats(studentAnswers);
                 }
+
+                _logger.LogInformation($"Final StudentAnswers count in DTO: {resultDetail.StudentAnswers?.Count() ?? 0}");
+                _logger.LogInformation($"=== END DEBUG ===");
 
                 return resultDetail;
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Lỗi khi lấy chi tiết kết quả bài thi: {ex.Message}");
-                return null;
+                _logger.LogError($"StackTrace: {ex.StackTrace}");
+                throw;
             }
         }
 
@@ -621,12 +649,22 @@ namespace webthitn_backend.Services
         /// <summary>
         /// Tạo danh sách DTO cho câu trả lời của học sinh
         /// </summary>
-        private List<StudentAnswerDTO> GetStudentAnswerDTOs(List<StudentAnswer> answers, bool showExplanation)
+        private List<StudentAnswerDTO> GetStudentAnswerDTOs(List<StudentAnswer> answers, bool showCorrectAnswers)
         {
+            _logger.LogInformation($"=== GetStudentAnswerDTOs ===");
+            _logger.LogInformation($"Input answers count: {answers.Count}");
+            _logger.LogInformation($"Show correct answers: {showCorrectAnswers}");
+            
             var result = new List<StudentAnswerDTO>();
 
             foreach (var answer in answers)
             {
+                if (answer.Question == null)
+                {
+                    _logger.LogWarning($"Answer {answer.Id} has null Question");
+                    continue;
+                }
+
                 var answerDto = new StudentAnswerDTO
                 {
                     Id = answer.Id,
@@ -642,11 +680,27 @@ namespace webthitn_backend.Services
                     AnswerTime = answer.AnswerTime,
                     Status = answer.Status,
                     RequiresManualReview = answer.RequiresManualReview,
-                    Explanation = showExplanation ? answer.Question?.Explanation : null,
+                    Explanation = showCorrectAnswers ? answer.Question?.Explanation : string.Empty,
                     TextAnswer = answer.TextAnswer,
                     SelectedOptionId = answer.SelectedOptionId,
                     SelectedOptions = new List<SelectedOptionDTO>(),
-                    TrueFalseAnswers = new Dictionary<string, bool>()
+                    TrueFalseAnswers = new Dictionary<string, bool>(),
+                    
+                    // ✅ THÊM: Luôn trả về tất cả options để frontend hiển thị câu hỏi
+                    Options = answer.Question.Options?.Select(o => new QuestionOptionDTO
+                    {
+                        Id = o.Id,
+                        Content = o.Content,
+                        Label = o.Label,
+                        // Chỉ hiển thị đáp án đúng nếu được phép
+                        IsCorrect = showCorrectAnswers ? o.IsCorrect : false,
+                        OrderIndex = o.OrderIndex
+                    }).OrderBy(o => o.OrderIndex).ToList() ?? new List<QuestionOptionDTO>(),
+                    
+                    // ✅ THÊM: Chỉ hiển thị ID đáp án đúng nếu được phép
+                    CorrectOptionId = showCorrectAnswers 
+                        ? answer.Question.Options?.FirstOrDefault(o => o.IsCorrect)?.Id 
+                        : null
                 };
 
                 // Xử lý chi tiết câu trả lời dựa trên loại câu hỏi
@@ -655,9 +709,11 @@ namespace webthitn_backend.Services
                     ProcessAnswerDetails(answer, answerDto);
                 }
 
+                _logger.LogInformation($"Created DTO for question {answer.QuestionId} with {answerDto.Options.Count} options");
                 result.Add(answerDto);
             }
 
+            _logger.LogInformation($"Final result count: {result.Count}");
             return result;
         }
 
