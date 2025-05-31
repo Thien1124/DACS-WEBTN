@@ -1,4 +1,6 @@
-import apiClient from './apiClient';
+
+import apiClient from './apiClient'; 
+const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5006';
 
 /**
  * Lấy dữ liệu cho Dashboard
@@ -6,67 +8,32 @@ import apiClient from './apiClient';
  */
 export const getDashboardData = async () => {
   try {
-    // Gọi API endpoint để lấy dữ liệu Dashboard
-    const response = await apiClient.get('/api/Dashboard');
+    const token = localStorage.getItem('token');
     
-    // Cấu trúc dữ liệu mong đợi từ API
-    // {
-    //   stats: {
-    //     testsCompleted: number,
-    //     testsCompletedChange: number,  // % thay đổi so với tháng trước
-    //     averageScore: number,
-    //     averageScoreChange: number,    // % thay đổi so với tháng trước
-    //     studyTime: number,             // số giờ học tập
-    //     studyTimeChange: number,       // % thay đổi so với tháng trước
-    //     strengths: string              // môn học mạnh nhất
-    //   },
-    //   recentExams: [
-    //     {
-    //       id: number,
-    //       title: string,
-    //       subject: string,
-    //       duration: string,
-    //       progress: number,           // % hoàn thành (0-100)
-    //       questions: number,          // tổng số câu hỏi
-    //       completed: number           // số câu đã hoàn thành
-    //     }
-    //   ],
-    //   activities: [
-    //     {
-    //       id: number,
-    //       title: string,
-    //       time: string,
-    //       type: string,              // 'test', 'achievement', 'course', 'streak'
-    //       color: string              // định dạng 'R, G, B' (optional)
-    //     }
-    //   ],
-    //   events: [
-    //     {
-    //       id: number,
-    //       title: string,
-    //       date: string
-    //     }
-    //   ]
-    // }
-    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/api/Dashboard`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
     return response.data;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     
-    // Xử lý lỗi
-    if (error.response) {
-      // Lỗi từ server
-      console.error('Server error response:', error.response.data);
-      console.error('Server error status:', error.response.status);
-    } else if (error.request) {
-      // Không nhận được phản hồi từ server
-      console.error('No response received:', error.request);
-    } else {
-      // Lỗi khi setup request
-      console.error('Request error:', error.message);
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      throw new Error('Authentication failed. Please login again.');
     }
     
-    throw error;
+    throw new Error(error.response?.data?.message || 'Failed to fetch dashboard data');
   }
 };
 

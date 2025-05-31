@@ -1,4 +1,6 @@
 import apiClient from './apiClient';
+import axios from 'axios';
+import { API_URL } from '../config/constants';
 
 /**
  * Get list of study materials/documents
@@ -77,14 +79,65 @@ export const uploadMaterial = async (formData) => {
  */
 export const uploadVideo = async (formData) => {
   try {
-    const response = await apiClient.post('/api/videos/upload', formData, {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Token not found. Please login again.');
+    }
+
+    console.log('Uploading video with token:', token.substring(0, 20) + '...');
+    
+    // Log FormData contents for debugging
+    console.log('FormData contents:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
+    }
+    
+    const response = await axios.post(`${API_URL}/api/videos/upload`, formData, {
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 300000 // 5 minutes timeout for large video files
     });
+
+    console.log('Video upload response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error uploading video:', error);
-    throw error;
+    // Chi tiết hơn về lỗi
+    console.error('Video upload error details:', error);
+    
+    if (error.response) {
+      // Log chi tiết response từ server
+      console.error('Server response:', {
+        status: error.response.status,
+        headers: error.response.headers,
+        data: error.response.data
+      });
+    }
+    
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      throw new Error('Session expired. Please login again.');
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('You do not have permission to upload videos.');
+    }
+    
+    if (error.response?.status === 413) {
+      throw new Error('File too large. Maximum size is 500MB.');
+    }
+    
+    if (error.response?.status === 500) {
+      // Thêm phần này để bắt lỗi 500 chi tiết hơn
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          'Internal server error. Please try again later.';
+      throw new Error(`Server error: ${errorMessage}`);
+    }
+    
+    throw error.response?.data || error;
   }
 };

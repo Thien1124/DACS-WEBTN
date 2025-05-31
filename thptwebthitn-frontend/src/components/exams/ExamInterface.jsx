@@ -222,14 +222,18 @@ const ExamInterface = () => {
     const fetchExamData = async () => {
       setLoading(true);
       try {
-        // Gọi API lấy đề thi và câu hỏi thực
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Exam/WithQuestions/${examId}`);
-        
-        if (!response.ok) {
-          throw new Error(`Không thể tải đề thi. Mã lỗi: ${response.status}`);
+        // Check authentication first
+        const token = localStorage.getItem('token');
+        if (!token) {
+          showErrorToast('Vui lòng đăng nhập để tiếp tục.');
+          navigate('/login');
+          return;
         }
         
-        const examData = await response.json();
+        // Use apiClient instead of fetch for consistent authentication
+        const response = await apiClient.get(`/api/Exam/WithQuestions/${examId}`);
+        
+        const examData = response.data;
         console.log("Dữ liệu đề thi từ API:", examData);
         
         // Kiểm tra cấu trúc dữ liệu
@@ -272,6 +276,14 @@ const ExamInterface = () => {
         
       } catch (error) {
         console.error("Lỗi khi tải đề thi:", error);
+        
+        if (error.response?.status === 401) {
+          showErrorToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        
         setError(error.message || "Đã xảy ra lỗi khi tải đề thi.");
       } finally {
         setLoading(false);
@@ -279,7 +291,7 @@ const ExamInterface = () => {
     };
     
     fetchExamData();
-  }, [examId]);
+  }, [examId, navigate]);
   
   // Thiết lập bộ đếm thời gian
   useEffect(() => {
@@ -354,11 +366,18 @@ const handleSubmitExam = async () => {
     setIsSubmitting(true);
     closeSubmitModal();
     
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showErrorToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      navigate('/login');
+      return;
+    }
+    
     // Get current time for end time
     const endTimeNow = new Date().toISOString();
     
     // Ensure we have at least empty answers for every question
-    // This is critical - the API needs an answer entry for each question
     const allAnswers = questions.map(question => {
       const existingAnswer = userAnswers[question.id];
       
@@ -387,16 +406,8 @@ const handleSubmitExam = async () => {
     
     console.log('Submitting exam data:', submissionData);
     
-    // Ensure proper headers are set
-    const response = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5006'}/api/Results`, 
-      submissionData,
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    // Use apiClient instead of axios directly (this should handle authentication automatically)
+    const response = await apiClient.post('/api/Results', submissionData);
     
     console.log('API response:', response);
     
@@ -417,6 +428,14 @@ const handleSubmitExam = async () => {
     }
   } catch (error) {
     console.error('Error submitting exam:', error);
+    
+    // Handle authentication errors specifically
+    if (error.response?.status === 401) {
+      showErrorToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      localStorage.removeItem('token'); // Clear invalid token
+      navigate('/login');
+      return;
+    }
     
     // More detailed error logging
     if (error.response) {

@@ -631,7 +631,10 @@ function Header() {
                             <FaTrophy />
                             Kỳ thi chính thức
                           </DropdownItem>
-                          
+                          <DropdownItem to="/admin/verification-requests" theme={theme}>
+                            <FaClipboardCheck />
+                            Phúc Khảo Điểm
+                          </DropdownItem>
                           <DropdownItem to="/admin/questions" theme={theme}>
                             <FaQuestion />
                             Quản lý câu hỏi
@@ -691,10 +694,7 @@ function Header() {
                             <FaClipboardList />
                             Quản lý đề thi
                           </DropdownItem>
-                          <DropdownItem to="/teacher/verification-requests" theme={theme}>
-                            <FaClipboardCheck />
-                            Phúc Khảo Điểm
-                          </DropdownItem>
+                          
                           <DropdownItem to="/teacher/questions" theme={theme}>
                             <FaQuestionCircle />
                             Ngân hàng câu hỏi

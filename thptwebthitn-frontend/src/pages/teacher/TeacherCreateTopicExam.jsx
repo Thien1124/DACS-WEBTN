@@ -5,8 +5,8 @@ import axios from 'axios';
 import { API_URL } from '../../config/constants';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useSelector } from 'react-redux';
-import { FaInfoCircle, FaSave, FaArrowLeft, FaPlus, FaCheck } from 'react-icons/fa';
-import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toastUtils';
+import { FaInfoCircle, FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 
 const TeacherCreateTopicExam = () => {
   const navigate = useNavigate();
@@ -17,39 +17,54 @@ const TeacherCreateTopicExam = () => {
   const [subjects, setSubjects] = useState([]);
   const [topics, setTopics] = useState([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
-  const [availableQuestions, setAvailableQuestions] = useState([]);
-  const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   const createMode = 'manual'; // Replace useState with constant
 
   const [formData, setFormData] = useState({
+    title: '', // Thêm field title
     subjectId: '',
     questionCount: 40,
-    levelId: 0, // Default level (add this new field)
-    questionTypes: [], // Array of question types (add this new field)
-    chapterIds: [], // Renamed from topicIds
-    topic: '', // Renamed from topicName
+    levelId: 1, 
+    questionTypes: [1], // API expects array, default to [1] for single choice
+    chapterIds: [], 
+    topic: '',
+    // Remove these fields as they're not part of the API
+    // duration, passingScore, isPublic, shuffleQuestions, showResult, showAnswers
   });
   
   // Add this function to handle question type selection
 const handleQuestionTypesChange = (typeId) => {
   setFormData(prev => {
-    const types = [...prev.questionTypes];
+    let newTypes = [...prev.questionTypes];
     
-    if (types.includes(typeId)) {
-      // Remove type if already selected
+    // Handle "All types" option (0)
+    if (typeId === 0) {
       return {
         ...prev,
-        questionTypes: types.filter(id => id !== typeId)
-      };
-    } else {
-      // Add type if not selected
-      return {
-        ...prev,
-        questionTypes: [...types, typeId]
+        questionTypes: newTypes.includes(0) ? [] : [0]
       };
     }
+    
+    // Remove "All types" if specific type is selected
+    newTypes = newTypes.filter(id => id !== 0);
+    
+    if (newTypes.includes(typeId)) {
+      // Remove type if already selected
+      newTypes = newTypes.filter(id => id !== typeId);
+    } else {
+      // Add type if not selected
+      newTypes.push(typeId);
+    }
+    
+    // If no specific types selected, default to "All types"
+    if (newTypes.length === 0) {
+      newTypes = [0];
+    }
+    
+    return {
+      ...prev,
+      questionTypes: newTypes
+    };
   });
 };
 
@@ -174,83 +189,6 @@ const handleQuestionTypesChange = (typeId) => {
     }
   }, [formData.subjectId]);
   
-  // Add this useEffect after the topic loading useEffect
-
-// Fix the useEffect for fetching questions
-useEffect(() => {
-  const fetchQuestionsForTopics = async () => {
-    // Change from formData.topicIds to formData.chapterIds
-    if (formData.chapterIds.length === 0 || formData.subjectId === '') {
-      setAvailableQuestions([]);
-      return;
-    }
-    
-    try {
-      setLoadingQuestions(true);
-      
-      const token = localStorage.getItem('token');
-      if (!token) {
-        showErrorToast('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn');
-        return;
-      }
-      
-      // Change from formData.topicIds to formData.chapterIds
-      const chapterIds = formData.chapterIds.join(',');
-      
-      // Try to fetch questions from the API based on chapters
-      const response = await axios.get(`${API_URL}/api/Question`, {
-        params: {
-          chapterIds: chapterIds,
-          subjectId: formData.subjectId,
-          pageSize: 100 // Get a reasonable number of questions
-        },
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      console.log('Questions API response:', response.data);
-      
-      // Process the response to extract questions
-      let questions = [];
-      
-      if (response.data.items && Array.isArray(response.data.items)) {
-        questions = response.data.items;
-      } else if (Array.isArray(response.data)) {
-        questions = response.data;
-      } else if (response.data && typeof response.data === 'object') {
-        // Look for an array property that might contain questions
-        for (const key in response.data) {
-          if (Array.isArray(response.data[key])) {
-            questions = response.data[key];
-            break;
-          }
-        }
-      }
-      
-      console.log(`Found ${questions.length} questions for the selected chapters`);
-      setAvailableQuestions(questions);
-      
-      // If we've just loaded questions and are in manual mode, pre-select up to the question count
-      if (questions.length > 0) {
-        const initialSelection = questions
-          .slice(0, Math.min(questions.length, formData.questionCount))
-          .map(q => q.id);
-        setSelectedQuestions(initialSelection);
-      }
-      
-    } catch (err) {
-      console.error('Error fetching questions:', err);
-      showErrorToast('Không thể tải danh sách câu hỏi. Vui lòng thử lại sau.');
-      setAvailableQuestions([]);
-    } finally {
-      setLoadingQuestions(false);
-    }
-  };
-  
-  fetchQuestionsForTopics();
-}, [formData.chapterIds, formData.subjectId]);
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -268,23 +206,24 @@ const handleTopicChange = (e) => {
   });
 };
   
-  const handleQuestionSelection = (questionId) => {
-    setSelectedQuestions(prevSelected => {
-      if (prevSelected.includes(questionId)) {
-        return prevSelected.filter(id => id !== questionId);
-      } else {
-        return [...prevSelected, questionId];
-      }
-    });
-  };
-  
   // Cập nhật hàm handleSubmit
 
 const handleSubmit = async (e) => {
   e.preventDefault();
   
-  if (formData.chapterIds.length === 0) {
-    showErrorToast('Vui lòng chọn ít nhất một chương');
+  // Validation
+  if (!formData.title.trim()) {
+    showErrorToast('Vui lòng nhập tiêu đề đề thi');
+    return;
+  }
+  
+  if (!formData.subjectId) {
+    showErrorToast('Vui lòng chọn môn học');
+    return;
+  }
+  
+  if (formData.questionCount < 1 || formData.questionCount > 100) {
+    showErrorToast('Số lượng câu hỏi phải từ 1 đến 100');
     return;
   }
   
@@ -299,50 +238,77 @@ const handleSubmit = async (e) => {
       return;
     }
     
-    // Remove /api/ from the URL path
-    const apiEndpoint = `${API_URL}/api/tests/practice`;
-    
-    // Format payload to exactly match API expectations
+    // Prepare payload exactly matching API schema
     const payload = {
+      title: formData.title.trim(),
       subjectId: parseInt(formData.subjectId),
       questionCount: parseInt(formData.questionCount),
-      levelId: parseInt(formData.levelId || 0),
-      questionTypes: formData.questionTypes.length > 0 ? formData.questionTypes : [0],
-      chapterIds: formData.chapterIds.map(id => parseInt(id)),
-      topic: formData.topic || ''
+      levelId: parseInt(formData.levelId),
+      questionTypes: formData.questionTypes.map(type => parseInt(type)),
+      chapterIds: formData.chapterIds.length > 0 ? formData.chapterIds.map(id => parseInt(id)) : [],
+      topic: formData.topic.trim() || ""
     };
     
-    console.log('Sending API payload:', payload);
-    console.log('API endpoint:', apiEndpoint);
+    console.log('🚀 Sending API payload:', JSON.stringify(payload, null, 2));
     
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
+    const response = await axios.post(`${API_URL}/api/tests/practice`, payload, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
     
-    // Use the practice test creation endpoint without /api/ prefix
-    const response = await axios.post(apiEndpoint, payload, { headers });
+    console.log('✅ API response:', response.data);
     
-    console.log('API response:', response.data);
-    showSuccessToast('Đã tạo đề thi thành công!');
-    
-    // Navigate to appropriate page
-    navigate('/teacher/exams');
+    // Check for success response
+    if (response.data?.success === true || response.status === 200 || response.status === 201) {
+      // Show success message with details
+      const practiceData = response.data?.data;
+      let successMessage = response.data?.message || 'Đã tạo đề ôn tập thành công!';
+      
+      if (practiceData) {
+        successMessage += ` (${practiceData.questionCount} câu hỏi, ${practiceData.totalScore} điểm)`;
+      }
+      
+      showSuccessToast(successMessage);
+      
+      // Always navigate to teacher exams management page
+      navigate('/teacher/exams', { 
+        state: { 
+          message: 'Đề thi đã được tạo thành công!',
+          newPracticeId: practiceData?.practiceId 
+        }
+      });
+      
+    } else {
+      throw new Error(response.data?.message || 'Tạo đề ôn tập thất bại');
+    }
     
   } catch (err) {
-    console.error('Error creating practice test:', err);
+    console.error('❌ Error creating practice test:', err);
     
-    // Better error reporting
-    let errorMessage = 'Không thể tạo đề thi';
+    let errorMessage = 'Không thể tạo đề ôn tập';
     
-    if (err.response) {
-      console.log('Complete API Error Response:', err.response.data);
-      
-      if (typeof err.response.data === 'object') {
-        errorMessage += ': ' + JSON.stringify(err.response.data);
-      } else if (typeof err.response.data === 'string') {
-        errorMessage += ': ' + err.response.data;
-      }
+    if (err.response?.status === 400) {
+      errorMessage = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+    } else if (err.response?.status === 401) {
+      errorMessage = 'Bạn không có quyền thực hiện thao tác này.';
+      // Redirect to login if unauthorized
+      navigate('/login');
+      return;
+    } else if (err.response?.status === 404) {
+      errorMessage = 'Không tìm thấy dữ liệu. Vui lòng kiểm tra lại môn học và chương.';
+    } else if (err.response?.status === 500) {
+      errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+    } else if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.title) {
+      errorMessage = err.response.data.title;
+    } else if (err.response?.data?.errors) {
+      const errors = err.response.data.errors;
+      errorMessage += ': ' + Object.values(errors).flat().join(', ');
+    } else if (err.message) {
+      errorMessage += ': ' + err.message;
     }
     
     setError(errorMessage);
@@ -377,22 +343,27 @@ const handleSubmit = async (e) => {
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Row>
-              <Col md={8}>
+              <Col md={12}>
                 <Form.Group className="mb-3">
                   <Form.Label>Tiêu đề đề thi *</Form.Label>
                   <Form.Control
                     type="text"
-                    name="title" // Keep for UI but won't send to API
-                    value={formData.title || ''}
+                    name="title"
+                    value={formData.title}
                     onChange={handleChange}
-                    placeholder="Nhập tiêu đề đề thi"
+                    placeholder="Nhập tiêu đề cho đề ôn tập (ví dụ: Ôn tập Toán 10 - Chương 1)"
                     required
                     className={theme === 'dark' ? 'bg-dark text-white' : ''}
                   />
+                  <Form.Text className="text-muted">
+                    Tiêu đề giúp bạn dễ dàng nhận biết và quản lý đề thi
+                  </Form.Text>
                 </Form.Group>
               </Col>
-              
-              <Col md={4}>
+            </Row>
+            
+            <Row>
+              <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Môn học *</Form.Label>
                   <Form.Select
@@ -411,16 +382,31 @@ const handleSubmit = async (e) => {
                   </Form.Select>
                 </Form.Group>
               </Col>
+              
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Số lượng câu hỏi *</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="questionCount"
+                    value={formData.questionCount}
+                    onChange={handleChange}
+                    min="1"
+                    max="100"
+                    required
+                    className={theme === 'dark' ? 'bg-dark text-white' : ''}
+                  />
+                </Form.Group>
+              </Col>
             </Row>
             
             <Form.Group className="mb-3">
-              <Form.Label>Chương *</Form.Label>
+              <Form.Label>Chương</Form.Label>
               <Form.Select
                 multiple
-                name="chapterIds" // Changed from topicIds
-                value={formData.chapterIds} // Changed from topicIds
+                name="chapterIds"
+                value={formData.chapterIds}
                 onChange={handleTopicChange}
-                required
                 className={theme === 'dark' ? 'bg-dark text-white' : ''}
                 style={{ height: '150px' }}
                 disabled={isLoadingTopics || topics.length === 0}
@@ -438,264 +424,80 @@ const handleSubmit = async (e) => {
                 )}
               </Form.Select>
               <Form.Text className="text-muted">
-                Giữ phím Ctrl (Windows) hoặc Command (Mac) để chọn nhiều chương
+                Giữ phím Ctrl (Windows) hoặc Command (Mac) để chọn nhiều chương. Để trống nếu muốn lấy từ tất cả các chương.
               </Form.Text>
             </Form.Group>
 
-            {/* Thêm trường nhập Chủ đề */}
-            <Form.Group className="mb-3">
-              <Form.Label>Chủ đề</Form.Label>
-              <Form.Control
-                type="text"
-                name="topic" // Changed from topicName
-                value={formData.topic} // Changed from topicName
-                onChange={handleChange}
-                placeholder="Nhập tên chủ đề của đề thi (ví dụ: Toán Đại,Toán Hình...)"
-                className={theme === 'dark' ? 'bg-dark text-white' : ''}
-              />
-              <Form.Text className="text-muted">
-                Chủ đề giúp phân loại đề thi của bạn, ví dụ: "Toán Đại,Toán Hình"...
-              </Form.Text>
-            </Form.Group>
-
-            {/* Add new field for difficulty level */}
             <Form.Group className="mb-3">
               <Form.Label>Độ khó</Form.Label>
               <Form.Select
                 name="levelId"
                 value={formData.levelId}
                 onChange={handleChange}
-                required
                 className={theme === 'dark' ? 'bg-dark text-white' : ''}
               >
-                <option value="0">Tất cả</option>
                 <option value="1">Dễ</option>
                 <option value="2">Trung bình</option>
                 <option value="3">Khó</option>
               </Form.Select>
             </Form.Group>
 
-            {/* Add new field for question types */}
             <Form.Group className="mb-3">
               <Form.Label>Loại câu hỏi</Form.Label>
               <div>
                 <Form.Check
                   type="checkbox"
+                  id="questionType-0"
+                  label="Tất cả loại câu hỏi"
+                  checked={formData.questionTypes.includes(0)}
+                  onChange={() => handleQuestionTypesChange(0)}
+                  className={theme === 'dark' ? 'text-white' : ''}
+                />
+                <Form.Check
+                  type="checkbox"
                   id="questionType-1"
-                  label="Trắc nghiệm"
+                  label="Trắc nghiệm một đáp án"
                   checked={formData.questionTypes.includes(1)}
                   onChange={() => handleQuestionTypesChange(1)}
+                  disabled={formData.questionTypes.includes(0)}
                   className={theme === 'dark' ? 'text-white' : ''}
                 />
                 <Form.Check
                   type="checkbox"
                   id="questionType-2"
-                  label="Đúng/Sai"
+                  label="Trắc nghiệm nhiều đáp án / Đúng-sai"
                   checked={formData.questionTypes.includes(2)}
                   onChange={() => handleQuestionTypesChange(2)}
+                  disabled={formData.questionTypes.includes(0)}
                   className={theme === 'dark' ? 'text-white' : ''}
                 />
                 <Form.Check
                   type="checkbox"
                   id="questionType-3"
-                  label="Tự luận"
+                  label="Tự luận ngắn"
                   checked={formData.questionTypes.includes(3)}
                   onChange={() => handleQuestionTypesChange(3)}
+                  disabled={formData.questionTypes.includes(0)}
                   className={theme === 'dark' ? 'text-white' : ''}
                 />
               </div>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Phương thức tạo đề thi</Form.Label>
-              <div>
-                <Form.Check
-                  type="radio"
-                  id="createMode-manual"
-                  name="createMode"
-                  label="Chọn câu hỏi thủ công"
-                  checked={true}
-                  readOnly
-                  className={theme === 'dark' ? 'text-white' : ''}
-                />
-              </div>
+              <Form.Label>Chủ đề (tùy chọn)</Form.Label>
+              <Form.Control
+                type="text"
+                name="topic"
+                value={formData.topic}
+                onChange={handleChange}
+                placeholder="Nhập chủ đề cụ thể (ví dụ: Đạo hàm, Tích phân...)"
+                className={theme === 'dark' ? 'bg-dark text-white' : ''}
+              />
+              <Form.Text className="text-muted">
+                Để trống nếu muốn lấy câu hỏi từ tất cả các chủ đề trong chương đã chọn.
+              </Form.Text>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <Form.Label><strong>Chọn câu hỏi cho đề thi</strong></Form.Label>
-                <Button 
-                  variant="outline-primary" 
-                  size="sm"
-                  onClick={() => {
-                    // Update questionCount to match selection count
-                    setFormData(prev => ({
-                      ...prev,
-                      questionCount: selectedQuestions.length
-                    }));
-                    showSuccessToast(`Đã cập nhật số lượng câu hỏi thành ${selectedQuestions.length}`);
-                  }}
-                  disabled={selectedQuestions.length === 0}
-                >
-                  <FaCheck className="me-1" /> Cập nhật số lượng câu hỏi ({selectedQuestions.length})
-                </Button>
-              </div>
-              
-              {loadingQuestions ? (
-                <div className="text-center py-3">
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Đang tải danh sách câu hỏi...
-                </div>
-              ) : availableQuestions.length > 0 ? (
-                <Card bg={theme === 'dark' ? 'dark' : 'light'} border={selectedQuestions.length !== parseInt(formData.questionCount) ? 'warning' : 'success'}>
-                  <Card.Header>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <span>
-                        <strong>Đã chọn: {selectedQuestions.length}</strong> / {formData.questionCount} câu hỏi yêu cầu
-                      </span>
-                      {selectedQuestions.length !== parseInt(formData.questionCount) && (
-                        <span className="text-warning">
-                          <FaInfoCircle className="me-1" /> 
-                          {selectedQuestions.length < parseInt(formData.questionCount) ? 
-                            `Bạn cần chọn thêm ${parseInt(formData.questionCount) - selectedQuestions.length} câu hỏi` :
-                            `Bạn đã chọn nhiều hơn ${selectedQuestions.length - parseInt(formData.questionCount)} câu hỏi so với yêu cầu`}
-                        </span>
-                      )}
-                    </div>
-                  </Card.Header>
-                  <Card.Body style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {availableQuestions.map(question => (
-                      <div 
-                        key={question.id} 
-                        className={`border-bottom py-2 ${selectedQuestions.includes(question.id) ? 'bg-light' : ''}`}
-                      >
-                        <Form.Check
-                          type="checkbox"
-                          id={`question-${question.id}`}
-                          label={
-                            <div dangerouslySetInnerHTML={{ __html: question.content }} />
-                          }
-                          checked={selectedQuestions.includes(question.id)}
-                          onChange={() => handleQuestionSelection(question.id)}
-                        />
-                        <small className="text-muted">
-                          ID: {question.id} | Loại: {
-                            question.questionType === 1 ? 'Trắc nghiệm' : 
-                            question.questionType === 2 ? 'Đúng/Sai' : 'Tự luận'
-                          }
-                        </small>
-                      </div>
-                    ))}
-                  </Card.Body>
-                </Card>
-              ) : (
-                <Alert variant="warning">
-                  <FaInfoCircle className="me-2" />
-                  Không tìm thấy câu hỏi nào trong các chương đã chọn. 
-                  Vui lòng thêm câu hỏi vào chương hoặc sử dụng chế độ tạo tự động.
-                </Alert>
-              )}
-            </Form.Group>
-            
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Thời gian làm bài (phút) *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleChange}
-                    min="1"
-                    max="180"
-                    required
-                    className={theme === 'dark' ? 'bg-dark text-white' : ''}
-                  />
-                </Form.Group>
-              </Col>
-              
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Số lượng câu hỏi *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="questionCount"
-                    value={formData.questionCount}
-                    onChange={handleChange}
-                    min="1"
-                    required
-                    className={theme === 'dark' ? 'bg-dark text-white' : ''}
-                  />
-                </Form.Group>
-              </Col>
-              
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Điểm đậu *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="passingScore"
-                    value={formData.passingScore}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.1"
-                    required
-                    className={theme === 'dark' ? 'bg-dark text-white' : ''}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            
-            <Row className="mb-3">
-              <Col md={3}>
-                <Form.Check
-                  type="switch"
-                  id="isPublic"
-                  name="isPublic"
-                  label="Công khai"
-                  checked={formData.isPublic}
-                  onChange={handleChange}
-                  className={theme === 'dark' ? 'text-white' : ''}
-                />
-              </Col>
-              
-              <Col md={3}>
-                <Form.Check
-                  type="switch"
-                  id="shuffleQuestions"
-                  name="shuffleQuestions"
-                  label="Xáo trộn câu hỏi"
-                  checked={formData.shuffleQuestions}
-                  onChange={handleChange}
-                  className={theme === 'dark' ? 'text-white' : ''}
-                />
-              </Col>
-              
-              <Col md={3}>
-                <Form.Check
-                  type="switch"
-                  id="showResult"
-                  name="showResult"
-                  label="Hiển thị kết quả"
-                  checked={formData.showResult}
-                  onChange={handleChange}
-                  className={theme === 'dark' ? 'text-white' : ''}
-                />
-              </Col>
-              
-              <Col md={3}>
-                <Form.Check
-                  type="switch"
-                  id="showAnswers"
-                  name="showAnswers"
-                  label="Hiển thị đáp án"
-                  checked={formData.showAnswers}
-                  onChange={handleChange}
-                  className={theme === 'dark' ? 'text-white' : ''}
-                />
-              </Col>
-            </Row>
-            
             <div className="mt-4 d-flex justify-content-end">
               <Button
                 variant="secondary"
@@ -717,7 +519,7 @@ const handleSubmit = async (e) => {
                   </>
                 ) : (
                   <>
-                    <FaSave className="me-2" /> Tạo đề thi
+                    <FaSave className="me-2" /> Tạo đề ôn tập
                   </>
                 )}
               </Button>

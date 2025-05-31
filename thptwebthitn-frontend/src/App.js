@@ -588,10 +588,10 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                <Route path="/teacher/verification-requests" element={
-                  <TeacherRoute>
+                <Route path="/admin/verification-requests" element={
+                  <AdminRoute>
                     <TeacherVerificationRequests />
-                  </TeacherRoute>
+                  </AdminRoute>
                 } />
 
                 <Route path="/student/verification-requests" element={

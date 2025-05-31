@@ -31,8 +31,14 @@ import {
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { getMaterials, uploadMaterial, uploadVideo } from '../../services/materialsService';
+import { getMaterials, uploadMaterial } from '../../services/materialsService';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+import documentDefaultImg from '../../assets/images/document-default.png';
+import pdfDefaultImg from '../../assets/images/pdf-default.png';
+import wordDefaultImg from '../../assets/images/word-default.png';
+import excelDefaultImg from '../../assets/images/excel-default.png';
+import powerPointDefaultImg from '../../assets/images/powerpoint-default.png';
+
 
 // Styled components
 const PageWrapper = styled.div`
@@ -858,46 +864,77 @@ const formatBytes = (bytes, decimals = 2) => {
 
 // File type icons
 const getFileIcon = (type) => {
-  switch (type) {
+  if (!type || typeof type !== 'string') {
+    return <img 
+      src={documentDefaultImg} 
+      alt="Document" 
+      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+    />;
+  }
+  
+  switch (type.toLowerCase()) {
     case 'pdf':
-      return <FaFilePdf />;
+      return <img 
+        src={pdfDefaultImg} 
+        alt="PDF" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />;
     case 'doc':
     case 'docx':
-      return <FaFileWord />;
+      return <img 
+        src={wordDefaultImg} 
+        alt="Word" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />;
     case 'xls':
     case 'xlsx':
-      return <FaFileExcel />;
+      return <img 
+        src={excelDefaultImg} 
+        alt="Excel" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />;
+    case 'ppt':
+    case 'pptx':
+      return <img 
+        src={powerPointDefaultImg} 
+        alt="PowerPoint" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />;
     case 'jpg':
     case 'jpeg':
     case 'png':
     case 'gif':
-      return <FaImage />;
-    case 'video':
-      return <FaVideo />;
-    case 'youtube':
-      return <FaYoutube />;
+      return <div style={{ 
+        width: '100%', 
+        height: '100%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: '#f0f5fa'
+      }}>
+        <FaImage style={{ fontSize: '3rem', color: '#3182ce' }} />
+      </div>;
     default:
-      return <FaFile />;
+      return <img 
+        src={documentDefaultImg} 
+        alt="Document" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />;
   }
 };
 
 const TeacherMaterials = () => {
   const { theme } = useSelector(state => state.ui);
   
-  // Add this state for subjects
+  // State variables
   const [subjects, setSubjects] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
-  
-  // Other state variables remain the same
-  const [activeTab, setActiveTab] = useState('documents');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [materialType, setMaterialType] = useState('document');
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [materialTitle, setMaterialTitle] = useState('');
   const [materialDescription, setMaterialDescription] = useState('');
   const [materialSubject, setMaterialSubject] = useState('');
@@ -906,15 +943,9 @@ const TeacherMaterials = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  const fileInputRef = useRef(null);
-  
-  // Add these state variables after your existing state declarations (around line 884)
   const [chapters, setChapters] = useState([]);
   const [loadingChapters, setLoadingChapters] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState('0');
-
-  // Thêm vào phần khai báo state (sau dòng 919)
   const [grades, setGrades] = useState([
     { id: 10, name: 'Khối 10' },
     { id: 11, name: 'Khối 11' },
@@ -922,6 +953,8 @@ const TeacherMaterials = () => {
   ]);
   const [selectedGrade, setSelectedGrade] = useState('');
   const [filteredSubjects, setFilteredSubjects] = useState([]);
+  
+  const fileInputRef = useRef(null);
 
   // Fetch subjects from API
   useEffect(() => {
@@ -956,7 +989,19 @@ const TeacherMaterials = () => {
     
     fetchSubjects();
   }, []);
+  const getFileTypeFromName = (filename) => {
+  if (!filename) return '';
   
+  if (filename.toLowerCase().endsWith('.pdf')) return 'pdf';
+  if (filename.toLowerCase().endsWith('.doc') || filename.toLowerCase().endsWith('.docx')) return 'doc';
+  if (filename.toLowerCase().endsWith('.xls') || filename.toLowerCase().endsWith('.xlsx')) return 'xls';
+  if (filename.toLowerCase().endsWith('.ppt') || filename.toLowerCase().endsWith('.pptx')) return 'ppt';
+  if (filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg')) return 'jpg';
+  if (filename.toLowerCase().endsWith('.png')) return 'png';
+  if (filename.toLowerCase().endsWith('.gif')) return 'gif';
+  
+  return '';
+};
   // Add this useEffect hook to fetch chapters when subject changes
   useEffect(() => {
     const fetchChapters = async () => {
@@ -1014,8 +1059,8 @@ const TeacherMaterials = () => {
     setFilteredSubjects(filtered);
   }, [selectedGrade, subjects]);
   
-  // Handle file upload
-  const handleFileUpload = (e) => {
+    // Handle file upload
+    const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles(prev => [
       ...prev,
@@ -1031,9 +1076,8 @@ const TeacherMaterials = () => {
   
   // Handle remove file
   const handleRemoveFile = (id) => {
-    setSelectedFiles(prev => prev.filter(file => file.id !== id));
-  };
-  
+  setSelectedFiles(prev => prev.filter(file => file.id !== id));
+};
   // Handle tag input
   const handleTagInputKeyDown = (e) => {
     if (e.key === 'Enter' && tagInput.trim()) {
@@ -1079,11 +1123,11 @@ const TeacherMaterials = () => {
       // Call the API
       const response = await getMaterials(params);
       
+      // Log để debug thông tin
+      console.log('Fetched materials:', response.items);
+      
       // Update the state with the response data
       setMaterials(response.items || []);
-      
-      // You can add pagination state update here if needed
-      // setTotalPages(response.totalPages);
     } catch (error) {
       console.error('Error fetching materials:', error);
       showErrorToast('Không thể tải danh sách tài liệu');
@@ -1095,7 +1139,7 @@ const TeacherMaterials = () => {
 
   useEffect(() => {
     fetchMaterials();
-  }, [activeTab, searchTerm, selectedSubject, currentPage]);
+  }, [searchTerm, selectedSubject, currentPage]);
   
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -1106,96 +1150,78 @@ const TeacherMaterials = () => {
     try {
       setIsSubmitting(true);
       
-      // Create form data for upload - this needs to match API specifications
-      const formData = new FormData();
+      if (selectedFiles.length === 0) {
+        showErrorToast('Vui lòng chọn ít nhất một tệp tài liệu');
+        setIsSubmitting(false);
+        return;
+      }
       
-      if (materialType === 'document') {
-        // Document upload
-        if (selectedFiles.length === 0) {
-          showErrorToast('Vui lòng chọn ít nhất một tệp tài liệu');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // IMPORTANT: API requires 'file' field
-        formData.append('file', selectedFiles[0].file);
-        
-        // Required field: title
-        formData.append('title', materialTitle);
-        
-        // Optional fields
-        if (materialDescription) {
-          formData.append('description', materialDescription);
-        }
-        
-        if (materialSubject) {
-          formData.append('subjectId', parseInt(materialSubject)); // Ensure it's an integer
-        }
-        
-        // Add chapterId (optional field required by API)
-        formData.append('chapterId', parseInt(selectedChapter || 0)); // You can set a default value or add UI to select chapter
-        
-        // Add documentType - Get file extension instead of MIME type
-        const fileExt = selectedFiles[0].name.split('.').pop().toLowerCase();
-        formData.append('documentType', fileExt);
-        
-        // Tags as a comma-separated string
-        if (tags.length > 0) {
-          formData.append('tags', tags.join(','));
-        }
-
-        // Cập nhật hàm handleSubmit để thêm thông tin khối (nếu cần)
-        // Trong phần formData.append, thêm dòng sau nếu API của bạn hỗ trợ
-        // formData.append('grade', selectedGrade);
-        
-        // Debug what's being sent
-        console.log('Uploading with FormData:');
-        for (let pair of formData.entries()) {
-          console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
-        }
-        
-        // Send the API request
-        const response = await uploadMaterial(formData);
-        
-        // Handle successful upload
-        if (response) {
-          showSuccessToast('Tài liệu đã được tải lên thành công');
-          // Reset form and close modal
-          setSelectedFiles([]);
-          setMaterialTitle('');
-          setMaterialDescription('');
-          setMaterialSubject('');
-          setTags([]);
-          setShowAddModal(false);
-          setSelectedChapter('0');
-          setSelectedGrade('');
-          
-          // Thêm dòng này để tải lại danh sách tài liệu sau khi thêm thành công
-          fetchMaterials();
-        }
-      } else {
-        // YouTube video upload code remains the same
-        if (!youtubeUrl) {
-          showErrorToast('Vui lòng nhập URL YouTube');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        formData.append('title', materialTitle);
+      const formData = new FormData();
+      formData.append('file', selectedFiles[0].file);
+      formData.append('title', materialTitle);
+      
+      if (materialDescription) {
         formData.append('description', materialDescription);
-        formData.append('subjectId', materialSubject);
-        formData.append('tags', JSON.stringify(tags));
-        formData.append('youtubeUrl', youtubeUrl);
-        const response = await uploadVideo(formData);
+      }
+      
+      if (materialSubject) {
+        formData.append('subjectId', parseInt(materialSubject));
+      }
+      
+      formData.append('chapterId', parseInt(selectedChapter || 0));
+      
+      const fileExt = selectedFiles[0].name.split('.').pop().toLowerCase();
+      formData.append('documentType', fileExt);
+      
+      if (tags.length > 0) {
+        formData.append('tags', tags.join(','));
+      }
+      
+      const response = await uploadMaterial(formData);
+      
+      if (response) {
+        showSuccessToast('Tài liệu đã được tải lên thành công');
+        // Reset form
+        setSelectedFiles([]);
+        setMaterialTitle('');
+        setMaterialDescription('');
+        setMaterialSubject('');
+        setTags([]);
+        setShowAddModal(false);
+        setSelectedChapter('0');
+        setSelectedGrade('');
+        fetchMaterials();
       }
     } catch (error) {
       console.error('Error uploading material:', error);
-      showErrorToast(`Không thể tải lên tài liệu. Vui lòng thử lại.`);
+      
+      if (error.response?.status === 413) {
+        showErrorToast('File quá lớn. Vui lòng chọn file nhỏ hơn.');
+      } else if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.Message || 
+                            'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+        showErrorToast(errorMessage);
+      } else if (error.response?.status === 401) {
+        showErrorToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else if (error.response?.status === 403) {
+        showErrorToast('Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ admin.');
+      } else {
+        const errorMessage = error.response?.data?.message || 
+                            error.message || 
+                            'Không thể tải lên tài liệu. Vui lòng thử lại.';
+        showErrorToast(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  // Cách tốt hơn là thêm state để xử lý lỗi ảnh
+  const [imageErrors, setImageErrors] = useState({});
+
   return (
     <PageWrapper theme={theme}>
       <Header />
@@ -1204,26 +1230,6 @@ const TeacherMaterials = () => {
           <FaBook />
           Tài liệu ôn tập
         </PageTitle>
-        
-        {/* Tabs */}
-        <TabContainer theme={theme}>
-          <Tab 
-            theme={theme}
-            active={activeTab === 'documents'} 
-            onClick={() => setActiveTab('documents')}
-          >
-            <FaFile />
-            Tài liệu
-          </Tab>
-          <Tab 
-            theme={theme}
-            active={activeTab === 'videos'} 
-            onClick={() => setActiveTab('videos')}
-          >
-            <FaVideo />
-            Video
-          </Tab>
-        </TabContainer>
         
         {/* Action Bar */}
         <ActionBar>
@@ -1303,18 +1309,15 @@ const TeacherMaterials = () => {
         ) : materials.length === 0 ? (
           <EmptyState theme={theme}>
             <EmptyIcon theme={theme}>
-              {activeTab === 'documents' ? <FaFile /> : <FaVideo />}
+              <FaFile />
             </EmptyIcon>
-            <EmptyTitle theme={theme}>Không có {activeTab === 'documents' ? 'tài liệu' : 'video'} nào</EmptyTitle>
+            <EmptyTitle theme={theme}>Không có tài liệu nào</EmptyTitle>
             <EmptyDescription theme={theme}>
-              {activeTab === 'documents' 
-                ? 'Hãy thêm tài liệu để hỗ trợ học sinh ôn tập trước kỳ thi.'
-                : 'Hãy thêm video để hỗ trợ học sinh ôn tập trước kỳ thi.'
-              }
+              Hãy thêm tài liệu để hỗ trợ học sinh ôn tập trước kỳ thi.
             </EmptyDescription>
             <AddButton onClick={() => setShowAddModal(true)}>
               <FaPlus />
-              Thêm {activeTab === 'documents' ? 'tài liệu' : 'video'} mới
+              Thêm tài liệu mới
             </AddButton>
           </EmptyState>
         ) : (
@@ -1322,13 +1325,21 @@ const TeacherMaterials = () => {
             {materials.map(material => (
               <MaterialCard key={material.id} theme={theme}>
                 <CardPreview theme={theme}>
-                  {material.thumbnailUrl ? (
+                  {material.thumbnailUrl && !imageErrors[material.id] ? (
                     <img 
                       src={`${API_URL}${material.thumbnailUrl}`} 
-                      alt={material.title} 
+                      alt={material.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={() => {
+                        // Khi ảnh lỗi, đánh dấu ID này vào state lỗi
+                        setImageErrors(prev => ({
+                          ...prev,
+                          [material.id]: true
+                        }));
+                      }}
                     />
                   ) : (
-                    getFileIcon(material.fileType || material.documentType)
+                    getFileIcon(material.fileType || material.documentType || getFileTypeFromName(material.title))
                   )}
                 </CardPreview>
                 <CardContent>
@@ -1413,7 +1424,7 @@ const TeacherMaterials = () => {
           </Pagination>
         )}
         
-        {/* Add Material Modal */}
+        {/* Add Material Modal - cập nhật để chỉ hiển thị form tài liệu */}
         <AnimatePresence>
           {showAddModal && (
             <ModalOverlay
@@ -1431,8 +1442,8 @@ const TeacherMaterials = () => {
                 <form onSubmit={handleSubmit}>
                   <ModalHeader theme={theme}>
                     <ModalTitle theme={theme}>
-                      {materialType === 'document' ? <FaFileUpload /> : <FaVideo />}
-                      {materialType === 'document' ? 'Thêm tài liệu mới' : 'Thêm video mới'}
+                      <FaFileUpload />
+                      Thêm tài liệu mới
                     </ModalTitle>
                     <CloseButton theme={theme} onClick={() => setShowAddModal(false)}>
                       <FaTimes />
@@ -1441,93 +1452,57 @@ const TeacherMaterials = () => {
                   
                   <ModalBody>
                     <FormGroup>
-                      <FormLabel theme={theme}>Loại tài liệu</FormLabel>
-                      <RadioGroup>
-                        <RadioOption theme={theme}>
-                          <input 
-                            type="radio" 
-                            name="materialType" 
-                            value="document" 
-                            checked={materialType === 'document'} 
-                            onChange={() => setMaterialType('document')}
-                          />
-                          <FaFile />
-                          Tài liệu
-                        </RadioOption>
-                        <RadioOption theme={theme}>
-                          <input 
-                            type="radio" 
-                            name="materialType" 
-                            value="video" 
-                            checked={materialType === 'video'} 
-                            onChange={() => setMaterialType('video')}
-                          />
-                          <FaVideo />
-                          Video
-                        </RadioOption>
-                      </RadioGroup>
+                      <FormLabel theme={theme}>Tải lên tài liệu</FormLabel>
+                      <UploadArea 
+                        theme={theme} 
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <input 
+                          type="file" 
+                          multiple 
+                          ref={fileInputRef} 
+                          onChange={handleFileUpload}
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif"
+                        />
+                        <UploadIcon theme={theme}>
+                          <FaFileUpload />
+                        </UploadIcon>
+                        <UploadText theme={theme}>
+                          {selectedFiles.length > 0 
+                            ? `Đã chọn ${selectedFiles.length} tệp`
+                            : 'Kéo thả tài liệu vào đây hoặc bấm để chọn'
+                          }
+                        </UploadText>
+                        <UploadSubtext theme={theme}>
+                          Hỗ trợ PDF, Word, Excel, PowerPoint, và các định dạng hình ảnh
+                        </UploadSubtext>
+                      </UploadArea>
+                      
+                      {selectedFiles.length > 0 && (
+                        <UploadPreview>
+                          {selectedFiles.map(file => (
+                            <FilePreview key={file.id} theme={theme}>
+                              <FileIcon>
+                                {getFileIcon(file.type || getFileTypeFromName(file.name))}
+                              </FileIcon>
+                              <FileInfo>
+                                <FileName theme={theme}>{file.name}</FileName>
+                                <FileSize theme={theme}>{formatBytes(file.size)}</FileSize>
+                              </FileInfo>
+                              <RemoveFileButton 
+                                theme={theme} 
+                                onClick={() => handleRemoveFile(file.id)}
+                              >
+                                <FaTimes />
+                              </RemoveFileButton>
+                            </FilePreview>
+                          ))}
+                        </UploadPreview>
+                      )}
                     </FormGroup>
                     
-                    {materialType === 'document' ? (
-                      <FormGroup>
-                        <FormLabel theme={theme}>Tải lên tài liệu</FormLabel>
-                        <UploadArea 
-                          theme={theme} 
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <input 
-                            type="file" 
-                            multiple 
-                            ref={fileInputRef} 
-                            onChange={handleFileUpload}
-                          />
-                          <UploadIcon theme={theme}>
-                            <FaFileUpload />
-                          </UploadIcon>
-                          <UploadText theme={theme}>Kéo thả tài liệu vào đây hoặc bấm để chọn</UploadText>
-                          <UploadSubtext theme={theme}>
-                            Hỗ trợ PDF, Word, Excel, PowerPoint, và các định dạng hình ảnh
-                          </UploadSubtext>
-                        </UploadArea>
-                        
-                        {selectedFiles.length > 0 && (
-                          <UploadPreview>
-                            {selectedFiles.map(file => (
-                              <FilePreview key={file.id} theme={theme}>
-                                <FileIcon>
-                                  {getFileIcon(file.type)}
-                                </FileIcon>
-                                <FileInfo>
-                                  <FileName theme={theme}>{file.name}</FileName>
-                                  <FileSize theme={theme}>{formatBytes(file.size)}</FileSize>
-                                </FileInfo>
-                                <RemoveFileButton 
-                                  theme={theme} 
-                                  onClick={() => handleRemoveFile(file.id)}
-                                >
-                                  <FaTimes />
-                                </RemoveFileButton>
-                              </FilePreview>
-                            ))}
-                          </UploadPreview>
-                        )}
-                      </FormGroup>
-                    ) : (
-                      <FormGroup>
-                        <FormLabel theme={theme}>URL YouTube</FormLabel>
-                        <FormInput 
-                          theme={theme} 
-                          type="text" 
-                          placeholder="Ví dụ: https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
-                          value={youtubeUrl}
-                          onChange={(e) => setYoutubeUrl(e.target.value)}
-                          required
-                        />
-                      </FormGroup>
-                    )}
-                    
                     <FormGroup>
-                      <FormLabel theme={theme}>Tiêu đề</FormLabel>
+                      <FormLabel theme={theme}>Tiêu đề *</FormLabel>
                       <FormInput 
                         theme={theme} 
                         type="text" 
@@ -1548,7 +1523,6 @@ const TeacherMaterials = () => {
                       />
                     </FormGroup>
 
-                    {/* Thêm vào form trong ModalBody trước phần chọn môn học (khoảng dòng 1137) */}
                     <FormGroup>
                       <FormLabel theme={theme}>Khối</FormLabel>
                       <FormSelect 
@@ -1565,9 +1539,8 @@ const TeacherMaterials = () => {
                       </FormSelect>
                     </FormGroup>
 
-                    {/* Sau đó điều chỉnh dropdown môn học để sử dụng filteredSubjects */}
                     <FormGroup>
-                      <FormLabel theme={theme}>Môn học</FormLabel>
+                      <FormLabel theme={theme}>Môn học *</FormLabel>
                       <FormSelect 
                         theme={theme} 
                         value={materialSubject}
@@ -1597,7 +1570,6 @@ const TeacherMaterials = () => {
                       )}
                     </FormGroup>
                     
-                    {/* Add this FormGroup after the subject selection in your form (around line 1139) */}
                     <FormGroup>
                       <FormLabel theme={theme}>Chương/Chuyên đề</FormLabel>
                       <FormSelect 
@@ -1652,7 +1624,12 @@ const TeacherMaterials = () => {
                     </CancelButton>
                     <SaveButton 
                       type="submit"
-                      disabled={isSubmitting || (materialType === 'document' && selectedFiles.length === 0) || !materialTitle || !materialSubject}
+                      disabled={
+                        isSubmitting || 
+                        selectedFiles.length === 0 || 
+                        !materialTitle || 
+                        !materialSubject
+                      }
                     >
                       {isSubmitting ? <LoadingSpinner size={16} color="#ffffff" /> : <FaCheck />}
                       {isSubmitting ? 'Đang lưu...' : 'Lưu'}
