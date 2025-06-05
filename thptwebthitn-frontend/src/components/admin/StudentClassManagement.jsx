@@ -913,7 +913,15 @@ const StudentClassManagement = () => {
           if (user.grade === 'Admin' || user.grade === 'Teacher') {
             return false;
           }
+          // Exclude users with "Lớp" in their fullName
+          if (user.fullName && user.fullName.toLowerCase().includes('lớp')) {
+            return false;
+          }
           
+          // Exclude users with "Lớp" in their username if fullName is not available
+          if (!user.fullName && user.username && user.username.toLowerCase().includes('lớp')) {
+            return false;
+          }
           // Keep only users with Student role or those that have a valid grade (10, 11, 12)
           return user.role === 'Student' || 
                  (typeof user.grade === 'string' && ['10', '11', '12'].includes(user.grade));

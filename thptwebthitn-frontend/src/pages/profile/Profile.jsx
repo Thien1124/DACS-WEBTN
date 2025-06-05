@@ -480,37 +480,58 @@ const Profile = () => {
     return userId ? localStorage.getItem(`tempAvatar_${userId}`) : null;
   });
   
-  // ✅ THAY ĐỔI: Sử dụng dữ liệu từ API Dashboard
+  // ✅ SỬA ĐỔI: Thêm logic kiểm tra role
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const fileInputRef = useRef(null);
+  const role = user?.role || (localStorage.getItem('user_role') || 'student');
   
-  // ✅ FETCH DỮ LIỆU TỪ API
+  // ✅ SỬA ĐỔI: Chỉ fetch data cho Student
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        const data = await getDashboardData();
-        setDashboardData(data);
+        
+        // ✅ KIỂM TRA ROLE TRƯỚC KHI GỌI API
+        if (role.toLowerCase() === 'student') {
+          const data = await getDashboardData();
+          setDashboardData(data);
+        } else {
+          // ✅ CHO TEACHER/ADMIN: Set dữ liệu trống
+          setDashboardData({
+            stats: null,
+            activities: []
+          });
+        }
       } catch (err) {
         console.error('Error fetching profile data:', err);
-        setError('Không thể tải dữ liệu profile');
+        
+        // ✅ CHỈ HIỆN LỖI CHO STUDENT
+        if (role.toLowerCase() === 'student') {
+          setError('Không thể tải dữ liệu profile');
+        } else {
+          // ✅ CHO TEACHER/ADMIN: Set dữ liệu trống thay vì lỗi
+          setDashboardData({
+            stats: null,
+            activities: []
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfileData();
-  }, []);
+  }, [role]);
   
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
   }, []);
   
-  // Helper functions
+  // ... các helper functions giữ nguyên ...
   const getInitials = (name) => {
     return name ? name.charAt(0).toUpperCase() : 'U';
   };
@@ -567,7 +588,6 @@ const Profile = () => {
     }).format(date);
   };
 
-  // ✅ HÀM CHUYỂN ĐỔI ACTIVITY TYPE THÀNH ICON
   const getActivityIcon = (type) => {
     switch(type?.toLowerCase()) {
       case 'test':
@@ -581,8 +601,7 @@ const Profile = () => {
     }
   };
 
-  const role = user?.role || (localStorage.getItem('user_role') || 'student');
-
+  // ... handleAvatarClick và handleFileChange giữ nguyên ...
   const handleAvatarClick = () => {
     fileInputRef.current.click();
   };
@@ -646,8 +665,8 @@ const Profile = () => {
     }
   };
 
-  // ✅ LOADING STATE
-  if (loading) {
+  // ✅ SỬA ĐỔI: Chỉ hiện loading cho Student
+  if (loading && role.toLowerCase() === 'student') {
     return (
       <PageWrapper theme={theme}>
         <Header />
@@ -661,8 +680,8 @@ const Profile = () => {
     );
   }
 
-  // ✅ ERROR STATE
-  if (error) {
+  // ✅ SỬA ĐỔI: Chỉ hiện error cho Student
+  if (error && role.toLowerCase() === 'student') {
     return (
       <PageWrapper theme={theme}>
         <Header />
@@ -681,6 +700,39 @@ const Profile = () => {
       </PageWrapper>
     );
   }
+
+  // ✅ SỬA ĐỔI: Tùy chỉnh Quick Actions theo role
+  const getQuickActions = () => {
+    const commonActions = [
+      { to: "/settings", icon: FaCog, label: "Cài đặt" }
+    ];
+
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return [
+          { to: "/admin/dashboard", icon: FaCrown, label: "Quản trị" },
+          { to: "/admin/users", icon: FaUsers, label: "Người dùng" },
+          { to: "/admin/exams", icon: FaBookOpen, label: "Quản lý đề" },
+          ...commonActions
+        ];
+      
+      case 'teacher':
+        return [
+          { to: "/teacher/dashboard", icon: FaChalkboardTeacher, label: "Giảng dạy" },
+          { to: "/teacher/exams", icon: FaBookOpen, label: "Đề thi" },
+          { to: "/teacher/students", icon: FaUsers, label: "Học sinh" },
+          ...commonActions
+        ];
+      
+      default: // student
+        return [
+          { to: "/exams", icon: FaGamepad, label: "Làm bài thi" },
+          { to: "/exam-history", icon: FaChartLine, label: "Lịch sử thi" },
+          { to: "/leaderboard", icon: FaTrophy, label: "Bảng xếp hạng" },
+          ...commonActions
+        ];
+    }
+  };
 
   return (
     <PageWrapper theme={theme}>
@@ -766,8 +818,8 @@ const Profile = () => {
                     Đăng nhập cuối: {user?.lastLoginDate ? formatLastLogin(user.lastLoginDate) : 'Chưa có thông tin'}
                   </DetailItem>
                   
-                  {/* ✅ HIỂN THỊ MÔÔN MẠNH TỪ API */}
-                  {dashboardData?.stats?.strengths && (
+                  {/* ✅ CHỈ HIỆN MÔN MẠNH CHO STUDENT */}
+                  {role.toLowerCase() === 'student' && dashboardData?.stats?.strengths && (
                     <DetailItem theme={theme}>
                       <FaTrophy />
                       Môn mạnh: {dashboardData.stats.strengths}
@@ -787,8 +839,8 @@ const Profile = () => {
               </RoleDetails>
             </ProfileContainer>
 
-            {/* ✅ STATS GRID - SỬ DỤNG DỮ LIỆU TỪ API */}
-            {dashboardData?.stats && (
+            {/* ✅ CHỈ HIỆN STATS CHO STUDENT */}
+            {role.toLowerCase() === 'student' && dashboardData?.stats && (
               <ProfileContainer theme={theme}>
                 <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <FaChartLine /> Thống kê học tập
@@ -832,7 +884,7 @@ const Profile = () => {
                   >
                     <StatNumber>
                       <FaFire />
-                      {Math.round(dashboardData.stats.studyTime / 60)} {/* Convert phút thành giờ */}
+                      {Math.round(dashboardData.stats.studyTime / 60)}
                     </StatNumber>
                     <StatLabel>Giờ học tập</StatLabel>
                   </StatCard>
@@ -856,51 +908,31 @@ const Profile = () => {
           </MainContent>
 
           <Sidebar>
-            {/* Quick Actions */}
+            {/* ✅ QUICK ACTIONS TỪY CHỈNH THEO ROLE */}
             <AchievementCard theme={theme}>
               <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FaRocket /> Thao tác nhanh
               </h4>
               
               <QuickActions>
-                <ActionButton
-                  theme={theme}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  as={Link}
-                  to="/exams"
-                >
-                  <FaGamepad />
-                  Làm bài thi
-                </ActionButton>
-
-                <ActionButton
-                  theme={theme}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  as={Link}
-                  to="/exam-history"
-                >
-                  <FaChartLine />
-                  Lịch sử thi
-                </ActionButton>
-
-
-                <ActionButton
-                  theme={theme}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  as={Link}
-                  to="/settings"
-                >
-                  <FaCog />
-                  Cài đặt
-                </ActionButton>
+                {getQuickActions().map((action, index) => (
+                  <ActionButton
+                    key={index}
+                    theme={theme}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    as={Link}
+                    to={action.to}
+                  >
+                    <action.icon />
+                    {action.label}
+                  </ActionButton>
+                ))}
               </QuickActions>
             </AchievementCard>
 
-            {/* ✅ RECENT ACTIVITIES - SỬ DỤNG DỮ LIỆU TỪ API */}
-            {dashboardData?.activities && dashboardData.activities.length > 0 && (
+            {/* ✅ CHỈ HIỆN ACTIVITIES CHO STUDENT */}
+            {role.toLowerCase() === 'student' && dashboardData?.activities && dashboardData.activities.length > 0 && (
               <AchievementCard theme={theme}>
                 <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <FaClock /> Hoạt động gần đây
